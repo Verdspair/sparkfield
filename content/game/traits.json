@@ -1,0 +1,454 @@
+{
+  "version": "1.0.0",
+  "maxEmblemCountedPerFaction": 1,
+  "factions": [
+    {
+      "id": "F_DYSON",
+      "name": "戴森工团",
+      "nativeCount": 6,
+      "thresholds": [
+        2,
+        4,
+        6,
+        7
+      ],
+      "emblemId": "E_DYSON",
+      "desc": "阵亡触发【质量投射回收】：最近存活工团友军获亡者最大生命 12%/18%/25%/35% 等离子盾(4秒)与12法力（限3次不递归）；(6)/(7) 召唤并超载【日冕聚光镜】灼烧敌群并加固前排。",
+      "tierParams": [
+        {
+          "count": 2,
+          "shieldPct": 12,
+          "mana": 12,
+          "solarMirror": 0
+        },
+        {
+          "count": 4,
+          "shieldPct": 18,
+          "mana": 12,
+          "solarMirror": 0
+        },
+        {
+          "count": 6,
+          "shieldPct": 25,
+          "mana": 12,
+          "solarMirror": 1
+        },
+        {
+          "count": 7,
+          "shieldPct": 35,
+          "mana": 12,
+          "solarMirror": 2
+        }
+      ]
+    },
+    {
+      "id": "F_CLOUD",
+      "name": "云端星环",
+      "nativeCount": 6,
+      "thresholds": [
+        2,
+        4,
+        6,
+        7
+      ],
+      "emblemId": "E_CLOUD",
+      "desc": "开战前8秒获 12%/20%/30%/40% 逻辑屏障减伤；首次有星环单位跌破35%生命时触发全图【算力过载脉冲】（延迟1秒造成 120/240/420/650 魔法伤害并挂20%易伤4秒，每战1次）。",
+      "tierParams": [
+        {
+          "count": 2,
+          "drPct": 12,
+          "pulseDmg": 120
+        },
+        {
+          "count": 4,
+          "drPct": 20,
+          "pulseDmg": 240
+        },
+        {
+          "count": 6,
+          "drPct": 30,
+          "pulseDmg": 420
+        },
+        {
+          "count": 7,
+          "drPct": 40,
+          "pulseDmg": 650
+        }
+      ]
+    },
+    {
+      "id": "F_DILATION",
+      "name": "钟慢远征",
+      "nativeCount": 6,
+      "thresholds": [
+        2,
+        4,
+        6,
+        7
+      ],
+      "emblemId": "E_DILATION",
+      "desc": "【相对论先手】：对邻格无其他敌军的孤立目标增伤 15%/28%/42%/60%；场上每有单位阵亡，全体远征军吸收尾迹恢复 4%/7%/11%/16% 已损生命并叠6%攻速（上限4层）。",
+      "tierParams": [
+        {
+          "count": 2,
+          "isoAmpPct": 15,
+          "missingHpHealPct": 4
+        },
+        {
+          "count": 4,
+          "isoAmpPct": 28,
+          "missingHpHealPct": 7
+        },
+        {
+          "count": 6,
+          "isoAmpPct": 42,
+          "missingHpHealPct": 11
+        },
+        {
+          "count": 7,
+          "isoAmpPct": 60,
+          "missingHpHealPct": 16
+        }
+      ]
+    },
+    {
+      "id": "F_EUROPA",
+      "name": "木卫冰海",
+      "nativeCount": 4,
+      "thresholds": [
+        2,
+        4
+      ],
+      "emblemId": "E_EUROPA",
+      "desc": "后两排展开【磁层防辐射幕】降低暴击与范围伤害 18%/32%，每3秒全队冰海单位获 8%/16% 最大生命护盾3秒。",
+      "tierParams": [
+        {
+          "count": 2,
+          "backDrPct": 18,
+          "periodicShieldPct": 8
+        },
+        {
+          "count": 4,
+          "backDrPct": 32,
+          "periodicShieldPct": 16
+        }
+      ]
+    },
+    {
+      "id": "F_ARRAY",
+      "name": "深空阵列",
+      "nativeCount": 4,
+      "thresholds": [
+        2,
+        4
+      ],
+      "emblemId": "E_ARRAY",
+      "desc": "开战向敌最高血量区投射【引力透镜焦点】削减2格内敌军 15%/30% 双抗；(4) 第7秒降下伽马聚焦轰击并临时拉高敌最大法力15%持续4秒。",
+      "tierParams": [
+        {
+          "count": 2,
+          "shredPct": 15,
+          "gammaStrike": false
+        },
+        {
+          "count": 4,
+          "shredPct": 30,
+          "gammaStrike": true
+        }
+      ]
+    },
+    {
+      "id": "F_ANTIMATTER",
+      "name": "反物质院",
+      "nativeCount": 4,
+      "thresholds": [
+        2,
+        4
+      ],
+      "emblemId": "E_ANTIMATTER",
+      "desc": "获 +15%/+30% 双穿；第8秒（超快6秒）触发【磁约束解除】解负面控制/减益，并获 +22%/+42% 攻速与技能效能直至战末。",
+      "tierParams": [
+        {
+          "count": 2,
+          "penPct": 15,
+          "unleashBonusPct": 22
+        },
+        {
+          "count": 4,
+          "penPct": 30,
+          "unleashBonusPct": 42
+        }
+      ]
+    },
+    {
+      "id": "F_STARGATE",
+      "name": "星门摆渡",
+      "nativeCount": 3,
+      "thresholds": [
+        2,
+        3
+      ],
+      "emblemId": "E_STARGATE",
+      "desc": "开战获 15/30 初始法力与 +25% 移速；首次施法留下4秒减速25%并持续灼烧的【切伦科夫航迹】。",
+      "tierParams": [
+        {
+          "count": 2,
+          "startMana": 15,
+          "wakeDps": 35
+        },
+        {
+          "count": 3,
+          "startMana": 30,
+          "wakeDps": 65
+        }
+      ]
+    },
+    {
+      "id": "F_SWARM",
+      "name": "失控蜂群",
+      "nativeCount": 3,
+      "thresholds": [
+        1,
+        2,
+        3
+      ],
+      "emblemId": "E_SWARM",
+      "desc": "(1) 开战纳米侵蚀使正对位敌军前4秒最大法力 +20%；(2) 免疫破甲/碎魔抗并获18%增伤；(3) 第10秒对低于10%生命非首领敌军执行纳米吞噬斩杀。",
+      "tierParams": [
+        {
+          "count": 1,
+          "manaTaxPct": 20,
+          "ampPct": 0,
+          "executeBelowPct": 0
+        },
+        {
+          "count": 2,
+          "manaTaxPct": 20,
+          "ampPct": 18,
+          "executeBelowPct": 0
+        },
+        {
+          "count": 3,
+          "manaTaxPct": 20,
+          "ampPct": 18,
+          "executeBelowPct": 10
+        }
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "id": "R_VANGUARD",
+      "name": "重装",
+      "nativeCount": 6,
+      "thresholds": [
+        2,
+        4,
+        6
+      ],
+      "fourCostAnchor": "S27",
+      "desc": "全队 +10 双抗；重装额外获 +20%/+45%/+75% 最大生命，开战首3秒减伤15%。",
+      "tierParams": [
+        {
+          "count": 2,
+          "teamResist": 10,
+          "hpBonusPct": 20
+        },
+        {
+          "count": 4,
+          "teamResist": 10,
+          "hpBonusPct": 45
+        },
+        {
+          "count": 6,
+          "teamResist": 10,
+          "hpBonusPct": 75
+        }
+      ]
+    },
+    {
+      "id": "R_MATRIX",
+      "name": "矩阵",
+      "nativeCount": 6,
+      "thresholds": [
+        2,
+        4,
+        6
+      ],
+      "fourCostAnchor": "S28",
+      "desc": "开战获12%最大生命护盾，技能效能与护盾强度 +20%/+45%/+75%。",
+      "tierParams": [
+        {
+          "count": 2,
+          "apAndShieldPct": 20
+        },
+        {
+          "count": 4,
+          "apAndShieldPct": 45
+        },
+        {
+          "count": 6,
+          "apAndShieldPct": 75
+        }
+      ]
+    },
+    {
+      "id": "R_RAILGUN",
+      "name": "磁轨",
+      "nativeCount": 6,
+      "thresholds": [
+        2,
+        4,
+        6
+      ],
+      "fourCostAnchor": "S29",
+      "desc": "获 +18%/+38%/+65% 攻速，每普攻同一目标3次附带一次电磁穿甲弹片。",
+      "tierParams": [
+        {
+          "count": 2,
+          "asPct": 18,
+          "shrapnelDmg": 40
+        },
+        {
+          "count": 4,
+          "asPct": 38,
+          "shrapnelDmg": 75
+        },
+        {
+          "count": 6,
+          "asPct": 65,
+          "shrapnelDmg": 120
+        }
+      ]
+    },
+    {
+      "id": "R_PHOTON",
+      "name": "光子",
+      "nativeCount": 6,
+      "thresholds": [
+        2,
+        4,
+        6
+      ],
+      "fourCostAnchor": "S30",
+      "desc": "全队 +8% 技能效能；光子获 +22%/+50%/+85% 效能，施法锁结束后回复 6/12/20 法力。",
+      "tierParams": [
+        {
+          "count": 2,
+          "teamApPct": 8,
+          "apPct": 22,
+          "postLockMana": 6
+        },
+        {
+          "count": 4,
+          "teamApPct": 8,
+          "apPct": 50,
+          "postLockMana": 12
+        },
+        {
+          "count": 6,
+          "teamApPct": 8,
+          "apPct": 85,
+          "postLockMana": 20
+        }
+      ]
+    },
+    {
+      "id": "R_BIOCARE",
+      "name": "维生",
+      "nativeCount": 6,
+      "thresholds": [
+        2,
+        3,
+        4
+      ],
+      "fourCostAnchor": "S31",
+      "cryoBenchSlot": 8,
+      "cryoBonusHpPerRound": 120,
+      "cryoBonusApPctPerRound": 8,
+      "cryoMaxRounds": 2,
+      "desc": "治疗护盾效能 +20%/+35%/+55%；允许准备期自愿将备战第9槽切为【低温休眠舱】（停战1轮，下轮解冻永久+120生命与+8%效能，限叠2轮、末轮禁封，封存中不参与自动合成）。",
+      "tierParams": [
+        {
+          "count": 2,
+          "healShieldPct": 20
+        },
+        {
+          "count": 3,
+          "healShieldPct": 35
+        },
+        {
+          "count": 4,
+          "healShieldPct": 55
+        }
+      ]
+    },
+    {
+      "id": "R_WARP",
+      "name": "跃迁",
+      "nativeCount": 6,
+      "thresholds": [
+        2,
+        3,
+        4
+      ],
+      "fourCostAnchor": "S32",
+      "desc": "获 12%/20%/30% 全能吸血，技能可暴击，对低于50%生命目标额外增伤 15%/25%/40%。",
+      "tierParams": [
+        {
+          "count": 2,
+          "omnivampPct": 12,
+          "lowHpAmpPct": 15
+        },
+        {
+          "count": 3,
+          "omnivampPct": 20,
+          "lowHpAmpPct": 25
+        },
+        {
+          "count": 4,
+          "omnivampPct": 30,
+          "lowHpAmpPct": 40
+        }
+      ]
+    }
+  ],
+  "uniques": [
+    {
+      "id": "U_PENROSE",
+      "name": "彭罗斯能层",
+      "unitId": "S33",
+      "thresholds": [
+        1
+      ],
+      "desc": "在场时敌全体开战前6秒伤害降低10%；首次濒死时锁血1.0秒并必定无消耗引爆一次全图彭罗斯伽马射流。"
+    },
+    {
+      "id": "U_LIGHTCONE",
+      "name": "光锥错位",
+      "unitId": "S34",
+      "thresholds": [
+        1
+      ],
+      "desc": "备战期置于前2排激活近距时间膨胀重轰与25%减伤；置于后2排激活无限射程锁定敌累计最高伤主C。"
+    },
+    {
+      "id": "U_OLD_SHIP",
+      "name": "老舰不沉",
+      "unitId": "S35",
+      "thresholds": [
+        1
+      ],
+      "desc": "开战及每6秒开启纯机械火控校准，使最近1名己方主C接下来2次攻击或技能无视目标35%护盾与双抗。"
+    },
+    {
+      "id": "U_HORIZON",
+      "name": "事件视界",
+      "unitId": "S36",
+      "thresholds": [
+        1
+      ],
+      "desc": "开战第10秒展开引力红移力场，使全场敌军受到的治疗与护盾效果降低25%，克制纯肉无限拖平。"
+    }
+  ]
+}

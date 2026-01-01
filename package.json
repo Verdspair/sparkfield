@@ -1,0 +1,23 @@
+{
+  "name": "sparkfield",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @app/server --filter @app/client dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "dev:server": "pnpm --filter @app/server dev",
+    "dev:client": "pnpm --filter @app/client dev",
+    "test:e2e": "pnpm --filter @app/client test:e2e",
+    "test:ui": "pnpm --filter @app/client test:ui"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}

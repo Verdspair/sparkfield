@@ -1,0 +1,41 @@
+question_id,family_id,subject,knowledge_node,step_role,question_type,assessment_kind,allow_material_review,material_md,stem_md,option_a,option_b,option_c,option_d,answer_spec,partial_rubric,hint_md,explanation_md,difficulty,weight,est_seconds,source_license
+ENG_Q01,FAM_ENG_Q01,english,ENG_N1_VOCAB_DIALOGUE,practice,single_choice,application,true,"- Would you mind…?：询问对方是否介意。
+- Not at all.：不介意。","— Would you mind my opening the window for some fresh air?
+— ______. Go ahead.","Yes, I would",Not at all,You’d better not,I’m afraid you can’t,B,,,Not at all 表示“不介意”，与 Go ahead 一致。,2,10,35,CC0-1.0
+ENG_Q02,FAM_ENG_Q02,english,ENG_N1_VOCAB_DIALOGUE,practice,single_choice,application,true,"- 根据前后话轮确认说话目的。
+- I’d like to…：我想……。","— Good morning. City Library. How may I help you?
+— ______.
+— Certainly. May I have your name, please?",I enjoyed the talk yesterday,The library is next to the bank,I’d like to book a seat for Saturday’s talk,You should ask someone else,C,,,来电者要预约座位；后句询问姓名，与预订请求衔接。,2,10,45,CC0-1.0
+ENG_Q03,FAM_ENG_Q03,english,ENG_N1_VOCAB_DIALOGUE,resource_check,single_choice,application,true,- 投诉回应要确认问题，并提出合理处理办法。,"— Excuse me. The desk lamp I bought here yesterday does not work.
+— ______. Would you like a new one or your money back?",I’m sorry about that,You’re welcome,Enjoy your trip,That sounds like a great idea,A,,,商家先表示歉意，再给出换货或退款方案；其他选项与投诉处理不一致。,2,10,40,CC0-1.0
+ENG_Q04,FAM_ENG_Q04,english,ENG_N1_VOCAB_DIALOGUE,resource_check,single_choice,application,true,"- You’re welcome.：回应感谢。
+- Never mind.：常用于安慰或回应道歉。","— Thank you so much for giving me a lift to the station.
+— ______.",You’re welcome,Never mind,I’m afraid not,That’s a pity,A,,,You’re welcome 用于回应感谢。,2,10,30,CC0-1.0
+ENG_Q05,FAM_ENG_Q05,english,ENG_N1_VOCAB_DIALOGUE,verification,single_choice,application,false,,"— I’m sorry I have to turn down your invitation. I’ve already made other plans.
+— ______. We can meet another time.",You must be joking,Help yourself,That’s all right,Congratulations,C,,,That’s all right 表示谅解，与另约时间相符。,2,10,40,CC0-1.0
+ENG_Q06,FAM_ENG_Q06,english,ENG_N1_VOCAB_DIALOGUE,verification,single_choice,application,false,,"— We have a job interview for you on Tuesday. Does 9 a.m. work for you?
+— ______. I have a class then, but I’m free after 2 p.m.","Yes, 9 a.m. is perfect",I don’t know your name,Thank you for the good news,Could we meet in the afternoon instead,D,,,答语说明上午有课并提出下午可行时间，因此请求改约下午。,2,10,45,CC0-1.0
+ENG_Q07,FAM_ENG_Q07,english,ENG_N2_GRAMMAR_CLAUSE,practice,short_fill,application,true,"- 先判断空格所需词性，再根据语境变形。
+- patient：耐心的；patience：耐心。","With great ______ (patient), the nurse explained the instructions twice.
+（用所给词的适当形式填空。）",,,,,patience,,,with great patience 中需用名词；patient 的派生名词为 patience。,2,10,35,CC0-1.0
+ENG_Q08,FAM_ENG_Q08,english,ENG_N2_GRAMMAR_CLAUSE,practice,short_fill,application,true,"- since 引出过去的时间起点。
+- 延续至现在的状态或动作可用完成时；表达持续过程也可用完成进行时。","Tom ______ (live) in this city since he moved here in 2021, and he still lives here now.
+（用所给词的适当形式填空，可填多个词。）",,,,,has lived|has been living,,,过去开始、延续到现在的居住状态可用 has lived；强调持续过程也可用 has been living，两种答案均接受。,2,10,45,CC0-1.0
+ENG_Q09,FAM_ENG_Q09,english,ENG_N2_GRAMMAR_CLAUSE,resource_check,short_fill,application,true,"- 被动语态：be + 过去分词。
+- 同时检查主语、动作关系和时间。","A new bridge ______ (build) over the river last year, and it is now open to traffic.
+（用所给词的适当形式填空，可填多个词。）",,,,,was built,,,主语 bridge 承受建造动作，last year 指过去，用一般过去时被动语态 was built。,2,10,40,CC0-1.0
+ENG_Q10,FAM_ENG_Q10,english,ENG_N2_GRAMMAR_CLAUSE,resource_check,short_fill,application,true,"- 分词作状语时，先检查其逻辑主语与主句主语是否一致。
+- 本句城市是被观察的对象，用过去分词；不能把所有主动关系都机械等同于现在分词。","______ (see) from the top of the tower, the city looks especially beautiful at night.
+（用所给词的适当形式填空。）",,,,,Seen,,,the city 是 see 的承受者；此处用过去分词 Seen 作状语，相当于 When it is seen…。,3,10,45,CC0-1.0
+ENG_Q11,FAM_ENG_PHONE_VOLUNTEER,english,ENG_N2_GRAMMAR_CLAUSE,practice,single_choice,application,true,- 完形填空要利用前后句的因果、转折和复现线索。,"Last month, Li Hua joined a group that helps older people use their phones. At first, he thought the work would be easy because he used his own phone every day. However, he soon found that using an app was different from explaining it clearly. One visitor asked the same question several times. Li Hua felt impatient, but then he remembered how his grandfather had helped him learn to ride a bike. He slowed down and wrote each step on a card. The visitor finally sent a photo to her family by herself. Li Hua realized that good communication needs both knowledge and ______.
+
+Choose the best word for the blank.",luck,money,patience,courage,C,,,从 impatient 到放慢讲解，说明沟通除了知识还需要 patience。,2,10,100,CC0-1.0
+ENG_Q12,FAM_ENG_PHONE_VOLUNTEER,english,ENG_N2_GRAMMAR_CLAUSE,resource_check,single_choice,application,true,- so that 可引出目的；even though 表示让步。,"Last month, Li Hua joined a group that helps older people use their phones. At first, he thought the work would be easy because he used his own phone every day. However, he soon found that using an app was different from explaining it clearly. One visitor asked the same question several times. Li Hua felt impatient, but then he remembered how his grandfather had helped him learn to ride a bike. He slowed down and wrote each step on a card ______ the visitor could follow the instructions more easily. The visitor finally sent a photo to her family by herself. Li Hua realized that good communication needs both knowledge and patience.
+
+Choose the best expression for the blank.",even though,so that,as if,unless,B,,,写步骤是为了让对方更容易照做，用 so that 引导目的状语从句。,2,10,105,CC0-1.0
+ENG_Q13,FAM_ENG_PARK_CLEANUP,english,ENG_N2_GRAMMAR_CLAUSE,verification,single_choice,application,false,,"On Friday, our class helped clean a small park. Before we started, our teacher asked us to work in pairs and take care of one another. I picked up paper while Lin collected empty bottles. After an hour, the park looked much ______. A visitor thanked us for our work. I felt tired, but I was happy to see children playing on the clean grass. On the way home, I decided to join the activity again.
+
+Choose the best word for the blank.",darker,noisier,smaller,cleaner,D,,,捡走纸张和瓶子后，公园更干净；much 修饰比较级 cleaner。,2,10,90,CC0-1.0
+ENG_Q14,FAM_ENG_PARK_CLEANUP,english,ENG_N2_GRAMMAR_CLAUSE,verification,single_choice,application,false,,"On Friday, our class helped clean a small park. Before we started, our teacher asked us to work in pairs and take care of one another. I picked up paper while Lin collected empty bottles. After an hour, the park looked much cleaner. A visitor thanked us for our work. I felt tired, ______ I was happy to see children playing on the clean grass. On the way home, I decided to join the activity again.
+
+Choose the best word for the blank.",but,so,because,or,A,,,tired 与 happy 构成转折，用 but；不是并列顺承、因果或结果关系。,2,10,90,CC0-1.0

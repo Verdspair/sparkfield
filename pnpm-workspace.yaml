@@ -1,0 +1,10 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true
+
+minimumReleaseAgeExclude:
+  - vite@8.3.8

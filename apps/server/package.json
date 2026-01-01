@@ -1,0 +1,33 @@
+{
+  "name": "@app/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@colyseus/core": "^0.18.10",
+    "@colyseus/schema": "^5.0.8",
+    "@colyseus/ws-transport": "^0.18.5",
+    "@fastify/cookie": "^11.1.5",
+    "@fastify/cors": "^11.4.1",
+    "@pkg/contracts": "workspace:*",
+    "@pkg/game-core": "workspace:*",
+    "@pkg/learning-core": "workspace:*",
+    "@pkg/pack-compiler": "workspace:*",
+    "fastify": "^5.12.8",
+    "kysely": "^0.29.8",
+    "openskill": "^5.0.1",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.11",
+    "@types/ws": "^8.18.0"
+  }
+}

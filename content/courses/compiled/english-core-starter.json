@@ -1,0 +1,952 @@
+{
+  "manifest": {
+    "packId": "english-core-starter",
+    "coursePackVersion": "1.2.0",
+    "subject": "english",
+    "title": "核心英语：情景交际、语法填空与语篇理解",
+    "syllabusTag": "CC0-1.0",
+    "contentSha256": "7de1831803c64c49aa59d4408714e9578040da5343363f3e6f847f5a08c4646f",
+    "itemCount": 24,
+    "knowledgeGraph": [
+      {
+        "nodeId": "ENG_N1_VOCAB_DIALOGUE",
+        "title": "情景交际与日常、职场沟通",
+        "prerequisites": []
+      },
+      {
+        "nodeId": "ENG_N2_GRAMMAR_CLAUSE",
+        "title": "语法填空与完形语境",
+        "prerequisites": [
+          "ENG_N1_VOCAB_DIALOGUE"
+        ]
+      },
+      {
+        "nodeId": "ENG_N3_CLOZE_READING",
+        "title": "信息获取、词义推断与语篇理解",
+        "prerequisites": [
+          "ENG_N1_VOCAB_DIALOGUE",
+          "ENG_N2_GRAMMAR_CLAUSE"
+        ]
+      }
+    ],
+    "createdAtIso": "2026-01-01T00:00:00.000Z"
+  },
+  "items": [
+    {
+      "questionId": "ENG_Q01",
+      "familyId": "FAM_ENG_Q01",
+      "subject": "english",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- Would you mind…?：询问对方是否介意。\n- Not at all.：不介意。",
+      "stemMd": "— Would you mind my opening the window for some fresh air?\n— ______. Go ahead.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Yes, I would"
+        },
+        {
+          "key": "B",
+          "text": "Not at all"
+        },
+        {
+          "key": "C",
+          "text": "You’d better not"
+        },
+        {
+          "key": "D",
+          "text": "I’m afraid you can’t"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "Not at all 表示“不介意”，与 Go ahead 一致。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 35,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q02",
+      "familyId": "FAM_ENG_Q02",
+      "subject": "english",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 根据前后话轮确认说话目的。\n- I’d like to…：我想……。",
+      "stemMd": "— Good morning. City Library. How may I help you?\n— ______.\n— Certainly. May I have your name, please?",
+      "options": [
+        {
+          "key": "A",
+          "text": "I enjoyed the talk yesterday"
+        },
+        {
+          "key": "B",
+          "text": "The library is next to the bank"
+        },
+        {
+          "key": "C",
+          "text": "I’d like to book a seat for Saturday’s talk"
+        },
+        {
+          "key": "D",
+          "text": "You should ask someone else"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "来电者要预约座位；后句询问姓名，与预订请求衔接。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q03",
+      "familyId": "FAM_ENG_Q03",
+      "subject": "english",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 投诉回应要确认问题，并提出合理处理办法。",
+      "stemMd": "— Excuse me. The desk lamp I bought here yesterday does not work.\n— ______. Would you like a new one or your money back?",
+      "options": [
+        {
+          "key": "A",
+          "text": "I’m sorry about that"
+        },
+        {
+          "key": "B",
+          "text": "You’re welcome"
+        },
+        {
+          "key": "C",
+          "text": "Enjoy your trip"
+        },
+        {
+          "key": "D",
+          "text": "That sounds like a great idea"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "商家先表示歉意，再给出换货或退款方案；其他选项与投诉处理不一致。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 40,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q04",
+      "familyId": "FAM_ENG_Q04",
+      "subject": "english",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- You’re welcome.：回应感谢。\n- Never mind.：常用于安慰或回应道歉。",
+      "stemMd": "— Thank you so much for giving me a lift to the station.\n— ______.",
+      "options": [
+        {
+          "key": "A",
+          "text": "You’re welcome"
+        },
+        {
+          "key": "B",
+          "text": "Never mind"
+        },
+        {
+          "key": "C",
+          "text": "I’m afraid not"
+        },
+        {
+          "key": "D",
+          "text": "That’s a pity"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "You’re welcome 用于回应感谢。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 30,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q05",
+      "familyId": "FAM_ENG_Q05",
+      "subject": "english",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "— I’m sorry I have to turn down your invitation. I’ve already made other plans.\n— ______. We can meet another time.",
+      "options": [
+        {
+          "key": "A",
+          "text": "You must be joking"
+        },
+        {
+          "key": "B",
+          "text": "Help yourself"
+        },
+        {
+          "key": "C",
+          "text": "That’s all right"
+        },
+        {
+          "key": "D",
+          "text": "Congratulations"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "That’s all right 表示谅解，与另约时间相符。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 40,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q06",
+      "familyId": "FAM_ENG_Q06",
+      "subject": "english",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "— We have a job interview for you on Tuesday. Does 9 a.m. work for you?\n— ______. I have a class then, but I’m free after 2 p.m.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Yes, 9 a.m. is perfect"
+        },
+        {
+          "key": "B",
+          "text": "I don’t know your name"
+        },
+        {
+          "key": "C",
+          "text": "Thank you for the good news"
+        },
+        {
+          "key": "D",
+          "text": "Could we meet in the afternoon instead"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "答语说明上午有课并提出下午可行时间，因此请求改约下午。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q07",
+      "familyId": "FAM_ENG_Q07",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 先判断空格所需词性，再根据语境变形。\n- patient：耐心的；patience：耐心。",
+      "stemMd": "With great ______ (patient), the nurse explained the instructions twice.\n（用所给词的适当形式填空。）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "patience",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "with great patience 中需用名词；patient 的派生名词为 patience。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 35,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q08",
+      "familyId": "FAM_ENG_Q08",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- since 引出过去的时间起点。\n- 延续至现在的状态或动作可用完成时；表达持续过程也可用完成进行时。",
+      "stemMd": "Tom ______ (live) in this city since he moved here in 2021, and he still lives here now.\n（用所给词的适当形式填空，可填多个词。）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "has lived|has been living",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "过去开始、延续到现在的居住状态可用 has lived；强调持续过程也可用 has been living，两种答案均接受。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q09",
+      "familyId": "FAM_ENG_Q09",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 被动语态：be + 过去分词。\n- 同时检查主语、动作关系和时间。",
+      "stemMd": "A new bridge ______ (build) over the river last year, and it is now open to traffic.\n（用所给词的适当形式填空，可填多个词。）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "was built",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "主语 bridge 承受建造动作，last year 指过去，用一般过去时被动语态 was built。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 40,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q10",
+      "familyId": "FAM_ENG_Q10",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 分词作状语时，先检查其逻辑主语与主句主语是否一致。\n- 本句城市是被观察的对象，用过去分词；不能把所有主动关系都机械等同于现在分词。",
+      "stemMd": "______ (see) from the top of the tower, the city looks especially beautiful at night.\n（用所给词的适当形式填空。）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "Seen",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "the city 是 see 的承受者；此处用过去分词 Seen 作状语，相当于 When it is seen…。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q11",
+      "familyId": "FAM_ENG_PHONE_VOLUNTEER",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 完形填空要利用前后句的因果、转折和复现线索。",
+      "stemMd": "Last month, Li Hua joined a group that helps older people use their phones. At first, he thought the work would be easy because he used his own phone every day. However, he soon found that using an app was different from explaining it clearly. One visitor asked the same question several times. Li Hua felt impatient, but then he remembered how his grandfather had helped him learn to ride a bike. He slowed down and wrote each step on a card. The visitor finally sent a photo to her family by herself. Li Hua realized that good communication needs both knowledge and ______.\n\nChoose the best word for the blank.",
+      "options": [
+        {
+          "key": "A",
+          "text": "luck"
+        },
+        {
+          "key": "B",
+          "text": "money"
+        },
+        {
+          "key": "C",
+          "text": "patience"
+        },
+        {
+          "key": "D",
+          "text": "courage"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "从 impatient 到放慢讲解，说明沟通除了知识还需要 patience。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 100,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q12",
+      "familyId": "FAM_ENG_PHONE_VOLUNTEER",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- so that 可引出目的；even though 表示让步。",
+      "stemMd": "Last month, Li Hua joined a group that helps older people use their phones. At first, he thought the work would be easy because he used his own phone every day. However, he soon found that using an app was different from explaining it clearly. One visitor asked the same question several times. Li Hua felt impatient, but then he remembered how his grandfather had helped him learn to ride a bike. He slowed down and wrote each step on a card ______ the visitor could follow the instructions more easily. The visitor finally sent a photo to her family by herself. Li Hua realized that good communication needs both knowledge and patience.\n\nChoose the best expression for the blank.",
+      "options": [
+        {
+          "key": "A",
+          "text": "even though"
+        },
+        {
+          "key": "B",
+          "text": "so that"
+        },
+        {
+          "key": "C",
+          "text": "as if"
+        },
+        {
+          "key": "D",
+          "text": "unless"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "写步骤是为了让对方更容易照做，用 so that 引导目的状语从句。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 105,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q13",
+      "familyId": "FAM_ENG_PARK_CLEANUP",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "On Friday, our class helped clean a small park. Before we started, our teacher asked us to work in pairs and take care of one another. I picked up paper while Lin collected empty bottles. After an hour, the park looked much ______. A visitor thanked us for our work. I felt tired, but I was happy to see children playing on the clean grass. On the way home, I decided to join the activity again.\n\nChoose the best word for the blank.",
+      "options": [
+        {
+          "key": "A",
+          "text": "darker"
+        },
+        {
+          "key": "B",
+          "text": "noisier"
+        },
+        {
+          "key": "C",
+          "text": "smaller"
+        },
+        {
+          "key": "D",
+          "text": "cleaner"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "捡走纸张和瓶子后，公园更干净；much 修饰比较级 cleaner。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q14",
+      "familyId": "FAM_ENG_PARK_CLEANUP",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "On Friday, our class helped clean a small park. Before we started, our teacher asked us to work in pairs and take care of one another. I picked up paper while Lin collected empty bottles. After an hour, the park looked much cleaner. A visitor thanked us for our work. I felt tired, ______ I was happy to see children playing on the clean grass. On the way home, I decided to join the activity again.\n\nChoose the best word for the blank.",
+      "options": [
+        {
+          "key": "A",
+          "text": "but"
+        },
+        {
+          "key": "B",
+          "text": "so"
+        },
+        {
+          "key": "C",
+          "text": "because"
+        },
+        {
+          "key": "D",
+          "text": "or"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "tired 与 happy 构成转折，用 but；不是并列顺承、因果或结果关系。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q15",
+      "familyId": "FAM_ENG_LIBRARY_TALK",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 细节题要核对动作、截止时间和条件。",
+      "stemMd": "The City Library will hold a talk on local history this Saturday. The talk begins at 10 a.m. in the reading room on the second floor and lasts for one hour. Writer Anna Green will share old photographs and explain how the river changed the city. Entry is free, but booking is required because only forty seats are available. To book a seat, send your name and phone number to the library by 6 p.m. on Friday. Please arrive ten minutes before the talk starts. You may bring a notebook, but taking photographs during the talk is not allowed. After the talk, visitors can ask Anna questions for fifteen minutes.\n\nWhat must visitors do to book a seat?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Buy a ticket at the entrance"
+        },
+        {
+          "key": "B",
+          "text": "Send their name and phone number by 6 p.m. on Friday"
+        },
+        {
+          "key": "C",
+          "text": "Send their questions to Anna after the talk"
+        },
+        {
+          "key": "D",
+          "text": "Arrive at the library at 10:15 a.m."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "To book a seat 后说明：周五下午6点前把姓名和电话号码发给图书馆。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 100,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q16",
+      "familyId": "FAM_ENG_LIBRARY_TALK",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- why 提问原因，注意 because 等线索。",
+      "stemMd": "The City Library will hold a talk on local history this Saturday. The talk begins at 10 a.m. in the reading room on the second floor and lasts for one hour. Writer Anna Green will share old photographs and explain how the river changed the city. Entry is free, but booking is required because only forty seats are available. To book a seat, send your name and phone number to the library by 6 p.m. on Friday. Please arrive ten minutes before the talk starts. You may bring a notebook, but taking photographs during the talk is not allowed. After the talk, visitors can ask Anna questions for fifteen minutes.\n\nWhy is booking required for the talk?",
+      "options": [
+        {
+          "key": "A",
+          "text": "All visitors must pay in advance"
+        },
+        {
+          "key": "B",
+          "text": "The library needs new photographs"
+        },
+        {
+          "key": "C",
+          "text": "Only forty seats are available"
+        },
+        {
+          "key": "D",
+          "text": "Anna will answer questions before the talk"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "原文 because only forty seats are available 给出原因：座位有限。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 95,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q17",
+      "familyId": "FAM_ENG_MUSEUM_NOTICE",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 核对票价对应年龄和团体优惠的最低人数。",
+      "stemMd": "Explore the River Museum this Sunday. Doors open at 9 a.m. and close at 5 p.m., with the last entry at 4 p.m. An adult ticket costs 40 yuan. Children aged six to twelve pay 20 yuan each, and children under six enter free. Groups of ten or more adults receive a 20 percent discount on adult tickets. This discount does not apply to children’s tickets. A free guided tour starts every hour from 10 a.m. to 3 p.m. and lasts forty minutes. You can buy tickets at the entrance or online. Please keep your ticket, as it also gives you free entry to the garden on the same day.\n\nTwo adults and one eight-year-old child visit the museum. How much do they pay in total?",
+      "options": [
+        {
+          "key": "A",
+          "text": "80 yuan"
+        },
+        {
+          "key": "B",
+          "text": "96 yuan"
+        },
+        {
+          "key": "C",
+          "text": "100 yuan"
+        },
+        {
+          "key": "D",
+          "text": "120 yuan"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "两名成人不满足10名成人的团体折扣条件；2×40+20=100元。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 110,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q18",
+      "familyId": "FAM_ENG_MUSEUM_NOTICE",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 区分闭馆时间与最晚入馆时间。",
+      "stemMd": "Explore the River Museum this Sunday. Doors open at 9 a.m. and close at 5 p.m., with the last entry at 4 p.m. An adult ticket costs 40 yuan. Children aged six to twelve pay 20 yuan each, and children under six enter free. Groups of ten or more adults receive a 20 percent discount on adult tickets. This discount does not apply to children’s tickets. A free guided tour starts every hour from 10 a.m. to 3 p.m. and lasts forty minutes. You can buy tickets at the entrance or online. Please keep your ticket, as it also gives you free entry to the garden on the same day.\n\nA visitor wants to enter the museum on Sunday afternoon. What is the latest time for entry?",
+      "options": [
+        {
+          "key": "A",
+          "text": "4 p.m."
+        },
+        {
+          "key": "B",
+          "text": "5 p.m."
+        },
+        {
+          "key": "C",
+          "text": "3 p.m."
+        },
+        {
+          "key": "D",
+          "text": "6 p.m."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "close at 5 p.m. 是闭馆时间，last entry at 4 p.m. 才是最晚入馆时间。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 95,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q19",
+      "familyId": "FAM_ENG_SLEEP_HABITS",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 用上下文替换目标词，检查替换后的意思是否连贯。",
+      "stemMd": "Many people try to get more sleep at weekends after staying up late during the week. However, a regular sleep schedule is usually more helpful. Going to bed and getting up at similar times helps the body know when to rest. Bright screens may delay sleep because their light tells the brain to stay awake. Try putting your phone away half an hour before bedtime. A short walk during the day can also help, but hard exercise just before bed may have the opposite effect. If you cannot fall asleep, read a few pages of a quiet book instead of checking messages. Small changes can make a real difference.\n\nThe word “delay” in the passage is closest in meaning to ______.",
+      "options": [
+        {
+          "key": "A",
+          "text": "make something safer"
+        },
+        {
+          "key": "B",
+          "text": "write something down"
+        },
+        {
+          "key": "C",
+          "text": "ask someone for help"
+        },
+        {
+          "key": "D",
+          "text": "make something happen later"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "屏幕光使人保持清醒，delay sleep 指让入睡发生得更晚。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 100,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q20",
+      "familyId": "FAM_ENG_SLEEP_HABITS",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 标题应覆盖全文，而不是只概括一个细节。",
+      "stemMd": "Many people try to get more sleep at weekends after staying up late during the week. However, a regular sleep schedule is usually more helpful. Going to bed and getting up at similar times helps the body know when to rest. Bright screens may delay sleep because their light tells the brain to stay awake. Try putting your phone away half an hour before bedtime. A short walk during the day can also help, but hard exercise just before bed may have the opposite effect. If you cannot fall asleep, read a few pages of a quiet book instead of checking messages. Small changes can make a real difference.\n\nWhat is the best title for the passage?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Simple Habits for Better Sleep"
+        },
+        {
+          "key": "B",
+          "text": "The Best Time to Check Messages"
+        },
+        {
+          "key": "C",
+          "text": "Why Everyone Needs More Weekend Sleep"
+        },
+        {
+          "key": "D",
+          "text": "How to Exercise Hard Before Bed"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "全文围绕规律作息、减少屏幕光等改善睡眠的习惯展开。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 100,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q21",
+      "familyId": "FAM_ENG_BICYCLE_ACTIVITY",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "- 区分自行携带的物品和组织方提供的物品。",
+      "stemMd": "Green Hill School will hold a bicycle repair activity on Wednesday afternoon. Students will work in groups in the school garden from 2 to 4 p.m. A local worker will show them how to check the brakes and change a tyre. No repair experience is needed. Everyone must bring their own gloves, but the school will provide the tools. Students must not use a tool before the worker shows them how to use it safely. To join, give your name to Ms Brown by Monday afternoon. There is no fee. If it rains, the activity will take place in Room 105 instead. After the activity, each group will write a short guide to checking a bicycle before a ride.\n\nWhat must each student bring?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A set of tools"
+        },
+        {
+          "key": "B",
+          "text": "Their own gloves"
+        },
+        {
+          "key": "C",
+          "text": "A new bicycle"
+        },
+        {
+          "key": "D",
+          "text": "A written repair guide"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "原文 Everyone must bring their own gloves；工具由学校提供。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 105,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q22",
+      "familyId": "FAM_ENG_BICYCLE_ACTIVITY",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "Green Hill School will hold a bicycle repair activity on Wednesday afternoon. Students will work in groups in the school garden from 2 to 4 p.m. A local worker will show them how to check the brakes and change a tyre. No repair experience is needed. Everyone must bring their own gloves, but the school will provide the tools. Students must not use a tool before the worker shows them how to use it safely. To join, give your name to Ms Brown by Monday afternoon. There is no fee. If it rains, the activity will take place in Room 105 instead. After the activity, each group will write a short guide to checking a bicycle before a ride.\n\nWhere will students meet if it rains?",
+      "options": [
+        {
+          "key": "A",
+          "text": "In the school garden"
+        },
+        {
+          "key": "B",
+          "text": "At a local shop"
+        },
+        {
+          "key": "C",
+          "text": "In Room 105"
+        },
+        {
+          "key": "D",
+          "text": "At Ms Brown’s home"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "条件句 If it rains 明确活动改到 Room 105。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 105,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q23",
+      "familyId": "FAM_ENG_BICYCLE_ACTIVITY",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "Green Hill School will hold a bicycle repair activity on Wednesday afternoon. Students will work in groups in the school garden from 2 to 4 p.m. A local worker will show them how to check the brakes and change a tyre. No repair experience is needed. Everyone must bring their own gloves, but the school will provide the tools. Students must not use a tool before the worker shows them how to use it safely. To join, give your name to Ms Brown by Monday afternoon. There is no fee. If it rains, the activity will take place in Room 105 instead. After the activity, each group will write a short guide to checking a bicycle before a ride.\n\nWhich student can join the activity according to the notice?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A student who can attend only on Thursday"
+        },
+        {
+          "key": "B",
+          "text": "A student who refuses to wear gloves"
+        },
+        {
+          "key": "C",
+          "text": "A student who registers after the activity"
+        },
+        {
+          "key": "D",
+          "text": "A beginner who gives their name to Ms Brown by Monday afternoon"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "通知明确 No repair experience is needed；周一下午前报名且可参加周三活动的新手符合条件。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 110,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q24",
+      "familyId": "FAM_ENG_BICYCLE_ACTIVITY",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "Green Hill School will hold a bicycle repair activity on Wednesday afternoon. Students will work in groups in the school garden from 2 to 4 p.m. A local worker will show them how to check the brakes and change a tyre. No repair experience is needed. Everyone must bring their own gloves, but the school will provide the tools. Students must not use a tool before the worker shows them how to use it safely. To join, give your name to Ms Brown by Monday afternoon. There is no fee. If it rains, the activity will take place in Room 105 instead. After the activity, each group will write a short guide to checking a bicycle before a ride.\n\nWhat is the main purpose of the notice?",
+      "options": [
+        {
+          "key": "A",
+          "text": "To tell students how to join a repair activity"
+        },
+        {
+          "key": "B",
+          "text": "To advertise bicycles for sale"
+        },
+        {
+          "key": "C",
+          "text": "To ask students to buy tools for the school"
+        },
+        {
+          "key": "D",
+          "text": "To explain why all outdoor activities are cancelled"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "通知介绍活动时间、内容、安全要求和报名方式，目的是告知学生如何参加修车活动。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 110,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    }
+  ]
+}

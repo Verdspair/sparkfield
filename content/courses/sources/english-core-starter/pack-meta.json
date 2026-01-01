@@ -1,0 +1,29 @@
+{
+  "packId": "english-core-starter",
+  "coursePackVersion": "1.2.0",
+  "subject": "english",
+  "title": "核心英语：情景交际、语法填空与语篇理解",
+  "syllabusTag": "CC0-1.0",
+  "knowledgeGraph": [
+    {
+      "nodeId": "ENG_N1_VOCAB_DIALOGUE",
+      "title": "情景交际与日常、职场沟通",
+      "prerequisites": []
+    },
+    {
+      "nodeId": "ENG_N2_GRAMMAR_CLAUSE",
+      "title": "语法填空与完形语境",
+      "prerequisites": [
+        "ENG_N1_VOCAB_DIALOGUE"
+      ]
+    },
+    {
+      "nodeId": "ENG_N3_CLOZE_READING",
+      "title": "信息获取、词义推断与语篇理解",
+      "prerequisites": [
+        "ENG_N1_VOCAB_DIALOGUE",
+        "ENG_N2_GRAMMAR_CLAUSE"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+node_modules/
+dist/
+target/
+apps/client/src-tauri/gen/
+test-results/
+playwright-report/
+.local-pg/
+workspace/
+archive/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+*.command

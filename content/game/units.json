@@ -1,0 +1,1584 @@
+{
+  "version": "1.0.0",
+  "seasonId": "S1_BEYOND_LIGHT_CONE",
+  "totalPoolCopies": 748,
+  "units": [
+    {
+      "id": "S01",
+      "name": "轨道兵",
+      "nameLength": 3,
+      "cost": 1,
+      "poolCopies": 28,
+      "faction": "戴森工团",
+      "role": "重装",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 715,
+        "atk": 40,
+        "armor": 30,
+        "mr": 30,
+        "atkSpeed": 0.65,
+        "range": 1,
+        "initialMana": 40,
+        "maxMana": 90,
+        "skillPowerBase": 100,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_NEUTRON_PLATE",
+        "I_MAGNETOSPHERE_GARB",
+        "I_RED_GIANT_MAIL"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "钛白零重力外骨骼＋六角蜂窝等离子磁盾"
+      },
+      "skillSummary": "架起六角等离子磁盾获1.35P护盾4秒，期间受普攻伤害降低12%。",
+      "skillSpec": {
+        "kind": "self_shield_dr",
+        "shieldRatio": 1.35,
+        "durationSec": 4,
+        "autoDrPct": 12
+      }
+    },
+    {
+      "id": "S02",
+      "name": "聚光帆修补员",
+      "nameLength": 6,
+      "cost": 1,
+      "poolCopies": 28,
+      "faction": "戴森工团",
+      "role": "维生",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 550,
+        "atk": 40,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 35,
+        "maxMana": 85,
+        "skillPowerBase": 100,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_REVIVAL_PUMP",
+        "I_SUPERCOMP_ARRAY"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "背负液态铑焊罐与太阳风锚索的轨道技师"
+      },
+      "skillSummary": "释放纳米镀膜修复生命最低友军1.15P生命并加15双抗3秒。",
+      "skillSpec": {
+        "kind": "ally_heal_buff",
+        "healRatio": 1.15,
+        "allyCount": 1,
+        "bonusArmorMr": 15,
+        "durationSec": 3
+      }
+    },
+    {
+      "id": "S03",
+      "name": "棱",
+      "nameLength": 1,
+      "cost": 1,
+      "poolCopies": 28,
+      "faction": "云端星环",
+      "role": "跃迁",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 550,
+        "atk": 40,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.82,
+        "range": 1,
+        "initialMana": 20,
+        "maxMana": 70,
+        "skillPowerBase": 100,
+        "jumpOnSkill": true
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_STRONG_CRIT_EDGE",
+        "I_LIFE_AXE",
+        "I_BLINDSPOT_LENS"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "高速自转的蓝宝石正八面体光子算力棱镜"
+      },
+      "skillSummary": "折射冷青激光切入侧翼造成1.10P物理伤害，使目标4秒内获盾量降低25%。",
+      "skillSpec": {
+        "kind": "flank_strike",
+        "damageType": "physical",
+        "powerRatio": 1.1,
+        "shieldReducePct": 25,
+        "durationSec": 4
+      }
+    },
+    {
+      "id": "S04",
+      "name": "脉冲",
+      "nameLength": 2,
+      "cost": 1,
+      "poolCopies": 28,
+      "faction": "钟慢远征",
+      "role": "光子",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 468,
+        "atk": 40,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 20,
+        "maxMana": 70,
+        "skillPowerBase": 100,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_STELLAR_CROWN",
+        "I_SUPERCOMP_ARRAY"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "张开双翼离子散热帆的深空先遣无人探测艇"
+      },
+      "skillSummary": "发射高能离子电浆弹命中当前目标及1名邻敌，各造成0.75P魔法伤害。",
+      "skillSpec": {
+        "kind": "chain_magic",
+        "damageType": "magic",
+        "ratios": [
+          0.75,
+          0.75
+        ]
+      }
+    },
+    {
+      "id": "S05",
+      "name": "林弦",
+      "nameLength": 2,
+      "cost": 1,
+      "poolCopies": 28,
+      "faction": "钟慢远征",
+      "role": "维生",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 550,
+        "atk": 40,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 35,
+        "maxMana": 85,
+        "skillPowerBase": 100,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_REVIVAL_PUMP",
+        "I_ZERO_POINT_SPRING"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "穿银蓝抗过载航行服、手托蓝水晶信匣的领航员"
+      },
+      "skillSummary": "开启跨世纪信标治疗最近2名友军0.55P生命，并使其下次技能效能+12%。",
+      "skillSpec": {
+        "kind": "ally_heal_ap",
+        "healRatio": 0.55,
+        "allyCount": 2,
+        "nextSkillApPct": 12
+      }
+    },
+    {
+      "id": "S06",
+      "name": "引力井",
+      "nameLength": 3,
+      "cost": 1,
+      "poolCopies": 28,
+      "faction": "木卫冰海",
+      "role": "矩阵",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 605,
+        "atk": 40,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.7,
+        "range": 2,
+        "initialMana": 30,
+        "maxMana": 80,
+        "skillPowerBase": 100,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_POLAR_SHIELD_ARMOR",
+        "I_IONOSPHERE_RING"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "悬浮磁力底座上的微型环形重力锚，绕冰蓝波纹"
+      },
+      "skillSummary": "释放重力阻尼环对目标及邻敌造成0.80P魔法伤害，降低20%攻速2.5秒。",
+      "skillSpec": {
+        "kind": "aoe_magic_slow",
+        "damageType": "magic",
+        "powerRatio": 0.8,
+        "asSlowPct": 20,
+        "durationSec": 2.5
+      }
+    },
+    {
+      "id": "S07",
+      "name": "观测者",
+      "nameLength": 3,
+      "cost": 1,
+      "poolCopies": 28,
+      "faction": "深空阵列",
+      "role": "维生",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 550,
+        "atk": 40,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 30,
+        "maxMana": 80,
+        "skillPowerBase": 100,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_REVIVAL_PUMP",
+        "I_SUPERCOMP_ARRAY"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "披防辐射银灰斗篷、身前环绕三枚全息星图球的学者"
+      },
+      "skillSummary": "投射校准星图恢复最低血友军0.90P生命，并清除减攻速效果。",
+      "skillSpec": {
+        "kind": "ally_heal_cleanse_as",
+        "healRatio": 0.9,
+        "allyCount": 1,
+        "cleanseAsSlow": true
+      }
+    },
+    {
+      "id": "S08",
+      "name": "梭",
+      "nameLength": 1,
+      "cost": 1,
+      "poolCopies": 28,
+      "faction": "反物质院",
+      "role": "跃迁",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 550,
+        "atk": 40,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.82,
+        "range": 1,
+        "initialMana": 0,
+        "maxMana": 65,
+        "skillPowerBase": 100,
+        "jumpOnSkill": true
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_STRONG_CRIT_EDGE",
+        "I_LIFE_AXE"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "流线银黑钨合金高周波穿刺无人机，翼缘泛冷青电光"
+      },
+      "skillSummary": "高周波翼刃横掠面前2名敌人，各造成0.85P物理伤害并附加3秒33%重伤。",
+      "skillSpec": {
+        "kind": "cleave_antiheal",
+        "damageType": "physical",
+        "powerRatio": 0.85,
+        "targetCount": 2,
+        "antiHealPct": 33,
+        "durationSec": 3
+      }
+    },
+    {
+      "id": "S09",
+      "name": "轨道炮",
+      "nameLength": 3,
+      "cost": 1,
+      "poolCopies": 28,
+      "faction": "反物质院",
+      "role": "磁轨",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 550,
+        "atk": 40,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.78,
+        "range": 4,
+        "initialMana": 0,
+        "maxMana": 65,
+        "skillPowerBase": 100,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_LORENTZ_RAIL",
+        "I_FUSION_BLADE",
+        "I_ARMOR_PIERCER"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "双联超导磁悬浮长轨重炮平台，导轨拉出电浆弧"
+      },
+      "skillSummary": "超导电容满额放电，钨芯弹直线贯穿最多2名敌人，各造成0.85P物理伤害。",
+      "skillSpec": {
+        "kind": "line_pierce",
+        "damageType": "physical",
+        "powerRatio": 0.85,
+        "maxTargets": 2
+      }
+    },
+    {
+      "id": "S10",
+      "name": "质量投射",
+      "nameLength": 4,
+      "cost": 2,
+      "poolCopies": 24,
+      "faction": "戴森工团",
+      "role": "磁轨",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 650,
+        "atk": 48,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.78,
+        "range": 4,
+        "initialMana": 20,
+        "maxMana": 75,
+        "skillPowerBase": 140,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_LORENTZ_RAIL",
+        "I_FUSION_IGNITER",
+        "I_HULL_BREAKER"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "环形电磁弹射轨道台，抛射炽白铁镍弹丸"
+      },
+      "skillSummary": "电磁轨道高速点射造成1.20P物理伤害，自身获0.65P护盾3秒。",
+      "skillSpec": {
+        "kind": "single_strike_shield",
+        "damageType": "physical",
+        "powerRatio": 1.2,
+        "shieldRatio": 0.65,
+        "durationSec": 3
+      }
+    },
+    {
+      "id": "S11",
+      "name": "防火墙矩阵",
+      "nameLength": 5,
+      "cost": 2,
+      "poolCopies": 24,
+      "faction": "云端星环",
+      "role": "重装",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 845,
+        "atk": 48,
+        "armor": 30,
+        "mr": 30,
+        "atkSpeed": 0.65,
+        "range": 1,
+        "initialMana": 40,
+        "maxMana": 90,
+        "skillPowerBase": 140,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_MAGNETOSPHERE_GARB",
+        "I_ONEILL_ARMOR",
+        "I_POLAR_SHIELD_ARMOR"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "三面悬浮正六边形白瓷超导逻辑屏障塔"
+      },
+      "skillSummary": "展开双层逻辑护盾，自身与相邻最低血友军各获0.90P护盾4秒。",
+      "skillSpec": {
+        "kind": "dual_shield",
+        "shieldRatio": 0.9,
+        "allyCount": 2,
+        "durationSec": 4
+      }
+    },
+    {
+      "id": "S12",
+      "name": "记忆切片",
+      "nameLength": 4,
+      "cost": 2,
+      "poolCopies": 24,
+      "faction": "云端星环",
+      "role": "维生",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 650,
+        "atk": 48,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 35,
+        "maxMana": 85,
+        "skillPowerBase": 140,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_REVIVAL_PUMP",
+        "I_PULSE_ACCELERATOR"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "飞秒激光扫描环与金色脑神经网络全息投影台"
+      },
+      "skillSummary": "注入备份记忆赋能前排最低血友军0.95P护盾与20%攻速4秒。",
+      "skillSpec": {
+        "kind": "ally_shield_as",
+        "shieldRatio": 0.95,
+        "bonusAsPct": 20,
+        "durationSec": 4
+      }
+    },
+    {
+      "id": "S13",
+      "name": "日冕船",
+      "nameLength": 3,
+      "cost": 2,
+      "poolCopies": 24,
+      "faction": "戴森工团",
+      "role": "跃迁",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 650,
+        "atk": 48,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.82,
+        "range": 1,
+        "initialMana": 20,
+        "maxMana": 70,
+        "skillPowerBase": 140,
+        "jumpOnSkill": true
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_STRONG_CRIT_EDGE",
+        "I_DEADHAND_BELT",
+        "I_LIFE_AXE"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "顶钨碳隔热金伞贴太阳火海滑行的打捞快艇"
+      },
+      "skillSummary": "掠入目标侧翼释放日冕热浪造成1.15P物理伤害，额外摧毁0.50P护盾。",
+      "skillSpec": {
+        "kind": "flank_shield_break",
+        "damageType": "physical",
+        "powerRatio": 1.15,
+        "bonusShieldDestroyRatio": 0.5
+      }
+    },
+    {
+      "id": "S14",
+      "name": "钟慢人",
+      "nameLength": 3,
+      "cost": 2,
+      "poolCopies": 24,
+      "faction": "钟慢远征",
+      "role": "跃迁",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 650,
+        "atk": 48,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.82,
+        "range": 1,
+        "initialMana": 20,
+        "maxMana": 75,
+        "skillPowerBase": 140,
+        "jumpOnSkill": true
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_LIFE_AXE",
+        "I_STRONG_CRIT_EDGE",
+        "I_KEEL_FIELD"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "穿旧世纪宇航服、持相变高周波振刀的时空孤兵"
+      },
+      "skillSummary": "瞬步切入目标侧翼斩击造成1.20P物理伤害，并恢复实际伤害18%的生命。",
+      "skillSpec": {
+        "kind": "flank_lifesteal",
+        "damageType": "physical",
+        "powerRatio": 1.2,
+        "vampPct": 18
+      }
+    },
+    {
+      "id": "S15",
+      "name": "木卫二潜航",
+      "nameLength": 5,
+      "cost": 2,
+      "poolCopies": 24,
+      "faction": "木卫冰海",
+      "role": "重装",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 845,
+        "atk": 48,
+        "armor": 30,
+        "mr": 30,
+        "atkSpeed": 0.65,
+        "range": 1,
+        "initialMana": 45,
+        "maxMana": 95,
+        "skillPowerBase": 140,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_ONEILL_ARMOR",
+        "I_ECOSPHERE_FILM",
+        "I_SLOW_FOG_CLOAK"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "鲸形钛合金深海抗压潜航舰，舰首半球声纳力场盾"
+      },
+      "skillSummary": "展开声纳力场恢复0.75P生命，使自身及身后1格友军获18双抗4秒。",
+      "skillSpec": {
+        "kind": "self_heal_row_resist",
+        "healRatio": 0.75,
+        "bonusArmorMr": 18,
+        "durationSec": 4
+      }
+    },
+    {
+      "id": "S16",
+      "name": "戴森镜",
+      "nameLength": 3,
+      "cost": 2,
+      "poolCopies": 24,
+      "faction": "深空阵列",
+      "role": "矩阵",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 715,
+        "atk": 48,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.7,
+        "range": 2,
+        "initialMana": 30,
+        "maxMana": 85,
+        "skillPowerBase": 140,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_FALLOUT_BRAND",
+        "I_SUPERCOMP_ARRAY",
+        "I_IONOSPHERE_RING"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "展开六片鎏金六角反射镜面的太空聚光阵列"
+      },
+      "skillSummary": "聚焦恒星光束灼烧当前目标及邻敌各0.90P魔法伤害，并削减20%魔抗4秒。",
+      "skillSpec": {
+        "kind": "aoe_magic_mr_shred",
+        "damageType": "magic",
+        "powerRatio": 0.9,
+        "mrShredPct": 20,
+        "durationSec": 4
+      }
+    },
+    {
+      "id": "S17",
+      "name": "反物质井",
+      "nameLength": 4,
+      "cost": 2,
+      "poolCopies": 24,
+      "faction": "反物质院",
+      "role": "光子",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 552,
+        "atk": 48,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 20,
+        "maxMana": 75,
+        "skillPowerBase": 140,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_NON_EUCLID_LENS",
+        "I_STELLAR_CROWN",
+        "I_SUPERCOMP_ARRAY"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "潘宁强磁约束真空球笼，球心跃动紫白反氢电浆"
+      },
+      "skillSummary": "释放微量反氢湮灭束，对目标及邻格最多2敌造成0.95P魔法伤害；单目标+25%。",
+      "skillSpec": {
+        "kind": "splash_isolated_magic",
+        "damageType": "magic",
+        "powerRatio": 0.95,
+        "maxTargets": 2,
+        "singleTargetBonusPct": 25
+      }
+    },
+    {
+      "id": "S18",
+      "name": "光锥信使",
+      "nameLength": 4,
+      "cost": 2,
+      "poolCopies": 24,
+      "faction": "星门摆渡",
+      "role": "维生",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 650,
+        "atk": 48,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 35,
+        "maxMana": 80,
+        "skillPowerBase": 140,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_ZERO_POINT_SPRING",
+        "I_REVIVAL_PUMP"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "张开极薄金色太阳帆的激光通信中继艇，悬量子存储球"
+      },
+      "skillSummary": "激光标定目标4秒使其受伤害+12%，并为最近友军回复14法力与0.70P护盾。",
+      "skillSpec": {
+        "kind": "mark_vuln_ally_mana",
+        "vulnPct": 12,
+        "durationSec": 4,
+        "allyMana": 14,
+        "shieldRatio": 0.7
+      }
+    },
+    {
+      "id": "S19",
+      "name": "日冕物质打捞船",
+      "nameLength": 7,
+      "cost": 3,
+      "poolCopies": 20,
+      "faction": "戴森工团",
+      "role": "光子",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 663,
+        "atk": 58,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 25,
+        "maxMana": 85,
+        "skillPowerBase": 190,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_STELLAR_CROWN",
+        "I_FALLOUT_BRAND",
+        "I_SUPERCOMP_ARRAY"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "双体磁勺采集母舰，舰腹牵引金色恒星耀斑团"
+      },
+      "skillSummary": "倾泻恒星耀斑电浆束，对沿途最多3敌依次造成0.95P/0.75P/0.55P魔法伤害。",
+      "skillSpec": {
+        "kind": "chain_magic",
+        "damageType": "magic",
+        "ratios": [
+          0.95,
+          0.75,
+          0.55
+        ]
+      }
+    },
+    {
+      "id": "S20",
+      "name": "云端仲裁官",
+      "nameLength": 5,
+      "cost": 3,
+      "poolCopies": 20,
+      "faction": "云端星环",
+      "role": "磁轨",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 780,
+        "atk": 58,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.78,
+        "range": 4,
+        "initialMana": 25,
+        "maxMana": 80,
+        "skillPowerBase": 190,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_FUSION_BLADE",
+        "I_ARMOR_PIERCER",
+        "I_LORENTZ_RAIL"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "悬浮纯白几何流体机神，背后展开六翼光纤环"
+      },
+      "skillSummary": "锁定目标发射高密度数据穿甲束造成1.15P物理伤害，邻格溅射0.50P。",
+      "skillSpec": {
+        "kind": "pierce_splash_phys",
+        "damageType": "physical",
+        "powerRatio": 1.15,
+        "splashRatio": 0.5
+      }
+    },
+    {
+      "id": "S21",
+      "name": "第三备份体",
+      "nameLength": 5,
+      "cost": 3,
+      "poolCopies": 20,
+      "faction": "云端星环",
+      "role": "光子",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 663,
+        "atk": 58,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 30,
+        "maxMana": 85,
+        "skillPowerBase": 190,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_NON_EUCLID_LENS",
+        "I_ZERO_POINT_SPRING",
+        "I_STELLAR_CROWN"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "半透明仿生白瓷躯壳，胸腔嵌发光蓝宝石晶格心"
+      },
+      "skillSummary": "超频释放光子脉冲弹射最多3名敌军，共造成0.90P/0.70P/0.50P魔法伤害。",
+      "skillSpec": {
+        "kind": "chain_magic",
+        "damageType": "magic",
+        "ratios": [
+          0.9,
+          0.7,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "S22",
+      "name": "蜂群",
+      "nameLength": 2,
+      "cost": 3,
+      "poolCopies": 20,
+      "faction": "失控蜂群",
+      "role": "矩阵",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 858,
+        "atk": 58,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.7,
+        "range": 2,
+        "initialMana": 35,
+        "maxMana": 95,
+        "skillPowerBase": 190,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_FALLOUT_BRAND",
+        "I_IONOSPHERE_RING",
+        "I_POLAR_SHIELD_ARMOR"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "上千枚银灰六角纳米机械虫聚合成的变形几何阵列"
+      },
+      "skillSummary": "纳米虫群涌向最密集敌群最多3人，造成0.85P魔法伤害并降低20%攻速2秒。",
+      "skillSpec": {
+        "kind": "cluster_magic_slow",
+        "damageType": "magic",
+        "powerRatio": 0.85,
+        "maxTargets": 3,
+        "asSlowPct": 20,
+        "durationSec": 2
+      }
+    },
+    {
+      "id": "S23",
+      "name": "磁轨母舰",
+      "nameLength": 4,
+      "cost": 3,
+      "poolCopies": 20,
+      "faction": "钟慢远征",
+      "role": "矩阵",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 858,
+        "atk": 58,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.7,
+        "range": 2,
+        "initialMana": 20,
+        "maxMana": 80,
+        "skillPowerBase": 190,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_HULL_BREAKER",
+        "I_FUSION_BLADE",
+        "I_FUSION_IGNITER"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "缩微十公里级银灰星际母舰，伴飞两架护航浮游炮"
+      },
+      "skillSummary": "放出浮游炮协同齐射造成1.20P物理伤害；目标孤立无邻友时伤害+25%。",
+      "skillSpec": {
+        "kind": "drone_salvo",
+        "damageType": "physical",
+        "powerRatio": 1.2,
+        "isolatedBonusPct": 25
+      }
+    },
+    {
+      "id": "S24",
+      "name": "奥尔特云哨站",
+      "nameLength": 6,
+      "cost": 3,
+      "poolCopies": 20,
+      "faction": "木卫冰海",
+      "role": "磁轨",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 780,
+        "atk": 58,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.78,
+        "range": 4,
+        "initialMana": 0,
+        "maxMana": 60,
+        "skillPowerBase": 190,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_LORENTZ_RAIL",
+        "I_HYPER_SWARM",
+        "I_LASER_SIGHT"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "锚定在蓝白彗核冰山上的四联全自动电磁速射堡垒"
+      },
+      "skillSummary": "四联电磁炮高速连射3波，每波0.48P物理伤害并为自身叠6%攻速（上限4层）。",
+      "skillSpec": {
+        "kind": "multi_volley_as",
+        "damageType": "physical",
+        "waves": 3,
+        "waveRatio": 0.48,
+        "asStackPct": 6,
+        "maxStacks": 4
+      }
+    },
+    {
+      "id": "S25",
+      "name": "白环",
+      "nameLength": 2,
+      "cost": 3,
+      "poolCopies": 20,
+      "faction": "深空阵列",
+      "role": "重装",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 1014,
+        "atk": 58,
+        "armor": 30,
+        "mr": 30,
+        "atkSpeed": 0.65,
+        "range": 1,
+        "initialMana": 45,
+        "maxMana": 95,
+        "skillPowerBase": 190,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_MAGNETOSPHERE_GARB",
+        "I_RED_GIANT_MAIL",
+        "I_ONEILL_ARMOR"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "十万年前外星遗留的纯白超流体圆环星门巨构"
+      },
+      "skillSummary": "激发空间驻波屏障获1.15P护盾4秒，并对前方2格敌军释放0.75P引力震荡。",
+      "skillSpec": {
+        "kind": "shield_front_wave",
+        "damageType": "magic",
+        "shieldRatio": 1.15,
+        "durationSec": 4,
+        "powerRatio": 0.75
+      }
+    },
+    {
+      "id": "S26",
+      "name": "恒星风帆船长",
+      "nameLength": 6,
+      "cost": 3,
+      "poolCopies": 20,
+      "faction": "星门摆渡",
+      "role": "磁轨",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 780,
+        "atk": 58,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.78,
+        "range": 4,
+        "initialMana": 15,
+        "maxMana": 70,
+        "skillPowerBase": 190,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_FUSION_IGNITER",
+        "I_LASER_SIGHT",
+        "I_LORENTZ_RAIL"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "立于银色光帆舰桥、手握激光六分仪的老领航家"
+      },
+      "skillSummary": "借太阳风滑步至相邻安全格并射出2枚光子鱼雷，每枚0.70P物理+0.30P魔法溅射。",
+      "skillSpec": {
+        "kind": "dash_dual_torpedo",
+        "damageType": "hybrid",
+        "torpedoCount": 2,
+        "physRatio": 0.7,
+        "magicSplashRatio": 0.3
+      }
+    },
+    {
+      "id": "S27",
+      "name": "环",
+      "nameLength": 1,
+      "cost": 4,
+      "poolCopies": 14,
+      "faction": "反物质院",
+      "role": "重装",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 1235,
+        "atk": 70,
+        "armor": 30,
+        "mr": 30,
+        "atkSpeed": 0.65,
+        "range": 1,
+        "initialMana": 50,
+        "maxMana": 110,
+        "skillPowerBase": 260,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_MAGNETOSPHERE_GARB",
+        "I_ONEILL_ARMOR",
+        "I_RED_GIANT_MAIL"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "百米缩微行星级超导托卡马克磁笼巨环，内奔蓝白核火"
+      },
+      "skillSummary": "过载托卡马克强磁幕获1.45P巨盾5秒，嘲讽邻敌1.0秒并释放0.60P电弧震击。",
+      "skillSpec": {
+        "kind": "mega_shield_taunt_arc",
+        "damageType": "magic",
+        "shieldRatio": 1.45,
+        "durationSec": 5,
+        "tauntSec": 1.0,
+        "powerRatio": 0.6
+      }
+    },
+    {
+      "id": "S28",
+      "name": "水星拆解工程舰",
+      "nameLength": 7,
+      "cost": 4,
+      "poolCopies": 14,
+      "faction": "戴森工团",
+      "role": "矩阵",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 1045,
+        "atk": 70,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.7,
+        "range": 2,
+        "initialMana": 45,
+        "maxMana": 105,
+        "skillPowerBase": 260,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_POLAR_SHIELD_ARMOR",
+        "I_FALLOUT_BRAND",
+        "I_SUPERCOMP_ARRAY"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "三叉戟行星破拆母舰，舰首悬三道引力破碎束"
+      },
+      "skillSummary": "引力重锤轰击前中排最多3敌，造成0.85P魔法伤害、眩晕1.0秒并击碎30%双抗4秒。",
+      "skillSpec": {
+        "kind": "aoe_stun_sunder",
+        "damageType": "magic",
+        "powerRatio": 0.85,
+        "maxTargets": 3,
+        "stunSec": 1.0,
+        "dualShredPct": 30,
+        "durationSec": 4
+      }
+    },
+    {
+      "id": "S29",
+      "name": "近光速孤旅",
+      "nameLength": 5,
+      "cost": 4,
+      "poolCopies": 14,
+      "faction": "钟慢远征",
+      "role": "磁轨",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 950,
+        "atk": 70,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.78,
+        "range": 4,
+        "initialMana": 0,
+        "maxMana": 65,
+        "skillPowerBase": 260,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_FUSION_BLADE",
+        "I_ARMOR_PIERCER",
+        "I_STRONG_CRIT_EDGE"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "舰首覆相对论蓝移流光锥的突击巡洋舰，四联粒子炮"
+      },
+      "skillSummary": "四联相对论粒子炮向锥形区倾泻3波弹幕，主目标1.55P物理伤害，击杀返20法力。",
+      "skillSpec": {
+        "kind": "cone_barrage_reset",
+        "damageType": "physical",
+        "powerRatio": 1.55,
+        "waves": 3,
+        "killManaRefund": 20
+      }
+    },
+    {
+      "id": "S30",
+      "name": "白矮",
+      "nameLength": 2,
+      "cost": 4,
+      "poolCopies": 14,
+      "faction": "深空阵列",
+      "role": "光子",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 808,
+        "atk": 70,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 25,
+        "maxMana": 85,
+        "skillPowerBase": 260,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_NON_EUCLID_LENS",
+        "I_STELLAR_CROWN",
+        "I_SUPERCOMP_ARRAY"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "引力透镜阵列聚焦形成的微缩刺目蓝白致密星核投影"
+      },
+      "skillSummary": "借引力透镜倍增射线，对最近与最远两个敌群各降下0.95P范围魔法轰击。",
+      "skillSpec": {
+        "kind": "dual_focus_blast",
+        "damageType": "magic",
+        "powerRatio": 0.95,
+        "focusCount": 2
+      }
+    },
+    {
+      "id": "S31",
+      "name": "未上传的旧人类",
+      "nameLength": 7,
+      "cost": 4,
+      "poolCopies": 14,
+      "faction": "木卫冰海",
+      "role": "维生",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 950,
+        "atk": 70,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 40,
+        "maxMana": 95,
+        "skillPowerBase": 260,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_REVIVAL_PUMP",
+        "I_ZERO_POINT_SPRING",
+        "I_SUPERCOMP_ARRAY"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "穿朴素宇航服、手捧真实绿苗培养舱的白发女学者"
+      },
+      "skillSummary": "展开碳基生机圣域（零伤害纯保护）：治疗最低血3名友军0.95P，全队+15%攻速与0.40P盾。",
+      "skillSpec": {
+        "kind": "sanctuary_pure_support",
+        "healRatio": 0.95,
+        "healTargets": 3,
+        "teamAsPct": 15,
+        "teamShieldRatio": 0.4,
+        "durationSec": 4
+      }
+    },
+    {
+      "id": "S32",
+      "name": "熵",
+      "nameLength": 1,
+      "cost": 4,
+      "poolCopies": 14,
+      "faction": "失控蜂群",
+      "role": "跃迁",
+      "uniqueTrait": null,
+      "stats": {
+        "hp": 950,
+        "atk": 70,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.82,
+        "range": 1,
+        "initialMana": 20,
+        "maxMana": 70,
+        "skillPowerBase": 260,
+        "jumpOnSkill": true
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_STRONG_CRIT_EDGE",
+        "I_LIFE_AXE",
+        "I_ZERO_STASIS_FILM"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "镜面液态金属凝聚成的锐利银色多面体猎杀母核"
+      },
+      "skillSummary": "液态刚体沿折线连续高速贯穿最多3名不同敌人，各造成1.10P物理伤害并获0.50P盾。",
+      "skillSpec": {
+        "kind": "chain_dash_slash",
+        "damageType": "physical",
+        "powerRatio": 1.1,
+        "maxTargets": 3,
+        "shieldRatio": 0.5
+      }
+    },
+    {
+      "id": "S33",
+      "name": "黑洞潮汐电站",
+      "nameLength": 6,
+      "cost": 5,
+      "poolCopies": 9,
+      "faction": "云端星环",
+      "role": "矩阵",
+      "uniqueTrait": "彭罗斯能层",
+      "stats": {
+        "hp": 1265,
+        "atk": 85,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.7,
+        "range": 2,
+        "initialMana": 50,
+        "maxMana": 120,
+        "skillPowerBase": 360,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_POLAR_SHIELD_ARMOR",
+        "I_STELLAR_CROWN",
+        "I_FALLOUT_BRAND"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "环绕漆黑球形视界与金色弯曲吸积盘的超导巨环"
+      },
+      "skillSummary": "引爆彭罗斯能层，1.0秒后全图降下伽马射流造成0.85P魔法伤害并挂20%易伤4秒。",
+      "skillSpec": {
+        "kind": "penrose_global_jet",
+        "damageType": "magic",
+        "delaySec": 1.0,
+        "powerRatio": 0.85,
+        "vulnPct": 20,
+        "durationSec": 4
+      }
+    },
+    {
+      "id": "S34",
+      "name": "慢了一百年的人",
+      "nameLength": 7,
+      "cost": 5,
+      "poolCopies": 9,
+      "faction": "星门摆渡",
+      "role": "跃迁",
+      "uniqueTrait": "光锥错位",
+      "stats": {
+        "hp": 1150,
+        "atk": 85,
+        "armor": 25,
+        "mr": 25,
+        "atkSpeed": 0.82,
+        "range": 1,
+        "initialMana": 20,
+        "maxMana": 70,
+        "skillPowerBase": 360,
+        "jumpOnSkill": true
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_LIFE_AXE",
+        "I_STRONG_CRIT_EDGE",
+        "I_DEADHAND_BELT"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "穿初代探春号宇航服、脚踏弯曲时空光环的传奇领航员"
+      },
+      "skillSummary": "前2排激活时间膨胀近距重轰（1.45P物理+25%吸血）；后2排无限射程狙杀敌最高伤主C（1.60P）。",
+      "skillSpec": {
+        "kind": "lightcone_dual_stance",
+        "frontPhysRatio": 1.45,
+        "frontVampPct": 25,
+        "backPhysRatio": 1.6
+      }
+    },
+    {
+      "id": "S35",
+      "name": "退役星舰舰长",
+      "nameLength": 6,
+      "cost": 5,
+      "poolCopies": 9,
+      "faction": "钟慢远征",
+      "role": "重装",
+      "uniqueTrait": "老舰不沉",
+      "stats": {
+        "hp": 1495,
+        "atk": 85,
+        "armor": 30,
+        "mr": 30,
+        "atkSpeed": 0.65,
+        "range": 1,
+        "initialMana": 50,
+        "maxMana": 115,
+        "skillPowerBase": 360,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_MAGNETOSPHERE_GARB",
+        "I_POLAR_SHIELD_ARMOR",
+        "I_ECOSPHERE_FILM"
+      ],
+      "modelProfile": {
+        "archetype": "humanoid_rig",
+        "silhouetteDesc": "立于纯机械手摇火控舰桥、免疫木马的独眼老统帅"
+      },
+      "skillSummary": "全队前排获0.80P防辐射装甲盾4秒，并对目标区降下1.05P重炮压制。",
+      "skillSpec": {
+        "kind": "frontline_shield_barrage",
+        "damageType": "physical",
+        "frontShieldRatio": 0.8,
+        "durationSec": 4,
+        "powerRatio": 1.05
+      }
+    },
+    {
+      "id": "S36",
+      "name": "渊",
+      "nameLength": 1,
+      "cost": 5,
+      "poolCopies": 9,
+      "faction": "失控蜂群",
+      "role": "光子",
+      "uniqueTrait": "事件视界",
+      "stats": {
+        "hp": 978,
+        "atk": 85,
+        "armor": 20,
+        "mr": 20,
+        "atkSpeed": 0.72,
+        "range": 4,
+        "initialMana": 30,
+        "maxMana": 95,
+        "skillPowerBase": 360,
+        "jumpOnSkill": false
+      },
+      "starMultipliers": {
+        "1": 1.0,
+        "2": 1.8,
+        "3": 3.24
+      },
+      "recommendedItems": [
+        "I_ZERO_POINT_SPRING",
+        "I_NON_EUCLID_LENS",
+        "I_MASS_CONVERTER"
+      ],
+      "modelProfile": {
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "悬浮半空的微型原生黑洞奇点，环绕绚丽爱因斯坦环"
+      },
+      "skillSummary": "展开事件视界引力坍缩4秒造成1.15P魔法伤害；区内敌人每秒受4%最大生命伤害并减疗33%。",
+      "skillSpec": {
+        "kind": "event_horizon_collapse",
+        "damageType": "magic",
+        "powerRatio": 1.15,
+        "durationSec": 4,
+        "maxHpDotPctPerSec": 4,
+        "antiHealPct": 33
+      }
+    }
+  ]
+}

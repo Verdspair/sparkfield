@@ -1,0 +1,646 @@
+{
+  "version": "1.0.0",
+  "augments": [
+    {
+      "id": "AUG_S01",
+      "tier": "silver",
+      "name": "《戴森帆配额调度》",
+      "category": "economy",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "立即获得有限金币与1张免费刷新券。",
+      "modeValues": {
+        "standard": {
+          "gold": 6,
+          "freeRerolls": 1
+        },
+        "deep": {
+          "gold": 7,
+          "freeRerolls": 1
+        },
+        "quick": {
+          "gold": 5,
+          "freeRerolls": 1
+        }
+      }
+    },
+    {
+      "id": "AUG_S02",
+      "tier": "silver",
+      "name": "《低温休眠舱扩容》",
+      "category": "economy",
+      "tailorTraits": [
+        "维生"
+      ],
+      "forbidFinalStage": true,
+      "desc": "备战席冬眠封存格单次解冻属性加成提高50%，并立即获1张2费卡。",
+      "modeValues": {
+        "standard": {
+          "cryoBonusMult": 1.5,
+          "grant2Cost": 1
+        },
+        "deep": {
+          "cryoBonusMult": 1.5,
+          "grant2Cost": 1
+        },
+        "quick": {
+          "cryoBonusMult": 1.5,
+          "grant2Cost": 1
+        }
+      }
+    },
+    {
+      "id": "AUG_S03",
+      "tier": "silver",
+      "name": "《轨道残骸重熔》",
+      "category": "equipment",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "立即获得1个散件重铸器与1个3选1基础散件铁砧。",
+      "modeValues": {
+        "standard": {
+          "reforgers": 1,
+          "componentAnvils": 1
+        },
+        "deep": {
+          "reforgers": 1,
+          "componentAnvils": 1
+        },
+        "quick": {
+          "reforgers": 1,
+          "componentAnvils": 1
+        }
+      }
+    },
+    {
+      "id": "AUG_S04",
+      "tier": "silver",
+      "name": "《窄带信标校准》",
+      "category": "positioning",
+      "tailorTraits": [
+        "磁轨",
+        "光子"
+      ],
+      "forbidFinalStage": false,
+      "desc": "后两排友军开战获得 +1 射程上限内精准校准与 10% 伤害增幅。",
+      "modeValues": {
+        "standard": {
+          "backRowAmpPct": 10
+        },
+        "deep": {
+          "backRowAmpPct": 10
+        },
+        "quick": {
+          "backRowAmpPct": 10
+        }
+      }
+    },
+    {
+      "id": "AUG_S05",
+      "tier": "silver",
+      "name": "《近地偏导盾加固》",
+      "category": "positioning",
+      "tailorTraits": [
+        "重装",
+        "矩阵"
+      ],
+      "forbidFinalStage": false,
+      "desc": "前两排友军开战获得 16% 最大生命护盾5秒。",
+      "modeValues": {
+        "standard": {
+          "frontShieldPct": 16
+        },
+        "deep": {
+          "frontShieldPct": 16
+        },
+        "quick": {
+          "frontShieldPct": 16
+        }
+      }
+    },
+    {
+      "id": "AUG_S06",
+      "tier": "silver",
+      "name": "《孤岛守望哨》",
+      "category": "positioning",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "开战邻格无友军的棋子获得15%最大生命护盾与12%攻速。",
+      "modeValues": {
+        "standard": {
+          "shieldPct": 15,
+          "asPct": 12
+        },
+        "deep": {
+          "shieldPct": 15,
+          "asPct": 12
+        },
+        "quick": {
+          "shieldPct": 15,
+          "asPct": 12
+        }
+      }
+    },
+    {
+      "id": "AUG_S07",
+      "tier": "silver",
+      "name": "《基础物理补丁》",
+      "category": "combat",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "全队获得 +12 双抗与 +10 初始法力。",
+      "modeValues": {
+        "standard": {
+          "armorMr": 12,
+          "startMana": 10
+        },
+        "deep": {
+          "armorMr": 12,
+          "startMana": 10
+        },
+        "quick": {
+          "armorMr": 12,
+          "startMana": 10
+        }
+      }
+    },
+    {
+      "id": "AUG_S08",
+      "tier": "silver",
+      "name": "《紧急医疗复苏》",
+      "category": "combat",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "每场战斗己方首个跌破40%生命的单位立即恢复20%最大生命。",
+      "modeValues": {
+        "standard": {
+          "healPct": 20
+        },
+        "deep": {
+          "healPct": 20
+        },
+        "quick": {
+          "healPct": 20
+        }
+      }
+    },
+    {
+      "id": "AUG_G01",
+      "tier": "gold",
+      "name": "《跃迁先遣计划》",
+      "category": "economy",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "立即获得队伍经验与1个基础散件铁砧；每次升级后免费刷新商店1次。",
+      "modeValues": {
+        "standard": {
+          "xp": 8,
+          "componentAnvils": 1
+        },
+        "deep": {
+          "xp": 8,
+          "componentAnvils": 1
+        },
+        "quick": {
+          "xp": 6,
+          "componentAnvils": 1
+        }
+      }
+    },
+    {
+      "id": "AUG_G02",
+      "tier": "gold",
+      "name": "《深空整备储备》",
+      "category": "economy",
+      "tailorTraits": [],
+      "forbidFinalStage": true,
+      "desc": "立即获得整备金；接下来2个准备期开始额外获2张限时免费刷新券。",
+      "modeValues": {
+        "standard": {
+          "gold": 9,
+          "nextRoundsRerolls": 2
+        },
+        "deep": {
+          "gold": 10,
+          "nextRoundsRerolls": 2
+        },
+        "quick": {
+          "gold": 7,
+          "nextRoundsRerolls": 2
+        }
+      }
+    },
+    {
+      "id": "AUG_G03",
+      "tier": "gold",
+      "name": "《光子逻辑冗余》",
+      "category": "trait",
+      "tailorTraits": [
+        "云端星环"
+      ],
+      "forbidFinalStage": false,
+      "desc": "云端星环开战逻辑屏障减伤延长3秒，获得1名3费星环单位与1件防具散件。",
+      "modeValues": {
+        "standard": {
+          "extraSec": 3,
+          "unitId": "S20",
+          "compId": "C_VEST"
+        },
+        "deep": {
+          "extraSec": 3,
+          "unitId": "S20",
+          "compId": "C_VEST"
+        },
+        "quick": {
+          "extraSec": 3,
+          "unitId": "S20",
+          "compId": "C_VEST"
+        }
+      }
+    },
+    {
+      "id": "AUG_G04",
+      "tier": "gold",
+      "name": "《水星质量投射链》",
+      "category": "trait",
+      "tailorTraits": [
+        "戴森工团"
+      ],
+      "forbidFinalStage": false,
+      "desc": "戴森工团回收护盾额外附带15%攻速，获得1名3费工团单位。",
+      "modeValues": {
+        "standard": {
+          "bonusAsPct": 15,
+          "unitId": "S19"
+        },
+        "deep": {
+          "bonusAsPct": 15,
+          "unitId": "S19"
+        },
+        "quick": {
+          "bonusAsPct": 15,
+          "unitId": "S19"
+        }
+      }
+    },
+    {
+      "id": "AUG_G05",
+      "tier": "gold",
+      "name": "《相对论蓝移锁定》",
+      "category": "trait",
+      "tailorTraits": [
+        "钟慢远征"
+      ],
+      "forbidFinalStage": false,
+      "desc": "钟慢远征孤立增伤对相邻仅1名队友的敌人也减半生效，获1名远征单位。",
+      "modeValues": {
+        "standard": {
+          "semiIsoMult": 0.5,
+          "unitId": "S23"
+        },
+        "deep": {
+          "semiIsoMult": 0.5,
+          "unitId": "S23"
+        },
+        "quick": {
+          "semiIsoMult": 0.5,
+          "unitId": "S23"
+        }
+      }
+    },
+    {
+      "id": "AUG_G06",
+      "tier": "gold",
+      "name": "《冰下暗海公约》",
+      "category": "trait",
+      "tailorTraits": [
+        "木卫冰海"
+      ],
+      "forbidFinalStage": false,
+      "desc": "木卫冰海防辐射幕扩展至前排一半效能，获1名冰海单位与偏折膜。",
+      "modeValues": {
+        "standard": {
+          "frontShare": 0.5,
+          "unitId": "S15",
+          "compId": "C_CLOAK"
+        },
+        "deep": {
+          "frontShare": 0.5,
+          "unitId": "S15",
+          "compId": "C_CLOAK"
+        },
+        "quick": {
+          "frontShare": 0.5,
+          "unitId": "S15",
+          "compId": "C_CLOAK"
+        }
+      }
+    },
+    {
+      "id": "AUG_G07",
+      "tier": "gold",
+      "name": "《引力透镜阵列联网》",
+      "category": "trait",
+      "tailorTraits": [
+        "深空阵列"
+      ],
+      "forbidFinalStage": false,
+      "desc": "深空阵列引力焦点范围+1格，获1名阵列单位与超导谐振腔。",
+      "modeValues": {
+        "standard": {
+          "bonusRadius": 1,
+          "unitId": "S25",
+          "compId": "C_ROD"
+        },
+        "deep": {
+          "bonusRadius": 1,
+          "unitId": "S25",
+          "compId": "C_ROD"
+        },
+        "quick": {
+          "bonusRadius": 1,
+          "unitId": "S25",
+          "compId": "C_ROD"
+        }
+      }
+    },
+    {
+      "id": "AUG_G08",
+      "tier": "gold",
+      "name": "《潘宁磁阱解限》",
+      "category": "trait",
+      "tailorTraits": [
+        "反物质院"
+      ],
+      "forbidFinalStage": false,
+      "desc": "反物质院磁约束解除提前2秒触发，获1名反物质院单位与高周波钨芯刃。",
+      "modeValues": {
+        "standard": {
+          "earlierSec": 2,
+          "unitId": "S17",
+          "compId": "C_SWORD"
+        },
+        "deep": {
+          "earlierSec": 2,
+          "unitId": "S17",
+          "compId": "C_SWORD"
+        },
+        "quick": {
+          "earlierSec": 2,
+          "unitId": "S17",
+          "compId": "C_SWORD"
+        }
+      }
+    },
+    {
+      "id": "AUG_G09",
+      "tier": "gold",
+      "name": "《单舰跨光锥侦察》",
+      "category": "positioning",
+      "tailorTraits": [
+        "重装"
+      ],
+      "forbidFinalStage": false,
+      "desc": "开战仅在最前排部署唯一单坦时，该单位获+45双抗，阵亡时赋能全队+15%攻速。",
+      "modeValues": {
+        "standard": {
+          "soloTankResist": 45,
+          "deathTeamAsPct": 15
+        },
+        "deep": {
+          "soloTankResist": 45,
+          "deathTeamAsPct": 15
+        },
+        "quick": {
+          "soloTankResist": 45,
+          "deathTeamAsPct": 15
+        }
+      }
+    },
+    {
+      "id": "AUG_G10",
+      "tier": "gold",
+      "name": "《精密铁砧工坊》",
+      "category": "equipment",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "立即获得1个4选1成装铁砧与1次拆卸充能。",
+      "modeValues": {
+        "standard": {
+          "completedAnvils": 1,
+          "removerCharge": 1
+        },
+        "deep": {
+          "completedAnvils": 1,
+          "removerCharge": 1
+        },
+        "quick": {
+          "completedAnvils": 1,
+          "removerCharge": 1
+        }
+      }
+    },
+    {
+      "id": "AUG_P01",
+      "tier": "prismatic",
+      "name": "《彭罗斯超辐射爆发》",
+      "category": "endgame",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "获得1枚【星环拓片】；每战第9秒向敌阵降下一次全屏黑洞伽马轰击（260魔法伤害）。",
+      "modeValues": {
+        "standard": {
+          "grantRubbing": 1,
+          "gammaDmg": 260
+        },
+        "deep": {
+          "grantRubbing": 1,
+          "gammaDmg": 260
+        },
+        "quick": {
+          "grantRubbing": 1,
+          "gammaDmg": 260
+        }
+      }
+    },
+    {
+      "id": "AUG_P02",
+      "tier": "prismatic",
+      "name": "《突破光锥障壁》",
+      "category": "economy",
+      "tailorTraits": [],
+      "forbidFinalStage": true,
+      "desc": "购买经验消耗由4金获4XP升级为4金获6XP，立即获得10金币（末段禁刷）。",
+      "modeValues": {
+        "standard": {
+          "xpPerBuy": 6,
+          "gold": 10
+        },
+        "deep": {
+          "xpPerBuy": 6,
+          "gold": 10
+        },
+        "quick": {
+          "xpPerBuy": 6,
+          "gold": 8
+        }
+      }
+    },
+    {
+      "id": "AUG_P03",
+      "tier": "prismatic",
+      "name": "《拆星工程遗产》",
+      "category": "equipment",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "立即获得2个4选1成装铁砧与1个重铸器。",
+      "modeValues": {
+        "standard": {
+          "completedAnvils": 2,
+          "reforgers": 1
+        },
+        "deep": {
+          "completedAnvils": 2,
+          "reforgers": 1
+        },
+        "quick": {
+          "completedAnvils": 2,
+          "reforgers": 1
+        }
+      }
+    },
+    {
+      "id": "AUG_P04",
+      "tier": "prismatic",
+      "name": "《三大星际学派之冕》",
+      "category": "trait",
+      "tailorTraits": [
+        "戴森工团",
+        "云端星环",
+        "钟慢远征"
+      ],
+      "forbidFinalStage": false,
+      "desc": "获得1枚三大主派系纹章、1件契合成装与对应4费阵眼主核。",
+      "modeValues": {
+        "quick": {
+          "grantCrown": true,
+          "crownPackages": {
+            "戴森工团": {
+              "emblemId": "E_DYSON",
+              "itemId": "I_POLAR_SHIELD_ARMOR",
+              "unitId": "S28",
+              "bonusGold": 0
+            },
+            "钟慢远征": {
+              "emblemId": "E_DILATION",
+              "itemId": "I_FUSION_BLADE",
+              "unitId": "S29",
+              "bonusGold": 0
+            },
+            "云端星环": {
+              "emblemId": "E_CLOUD",
+              "itemId": "I_STELLAR_CROWN",
+              "unitId": "S20",
+              "bonusGold": 1
+            }
+          }
+        },
+        "standard": {
+          "grantCrown": true,
+          "crownPackages": {
+            "戴森工团": {
+              "emblemId": "E_DYSON",
+              "itemId": "I_POLAR_SHIELD_ARMOR",
+              "unitId": "S28",
+              "bonusGold": 0
+            },
+            "钟慢远征": {
+              "emblemId": "E_DILATION",
+              "itemId": "I_FUSION_BLADE",
+              "unitId": "S29",
+              "bonusGold": 0
+            },
+            "云端星环": {
+              "emblemId": "E_CLOUD",
+              "itemId": "I_STELLAR_CROWN",
+              "unitId": "S20",
+              "bonusGold": 1
+            }
+          }
+        },
+        "deep": {
+          "grantCrown": true,
+          "crownPackages": {
+            "戴森工团": {
+              "emblemId": "E_DYSON",
+              "itemId": "I_POLAR_SHIELD_ARMOR",
+              "unitId": "S28",
+              "bonusGold": 0
+            },
+            "钟慢远征": {
+              "emblemId": "E_DILATION",
+              "itemId": "I_FUSION_BLADE",
+              "unitId": "S29",
+              "bonusGold": 0
+            },
+            "云端星环": {
+              "emblemId": "E_CLOUD",
+              "itemId": "I_STELLAR_CROWN",
+              "unitId": "S20",
+              "bonusGold": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "AUG_P05",
+      "tier": "prismatic",
+      "name": "《零点静滞力场》",
+      "category": "positioning",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "开战前6秒全场双方攻速降低20%，但己方全队获得30%最大生命护盾与15法力回复。",
+      "modeValues": {
+        "standard": {
+          "globalAsSlowPct": 20,
+          "allyShieldPct": 30,
+          "allyMana": 15
+        },
+        "deep": {
+          "globalAsSlowPct": 20,
+          "allyShieldPct": 30,
+          "allyMana": 15
+        },
+        "quick": {
+          "globalAsSlowPct": 20,
+          "allyShieldPct": 30,
+          "allyMana": 15
+        }
+      }
+    },
+    {
+      "id": "AUG_P06",
+      "tier": "prismatic",
+      "name": "《光锥记忆永存》",
+      "category": "combat",
+      "tailorTraits": [],
+      "forbidFinalStage": false,
+      "desc": "友军阵亡时将自身15%基础攻击与技能效能平分给在场所有存活友军（上限叠4次）。",
+      "modeValues": {
+        "standard": {
+          "inheritPct": 15,
+          "maxStacks": 4
+        },
+        "deep": {
+          "inheritPct": 15,
+          "maxStacks": 4
+        },
+        "quick": {
+          "inheritPct": 15,
+          "maxStacks": 4
+        }
+      }
+    }
+  ]
+}

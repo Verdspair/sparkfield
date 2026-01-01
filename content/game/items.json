@@ -1,0 +1,757 @@
+{
+  "version": "1.0.0",
+  "components": [
+    {
+      "id": "C_SWORD",
+      "short": "剑",
+      "name": "高周波钨芯刃",
+      "stat": "atk",
+      "value": 10,
+      "desc": "攻击力 +10"
+    },
+    {
+      "id": "C_BOW",
+      "short": "弓",
+      "name": "洛伦兹加速轨",
+      "stat": "atkSpeedPct",
+      "value": 10,
+      "desc": "攻速 +10%"
+    },
+    {
+      "id": "C_ROD",
+      "short": "杖",
+      "name": "超导谐振腔",
+      "stat": "abilityPowerPct",
+      "value": 10,
+      "desc": "技能效能 +10%"
+    },
+    {
+      "id": "C_TEAR",
+      "short": "泪",
+      "name": "重水聚变芯",
+      "stat": "initialMana",
+      "value": 10,
+      "desc": "初始法力 +10"
+    },
+    {
+      "id": "C_VEST",
+      "short": "甲",
+      "name": "简并态镀层",
+      "stat": "armor",
+      "value": 15,
+      "desc": "护甲 +15"
+    },
+    {
+      "id": "C_CLOAK",
+      "short": "披",
+      "name": "慢雾偏折膜",
+      "stat": "mr",
+      "value": 15,
+      "desc": "魔抗 +15"
+    },
+    {
+      "id": "C_BELT",
+      "short": "带",
+      "name": "低温维生舱",
+      "stat": "hp",
+      "value": 150,
+      "desc": "最大生命 +150"
+    },
+    {
+      "id": "C_GLOVE",
+      "short": "套",
+      "name": "相位干涉仪",
+      "stat": "critPct",
+      "value": 15,
+      "desc": "暴击率 +15%"
+    }
+  ],
+  "completedItems": [
+    {
+      "id": "I_FUSION_BLADE",
+      "name": "聚变重型钨刃",
+      "formula": "剑+剑",
+      "components": [
+        "C_SWORD",
+        "C_SWORD"
+      ],
+      "uniquePerUnit": true,
+      "desc": "额外提高 25% 攻击力（纯物理基座）。",
+      "effects": {
+        "bonusAtkPct": 25
+      }
+    },
+    {
+      "id": "I_LORENTZ_RAIL",
+      "name": "洛伦兹连发轨",
+      "formula": "剑+弓",
+      "components": [
+        "C_SWORD",
+        "C_BOW"
+      ],
+      "uniquePerUnit": true,
+      "desc": "普攻命中叠 2.5% 攻速，最多 10 层（持续速射）。",
+      "effects": {
+        "onHitAsStackPct": 2.5,
+        "maxStacks": 10
+      }
+    },
+    {
+      "id": "I_MASS_CONVERTER",
+      "name": "质能回流转换器",
+      "formula": "剑+杖",
+      "components": [
+        "C_SWORD",
+        "C_ROD"
+      ],
+      "uniquePerUnit": true,
+      "desc": "技能造成实际伤害的 12% 转化为自身生命恢复。",
+      "effects": {
+        "skillOmnivampPct": 12
+      }
+    },
+    {
+      "id": "I_FUSION_IGNITER",
+      "name": "聚变点火起爆器",
+      "formula": "剑+泪",
+      "components": [
+        "C_SWORD",
+        "C_TEAR"
+      ],
+      "uniquePerUnit": true,
+      "desc": "普通攻击命中额外恢复 5 法力（物理启动装）。",
+      "effects": {
+        "onHitBonusMana": 5
+      }
+    },
+    {
+      "id": "I_KEEL_FIELD",
+      "name": "龙骨应急力场",
+      "formula": "剑+甲",
+      "components": [
+        "C_SWORD",
+        "C_VEST"
+      ],
+      "uniquePerUnit": true,
+      "desc": "生命首次跌破 40% 时获 22% 最大生命护盾5秒，并加 15 攻击。",
+      "effects": {
+        "lowHpThresholdPct": 40,
+        "shieldMaxHpPct": 22,
+        "shieldDurSec": 5,
+        "bonusAtk": 15
+      }
+    },
+    {
+      "id": "I_HULL_BREAKER",
+      "name": "巨舰破拆重刃",
+      "formula": "剑+披",
+      "components": [
+        "C_SWORD",
+        "C_CLOAK"
+      ],
+      "uniquePerUnit": true,
+      "desc": "对最大生命高于自身的目标造成伤害提高 18%（反重装专武）。",
+      "effects": {
+        "giantSlayerBonusPct": 18
+      }
+    },
+    {
+      "id": "I_LIFE_AXE",
+      "name": "循环维生战斧",
+      "formula": "剑+带",
+      "components": [
+        "C_SWORD",
+        "C_BELT"
+      ],
+      "uniquePerUnit": true,
+      "desc": "普攻与物理技能实际伤害 12% 治疗自身，低血时获短暂护盾。",
+      "effects": {
+        "physicalOmnivampPct": 12,
+        "lowHpShieldPct": 12
+      }
+    },
+    {
+      "id": "I_STRONG_CRIT_EDGE",
+      "name": "强核力会心刺",
+      "formula": "剑+套",
+      "components": [
+        "C_SWORD",
+        "C_GLOVE"
+      ],
+      "uniquePerUnit": true,
+      "desc": "物理技能可暴击，且暴击伤害倍率额外提高 20%。",
+      "effects": {
+        "physicalSkillCanCrit": true,
+        "bonusCritDmgPct": 20
+      }
+    },
+    {
+      "id": "I_HYPER_SWARM",
+      "name": "超高速电磁蜂群",
+      "formula": "弓+弓",
+      "components": [
+        "C_BOW",
+        "C_BOW"
+      ],
+      "uniquePerUnit": true,
+      "desc": "额外提高 28% 攻速，射程 +1 格（上限5格）。",
+      "effects": {
+        "bonusAtkSpeedPct": 28,
+        "bonusRange": 1,
+        "maxRangeCap": 5
+      }
+    },
+    {
+      "id": "I_PLASMA_SUBCANNON",
+      "name": "等离子电弧副炮",
+      "formula": "弓+杖",
+      "components": [
+        "C_BOW",
+        "C_ROD"
+      ],
+      "uniquePerUnit": true,
+      "desc": "每第3次普攻附加 45 点魔法伤害（不递归计普攻）。",
+      "effects": {
+        "every3rdHitMagicDmg": 45
+      }
+    },
+    {
+      "id": "I_PULSE_ACCELERATOR",
+      "name": "脉冲回能加速器",
+      "formula": "弓+泪",
+      "components": [
+        "C_BOW",
+        "C_TEAR"
+      ],
+      "uniquePerUnit": true,
+      "desc": "每第3次普攻额外恢复 12 法力。",
+      "effects": {
+        "every3rdHitMana": 12
+      }
+    },
+    {
+      "id": "I_ARMOR_PIERCER",
+      "name": "强核力穿甲锥",
+      "formula": "弓+甲",
+      "components": [
+        "C_BOW",
+        "C_VEST"
+      ],
+      "uniquePerUnit": true,
+      "desc": "【物理破甲】普攻与物理技能降低目标 30% 护甲4秒。",
+      "effects": {
+        "armorShredPct": 30,
+        "shredDurSec": 4
+      }
+    },
+    {
+      "id": "I_SPECTRUM_MAG",
+      "name": "频谱撕裂弹仓",
+      "formula": "弓+披",
+      "components": [
+        "C_BOW",
+        "C_CLOAK"
+      ],
+      "uniquePerUnit": true,
+      "desc": "【双系破防辅】普攻降低目标 30% 魔抗4秒。",
+      "effects": {
+        "mrShredPct": 30,
+        "shredDurSec": 4
+      }
+    },
+    {
+      "id": "I_TACTICAL_EXO",
+      "name": "战术机动外骨骼",
+      "formula": "弓+带",
+      "components": [
+        "C_BOW",
+        "C_BELT"
+      ],
+      "uniquePerUnit": true,
+      "desc": "每第3次普攻恢复自身 2.5% 最大生命。",
+      "effects": {
+        "every3rdHitHealMaxHpPct": 2.5
+      }
+    },
+    {
+      "id": "I_LASER_SIGHT",
+      "name": "激光标定瞄具",
+      "formula": "弓+套",
+      "components": [
+        "C_BOW",
+        "C_GLOVE"
+      ],
+      "uniquePerUnit": true,
+      "desc": "开战获 15% 伤害增幅，前3次普攻必定暴击。",
+      "effects": {
+        "damageAmpPct": 15,
+        "guaranteedFirstCrits": 3
+      }
+    },
+    {
+      "id": "I_STELLAR_CROWN",
+      "name": "恒星级倍增谐振冠",
+      "formula": "杖+杖",
+      "components": [
+        "C_ROD",
+        "C_ROD"
+      ],
+      "uniquePerUnit": true,
+      "desc": "额外提高 28% 技能效能（纯法核基座）。",
+      "effects": {
+        "bonusApPct": 28
+      }
+    },
+    {
+      "id": "I_SUPERCOMP_ARRAY",
+      "name": "智库超算阵列",
+      "formula": "杖+泪",
+      "components": [
+        "C_ROD",
+        "C_TEAR"
+      ],
+      "uniquePerUnit": true,
+      "desc": "每次正常施法后恢复 8 法力（遵守施法法力锁）。",
+      "effects": {
+        "postCastManaRefund": 8
+      }
+    },
+    {
+      "id": "I_FARADAY_COAT",
+      "name": "法拉第反震电衣",
+      "formula": "杖+甲",
+      "components": [
+        "C_ROD",
+        "C_VEST"
+      ],
+      "uniquePerUnit": true,
+      "desc": "受近身普攻时对邻格敌人释放 85 魔法伤害（内置1.5秒冷却）。",
+      "effects": {
+        "thornsMagicDmg": 85,
+        "cooldownSec": 1.5
+      }
+    },
+    {
+      "id": "I_IONOSPHERE_RING",
+      "name": "电离层击穿环",
+      "formula": "杖+披",
+      "components": [
+        "C_ROD",
+        "C_CLOAK"
+      ],
+      "uniquePerUnit": true,
+      "desc": "【魔抗击碎】技能伤害降低目标 30% 魔抗5秒，并震击施法敌军。",
+      "effects": {
+        "skillMrShredPct": 30,
+        "shredDurSec": 5,
+        "zapCasterDmg": 55
+      }
+    },
+    {
+      "id": "I_FALLOUT_BRAND",
+      "name": "辐射尘烙印仪",
+      "formula": "杖+带",
+      "components": [
+        "C_ROD",
+        "C_BELT"
+      ],
+      "uniquePerUnit": true,
+      "desc": "【法系重伤】技能施加4秒每秒 1% 最大生命灼烧与 33% 治疗削减。",
+      "effects": {
+        "burnMaxHpPctPerSec": 1,
+        "antiHealPct": 33,
+        "durSec": 4
+      }
+    },
+    {
+      "id": "I_NON_EUCLID_LENS",
+      "name": "非欧几何聚焦镜",
+      "formula": "杖+套",
+      "components": [
+        "C_ROD",
+        "C_GLOVE"
+      ],
+      "uniquePerUnit": true,
+      "desc": "魔法技能伤害可暴击，暴击伤害倍率额外提高 15%。",
+      "effects": {
+        "magicSkillCanCrit": true,
+        "bonusCritDmgPct": 15
+      }
+    },
+    {
+      "id": "I_ZERO_POINT_SPRING",
+      "name": "零点能永动泉",
+      "formula": "泪+泪",
+      "components": [
+        "C_TEAR",
+        "C_TEAR"
+      ],
+      "uniquePerUnit": true,
+      "desc": "最大法力降低 10%（下限40），首次参与击杀后增伤 12%。",
+      "effects": {
+        "maxManaReducePct": 10,
+        "minMaxMana": 40,
+        "takedownDamageAmpPct": 12
+      }
+    },
+    {
+      "id": "I_POLAR_SHIELD_ARMOR",
+      "name": "极地铅封护盾甲",
+      "formula": "泪+甲",
+      "components": [
+        "C_TEAR",
+        "C_VEST"
+      ],
+      "uniquePerUnit": true,
+      "desc": "开战及首次施法各获 12% 最大生命护盾4秒（前排启动装）。",
+      "effects": {
+        "startAndFirstCastShieldPct": 12,
+        "shieldDurSec": 4
+      }
+    },
+    {
+      "id": "I_ZERO_STASIS_FILM",
+      "name": "绝对零度静滞膜",
+      "formula": "泪+披",
+      "components": [
+        "C_TEAR",
+        "C_CLOAK"
+      ],
+      "uniquePerUnit": true,
+      "desc": "【开场免控】开战前 8秒 免疫硬控，期间每秒叠 3% 攻速。",
+      "effects": {
+        "ccImmuneStartSec": 8,
+        "asPerSecDuringImmunePct": 3
+      }
+    },
+    {
+      "id": "I_REVIVAL_PUMP",
+      "name": "跨代复苏营养泵",
+      "formula": "泪+带",
+      "components": [
+        "C_TEAR",
+        "C_BELT"
+      ],
+      "uniquePerUnit": true,
+      "desc": "正常施法后为自身与最近1名友军恢复 6% 最大生命（内置2秒冷却）。",
+      "effects": {
+        "postCastTeamHealMaxHpPct": 6,
+        "cooldownSec": 2
+      }
+    },
+    {
+      "id": "I_QUANTUM_TRIGGER",
+      "name": "量子坍缩触发器",
+      "formula": "泪+套",
+      "components": [
+        "C_TEAR",
+        "C_GLOVE"
+      ],
+      "uniquePerUnit": true,
+      "desc": "额外获 10 初始法力，生命低于50%时技能获 12% 全能吸血。",
+      "effects": {
+        "bonusInitialMana": 10,
+        "lowHpOmnivampPct": 12
+      }
+    },
+    {
+      "id": "I_NEUTRON_PLATE",
+      "name": "中子简并态重甲",
+      "formula": "甲+甲",
+      "components": [
+        "C_VEST",
+        "C_VEST"
+      ],
+      "uniquePerUnit": true,
+      "desc": "额外 +20 护甲，受到的普通攻击与暴击额外伤害降低 15%。",
+      "effects": {
+        "bonusArmor": 20,
+        "autoAndCritMitigationPct": 15
+      }
+    },
+    {
+      "id": "I_MAGNETOSPHERE_GARB",
+      "name": "行星磁层石甲",
+      "formula": "甲+披",
+      "components": [
+        "C_VEST",
+        "C_CLOAK"
+      ],
+      "uniquePerUnit": true,
+      "desc": "每有1名敌人锁定佩戴者，佩戴者获得 +10 护甲与 +10 魔抗（上限4层）。",
+      "effects": {
+        "perTargetingEnemyArmorMr": 10,
+        "maxStacks": 4
+      }
+    },
+    {
+      "id": "I_RED_GIANT_MAIL",
+      "name": "红巨星日冕甲",
+      "formula": "甲+带",
+      "components": [
+        "C_VEST",
+        "C_BELT"
+      ],
+      "uniquePerUnit": true,
+      "desc": "【前排重伤】每2秒灼烧邻格1名未挂重伤敌军（4秒每秒 1% 生命与 33% 减疗）。",
+      "effects": {
+        "auraIntervalSec": 2,
+        "burnMaxHpPctPerSec": 1,
+        "antiHealPct": 33,
+        "durSec": 4
+      }
+    },
+    {
+      "id": "I_INERTIA_GAUNTLET",
+      "name": "惯性阻尼拳套",
+      "formula": "甲+套",
+      "components": [
+        "C_VEST",
+        "C_GLOVE"
+      ],
+      "uniquePerUnit": true,
+      "desc": "普攻减缓目标 15% 攻速，自身跌破半血获 15% 减伤4秒。",
+      "effects": {
+        "slowTargetAsPct": 15,
+        "halfHpDamageReducePct": 15,
+        "durSec": 4
+      }
+    },
+    {
+      "id": "I_SLOW_FOG_CLOAK",
+      "name": "低光速慢雾披风",
+      "formula": "披+披",
+      "components": [
+        "C_CLOAK",
+        "C_CLOAK"
+      ],
+      "uniquePerUnit": true,
+      "desc": "额外 +20 魔抗，受到的技能魔法伤害降低 15%。",
+      "effects": {
+        "bonusMr": 20,
+        "magicDamageReducePct": 15
+      }
+    },
+    {
+      "id": "I_ECOSPHERE_FILM",
+      "name": "生态球自愈膜",
+      "formula": "披+带",
+      "components": [
+        "C_CLOAK",
+        "C_BELT"
+      ],
+      "uniquePerUnit": true,
+      "desc": "每2秒恢复自身 2% 最大生命；护盾存续时双抗 +15。",
+      "effects": {
+        "regenEvery2SecMaxHpPct": 2,
+        "shieldedArmorMr": 15
+      }
+    },
+    {
+      "id": "I_PHASE_TALISMAN",
+      "name": "相位偏折护符",
+      "formula": "披+套",
+      "components": [
+        "C_CLOAK",
+        "C_GLOVE"
+      ],
+      "uniquePerUnit": true,
+      "desc": "【单次挡控】抵消本战首次硬控并立即回复 15 法力。",
+      "effects": {
+        "blockFirstCc": true,
+        "blockCcManaGain": 15
+      }
+    },
+    {
+      "id": "I_ONEILL_ARMOR",
+      "name": "奥尼尔环城装甲",
+      "formula": "带+带",
+      "components": [
+        "C_BELT",
+        "C_BELT"
+      ],
+      "uniquePerUnit": true,
+      "desc": "额外增加 450 最大生命与 8% 最大生命加成。",
+      "effects": {
+        "bonusHp": 450,
+        "bonusMaxHpPct": 8
+      }
+    },
+    {
+      "id": "I_DEADHAND_BELT",
+      "name": "绝境死手束带",
+      "formula": "带+套",
+      "components": [
+        "C_BELT",
+        "C_GLOVE"
+      ],
+      "uniquePerUnit": true,
+      "desc": "生命首次跌破 35% 时清除负面并获 22% 护盾与免控3秒。",
+      "effects": {
+        "thresholdPct": 35,
+        "cleanse": true,
+        "shieldMaxHpPct": 22,
+        "ccImmuneSec": 3
+      }
+    },
+    {
+      "id": "I_BLINDSPOT_LENS",
+      "name": "盲斑概率透镜",
+      "formula": "套+套",
+      "components": [
+        "C_GLOVE",
+        "C_GLOVE"
+      ],
+      "uniquePerUnit": true,
+      "desc": "额外 +20% 暴击率，溢出100%暴击率的部分按1:1转为暴击伤害。",
+      "effects": {
+        "bonusCritPct": 20,
+        "overflowCritToDmg": true
+      }
+    }
+  ],
+  "emblems": [
+    {
+      "id": "E_DYSON",
+      "name": "戴森工团纹章",
+      "components": [
+        "C_RUBBING",
+        "C_VEST"
+      ],
+      "faction": "戴森工团",
+      "desc": "佩戴者获得【戴森工团】派系羁绊（单棋子限1枚纹章，同派系全队最多计1枚星环拓片加成）。"
+    },
+    {
+      "id": "E_CLOUD",
+      "name": "云端星环纹章",
+      "components": [
+        "C_RUBBING",
+        "C_TEAR"
+      ],
+      "faction": "云端星环",
+      "desc": "佩戴者获得【云端星环】派系羁绊（单棋子限1枚纹章，同派系全队最多计1枚星环拓片加成）。"
+    },
+    {
+      "id": "E_DILATION",
+      "name": "钟慢远征纹章",
+      "components": [
+        "C_RUBBING",
+        "C_BOW"
+      ],
+      "faction": "钟慢远征",
+      "desc": "佩戴者获得【钟慢远征】派系羁绊（单棋子限1枚纹章，同派系全队最多计1枚星环拓片加成）。"
+    },
+    {
+      "id": "E_EUROPA",
+      "name": "木卫冰海纹章",
+      "components": [
+        "C_RUBBING",
+        "C_BELT"
+      ],
+      "faction": "木卫冰海",
+      "desc": "佩戴者获得【木卫冰海】派系羁绊（单棋子限1枚纹章，同派系全队最多计1枚星环拓片加成）。"
+    },
+    {
+      "id": "E_ARRAY",
+      "name": "深空阵列纹章",
+      "components": [
+        "C_RUBBING",
+        "C_ROD"
+      ],
+      "faction": "深空阵列",
+      "desc": "佩戴者获得【深空阵列】派系羁绊（单棋子限1枚纹章，同派系全队最多计1枚星环拓片加成）。"
+    },
+    {
+      "id": "E_ANTIMATTER",
+      "name": "反物质院纹章",
+      "components": [
+        "C_RUBBING",
+        "C_SWORD"
+      ],
+      "faction": "反物质院",
+      "desc": "佩戴者获得【反物质院】派系羁绊（单棋子限1枚纹章，同派系全队最多计1枚星环拓片加成）。"
+    },
+    {
+      "id": "E_STARGATE",
+      "name": "星门摆渡纹章",
+      "components": [
+        "C_RUBBING",
+        "C_CLOAK"
+      ],
+      "faction": "星门摆渡",
+      "desc": "佩戴者获得【星门摆渡】派系羁绊（单棋子限1枚纹章，同派系全队最多计1枚星环拓片加成）。"
+    },
+    {
+      "id": "E_SWARM",
+      "name": "失控蜂群纹章",
+      "components": [
+        "C_RUBBING",
+        "C_GLOVE"
+      ],
+      "faction": "失控蜂群",
+      "desc": "佩戴者获得【失控蜂群】派系羁绊（单棋子限1枚纹章，同派系全队最多计1枚星环拓片加成）。"
+    }
+  ],
+  "special": {
+    "spatulaComponent": {
+      "id": "C_RUBBING",
+      "short": "拓",
+      "name": "星环拓片",
+      "desc": "与8类基础散件合成八大派系纹章；两枚拓片合成【深空远征母舰旗】。"
+    },
+    "mothershipFlag": {
+      "id": "I_MOTHERSHIP_FLAG",
+      "name": "深空远征母舰旗",
+      "components": [
+        "C_RUBBING",
+        "C_RUBBING"
+      ],
+      "maxEffectiveTeamCount": 1,
+      "bonusTeamCap": 1,
+      "desc": "上场人口上限 +1（不改变商店刷牌等级，全队最多生效 1 面）。"
+    },
+    "consumables": [
+      {
+        "id": "TOOL_MAGNETIC_REMOVER",
+        "name": "磁约束拆卸器",
+        "maxCharges": 1,
+        "rechargeRounds": {
+          "standard": [
+            4,
+            6
+          ],
+          "deep": [
+            4,
+            8,
+            10
+          ],
+          "quick": [
+            4
+          ]
+        },
+        "desc": "无损卸下目标棋子全部已穿戴装备退回背包；开局1次充能，指定阶段准备期若为0自动补满为1。"
+      },
+      {
+        "id": "TOOL_REFORGER",
+        "name": "散件重铸器",
+        "desc": "将目标棋子身上的散件/成装随机重铸为同品阶其他装备并退回装备舱（不重铸母舰旗）。"
+      }
+    ],
+    "anvils": [
+      {
+        "id": "ANVIL_COMPONENT_3",
+        "name": "3选1工程散件铁砧",
+        "choiceCount": 3,
+        "budgetCostComponents": 1,
+        "tailorGuaranteeMin": 1
+      },
+      {
+        "id": "ANVIL_COMPLETED_4",
+        "name": "4选1成装铁砧",
+        "choiceCount": 4,
+        "budgetCostComponents": 2,
+        "tailorGuaranteeMin": 1
+      }
+    ]
+  }
+}

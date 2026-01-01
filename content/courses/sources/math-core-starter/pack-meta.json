@@ -1,0 +1,28 @@
+{
+  "packId": "math-core-starter",
+  "coursePackVersion": "1.2.0",
+  "subject": "math",
+  "title": "核心数学：集合函数、三角数列与解析几何",
+  "syllabusTag": "CC0-1.0",
+  "knowledgeGraph": [
+    {
+      "nodeId": "MATH_N1_SET_FUNC",
+      "title": "集合充要条件、不等式与函数性质",
+      "prerequisites": []
+    },
+    {
+      "nodeId": "MATH_N2_TRIG_SEQ",
+      "title": "三角函数与等差、等比数列",
+      "prerequisites": [
+        "MATH_N1_SET_FUNC"
+      ]
+    },
+    {
+      "nodeId": "MATH_N3_VEC_GEOM_PROB",
+      "title": "平面向量、直线与圆及概率统计",
+      "prerequisites": [
+        "MATH_N2_TRIG_SEQ"
+      ]
+    }
+  ]
+}

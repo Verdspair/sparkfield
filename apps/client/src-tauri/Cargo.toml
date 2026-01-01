@@ -1,0 +1,23 @@
+[package]
+name = "beyond-light-cone"
+version = "0.1.0"
+description = "SparkField desktop and mobile host"
+authors = ["SparkField contributors"]
+edition = "2021"
+publish = false
+
+[lib]
+name = "beyond_light_cone_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+default = []
+custom-protocol = ["tauri/custom-protocol"]

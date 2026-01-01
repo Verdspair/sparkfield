@@ -1,0 +1,39 @@
+question_id,family_id,subject,knowledge_node,step_role,question_type,assessment_kind,allow_material_review,material_md,stem_md,option_a,option_b,option_c,option_d,answer_spec,partial_rubric,hint_md,explanation_md,difficulty,weight,est_seconds,source_license
+MATH_Q01,FAM_MATH_Q01,math,MATH_N1_SET_FUNC,practice,single_choice,application,true,"- $A\cap B$：同时属于两集合；$A\cup B$：至少属于其中一个。
+- $\complement_U A$：属于 $U$ 但不属于 $A$。","已知 $A=\{-1,0,1,2\}$，$B=\{x\mid x^2-x-2<0\}$，则 $A\cap B=$","$\{0,1\}$","$\{-1,0,1\}$","$\{0,1,2\}$","$\{-1,2\}$",A,,先解二次不等式，注意端点。,"$x^2-x-2=(x+1)(x-2)<0$，故 $B=(-1,2)$，交集为 $\{0,1\}$。",2,10,50,CC0-1.0
+MATH_Q02,FAM_MATH_Q02,math,MATH_N1_SET_FUNC,practice,single_choice,application,true,"- $p\Rightarrow q$：$p$ 是 $q$ 的充分条件。
+- $q\Rightarrow p$：$p$ 是 $q$ 的必要条件。",“$x=3$”是“$x^2-9=0$”的,必要不充分条件,充分不必要条件,充要条件,既不充分也不必要条件,B,,分别检查两个方向能否推出。,$x=3$ 能推出 $x^2-9=0$，但后者还允许 $x=-3$，故为充分不必要条件。,2,10,40,CC0-1.0
+MATH_Q03,FAM_MATH_Q03,math,MATH_N1_SET_FUNC,practice,single_choice,application,true,"- 偶次根式：被开方数不小于 $0$。
+- 分式：分母不等于 $0$；各限制取交集。",函数 $f(x)=\sqrt{4-x}+\frac{1}{x-1}$ 的定义域为,"$(-\infty,4]$","$[1,4]$","$(-\infty,1)\cup(1,4]$","$(-\infty,1)\cup(1,4)$",C,,根式与分式各给出一个限制。,"需同时满足 $x\le4$ 与 $x\ne1$，故定义域为 $(-\infty,1)\cup(1,4]$。",2,10,45,CC0-1.0
+MATH_Q05,FAM_MATH_Q05,math,MATH_N1_SET_FUNC,resource_check,single_choice,application,true,"- $|u|<a\ (a>0)\iff -a<u<a$。
+- 二次式先求零点，再按开口方向确定正负区间。",不等式 $|2x-1|<3$ 的解集为,"$(-2,1)$","$[-1,2]$","$(-\infty,-1)\cup(2,+\infty)$","$(-1,2)$",D,,,$-3<2x-1<3\Rightarrow-2<2x<4\Rightarrow-1<x<2$。,2,10,45,CC0-1.0
+MATH_Q06,FAM_MATH_Q06,math,MATH_N1_SET_FUNC,resource_check,numeric,application,true,"- $\log_a a^k=k\ (a>0,\ a\ne1)$。
+- $a^{m/n}=\sqrt[n]{a^m}\ (a>0)$；$b^0=1\ (b\ne0)$。",计算 $\log_3 27+8^{\frac{2}{3}}-(\pi-3)^0$。,,,,,6:0,,,原式 $=3+4-1=6$；$\pi-3\ne0$。,2,10,45,CC0-1.0
+MATH_Q07,FAM_MATH_Q07,math,MATH_N1_SET_FUNC,verification,numeric,application,false,"- 奇函数：定义域关于原点对称，$f(-x)=-f(x)$。
+- 先求正自变量的函数值，再取相反数。",已知 $f(x)$ 是定义在 $\mathbb{R}$ 上的奇函数，且 $x>0$ 时 $f(x)=x^2+2x$，求 $f(-2)$。,,,,,-8:0,,,$f(2)=4+4=8$，由奇函数性质得 $f(-2)=-8$。,2,10,45,CC0-1.0
+MATH_Q09,FAM_MATH_Q09,math,MATH_N2_TRIG_SEQ,practice,single_choice,application,true,"- $\sin^2\alpha+\cos^2\alpha=1$；$\tan\alpha=\frac{\sin\alpha}{\cos\alpha}$。
+- 第二象限：正弦为正，余弦、正切为负。","已知 $\sin\alpha=\frac45$，$\alpha\in(\frac\pi2,\pi)$，则 $(\cos\alpha,\tan\alpha)$ 为","$(-\frac35,-\frac43)$","$(\frac35,\frac43)$","$(-\frac35,\frac43)$","$(\frac35,-\frac43)$",A,,先确定象限中的符号。,第二象限余弦为负，$\cos\alpha=-\sqrt{1-\frac{16}{25}}=-\frac35$，$\tan\alpha=-\frac43$。,2,10,55,CC0-1.0
+MATH_Q10,FAM_MATH_Q10,math,MATH_N2_TRIG_SEQ,practice,numeric,application,true,"- $\sin(\alpha+\beta)=\sin\alpha\cos\beta+\cos\alpha\sin\beta$。
+- $\cos(\alpha-\beta)=\cos\alpha\cos\beta+\sin\alpha\sin\beta$。",计算 $\sin75^\circ\cos15^\circ+\cos75^\circ\sin15^\circ$。,,,,,1:0,,把两项合成一个正弦。,原式 $=\sin(75^\circ+15^\circ)=\sin90^\circ=1$。,2,10,40,CC0-1.0
+MATH_Q11,FAM_MATH_Q11,math,MATH_N2_TRIG_SEQ,practice,single_choice,retrieval,false,"- $y=A\sin(\omega x+\varphi)$ 的最小正周期为 $T=\frac{2\pi}{|\omega|}$。
+- 振幅为 $|A|$，不改变周期。",函数 $y=2\sin(2x+\frac\pi6)$ 的最小正周期为,$\frac\pi2$,$2\pi$,$\pi$,$4\pi$,C,,周期取决于自变量的系数。,$\omega=2$，故 $T=\frac{2\pi}{2}=\pi$。,2,10,35,CC0-1.0
+MATH_Q12,FAM_MATH_Q12,math,MATH_N2_TRIG_SEQ,resource_check,single_choice,application,true,"- 等差数列：$a_n=a_1+(n-1)d$。
+- $S_n=\frac{n(a_1+a_n)}{2}$；$a_k+a_{n+1-k}=a_1+a_n$。",等差数列 $\{a_n\}$ 中，$a_2+a_8=10$，则前 $9$ 项和 $S_9=$,40,45,50,90,B,,,$a_1+a_9=a_2+a_8=10$，故 $S_9=\frac{9\times10}{2}=45$。,2,10,45,CC0-1.0
+MATH_Q13,FAM_MATH_Q13,math,MATH_N2_TRIG_SEQ,resource_check,numeric,application,true,"- 等比数列：$a_n=a_1q^{n-1}$，$a_1\ne0$，$q\ne0$。
+- $q\ne1$ 时，$S_n=\frac{a_1(1-q^n)}{1-q}$；$q=1$ 时，$S_n=na_1$。",等比数列 $\{a_n\}$ 中，$a_2=6$，$a_5=48$，求前 $5$ 项和 $S_5$。,,,,,93:0,,,$q^3=\frac{48}{6}=8$，故 $q=2$，$a_1=3$；$S_5=3(2^5-1)=93$。,3,10,65,CC0-1.0
+MATH_Q14,FAM_MATH_Q14,math,MATH_N2_TRIG_SEQ,resource_check,single_choice,retrieval,false,"- $\sin(\pi-\alpha)=\sin\alpha$；$\cos(\pi+\alpha)=-\cos\alpha$。
+- $\tan(\pi+\alpha)=\tan\alpha$；$\sin^2\alpha+\cos^2\alpha=1$。",下列恒等式中，正确的是（各式均在有意义时讨论）。,$\sin(\pi-\alpha)=-\sin\alpha$,$\cos(\pi+\alpha)=\cos\alpha$,$\sin^2\alpha+\cos^2\alpha=1$,$\tan(\pi+\alpha)=-\tan\alpha$,C,,,C 为同角三角函数的基本恒等式；A 应为 $\sin\alpha$，B 应为 $-\cos\alpha$，D 应为 $\tan\alpha$。,2,10,50,CC0-1.0
+MATH_Q15,FAM_MATH_Q15,math,MATH_N2_TRIG_SEQ,verification,short_fill,retrieval,false,"- 等差数列：$a_n=a_1+(n-1)d$。
+- $S_n=\frac{n(a_1+a_n)}{2}$；$a_k+a_{n+1-k}=a_1+a_n$。",等差数列的通项为 $a_n=3n-2$，其公差 $d=$ ______。,,,,,3,,,$d=a_{n+1}-a_n=3$。,2,10,30,CC0-1.0
+MATH_Q17,FAM_MATH_Q17,math,MATH_N3_VEC_GEOM_PROB,practice,numeric,application,true,"- 向量加减与数乘按对应坐标计算。
+- $(x_1,y_1)\cdot(x_2,y_2)=x_1x_2+y_1y_2$。","已知 $\vec a=(1,-2)$，$\vec b=(3,1)$，$\vec c=2\vec a-\vec b$，求 $\vec c\cdot\vec b$。",,,,,-8:0,,先求向量的坐标，再算内积。,"$\vec c=(2,-4)-(3,1)=(-1,-5)$，故 $\vec c\cdot\vec b=-3-5=-8$。",2,10,55,CC0-1.0
+MATH_Q18,FAM_MATH_Q18,math,MATH_N3_VEC_GEOM_PROB,practice,single_choice,application,true,"- 平行：$x_1y_2-x_2y_1=0$。
+- 垂直：$x_1x_2+y_1y_2=0$；两向量均非零。","与向量 $(1,2)$ 垂直的向量是","$(2,4)$","$(-2,1)$","$(2,1)$","$(1,0)$",B,,两非零向量垂直时，内积等于零。,"$(1,2)\cdot(-2,1)=-2+2=0$。其余三项与 $(1,2)$ 的内积依次为 $10,4,1$，都不为零。",2,10,55,CC0-1.0
+MATH_Q19,FAM_MATH_Q19,math,MATH_N3_VEC_GEOM_PROB,practice,single_choice,application,true,"- 斜率 $k=\tan\theta$，倾斜角 $\theta\in[0,\pi)$。
+- 斜率存在时，两直线平行须斜率相等且不重合；垂直满足 $k_1k_2=-1$。",直线 $l:y=\sqrt3x+1$ 的倾斜角为 $\theta$，直线 $m:x+\sqrt3y-2=0$。则,$\theta=\frac\pi6$，$l\parallel m$,$\theta=\frac\pi3$，$l\parallel m$,$\theta=\frac\pi6$，$l\perp m$,$\theta=\frac\pi3$，$l\perp m$,D,,求出两条直线的斜率。,$\tan\theta=\sqrt3$，故 $\theta=\frac\pi3$；$m$ 的斜率为 $-\frac1{\sqrt3}$，与 $l$ 的斜率之积为 $-1$。,3,10,60,CC0-1.0
+MATH_Q20,FAM_MATH_Q20,math,MATH_N3_VEC_GEOM_PROB,resource_check,numeric,application,true,"- 点 $(x_0,y_0)$ 到直线 $Ax+By+C=0$ 的距离：$d=\frac{|Ax_0+By_0+C|}{\sqrt{A^2+B^2}}$。
+- 分子取绝对值，分母为法向量的模。","求点 $P(1,-1)$ 到直线 $3x-4y+3=0$ 的距离。",,,,,2:0,,,$d=\frac{|3\times1-4\times(-1)+3|}{\sqrt{3^2+(-4)^2}}=\frac{10}{5}=2$。,2,10,50,CC0-1.0
+MATH_Q21,FAM_MATH_Q21,math,MATH_N3_VEC_GEOM_PROB,resource_check,single_choice,application,true,"- 古典概型：$P(A)=\frac{m}{n}$，基本事件须等可能。
+- 不放回抽取：每取出一个，总数随之减少。",袋中有 3 个红球和 2 个蓝球，大小、质地相同。随机不放回地取出 2 个球，两球均为红球的概率为,$\frac35$,$\frac9{25}$,$\frac3{10}$,$\frac15$,C,,,$P=\frac35\times\frac24=\frac3{10}$。,2,10,50,CC0-1.0
+MATH_Q24,FAM_MATH_Q24,math,MATH_N3_VEC_GEOM_PROB,verification,single_choice,application,false,"- 斜率 $k=\tan\theta$，倾斜角 $\theta\in[0,\pi)$。
+- 斜率存在时，两直线平行须斜率相等且不重合；垂直满足 $k_1k_2=-1$。",若直线 $l_1:2x-y+1=0$ 与 $l_2:(m+1)x-2y+3=0$ 平行，则 $m=$,1,3,-3,-5,B,,,斜率相等得 $2=\frac{m+1}{2}$，解得 $m=3$；此时两直线不重合。,2,10,50,CC0-1.0
