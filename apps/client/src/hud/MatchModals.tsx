@@ -10,7 +10,7 @@ import {
   type AudioEventBus,
   type GameCommand,
 } from '@pkg/contracts';
-import { getUnitRecommendedBuilds, type SeatState, type TraitActivation } from '@pkg/game-core';
+import { getUnitRecommendedBuilds, type ActiveTrait, type SeatState } from '@pkg/game-core';
 import { UnitLoreDrawer } from '@pkg/learning-ui';
 import { ArenaThemeSwitcher } from '../components/PersistentStageCanvas.js';
 import type { BoardStageEngine } from '../stage/index.js';
@@ -193,7 +193,7 @@ export function MatchLineupPlannerModal({
   onClose,
 }: {
   readonly lineupPlan: readonly string[];
-  readonly plannedTraits: readonly TraitActivation[];
+  readonly plannedTraits: readonly ActiveTrait[];
   readonly serverCommandsLocked: boolean;
   readonly onClearPlan: () => void;
   readonly onToggleUnit: (unitId: string) => void;
