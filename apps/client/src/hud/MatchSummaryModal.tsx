@@ -5,6 +5,7 @@ import {
   lookupItemById,
 } from '@pkg/contracts';
 import { MarkdownKatexBlock } from '@pkg/learning-ui';
+import { TacticianPortrait, UnitPortrait } from '../components/UnitPortrait.js';
 import { STARTER_COURSE_PACKS } from '../content/starterPacks.js';
 import { useAppStore } from '../store/appStore.js';
 import {
@@ -12,12 +13,14 @@ import {
   QUEUE_TYPE_LABELS,
   formatQuarterPoints,
 } from '../utils/antiFakeZero.js';
+import './matchHud.css';
 
 export function MatchSummaryModal(): React.JSX.Element | null {
   const {
     matchSnapshot,
     matchSummary,
     isOfflineSandboxMatch,
+    preferredTacticianId,
     returnFromSummaryToPrep,
     exitMatchToLobby,
     pushToast,
@@ -51,10 +54,14 @@ export function MatchSummaryModal(): React.JSX.Element | null {
     (p) => p.place === competitive.place,
   ).length;
   const isTied = tiedCount > 1;
+  const isTopPlacement = competitive.place <= 4;
 
   const seatNicknameMap = new Map(
     matchSnapshot.seats.map((s) => [s.seatId, s]),
   );
+  const selfSeat = seatNicknameMap.get(competitive.seatId);
+  const selfTacticianId =
+    selfSeat?.tacticianId ?? preferredTacticianId ?? 'tactician_lumina_bell';
 
   const handleReturnPrep = async () => {
     if (exiting) return;
@@ -88,15 +95,31 @@ export function MatchSummaryModal(): React.JSX.Element | null {
       aria-label="本局结算"
       data-testid="match-summary-modal"
     >
-      <div className="ui-metal-frame ui-corner-ornaments blc-summary-shell">
-        <header className="blc-summary-header">
-          <div>
-            <h2 style={{ margin: 0 }}>本局结果</h2>
-            <p className="blc-summary-meta">
-              {DURATION_MODE_LABELS[matchSnapshot.mode]} · {QUEUE_TYPE_LABELS[competitive.queueType]}
-            </p>
+      <div className="ui-metal-frame ui-corner-ornaments sf-summary-shell">
+        <header className="sf-summary-hero">
+          <div className="sf-summary-hero__left">
+            <TacticianPortrait
+              tacticianId={selfTacticianId}
+              size="md"
+              alt={selfSeat?.nickname ?? '小小领航员'}
+            />
+            <div>
+              <div className="sf-summary-brand-kicker">
+                SparkField · 灵光之野 · S1 · 光锥之外
+              </div>
+              <h2 style={{ margin: '2px 0 4px', fontSize: 22 }}>荣耀航行结算</h2>
+              <p className="blc-summary-meta" style={{ margin: 0 }}>
+                {DURATION_MODE_LABELS[matchSnapshot.mode]} · {QUEUE_TYPE_LABELS[competitive.queueType]}
+              </p>
+            </div>
           </div>
-          <div className="blc-summary-place-badge" data-testid="summary-final-place">
+
+          <div
+            className={`sf-summary-place-crest ${
+              isTopPlacement ? 'sf-summary-place-crest--top' : ''
+            }`.trim()}
+            data-testid="summary-final-place"
+          >
             {isTied ? `并列第 ${competitive.place} 名` : `第 ${competitive.place} 名`}
           </div>
         </header>
@@ -108,7 +131,7 @@ export function MatchSummaryModal(): React.JSX.Element | null {
             data-testid="summary-competitive-col"
           >
             <div className="blc-col-head">
-              <h3>竞技</h3>
+              <h3>竞技战绩</h3>
               <span className="blc-chip blc-chip--gold">
                 胜点 {formatQuarterPoints(competitive.quarterPoints)}
               </span>
@@ -151,37 +174,11 @@ export function MatchSummaryModal(): React.JSX.Element | null {
               )}
             </div>
 
-            <div className="blc-summary-placements">
-              {competitive.placements.map((p) => {
-                const seatInfo = seatNicknameMap.get(p.seatId);
-                const isMe = p.seatId === competitive.seatId;
-                const sharedTie =
-                  competitive.placements.filter((x) => x.place === p.place).length > 1;
-                return (
-                  <div
-                    key={p.seatId}
-                    className={`blc-placement-row ${isMe ? 'blc-placement-row--self' : ''}`}
-                    data-seat-id={p.seatId}
-                  >
-                    <span>
-                      <strong>
-                        {sharedTie ? `=${p.place}` : `#${p.place}`}
-                      </strong>{' '}
-                      {seatInfo?.nickname ?? '玩家'}
-                      {competitive.queueType === 'solo' && seatInfo?.isBot ? ' · 电脑' : ''}
-                      {isMe ? ' · 你' : ''}
-                    </span>
-                    <strong>{formatQuarterPoints(p.victoryPoints)} 胜点</strong>
-                  </div>
-                );
-              })}
-            </div>
-
             <div>
               <div className="blc-field__label" style={{ marginBottom: 6 }}>
                 最终阵容 · {competitive.finalBoardSnapshot.level} 级
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                 {competitive.finalBoardSnapshot.activeTraits
                   .filter((t) => t.activeTier > 0)
                   .map((t) => (
@@ -195,20 +192,58 @@ export function MatchSummaryModal(): React.JSX.Element | null {
                   </span>
                 ))}
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <div className="sf-summary-roster-row">
                 {competitive.finalBoardSnapshot.units.map((u, idx) => (
-                  <div key={`${u.unitId}-${idx}`} className="blc-history-unit-chip" data-unit-id={u.unitId}>
-                    <strong>
-                      {'★'.repeat(u.star)} {SEASON1_UNITS_BY_ID.get(u.unitId)?.name ?? '棋子'}
-                    </strong>
+                  <div
+                    key={`${u.unitId}-${idx}`}
+                    className="sf-summary-unit-tile"
+                    data-unit-id={u.unitId}
+                  >
+                    <UnitPortrait unitId={u.unitId} size="md" star={u.star} />
+                    <span className="sf-summary-unit-tile__name">
+                      {SEASON1_UNITS_BY_ID.get(u.unitId)?.name ?? '棋子'}
+                    </span>
                     {u.items.length > 0 ? (
-                      <div style={{ fontSize: 11, color: 'var(--gold-light)' }}>
-                        {u.items.map((iid) => lookupItemById(iid)?.item.name ?? '装备').join(' / ')}
+                      <div className="sf-summary-unit-tile__items">
+                        {u.items
+                          .map((iid) => lookupItemById(iid)?.item.name ?? '装备')
+                          .join(' / ')}
                       </div>
                     ) : null}
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="blc-summary-placements">
+              {competitive.placements.map((p) => {
+                const seatInfo = seatNicknameMap.get(p.seatId);
+                const isMe = p.seatId === competitive.seatId;
+                const sharedTie =
+                  competitive.placements.filter((x) => x.place === p.place).length > 1;
+                return (
+                  <div
+                    key={p.seatId}
+                    className={`blc-placement-row ${isMe ? 'blc-placement-row--self' : ''}`}
+                    data-seat-id={p.seatId}
+                  >
+                    <span className="sf-summary-placement-who">
+                      <strong>{sharedTie ? `=${p.place}` : `#${p.place}`}</strong>
+                      <TacticianPortrait
+                        tacticianId={seatInfo?.tacticianId ?? 'tactician_lumina_bell'}
+                        size="sm"
+                        alt={seatInfo?.nickname ?? '领航员'}
+                      />
+                      <span>
+                        {seatInfo?.nickname ?? '玩家'}
+                        {competitive.queueType === 'solo' && seatInfo?.isBot ? ' · 电脑' : ''}
+                        {isMe ? ' · 你' : ''}
+                      </span>
+                    </span>
+                    <strong>{formatQuarterPoints(p.victoryPoints)} 胜点</strong>
+                  </div>
+                );
+              })}
             </div>
           </section>
 
@@ -218,7 +253,7 @@ export function MatchSummaryModal(): React.JSX.Element | null {
             data-testid="summary-learning-col"
           >
             <div className="blc-col-head">
-              <h3>学习</h3>
+              <h3>学习收获</h3>
               <span className="blc-chip blc-chip--gold" data-testid="summary-reward-points-granted">
                 {isOfflineSandboxMatch
                   ? '离线演练 · 不计积分'
@@ -226,7 +261,7 @@ export function MatchSummaryModal(): React.JSX.Element | null {
               </span>
             </div>
 
-            <div className="blc-field__label">学习资源</div>
+            <div className="blc-field__label">节点充能与法球账本</div>
             {learning.nodes.length === 0 ? (
               <div className="blc-muted-hint">暂无完成记录。</div>
             ) : (

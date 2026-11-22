@@ -2,6 +2,27 @@ import { z } from 'zod';
 import { ArenaThemeIdSchema, DisplaySettingsSchema, DurationModeSchema, QueueTypeSchema } from './modes.js';
 import { SubjectIdSchema } from './learning.js';
 
+export const TacticianIdSchema = z.enum(['tactician_lumina_bell', 'tactician_europa_fin', 'tactician_singularity_mew']);
+export type TacticianId = z.infer<typeof TacticianIdSchema>;
+export const DEFAULT_TACTICIAN_ID = 'tactician_lumina_bell';
+
+export const TACTICIAN_CATALOG = [
+  {
+    id: 'tactician_lumina_bell', name: '星汐 · 小铃', subtitle: '星潮巡航员', factionLabel: '环地星港',
+    tagline: '沿着星潮的回声，为归航点亮一盏灯。', accentColor: '#76e4cf',
+  },
+  {
+    id: 'tactician_europa_fin', name: '冰核 · 小鲸', subtitle: '冰海探测员', factionLabel: '木卫二冰海',
+    tagline: '在万米冰层下，用一声鲸歌指明方向。', accentColor: '#83cfff',
+  },
+  {
+    id: 'tactician_singularity_mew', name: '奇点 · 小猫', subtitle: '视界测绘员', factionLabel: '奇点观测站',
+    tagline: '用爪尖触碰视界，追踪每一次引力涟漪。', accentColor: '#d9a6fb',
+  },
+] as const satisfies readonly {
+  id: TacticianId; name: string; subtitle: string; factionLabel: string; tagline: string; accentColor: string;
+}[];
+
 export const RegisterRequestSchema = z.object({
   username: z.string().trim().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/),
   password: z.string().min(6).max(128),
@@ -29,6 +50,7 @@ export const UserProfileSchema = z.object({
   onboardingChoice: z.enum(['unset', 'cards', 'micro_match', 'skipped']),
   learningStartSelections: z.partialRecord(SubjectIdSchema, z.string()).default({}),
   preferredArena: ArenaThemeIdSchema.default('orbital_elevator_port'),
+  preferredTacticianId: TacticianIdSchema.default(DEFAULT_TACTICIAN_ID),
   displaySettings: DisplaySettingsSchema,
   avatarFrameId: z.string().nullable().default(null),
   boardPlaqueId: z.string().nullable().default(null),
@@ -51,6 +73,7 @@ export const PrepRoomMemberSchema = z.object({
   nickname: z.string(),
   isHost: z.boolean(),
   ready: z.boolean(),
+  tacticianId: TacticianIdSchema.default(DEFAULT_TACTICIAN_ID),
   avatarFrameId: z.string().nullable().default(null),
   boardPlaqueId: z.string().nullable().default(null),
 });

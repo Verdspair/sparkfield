@@ -10,6 +10,7 @@ import type {
   MatchPhaseKind,
   ModeStandingSummary,
   QueueType,
+  TacticianId,
   VersionLockTriplet,
 } from '@pkg/contracts';
 import type { RoundBattle, SeatState, UnitInstance } from '@pkg/game-core';
@@ -20,6 +21,7 @@ import { resolveRealtimeServerOrigin } from './httpClient.js';
 export interface MatchSeatPublicView {
   seatId: string;
   nickname: string;
+  tacticianId?: TacticianId;
   level: number;
   units: UnitInstance[];
   victoryPoints: number;

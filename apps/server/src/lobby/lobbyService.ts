@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   ArenaThemeIdSchema, CommunicationClientSendSchema, CommunicationEnvelopeSchema,
   ConfigurableCommunicationPolicy, DisplaySettingsSchema, DurationModeSchema,
-  PrepRoomStateSchema, QueueTypeSchema, SubjectIdSchema, UserProfileSchema,
+  PrepRoomStateSchema, QueueTypeSchema, SubjectIdSchema, TacticianIdSchema, UserProfileSchema,
   type ArenaThemeId, type CommunicationClientSend, type CommunicationEnvelope,
   type CommunicationGovernancePolicy, type DisplaySettings, type DurationMode,
   type GlobalMatchAcceptPrompt, type PrepRoomState, type QueueType, type SubjectId,
@@ -48,7 +48,7 @@ export interface LobbyState {
   prepRoom: PrepRoomState | null;
   acceptPrompt: GlobalMatchAcceptPrompt | null;
   match: { roomId: string; matchId: string; seatId?: string } | null;
-  selfPrefs: MemberPrefs | null;
+  selfPrefs: (MemberPrefs & Pick<UserProfile, 'preferredTacticianId'>) | null;
   lastError?: string;
 }
 export interface CommunicationDelivery {
@@ -63,7 +63,7 @@ const EnterModeSchema = SettingsSchema.extend({ durationMode: DurationModeSchema
 const MemberPrefsPatchSchema = z.object({
   ready: z.boolean().optional(), subject: SubjectIdSchema.optional(),
   learningStartSelections: z.partialRecord(SubjectIdSchema, z.string().min(1).max(128)).optional(),
-  preferredArena: ArenaThemeIdSchema.optional(), displaySettings: DisplaySettingsSchema.optional(),
+  preferredArena: ArenaThemeIdSchema.optional(), preferredTacticianId: TacticianIdSchema.optional(), displaySettings: DisplaySettingsSchema.optional(),
 }).strict();
 const AcceptSchema = z.object({ ticketId: z.string().min(1), accept: z.boolean() }).strict();
 const BlockSchema = z.object({ senderUserId: z.string().min(1), blocked: z.boolean() }).strict();
@@ -163,6 +163,7 @@ export class LobbyService {
   }
   private snapshot(userId: string): LobbyState {
     const room = this.findRoom(userId);
+    const self = room?.members.get(userId);
     const match = this.matches.get(userId);
     const ticket = this.tickets.get(this.userTickets.get(userId) ?? '');
     const candidate = ticket?.candidates.find((c) => c.userId === userId);
@@ -172,7 +173,7 @@ export class LobbyService {
       status: match ? 'in_match' : room.ticketId ? 'accept_check' : room.starting || room.queuedAt !== null ? 'queuing' : 'idle',
       plannedTotalSeconds: PLANNED_SECONDS[room.durationMode],
       members: [...room.members].map(([id, member]) => ({ userId: id, nickname: member.profile.nickname,
-        isHost: room.hostUserId === id, ready: member.ready,
+        isHost: room.hostUserId === id, ready: member.ready, tacticianId: member.profile.preferredTacticianId,
         avatarFrameId: member.profile.avatarFrameId, boardPlaqueId: member.profile.boardPlaqueId })),
     }) : null;
     const acceptPrompt: GlobalMatchAcceptPrompt | null = ticket && candidate && ticket.queueType !== 'solo' ? {
@@ -182,11 +183,23 @@ export class LobbyService {
       totalCandidateHumans: ticket.candidates.length, selfDecision: candidate.decision,
     } : null;
     return { prepRoom, acceptPrompt, match: match ? clone(match) : null,
-      selfPrefs: room?.members.get(userId) ? clone(room.members.get(userId)!.prefs) : null,
+      selfPrefs: self ? { ...clone(self.prefs), preferredTacticianId: self.profile.preferredTacticianId } : null,
       ...(this.errors.has(userId) ? { lastError: this.errors.get(userId)! } : {}) };
   }
 
   async getState(userId: string): Promise<LobbyState> { this.ensureOpen(); return this.snapshot(userId); }
+  syncProfilePrefs(profile: UserProfile, patch: Partial<Pick<UserProfile, 'preferredTacticianId' | 'learningStartSelections'>>): void {
+    const member = this.findRoom(profile.userId)?.members.get(profile.userId);
+    const last = this.lastEntries.get(profile.userId);
+    for (const entry of [member, last]) {
+      if (!entry) continue;
+      if (patch.preferredTacticianId !== undefined) entry.profile.preferredTacticianId = profile.preferredTacticianId;
+      if (patch.learningStartSelections !== undefined) {
+        entry.profile.learningStartSelections = clone(profile.learningStartSelections);
+        entry.prefs.learningStartSelections = clone(profile.learningStartSelections);
+      }
+    }
+  }
   async enterMode(profile: UserProfile, input: unknown): Promise<LobbyState> {
     this.ensureOpen(); const data = EnterModeSchema.parse(input); const user = UserProfileSchema.parse(profile);
     const current = this.findRoom(user.userId);
@@ -234,14 +247,14 @@ export class LobbyService {
     const data = MemberPrefsPatchSchema.parse(input);
     if (data.subject && room.queueType === 'ranked' && data.subject !== room.sharedSubject) throw new ServiceError('RANKED_SUBJECT_LOCKED');
     return (confirmedProfile) => {
+      this.syncProfilePrefs(confirmedProfile, data);
       const member = room.members.get(user.userId);
       if (this.rooms.get(room.code) !== room || !member) return this.snapshot(user.userId);
-      member.profile = clone(confirmedProfile);
+      member.profile = clone({ ...confirmedProfile, preferredTacticianId: member.profile.preferredTacticianId });
       if (data.subject !== undefined) member.prefs.subject = data.subject;
-      if (data.learningStartSelections !== undefined) member.prefs.learningStartSelections = clone(confirmedProfile.learningStartSelections);
       if (data.preferredArena !== undefined) member.prefs.preferredArena = confirmedProfile.preferredArena;
       if (data.displaySettings !== undefined) member.prefs.displaySettings = clone(confirmedProfile.displaySettings);
-      const changedPrefs = Object.keys(data).some((key) => key !== 'ready');
+      const changedPrefs = Object.keys(data).some((key) => key !== 'ready' && key !== 'preferredTacticianId');
       if (changedPrefs) member.ready = false;
       if (data.ready !== undefined) member.ready = data.ready;
       this.remember(room); return this.snapshot(user.userId);
@@ -252,6 +265,7 @@ export class LobbyService {
     const updated = UserProfileSchema.parse({ ...profile,
       ...(data.learningStartSelections !== undefined ? { learningStartSelections: data.learningStartSelections } : {}),
       ...(data.preferredArena !== undefined ? { preferredArena: data.preferredArena } : {}),
+      ...(data.preferredTacticianId !== undefined ? { preferredTacticianId: data.preferredTacticianId } : {}),
       ...(data.displaySettings !== undefined ? { displaySettings: data.displaySettings } : {}),
     });
     return this.prepareMemberPrefs(profile, data)(updated);

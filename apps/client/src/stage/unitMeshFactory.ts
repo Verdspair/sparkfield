@@ -2,115 +2,50 @@ import * as THREE from 'three';
 import { SEASON1_UNITS_BY_ID, type UnitDef, type UnitStar } from '@pkg/contracts';
 import type { PbrMaterialLibrary } from './pbrMaterials.js';
 import { SpringDamper, SpringDamper3D } from './spring.js';
+import {
+  SharedUnitGeometryPool,
+  appendRoleFallbackChassis,
+  createBuilderContext,
+  makeTransform,
+  mergePartsWithVertexColor,
+  type BespokeUnitBuilder,
+  type GeometryPartSpec,
+  type UnitBlueprintParts,
+} from './unitBuilderCore.js';
+import { UNIT_PACK_CORE_BUILDERS } from './unitPackCore.js';
+import { UNIT_PACK_1_BUILDERS } from './unitPack1.js';
+import { UNIT_PACK_2_BUILDERS } from './unitPack2.js';
+import { UNIT_PACK_3_BUILDERS } from './unitPack3.js';
+import { UNIT_PACK_4_BUILDERS } from './unitPack4.js';
+
+export { SharedUnitGeometryPool } from './unitBuilderCore.js';
 
 const CAMERA_PITCH_COMPENSATION_RAD = -THREE.MathUtils.degToRad(10);
 
-const FACTION_RGB: Readonly<Record<string, readonly [number, number, number]>> = {
-  戴森工团: [0.92, 0.70, 0.30],
-  云端星环: [0.45, 0.72, 0.98],
-  钟慢远征: [0.55, 0.84, 0.98],
-  木卫冰海: [0.24, 0.85, 0.76],
-  深空阵列: [0.72, 0.58, 0.98],
-  反物质院: [0.92, 0.48, 0.96],
-  星门摆渡: [0.96, 0.68, 0.24],
-  失控蜂群: [0.68, 0.74, 0.82],
+const ALL_BESPOKE_UNIT_BUILDERS: Readonly<Record<string, BespokeUnitBuilder>> = {
+  ...UNIT_PACK_CORE_BUILDERS,
+  ...UNIT_PACK_1_BUILDERS,
+  ...UNIT_PACK_2_BUILDERS,
+  ...UNIT_PACK_3_BUILDERS,
+  ...UNIT_PACK_4_BUILDERS,
 };
 
-interface GeometryPartSpec {
-  readonly geo: THREE.BufferGeometry;
-  readonly matrix?: THREE.Matrix4;
-  readonly colorRgb?: readonly [number, number, number];
-}
-
-function makeTransform(
-  px: number,
-  py: number,
-  pz: number,
-  rx = 0,
-  ry = 0,
-  rz = 0,
-  sx = 1,
-  sy = 1,
-  sz = 1,
-): THREE.Matrix4 {
-  const m = new THREE.Matrix4();
-  const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz));
-  m.compose(new THREE.Vector3(px, py, pz), q, new THREE.Vector3(sx, sy, sz));
-  return m;
-}
-
-function mergePartsWithVertexColor(parts: readonly GeometryPartSpec[]): THREE.BufferGeometry {
-  const positions: number[] = [];
-  const normals: number[] = [];
-  const uvs: number[] = [];
-  const colors: number[] = [];
-  const indices: number[] = [];
-
-  let vertexOffset = 0;
-  const vPos = new THREE.Vector3();
-  const vNorm = new THREE.Vector3();
-  const normalMat = new THREE.Matrix3();
-
-  for (const part of parts) {
-    const srcPos = part.geo.getAttribute('position');
-    if (!srcPos) continue;
-    const srcNorm = part.geo.getAttribute('normal');
-    const srcUv = part.geo.getAttribute('uv');
-    const srcIdx = part.geo.getIndex();
-    const mat = part.matrix;
-    if (mat) normalMat.getNormalMatrix(mat);
-    const [cr, cg, cb] = part.colorRgb ?? [1, 1, 1];
-
-    for (let i = 0; i < srcPos.count; i += 1) {
-      vPos.fromBufferAttribute(srcPos, i);
-      if (mat) vPos.applyMatrix4(mat);
-      positions.push(vPos.x, vPos.y, vPos.z);
-
-      if (srcNorm) {
-        vNorm.fromBufferAttribute(srcNorm, i);
-        if (mat) vNorm.applyMatrix3(normalMat).normalize();
-        normals.push(vNorm.x, vNorm.y, vNorm.z);
-      } else {
-        normals.push(0, 1, 0);
-      }
-
-      if (srcUv) {
-        uvs.push(srcUv.getX(i), srcUv.getY(i));
-      } else {
-        uvs.push(0.5, 0.5);
-      }
-
-      colors.push(cr, cg, cb);
-    }
-
-    if (srcIdx) {
-      for (let i = 0; i < srcIdx.count; i += 1) {
-        indices.push(vertexOffset + srcIdx.getX(i));
-      }
-    } else {
-      for (let i = 0; i < srcPos.count; i += 1) {
-        indices.push(vertexOffset + i);
-      }
-    }
-
-    vertexOffset += srcPos.count;
-  }
-
-  const merged = new THREE.BufferGeometry();
-  merged.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  merged.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-  merged.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-  merged.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  merged.setIndex(indices);
-  merged.computeBoundingSphere();
-  return merged;
-}
-
 interface CachedUnitBlueprint {
-  readonly bodyAndTrimGeo: THREE.BufferGeometry;
-  readonly weaponAndGlowGeo: THREE.BufferGeometry;
+  readonly armorGeo: THREE.BufferGeometry;
+  readonly matteGeo: THREE.BufferGeometry;
+  readonly trimGeo: THREE.BufferGeometry;
+  readonly energyGeo: THREE.BufferGeometry;
+  readonly crystalGeo: THREE.BufferGeometry;
   readonly star3WingsGeo: THREE.BufferGeometry;
   readonly headTopLocalY: number;
+  readonly weaponGlowHex: number;
+  readonly crystalHex: number;
+  readonly crystalOpacity: number;
+  readonly crystalIntensity: number;
+  readonly hasMatte: boolean;
+  readonly hasTrim: boolean;
+  readonly hasEnergy: boolean;
+  readonly hasCrystal: boolean;
 }
 
 function createFresnelHitRimMaterial(): THREE.ShaderMaterial {
@@ -137,104 +72,11 @@ function createFresnelHitRimMaterial(): THREE.ShaderMaterial {
       varying vec3 vViewDir;
       void main() {
         float fresnel = pow(1.0 - clamp(abs(dot(vNormalView, vViewDir)), 0.0, 1.0), 2.5);
-        vec3 warmWhite = vec3(1.25, 1.18, 1.02);
-        gl_FragColor = vec4(warmWhite * fresnel * uFlash, fresnel * uFlash * 0.95);
+        vec3 warmWhite = vec3(1.22, 1.16, 1.02);
+        gl_FragColor = vec4(warmWhite * fresnel * uFlash, fresnel * uFlash * 0.92);
       }
     `,
   });
-}
-
-export class SharedUnitGeometryPool {
-  public readonly shadowPlane = new THREE.PlaneGeometry(1.42, 1.42);
-  public readonly allegianceRing = new THREE.RingGeometry(0.50, 0.57, 24);
-
-  public readonly pedestal1Geo: THREE.BufferGeometry;
-  public readonly pedestal2Geo: THREE.BufferGeometry;
-  public readonly pedestal3Geo: THREE.BufferGeometry;
-
-  public readonly headSphere = new THREE.OctahedronGeometry(0.21, 1);
-  public readonly visorBox = new THREE.BoxGeometry(0.28, 0.09, 0.14);
-  public readonly torsoChest = new THREE.CylinderGeometry(0.23, 0.18, 0.42, 6);
-  public readonly pelvis = new THREE.CylinderGeometry(0.17, 0.15, 0.16, 6);
-  public readonly shoulderPad = new THREE.BoxGeometry(0.16, 0.12, 0.18);
-  public readonly limb = new THREE.CylinderGeometry(0.06, 0.05, 0.30, 6);
-  public readonly hexShield = new THREE.CylinderGeometry(0.32, 0.32, 0.05, 6);
-  public readonly blade = new THREE.BoxGeometry(0.05, 0.56, 0.10);
-  public readonly staff = new THREE.CylinderGeometry(0.035, 0.035, 0.72, 6);
-  public readonly wingFin = new THREE.BoxGeometry(0.06, 0.52, 0.18);
-
-  public readonly octaPrism = new THREE.OctahedronGeometry(0.42, 0);
-  public readonly icosaCore = new THREE.IcosahedronGeometry(0.30, 1);
-  public readonly hullCruiser = new THREE.ConeGeometry(0.30, 0.96, 6);
-  public readonly railBarrel = new THREE.BoxGeometry(0.08, 0.08, 0.88);
-  public readonly torusMajor = new THREE.TorusGeometry(0.44, 0.075, 8, 24);
-  public readonly torusEinstein = new THREE.TorusGeometry(0.50, 0.032, 8, 32);
-  public readonly whaleBody = new THREE.CapsuleGeometry(0.24, 0.46, 4, 8);
-  public readonly hexPanel = new THREE.CylinderGeometry(0.26, 0.26, 0.04, 6);
-  public readonly funnelBit = new THREE.OctahedronGeometry(0.11, 0);
-
-  private readonly rawRings: THREE.BufferGeometry[] = [];
-
-  constructor() {
-    this.shadowPlane.rotateX(-Math.PI * 0.5);
-    this.allegianceRing.rotateX(-Math.PI * 0.5);
-    this.hexShield.rotateX(Math.PI * 0.5);
-    this.hullCruiser.rotateX(Math.PI * 0.5);
-    this.whaleBody.rotateX(Math.PI * 0.5);
-    this.hexPanel.rotateX(Math.PI * 0.5);
-
-    const r1 = new THREE.TorusGeometry(0.42, 0.032, 6, 20);
-    r1.rotateX(Math.PI * 0.5);
-    const r2 = new THREE.TorusGeometry(0.52, 0.024, 6, 24);
-    r2.rotateX(Math.PI * 0.5);
-    const r3 = new THREE.TorusGeometry(0.62, 0.028, 6, 6);
-    r3.rotateX(Math.PI * 0.5);
-    this.rawRings.push(r1, r2, r3);
-
-    this.pedestal1Geo = mergePartsWithVertexColor([
-      { geo: r1, matrix: makeTransform(0, 0.035, 0) },
-    ]);
-    this.pedestal2Geo = mergePartsWithVertexColor([
-      { geo: r1, matrix: makeTransform(0, 0.035, 0) },
-      { geo: r2, matrix: makeTransform(0, 0.032, 0) },
-    ]);
-    this.pedestal3Geo = mergePartsWithVertexColor([
-      { geo: r1, matrix: makeTransform(0, 0.035, 0) },
-      { geo: r2, matrix: makeTransform(0, 0.032, 0) },
-      { geo: r3, matrix: makeTransform(0, 0.028, 0) },
-    ]);
-  }
-
-  public dispose(): void {
-    const all: THREE.BufferGeometry[] = [
-      this.shadowPlane,
-      this.allegianceRing,
-      this.pedestal1Geo,
-      this.pedestal2Geo,
-      this.pedestal3Geo,
-      this.headSphere,
-      this.visorBox,
-      this.torsoChest,
-      this.pelvis,
-      this.shoulderPad,
-      this.limb,
-      this.hexShield,
-      this.blade,
-      this.staff,
-      this.wingFin,
-      this.octaPrism,
-      this.icosaCore,
-      this.hullCruiser,
-      this.railBarrel,
-      this.torusMajor,
-      this.torusEinstein,
-      this.whaleBody,
-      this.hexPanel,
-      this.funnelBit,
-      ...this.rawRings,
-    ];
-    for (const g of all) g.dispose();
-  }
 }
 
 export interface UnitActorRig {
@@ -273,6 +115,10 @@ export interface UnitActorRig {
 
 const MAX_GROUND_RING_INSTANCES = 64;
 
+function starTargetScale(star: UnitStar): number {
+  return star === 1 ? 1.0 : star === 2 ? 1.14 : 1.30;
+}
+
 export class UnitMeshFactory {
   public readonly pool = new SharedUnitGeometryPool();
   public readonly groundBatchGroup = new THREE.Group();
@@ -280,7 +126,7 @@ export class UnitMeshFactory {
   private readonly shadowsInstanced: THREE.InstancedMesh;
   private readonly allyRingsInstanced: THREE.InstancedMesh;
   private readonly enemyRingsInstanced: THREE.InstancedMesh;
-  private readonly vertexColorArmorMat: THREE.MeshStandardMaterial;
+  private readonly starCrownMat: THREE.MeshStandardMaterial;
 
   private readonly materials: PbrMaterialLibrary;
   private readonly blueprintCache = new Map<string, CachedUnitBlueprint>();
@@ -289,8 +135,13 @@ export class UnitMeshFactory {
   constructor(materials: PbrMaterialLibrary) {
     this.materials = materials;
 
-    this.vertexColorArmorMat = materials.porcelainArmorMat.clone();
-    this.vertexColorArmorMat.vertexColors = true;
+    this.starCrownMat = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.16,
+      metalness: 0.94,
+      emissive: new THREE.Color(0xf59e0b),
+      emissiveIntensity: 0.52,
+    });
 
     this.shadowsInstanced = new THREE.InstancedMesh(
       this.pool.shadowPlane,
@@ -352,140 +203,112 @@ export class UnitMeshFactory {
     this.enemyRingsInstanced.instanceMatrix.needsUpdate = true;
   }
 
+  public getRegisteredBespokeUnitIds(): readonly string[] {
+    return Object.keys(ALL_BESPOKE_UNIT_BUILDERS);
+  }
+
   private getOrBuildBlueprint(unitDef: UnitDef): CachedUnitBlueprint {
     const cached = this.blueprintCache.get(unitDef.id);
     if (cached) return cached;
 
-    const factionRgb = FACTION_RGB[unitDef.faction] ?? [0.85, 0.72, 0.45];
-    const porcelainRgb: readonly [number, number, number] = [0.98, 0.98, 1.0];
-    const darkJointRgb: readonly [number, number, number] = [0.26, 0.30, 0.38];
-    const sapphireRgb: readonly [number, number, number] = [0.22, 0.56, 0.96];
-    const goldRgb: readonly [number, number, number] = [0.95, 0.82, 0.52];
+    const ctx = createBuilderContext(this.pool, unitDef);
+    const out: UnitBlueprintParts = {
+      armor: [],
+      matte: [],
+      trim: [],
+      energy: [],
+      crystal: [],
+      bodyParts: [],
+      weaponParts: [],
+      wingParts: [],
+      disposables: [],
+      headTopLocalY: 1.56,
+      weaponGlowHex: ctx.palette.accentHex,
+      crystalHex: ctx.palette.accentHex,
+      crystalOpacity: 0.52,
+      crystalIntensity: 0.42,
+    };
 
-    const bodyParts: GeometryPartSpec[] = [];
-    const weaponParts: GeometryPartSpec[] = [];
-    const wingParts: GeometryPartSpec[] = [];
-    let headTopLocalY = 1.48;
-
-    if (unitDef.modelProfile.archetype === 'humanoid_rig') {
-      headTopLocalY = 1.56;
-      bodyParts.push(
-        { geo: this.pool.pelvis, matrix: makeTransform(0, 0.38, 0), colorRgb: darkJointRgb },
-        { geo: this.pool.limb, matrix: makeTransform(-0.11, 0.19, 0), colorRgb: porcelainRgb },
-        { geo: this.pool.limb, matrix: makeTransform(0.11, 0.19, 0), colorRgb: porcelainRgb },
-        { geo: this.pool.torsoChest, matrix: makeTransform(0, 0.66, 0), colorRgb: porcelainRgb },
-        { geo: this.pool.shoulderPad, matrix: makeTransform(-0.27, 0.80, 0), colorRgb: factionRgb },
-        { geo: this.pool.shoulderPad, matrix: makeTransform(0.27, 0.80, 0), colorRgb: factionRgb },
-        { geo: this.pool.headSphere, matrix: makeTransform(0, 1.08, 0), colorRgb: porcelainRgb },
-        { geo: this.pool.visorBox, matrix: makeTransform(0, 1.08, 0.14), colorRgb: sapphireRgb },
-      );
-
-      if (unitDef.id === 'S01') {
-        weaponParts.push({ geo: this.pool.hexShield, matrix: makeTransform(0.32, 0.66, 0.24) });
-      } else if (unitDef.id === 'S14' || unitDef.id === 'S34') {
-        weaponParts.push({ geo: this.pool.blade, matrix: makeTransform(0.34, 0.72, 0.20) });
-        if (unitDef.id === 'S34') {
-          bodyParts.push({
-            geo: this.pool.torusEinstein,
-            matrix: makeTransform(0, 0.12, 0, Math.PI * 0.42, 0, 0),
-            colorRgb: goldRgb,
-          });
-        }
-      } else if (unitDef.id === 'S20') {
-        weaponParts.push({
-          geo: this.pool.octaPrism,
-          matrix: makeTransform(0, 0.78, 0.34, 0, 0, 0, 0.45, 0.45, 0.45),
-        });
-        bodyParts.push({
-          geo: this.pool.torusMajor,
-          matrix: makeTransform(0, 0.88, -0.22),
-          colorRgb: factionRgb,
-        });
-      } else if (unitDef.id === 'S35') {
-        weaponParts.push({
-          geo: this.pool.torusMajor,
-          matrix: makeTransform(0, 0.64, 0.30, 0, 0, 0, 0.62, 0.62, 0.62),
-        });
-      } else {
-        weaponParts.push({ geo: this.pool.staff, matrix: makeTransform(0.32, 0.68, 0.16) });
-      }
-
-      wingParts.push(
-        { geo: this.pool.wingFin, matrix: makeTransform(-0.36, 0.88, -0.20, 0, 0, 0.42) },
-        { geo: this.pool.wingFin, matrix: makeTransform(0.36, 0.88, -0.20, 0, 0, -0.42) },
-      );
+    const bespoke = ALL_BESPOKE_UNIT_BUILDERS[unitDef.id];
+    if (bespoke) {
+      bespoke(ctx, out);
     } else {
-      headTopLocalY = 1.46;
-      if (unitDef.id === 'S36' || unitDef.id === 'S33') {
-        bodyParts.push(
-          { geo: this.pool.icosaCore, matrix: makeTransform(0, 0.74, 0), colorRgb: [0.06, 0.07, 0.10] },
-          {
-            geo: this.pool.torusEinstein,
-            matrix: makeTransform(0, 0.74, 0, Math.PI * 0.36, 0, 0),
-            colorRgb: goldRgb,
-          },
-        );
-        weaponParts.push({
-          geo: this.pool.torusEinstein,
-          matrix: makeTransform(0, 0.74, 0, 0, Math.PI * 0.25, 0, 0.86, 0.86, 0.86),
-        });
-      } else if (unitDef.id === 'S03' || unitDef.id === 'S32') {
-        bodyParts.push({
-          geo: this.pool.octaPrism,
-          matrix: makeTransform(0, 0.72, 0),
-          colorRgb: unitDef.id === 'S03' ? sapphireRgb : porcelainRgb,
-        });
-        weaponParts.push({ geo: this.pool.funnelBit, matrix: makeTransform(0, 1.18, 0) });
-      } else if (unitDef.id === 'S06' || unitDef.id === 'S25' || unitDef.id === 'S27') {
-        bodyParts.push({
-          geo: this.pool.torusMajor,
-          matrix: makeTransform(0, 0.70, 0),
-          colorRgb: porcelainRgb,
-        });
-        weaponParts.push({
-          geo: this.pool.icosaCore,
-          matrix: makeTransform(0, 0.70, 0, 0, 0, 0, 0.45, 0.45, 0.45),
-        });
-      } else if (unitDef.id === 'S15') {
-        bodyParts.push({
-          geo: this.pool.whaleBody,
-          matrix: makeTransform(0, 0.56, 0),
-          colorRgb: porcelainRgb,
-        });
-        weaponParts.push({ geo: this.pool.headSphere, matrix: makeTransform(0, 0.56, 0.36) });
-      } else if (unitDef.id === 'S11' || unitDef.id === 'S16' || unitDef.id === 'S22') {
-        bodyParts.push(
-          { geo: this.pool.hexPanel, matrix: makeTransform(0, 0.68, 0), colorRgb: factionRgb },
-          { geo: this.pool.hexPanel, matrix: makeTransform(-0.34, 0.64, -0.06, 0, 0.35, 0), colorRgb: porcelainRgb },
-          { geo: this.pool.hexPanel, matrix: makeTransform(0.34, 0.64, -0.06, 0, -0.35, 0), colorRgb: porcelainRgb },
-        );
-        weaponParts.push({ geo: this.pool.funnelBit, matrix: makeTransform(0, 0.98, 0.12) });
-      } else {
-        bodyParts.push(
-          { geo: this.pool.hullCruiser, matrix: makeTransform(0, 0.58, 0), colorRgb: porcelainRgb },
-          {
-            geo: this.pool.visorBox,
-            matrix: makeTransform(0, 0.66, -0.08, 0, 0, 0, 1.8, 0.9, 2.2),
-            colorRgb: factionRgb,
-          },
-        );
-        weaponParts.push({ geo: this.pool.railBarrel, matrix: makeTransform(0, 0.64, 0.32) });
-      }
-
-      wingParts.push(
-        { geo: this.pool.funnelBit, matrix: makeTransform(-0.52, 0.96, -0.10) },
-        { geo: this.pool.funnelBit, matrix: makeTransform(0.52, 0.96, -0.10) },
-      );
+      appendRoleFallbackChassis(ctx, out);
     }
 
+    if (out.wingParts.length === 0) {
+      const defaultWings: GeometryPartSpec[] =
+        unitDef.modelProfile.archetype === 'humanoid_rig'
+          ? [
+              { geo: this.pool.wingFin, matrix: makeTransform(-0.42, 0.94, -0.22, 0, 0.24, 0.44) },
+              { geo: this.pool.wingFin, matrix: makeTransform(0.42, 0.94, -0.22, 0, -0.24, -0.44) },
+              { geo: this.pool.wingFin, matrix: makeTransform(-0.56, 0.78, -0.26, 0, 0.32, 0.78, 0.8, 0.8, 0.8) },
+              { geo: this.pool.wingFin, matrix: makeTransform(0.56, 0.78, -0.26, 0, -0.32, -0.78, 0.8, 0.8, 0.8) },
+            ]
+          : [
+              { geo: this.pool.funnelBit, matrix: makeTransform(-0.62, 1.04, -0.10, 0, 0, 0, 1.25, 1.25, 1.25) },
+              { geo: this.pool.funnelBit, matrix: makeTransform(0.62, 1.04, -0.10, 0, 0, 0, 1.25, 1.25, 1.25) },
+              { geo: this.pool.torusSlim, matrix: makeTransform(0, 0.92, -0.22, 0.2, 0, 0, 1.22, 1.22, 1.22) },
+            ];
+      out.wingParts.push(...defaultWings);
+    }
+
+    const armorCombined = out.bodyParts.length > 0 ? [...out.armor, ...out.bodyParts] : out.armor;
+    const energyCombined = out.weaponParts.length > 0 ? [...out.energy, ...out.weaponParts] : out.energy;
+
     const blueprint: CachedUnitBlueprint = {
-      bodyAndTrimGeo: mergePartsWithVertexColor(bodyParts),
-      weaponAndGlowGeo: mergePartsWithVertexColor(weaponParts),
-      star3WingsGeo: mergePartsWithVertexColor(wingParts),
-      headTopLocalY,
+      armorGeo: mergePartsWithVertexColor(armorCombined),
+      matteGeo: mergePartsWithVertexColor(out.matte),
+      trimGeo: mergePartsWithVertexColor(out.trim),
+      energyGeo: mergePartsWithVertexColor(energyCombined),
+      crystalGeo: mergePartsWithVertexColor(out.crystal),
+      star3WingsGeo: mergePartsWithVertexColor(out.wingParts),
+      headTopLocalY: out.headTopLocalY,
+      weaponGlowHex: out.weaponGlowHex,
+      crystalHex: out.crystalHex,
+      crystalOpacity: out.crystalOpacity,
+      crystalIntensity: out.crystalIntensity,
+      hasMatte: out.matte.length > 0,
+      hasTrim: out.trim.length > 0,
+      hasEnergy: energyCombined.length > 0,
+      hasCrystal: out.crystal.length > 0,
     };
+
+    for (const d of out.disposables) {
+      d.dispose();
+    }
+
     this.blueprintCache.set(unitDef.id, blueprint);
     return blueprint;
+  }
+
+  public getUnitTriangleStats(unitId: string): {
+    readonly armorTris: number;
+    readonly matteTris: number;
+    readonly trimTris: number;
+    readonly energyTris: number;
+    readonly totalTris: number;
+  } {
+    const fallbackDef = SEASON1_UNITS_BY_ID.get('S01')!;
+    const unitDef = SEASON1_UNITS_BY_ID.get(unitId) ?? fallbackDef;
+    const bp = this.getOrBuildBlueprint(unitDef);
+    const countTris = (g: THREE.BufferGeometry): number => {
+      const idx = g.getIndex();
+      if (idx) return Math.floor(idx.count / 3);
+      const pos = g.getAttribute('position');
+      return pos ? Math.floor(pos.count / 3) : 0;
+    };
+    const armorTris = countTris(bp.armorGeo);
+    const matteTris = countTris(bp.matteGeo);
+    const trimTris = countTris(bp.trimGeo);
+    const energyTris = countTris(bp.energyGeo);
+    return {
+      armorTris,
+      matteTris,
+      trimTris,
+      energyTris,
+      totalTris: armorTris + matteTris + trimTris + energyTris,
+    };
   }
 
   public createUnitRig(
@@ -504,6 +327,13 @@ export class UnitMeshFactory {
     const pedestalMesh = new THREE.Mesh(this.pool.pedestal1Geo, this.materials.starPedestal1Mat);
     root.add(pedestalMesh);
 
+    const costRingMesh = new THREE.Mesh(
+      this.pool.costGlowRing,
+      this.materials.getCostRingMaterial(unitDef.cost),
+    );
+    costRingMesh.position.y = 0.022;
+    root.add(costRingMesh);
+
     const bodyTiltGroup = new THREE.Group();
     bodyTiltGroup.rotation.x = CAMERA_PITCH_COMPENSATION_RAD;
     root.add(bodyTiltGroup);
@@ -511,19 +341,47 @@ export class UnitMeshFactory {
     const animatedCore = new THREE.Group();
     bodyTiltGroup.add(animatedCore);
 
-    const bodyMesh = new THREE.Mesh(blueprint.bodyAndTrimGeo, this.vertexColorArmorMat);
-    animatedCore.add(bodyMesh);
+    const armorMesh = new THREE.Mesh(blueprint.armorGeo, this.materials.unitArmorMat);
+    animatedCore.add(armorMesh);
 
-    const weaponGlowMat = this.materials.createBloomEmissiveMaterial(0x5cc8d6, 0.25);
-    const weaponGlowMesh = new THREE.Mesh(blueprint.weaponAndGlowGeo, weaponGlowMat);
+    if (blueprint.hasMatte) {
+      const matteMesh = new THREE.Mesh(blueprint.matteGeo, this.materials.unitMatteMat);
+      animatedCore.add(matteMesh);
+    }
+
+    if (blueprint.hasTrim) {
+      const trimMesh = new THREE.Mesh(blueprint.trimGeo, this.materials.unitTrimMat);
+      animatedCore.add(trimMesh);
+    }
+
+    const weaponGlowMat = this.materials.createUnitEnergyMaterial(blueprint.weaponGlowHex, 0.62);
+    const weaponGlowMesh = new THREE.Mesh(blueprint.energyGeo, weaponGlowMat);
+    weaponGlowMesh.visible = blueprint.hasEnergy;
     animatedCore.add(weaponGlowMesh);
+
+    let crystalMat: THREE.MeshPhysicalMaterial | null = null;
+    if (blueprint.hasCrystal) {
+      crystalMat = this.materials.createUnitCrystalMaterial(
+        blueprint.crystalHex,
+        blueprint.crystalIntensity,
+        blueprint.crystalOpacity,
+      );
+      const crystalMesh = new THREE.Mesh(blueprint.crystalGeo, crystalMat);
+      crystalMesh.renderOrder = 2;
+      animatedCore.add(crystalMesh);
+    }
 
     const star3WingsMesh = new THREE.Mesh(blueprint.star3WingsGeo, this.materials.brushedGoldMat);
     star3WingsMesh.visible = false;
     animatedCore.add(star3WingsMesh);
 
+    const star3CrownMesh = new THREE.Mesh(this.pool.star3CrownGeo, this.starCrownMat);
+    star3CrownMesh.position.set(0, blueprint.headTopLocalY - 0.14, 0);
+    star3CrownMesh.visible = false;
+    animatedCore.add(star3CrownMesh);
+
     const fresnelHitMat = createFresnelHitRimMaterial();
-    const fresnelShellMesh = new THREE.Mesh(blueprint.bodyAndTrimGeo, fresnelHitMat);
+    const fresnelShellMesh = new THREE.Mesh(blueprint.armorGeo, fresnelHitMat);
     fresnelShellMesh.visible = false;
     animatedCore.add(fresnelShellMesh);
 
@@ -541,7 +399,7 @@ export class UnitMeshFactory {
       star: initialStar,
       allegiance: initialAllegiance,
       posSpring: new SpringDamper3D(0, 0, 0, 26, 0.68),
-      scaleSpring: new SpringDamper(1.0, 24, 0.66),
+      scaleSpring: new SpringDamper(starTargetScale(initialStar), 24, 0.66),
       recoilX: new SpringDamper(0, 32, 0.58),
       recoilZ: new SpringDamper(0, 32, 0.58),
       nudgeOffsetX: new SpringDamper(0, 22, 0.72),
@@ -553,8 +411,7 @@ export class UnitMeshFactory {
 
       applyStarTier: (star: UnitStar) => {
         rig.star = star;
-        const targetScale = star === 1 ? 1.0 : star === 2 ? 1.12 : 1.25;
-        rig.scaleSpring.setTarget(targetScale);
+        rig.scaleSpring.setTarget(starTargetScale(star));
 
         pedestalMesh.geometry =
           star === 1
@@ -569,6 +426,7 @@ export class UnitMeshFactory {
               ? this.materials.starPedestal2Mat
               : this.materials.starPedestal3Mat;
         star3WingsMesh.visible = star === 3;
+        star3CrownMesh.visible = star === 3;
       },
 
       applyAllegiance: (allegiance: 'ally' | 'enemy') => {
@@ -579,7 +437,7 @@ export class UnitMeshFactory {
         const clamped = Math.max(0, Math.min(1, ratio));
         rig.manaRatio = clamped;
         const fullGlow = clamped >= 0.85;
-        weaponGlowMat.emissiveIntensity = fullGlow ? 2.25 : rig.star >= 2 ? 0.65 : 0.28;
+        weaponGlowMat.emissiveIntensity = fullGlow ? 1.38 : rig.star >= 2 ? 0.82 : 0.62;
         return fullGlow;
       },
 
@@ -651,36 +509,60 @@ export class UnitMeshFactory {
           }
         }
 
-        const hoverAmp = unitDef.modelProfile.archetype === 'hard_surface_vessel' ? 0.045 : 0.018;
+        const hoverAmp = unitDef.modelProfile.archetype === 'hard_surface_vessel' ? 0.048 : 0.020;
         const idleY = Math.sin(elapsedSec * 2.6 + unitDef.cost) * hoverAmp;
         animatedCore.position.y = idleY + actionOffsetY;
         animatedCore.rotation.x = actionPitch;
 
         if (rig.star === 3) {
-          pedestalMesh.rotation.y = elapsedSec * 0.85;
+          pedestalMesh.rotation.y = elapsedSec * 0.95;
+          star3CrownMesh.rotation.y = elapsedSec * 1.4;
+          star3CrownMesh.position.y = blueprint.headTopLocalY - 0.12 + Math.sin(elapsedSec * 3.4) * 0.035;
+        }
+        if (unitDef.cost >= 4) {
+          costRingMesh.rotation.z = elapsedSec * 0.7;
         }
       },
 
       dispose: () => {
         fresnelHitMat.dispose();
+        weaponGlowMat.dispose();
+        crystalMat?.dispose();
       },
     };
 
     rig.applyStarTier(initialStar);
-    rig.scaleSpring.snap(initialStar === 1 ? 1.0 : initialStar === 2 ? 1.12 : 1.25);
+    rig.scaleSpring.snap(starTargetScale(initialStar));
     bodyTiltGroup.scale.setScalar(rig.scaleSpring.value);
 
     return rig;
   }
 
+  public buildPortraitPreviewGroup(unitId: string, star: UnitStar = 1): {
+    readonly group: THREE.Group;
+    readonly headTopLocalY: number;
+    dispose(): void;
+  } {
+    const rig = this.createUnitRig(`portrait_${unitId}`, unitId, star, 'ally');
+    rig.bodyTiltGroup.rotation.x = 0;
+    return {
+      group: rig.root,
+      headTopLocalY: rig.headTopLocalY,
+      dispose: () => rig.dispose(),
+    };
+  }
+
   public dispose(): void {
     for (const bp of this.blueprintCache.values()) {
-      bp.bodyAndTrimGeo.dispose();
-      bp.weaponAndGlowGeo.dispose();
+      bp.armorGeo.dispose();
+      bp.matteGeo.dispose();
+      bp.trimGeo.dispose();
+      bp.energyGeo.dispose();
+      bp.crystalGeo.dispose();
       bp.star3WingsGeo.dispose();
     }
     this.blueprintCache.clear();
-    this.vertexColorArmorMat.dispose();
+    this.starCrownMat.dispose();
     this.pool.dispose();
   }
 }

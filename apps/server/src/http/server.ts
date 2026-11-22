@@ -8,7 +8,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ArenaThemeIdSchema, CommunicationClientSendSchema, CoursePackSchema, DurationModeSchema, MODE_BUDGETS,
-  QuestionIssueReportSchema, QueueTypeSchema, RedeemRequestSchema, SubjectIdSchema, UserProfileSchema } from '@pkg/contracts';
+  QuestionIssueReportSchema, QueueTypeSchema, RedeemRequestSchema, SubjectIdSchema, TacticianIdSchema, UserProfileSchema } from '@pkg/contracts';
 import { toClientQuestionView } from '@pkg/learning-core';
 import { compileCoursePack, serializeCoursePackToAuthoring, type CompileCoursePackInput } from '@pkg/pack-compiler';
 import type { AppDatabase } from '../db/client.js';
@@ -28,7 +28,7 @@ export interface HttpServices {
   db: AppDatabase; auth: AuthService; ranking: RankingService; learning: LearningService;
   rewards?: typeof defaultRewards;
   lobby?: Pick<LobbyService, 'enterMode' | 'joinCode' | 'getState' | 'leaveRoom' | 'updateSettings' | 'updateMemberPrefs'
-    | 'prepareMemberPrefs' | 'start' | 'cancelQueue' | 'acceptMatch' | 'returnToPrep' | 'sendCommunication' | 'getCommunication' | 'setBlocked'>;
+    | 'prepareMemberPrefs' | 'syncProfilePrefs' | 'start' | 'cancelQueue' | 'acceptMatch' | 'returnToPrep' | 'sendCommunication' | 'getCommunication' | 'setBlocked'>;
   contentRoot?: string;
   matches?: { getActiveSeat(userId: string): unknown | Promise<unknown>; canReturn(userId: string): boolean | Promise<boolean> };
 }
@@ -42,10 +42,11 @@ const LearningStartSchema = z.partialRecord(SubjectIdSchema, z.string().min(1).m
 const V1DisplaySchema = z.object({ fullscreen: z.boolean(), orientation: z.literal('landscape') }).strict();
 const ProfilePatchSchema = z.object({ nickname: z.string().trim().min(1).max(24).optional(),
   onboardingChoice: z.enum(['unset', 'cards', 'micro_match', 'skipped']).optional(),
-  learningStartSelections: LearningStartSchema.optional(), preferredArena: ArenaThemeIdSchema.optional(), displaySettings: V1DisplaySchema.optional() }).strict();
+  learningStartSelections: LearningStartSchema.optional(), preferredArena: ArenaThemeIdSchema.optional(),
+  preferredTacticianId: TacticianIdSchema.optional(), displaySettings: V1DisplaySchema.optional() }).strict();
 const MemberPrefsSchema = z.object({ ready: z.boolean().optional(), subject: SubjectIdSchema.optional(),
   learningStartSelections: LearningStartSchema.optional(),
-  preferredArena: ArenaThemeIdSchema.optional(), displaySettings: V1DisplaySchema.optional() }).strict();
+  preferredArena: ArenaThemeIdSchema.optional(), preferredTacticianId: TacticianIdSchema.optional(), displaySettings: V1DisplaySchema.optional() }).strict();
 const SourceSchema = z.object({ file: z.string().min(1).max(200), text: z.string().max(2_000_000) }).strict();
 const CompileSchema = z.object({ meta: z.unknown(), csvSources: z.array(SourceSchema).max(20).optional(),
   mdSources: z.array(SourceSchema).max(20).optional(), metaSourceName: z.string().max(200).optional(), createdAtIso: z.string().datetime().optional() }).strict();
@@ -145,7 +146,14 @@ export async function registerHttpRoutes(app: FastifyInstance, services: HttpSer
     const token = requestSessionToken(request); await auth.logout(token);
     reply.clearCookie(SESSION_COOKIE, { path: '/', httpOnly: true, secure: secureCookie, sameSite: 'lax' }); return { ok: true };
   });
-  aliases('PATCH', ['/api/me/profile', '/api/auth/profile'], async (request) => auth.updateProfile(requestSessionToken(request), ProfilePatchSchema.parse(request.body)));
+  aliases('PATCH', ['/api/me/profile', '/api/auth/profile'], async (request) => {
+    const patch = ProfilePatchSchema.parse(request.body);
+    const profile = await auth.updateProfile(requestSessionToken(request), patch);
+    if (patch.preferredTacticianId !== undefined || patch.learningStartSelections !== undefined) {
+      services.lobby?.syncProfilePrefs(profile, patch);
+    }
+    return profile;
+  });
   app.get('/api/me', async (request) => {
     const session = await authenticate(request); const season = await currentSeason();
     const [balance, standings] = await Promise.all([rewards.getRewardPointsBalance(db, session.userId),
@@ -199,11 +207,12 @@ export async function registerHttpRoutes(app: FastifyInstance, services: HttpSer
     const data = MemberPrefsSchema.parse(request.body);
     const saved = await write(request, async (session, tx) => {
       const apply = lobby().prepareMemberPrefs(session.profile, data);
-      const { learningStartSelections, preferredArena, displaySettings } = data;
-      const profile = learningStartSelections !== undefined || preferredArena !== undefined || displaySettings !== undefined
+      const { learningStartSelections, preferredArena, preferredTacticianId, displaySettings } = data;
+      const profile = learningStartSelections !== undefined || preferredArena !== undefined || preferredTacticianId !== undefined || displaySettings !== undefined
         ? await auth.updateProfileInTransaction(session, tx, {
           ...(learningStartSelections !== undefined ? { learningStartSelections } : {}),
           ...(preferredArena !== undefined ? { preferredArena } : {}),
+          ...(preferredTacticianId !== undefined ? { preferredTacticianId } : {}),
           ...(displaySettings !== undefined ? { displaySettings } : {}),
         }) : session.profile;
       return { profile, apply };

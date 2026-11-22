@@ -8,25 +8,32 @@ import {
   type SubjectId,
 } from '@pkg/contracts';
 import { httpClient } from '../api/httpClient.js';
-import { ArenaThemeSwitcher } from '../components/PersistentStageCanvas.js';
+import { TacticianPortrait } from '../components/UnitPortrait.js';
 import { STARTER_COURSE_PACKS } from '../content/starterPacks.js';
+import { TACTICIAN_CATALOG } from '../stage/index.js';
 import { useAppStore } from '../store/appStore.js';
 import {
   DURATION_MODE_SHORT_LABELS,
   QUEUE_TYPE_LABELS,
 } from '../utils/antiFakeZero.js';
+import './lobbyPrep.css';
 
 const SHORT_SUBJECT_LABELS: Readonly<Record<SubjectId, string>> = {
   english: '英语',
   math: '数学',
 };
 
+const TOTAL_SEATS = 8;
+
 export function PrepRoomPage(): React.JSX.Element | null {
   const {
     authMode,
     profile,
+    preferredTacticianId,
     lobbyState,
+    setActiveTab,
     setViewingPrepRoom,
+    openSettings,
     updateRoomSettings,
     updateSelfRoomPrefs,
     startMatchOrQueue,
@@ -72,9 +79,16 @@ export function PrepRoomPage(): React.JSX.Element | null {
     [activeSubject, packs],
   );
 
+  const activeTacticianEntry = useMemo(
+    () =>
+      TACTICIAN_CATALOG.find((t) => t.id === preferredTacticianId) ?? TACTICIAN_CATALOG[0]!,
+    [preferredTacticianId],
+  );
+
   if (!room) return null;
 
   const isOffline = authMode === 'offline_practice';
+  const isSoloView = room.queueType === 'solo' || isOffline;
   const isHost = room.hostUserId === profile?.userId;
   const isIdle = room.status === 'idle';
   const selfMember = room.members.find((m) => m.userId === profile?.userId);
@@ -84,10 +98,23 @@ export function PrepRoomPage(): React.JSX.Element | null {
   const modeSpec = MODE_BUDGETS.modes[room.durationMode];
   const plannedMinutes = Math.round(room.plannedTotalSeconds / 60);
 
-  const selectedStartNode =
+  const selectedStartNodeId =
     selfPrefs?.learningStartSelections?.[activeSubject] ??
     profile?.learningStartSelections?.[activeSubject] ??
     subjectManifest.knowledgeGraph[0]!.nodeId;
+
+  const selectedNodeIndex = Math.max(
+    0,
+    subjectManifest.knowledgeGraph.findIndex((n) => n.nodeId === selectedStartNodeId),
+  );
+  const selectedNode =
+    subjectManifest.knowledgeGraph[selectedNodeIndex] ?? subjectManifest.knowledgeGraph[0]!;
+  const resolvedNodeTitle =
+    selectedNode.nodeId === 'ENG_N1_VOCAB_DIALOGUE'
+      ? '情景交际与日常沟通'
+      : selectedNode.title;
+
+  const emptySeatCount = Math.max(0, TOTAL_SEATS - room.members.length);
 
   const handleCopyCode = async () => {
     try {
@@ -122,42 +149,25 @@ export function PrepRoomPage(): React.JSX.Element | null {
     }
   };
 
-  const handleChangeSharedSubject = async (subj: SubjectId) => {
-    if (!isHost || !isIdle || busy) return;
-    setBusy(true);
-    try {
-      await updateRoomSettings({ sharedSubject: subj });
-    } catch (err) {
-      pushToast(err instanceof Error ? err.message : '切换学科失败', 'error');
-    } finally {
-      setBusy(false);
+  const handleChangeSubject = async (subj: SubjectId) => {
+    if (!isIdle || busy) return;
+    if (room.queueType === 'ranked') {
+      if (!isHost) return;
+      setBusy(true);
+      try {
+        await updateRoomSettings({ sharedSubject: subj });
+      } catch (err) {
+        pushToast(err instanceof Error ? err.message : '切换学科失败', 'error');
+      } finally {
+        setBusy(false);
+      }
+      return;
     }
-  };
-
-  const handleChangePersonalSubject = async (subj: SubjectId) => {
-    if (!isIdle || room.queueType === 'ranked' || busy) return;
     setBusy(true);
     try {
       await updateSelfRoomPrefs({ subject: subj });
     } catch (err) {
       pushToast(err instanceof Error ? err.message : '切换学科失败', 'error');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleChangeStartNode = async (nodeId: string) => {
-    if (!isIdle || busy) return;
-    setBusy(true);
-    try {
-      const nextMap = {
-        ...(profile?.learningStartSelections ?? {}),
-        ...(selfPrefs?.learningStartSelections ?? {}),
-        [activeSubject]: nodeId,
-      };
-      await updateSelfRoomPrefs({ learningStartSelections: nextMap });
-    } catch (err) {
-      pushToast(err instanceof Error ? err.message : '更新章节失败', 'error');
     } finally {
       setBusy(false);
     }
@@ -183,239 +193,256 @@ export function PrepRoomPage(): React.JSX.Element | null {
     }
   };
 
+  const primaryLabel = isHost
+    ? room.status === 'queuing'
+      ? '取消排队'
+      : room.queueType === 'solo'
+        ? '开始对局'
+        : !allNonHostReady
+          ? '等待准备'
+          : '开始匹配'
+    : selfMember?.ready
+      ? '取消准备'
+      : '准备';
+
   return (
-    <div className="blc-page-shell blc-prep-shell" data-testid="prep-room-page">
-      <header
-        className="ui-frosted-panel blc-prep-header"
-        style={{
-          borderRadius: 8,
-          border: '1px solid rgba(240, 220, 170, 0.22)',
-          background: 'rgba(13, 17, 26, 0.78)',
-        }}
-      >
-        <div className="blc-prep-header__left">
+    <div className="sf-prep-viewport" data-testid="prep-room-page">
+      <div className="sf-lobby-vignette-bottom" aria-hidden="true" />
+
+      <header className="sf-prep-topbar">
+        <div className="sf-prep-topbar__left">
           <button
             type="button"
-            className="blc-btn blc-btn--ghost blc-btn--sm"
+            className="sf-ghost-pill-btn"
             onClick={() => setViewingPrepRoom(false)}
             data-testid="prep-back-to-lobby-view-btn"
           >
-            ← 大厅
+            <span aria-hidden="true">←</span>
+            <span>返回大厅</span>
           </button>
-          <strong style={{ fontSize: 'var(--fs-md)', fontWeight: 600 }}>
-            {DURATION_MODE_SHORT_LABELS[room.durationMode]} · {plannedMinutes} 分钟
-          </strong>
-        </div>
 
-        <div className="blc-prep-header__right">
-          <ArenaThemeSwitcher compact />
+          <div className="sf-prep-mode-title">
+            <strong>
+              {DURATION_MODE_SHORT_LABELS[room.durationMode]} · {plannedMinutes} 分钟
+            </strong>
+            <span>
+              {QUEUE_TYPE_LABELS[room.queueType]} · {modeSpec.learning.length} 节学习 ·{' '}
+              {modeSpec.rounds} 场战斗
+            </span>
+          </div>
+
           <button
             type="button"
-            className="blc-btn blc-btn--ghost blc-btn--sm"
+            className="sf-ghost-pill-btn"
             onClick={() => void leavePrepRoom()}
             data-testid="prep-leave-room-btn"
           >
-            退出房间
+            离开房间
+          </button>
+        </div>
+
+        <div className="sf-prep-topbar__right">
+          <button
+            type="button"
+            className="sf-gear-btn"
+            onClick={() => openSettings('display')}
+            aria-label="打开设置"
+            title="系统与舞台设置"
+            data-testid="open-settings-btn"
+          >
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="3.4" stroke="currentColor" strokeWidth="1.8" />
+              <path
+                d="M19.4 15A1.65 1.65 0 0 0 19.73 16.82L19.79 16.88A2 2 0 1 1 16.96 19.71L16.9 19.65A1.65 1.65 0 0 0 15.08 19.32A1.65 1.65 0 0 0 14.08 20.83V21A2 2 0 1 1 10.08 21V20.91A1.65 1.65 0 0 0 9 19.4A1.65 1.65 0 0 0 7.18 19.73L7.12 19.79A2 2 0 1 1 4.29 16.96L4.35 16.9A1.65 1.65 0 0 0 4.68 15.08A1.65 1.65 0 0 0 3.17 14.08H3A2 2 0 1 1 3 10.08H3.09A1.65 1.65 0 0 0 4.6 9A1.65 1.65 0 0 0 4.27 7.18L4.21 7.12A2 2 0 1 1 7.04 4.29L7.1 4.35A1.65 1.65 0 0 0 8.92 4.68H9A1.65 1.65 0 0 0 10 3.17V3A2 2 0 1 1 14 3V3.09A1.65 1.65 0 0 0 15 4.6A1.65 1.65 0 0 0 16.82 4.27L16.88 4.21A2 2 0 1 1 19.71 7.04L19.65 7.1A1.65 1.65 0 0 0 19.32 8.92V9A1.65 1.65 0 0 0 20.83 10H21A2 2 0 1 1 21 14H20.91A1.65 1.65 0 0 0 19.4 15Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
         </div>
       </header>
 
-      <div className="blc-prep-grid">
-        <section
-          className="ui-frosted-panel blc-prep-col"
-          style={{
-            borderRadius: 8,
-            border: '1px solid rgba(240, 220, 170, 0.2)',
-            background: 'rgba(13, 17, 26, 0.76)',
-          }}
-          aria-label="席位"
-          data-testid="prep-left-roster"
-        >
-          <div className="blc-col-head">
-            <h3 style={{ fontWeight: 600 }}>席位 ({room.members.length}/8)</h3>
-          </div>
-
-          {room.queueType !== 'solo' && !isOffline ? (
-            <div
-              className="ui-frosted-panel blc-room-code-box"
-              style={{
-                padding: '8px 12px',
-                border: '1px solid rgba(240, 220, 170, 0.2)',
-                background: 'rgba(11, 14, 21, 0.56)',
-              }}
-              data-testid="prep-room-code-box"
-            >
-              <strong className="blc-room-code-text" style={{ fontSize: 16 }}>
-                {room.roomCode}
-              </strong>
+      <div className="sf-prep-middle">
+        <div className="sf-prep-left-wing">
+          <div className="sf-prep-host-plate">
+            <TacticianPortrait
+              tacticianId={preferredTacticianId}
+              size="sm"
+              alt={activeTacticianEntry.name}
+            />
+            <div className="sf-prep-host-meta">
+              <span className="sf-prep-host-name">{profile?.nickname ?? '星港领航员'}</span>
+              <span className="sf-prep-host-sub">{activeTacticianEntry.name}</span>
+            </div>
+            <div className="sf-prep-host-actions">
               <button
                 type="button"
-                className="blc-btn blc-btn--metal blc-btn--xs"
-                onClick={() => void handleCopyCode()}
-                data-testid="copy-room-code-btn"
+                className="sf-prep-mini-link"
+                onClick={() => openSettings('display')}
+                data-testid="prep-switch-tactician-btn"
               >
-                复制
+                切换领航员
+              </button>
+              <button
+                type="button"
+                className="sf-prep-mini-link"
+                onClick={() => {
+                  setViewingPrepRoom(false);
+                  setActiveTab('encyclopedia');
+                }}
+                data-testid="prep-open-collection-btn"
+              >
+                藏品
               </button>
             </div>
-          ) : (
-            <div className="blc-subtle-banner" data-testid="solo-invite-hidden-note">
-              单人模式 · 其余席位由 AI 补齐
-            </div>
-          )}
+          </div>
+        </div>
 
-          <ul className="blc-member-list">
-            {room.members.map((m, idx) => (
-              <li
-                key={m.userId}
-                className={`blc-member-row ${
-                  m.userId === profile?.userId ? 'blc-member-row--self' : ''
-                }`.trim()}
-              >
-                <div className="blc-member-avatar" style={{ width: 30, height: 30, fontSize: 13 }}>
-                  {idx + 1}
-                </div>
-                <div className="blc-member-meta">
-                  <div className="blc-member-name">
-                    <strong>{m.nickname}</strong>
-                    {m.isHost ? <span className="blc-tag-mini blc-tag-mini--gold">房主</span> : null}
-                  </div>
-                </div>
-                <span
-                  className={`blc-ready-pill ${
-                    m.isHost || m.ready ? 'blc-ready-pill--ok' : ''
-                  }`.trim()}
+        <section
+          className="sf-prep-roster-panel ui-corner-ornaments"
+          aria-label="8 席星环席位"
+          data-testid="prep-left-roster"
+        >
+          <div className="sf-prep-roster-head">
+            <div className="sf-prep-roster-title">
+              <span>星港备战席</span>
+              <span>({room.members.length} / {TOTAL_SEATS})</span>
+            </div>
+
+            {!isSoloView ? (
+              <div className="sf-prep-room-code" data-testid="prep-room-code-box">
+                <span className="sf-prep-room-code__label">房间码</span>
+                <strong className="sf-prep-room-code__val">{room.roomCode}</strong>
+                <button
+                  type="button"
+                  className="sf-ghost-pill-btn"
+                  style={{ minHeight: 28, padding: '0 11px', fontSize: 12 }}
+                  onClick={() => void handleCopyCode()}
+                  data-testid="copy-room-code-btn"
                 >
-                  {m.isHost ? '房主' : m.ready ? '已准备' : '未准备'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+                  复制
+                </button>
+              </div>
+            ) : (
+              <div className="sf-prep-solo-note" data-testid="solo-invite-hidden-note">
+                单人模式 · AI 补齐席位
+              </div>
+            )}
+          </div>
 
-        <section
-          className="ui-frosted-panel blc-prep-col"
-          style={{
-            borderRadius: 8,
-            border: '1px solid rgba(240, 220, 170, 0.2)',
-            background: 'rgba(13, 17, 26, 0.76)',
-          }}
-          aria-label="起始章节"
-          data-testid="prep-center-self-learning"
-        >
-          <div className="blc-col-head">
-            <h3 style={{ fontWeight: 600 }}>起始章节</h3>
-            <div className="blc-seg-tabs">
-              {(['english', 'math'] as const).map((subj) => {
-                const selected = activeSubject === subj;
-                const locked = room.queueType === 'ranked' || !isIdle;
-                return (
-                  <button
-                    key={subj}
-                    type="button"
-                    disabled={locked}
-                    className={`blc-seg-tab ${selected ? 'blc-seg-tab--active' : ''}`.trim()}
-                    style={{ minHeight: 30, padding: '3px 10px' }}
-                    onClick={() => void handleChangePersonalSubject(subj)}
-                    data-testid={`self-subject-${subj}`}
+          <div className="sf-seat-grid">
+            {room.members.map((member, idx) => {
+              const isSelf = member.userId === profile?.userId;
+              const isReady = member.isHost || member.ready;
+              return (
+                <div
+                  key={member.userId}
+                  className="sf-seat-card"
+                  style={{ animationDelay: `${idx * 35}ms` }}
+                  data-testid={`prep-seat-member-${idx}`}
+                >
+                  <div
+                    className={`sf-seat-ring ${isReady ? 'sf-seat-ring--ready' : ''} ${
+                      isSelf ? 'sf-seat-ring--self' : ''
+                    }`.trim()}
                   >
-                    {SHORT_SUBJECT_LABELS[subj]}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="blc-form-group">
-            <select
-              id="prep-start-node-select"
-              aria-label="起始章节"
-              className="blc-select"
-              disabled={!isIdle || busy}
-              value={selectedStartNode}
-              onChange={(e) => void handleChangeStartNode(e.target.value)}
-              data-testid="prep-start-node-select"
-            >
-              {subjectManifest.knowledgeGraph.map((node, idx) => (
-                <option key={node.nodeId} value={node.nodeId}>
-                  {idx + 1}. {node.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
-            <span className="blc-field__label">节奏</span>
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: 6,
-                padding: '12px',
-                borderRadius: 6,
-                background: 'rgba(11, 14, 21, 0.52)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-              }}
-            >
-              {modeSpec.learning_detail.map((nd, idx) => (
-                <React.Fragment key={idx}>
-                  {idx > 0 ? (
-                    <span style={{ color: 'var(--text-muted)', fontSize: 12 }} aria-hidden="true">
-                      ›
+                    <TacticianPortrait
+                      tacticianId={member.tacticianId}
+                      size="sm"
+                      alt={member.nickname}
+                      className="sf-seat-portrait"
+                    />
+                    {member.isHost ? <span className="sf-seat-crown">房主</span> : null}
+                    <span
+                      className={`sf-seat-status-dot ${
+                        isReady ? 'sf-seat-status-dot--ok' : ''
+                      }`.trim()}
+                      title={member.isHost ? '房主已就绪' : member.ready ? '已就绪' : '未准备'}
+                    >
+                      {isReady ? '✓' : '·'}
                     </span>
-                  ) : null}
-                  <span
-                    className="blc-chip"
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: 999,
-                      fontVariantNumeric: 'tabular-nums',
-                      borderColor: 'rgba(240, 220, 170, 0.26)',
-                      color: 'var(--text-primary)',
-                      background: 'rgba(200, 170, 110, 0.1)',
-                    }}
-                  >
-                    N{idx + 1} {modeSpec.learning[idx]}s → R{nd.battle_rounds_after.join('/')}
+                  </div>
+                  <span className="sf-seat-name">{member.nickname}</span>
+                  <span className={`sf-seat-sub ${isReady ? 'sf-seat-sub--ok' : ''}`.trim()}>
+                    {member.isHost ? '房主' : member.ready ? '已就绪' : '待准备'}
                   </span>
-                </React.Fragment>
-              ))}
-            </div>
+                </div>
+              );
+            })}
+
+            {Array.from({ length: emptySeatCount }, (_, emptyIdx) => {
+              const slotNum = room.members.length + emptyIdx;
+              if (isSoloView) {
+                return (
+                  <div
+                    key={`ai-${slotNum}`}
+                    className="sf-seat-card"
+                    style={{ animationDelay: `${slotNum * 35}ms` }}
+                  >
+                    <div className="sf-seat-ai-ghost">AI</div>
+                    <span className="sf-seat-name" style={{ color: 'var(--text-muted)' }}>
+                      AI 席位
+                    </span>
+                  </div>
+                );
+              }
+              return (
+                <div
+                  key={`invite-${slotNum}`}
+                  className="sf-seat-card"
+                  style={{ animationDelay: `${slotNum * 35}ms` }}
+                >
+                  <button
+                    type="button"
+                    className="sf-seat-invite-btn"
+                    onClick={() => void handleCopyCode()}
+                    title="复制房间码"
+                    aria-label="邀请好友加入空席"
+                    data-testid={`prep-invite-slot-${slotNum}`}
+                  >
+                    +
+                  </button>
+                  <span className="sf-seat-name" style={{ color: 'var(--text-secondary)' }}>
+                    邀请好友
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
+      </div>
 
-        <section
-          className="ui-frosted-panel blc-prep-col blc-prep-col--right"
-          style={{
-            borderRadius: 8,
-            border: '1px solid rgba(240, 220, 170, 0.2)',
-            background: 'rgba(13, 17, 26, 0.76)',
-          }}
-          aria-label="对局设置"
-          data-testid="prep-right-controls"
-        >
-          <div className="blc-form-group">
-            <div className="blc-field__label">时长</div>
-            <div className="blc-seg-tabs">
+      <footer
+        className="sf-prep-bottom-dock"
+        aria-label="备战控制栏"
+        data-testid="prep-right-controls"
+      >
+        <div className="sf-prep-controls-row">
+          <div className="sf-prep-control-cluster">
+            <span className="sf-prep-cluster-label">时长</span>
+            <div className="sf-seg-group">
               {(['quick', 'standard', 'deep'] as const).map((dm) => (
                 <button
                   key={dm}
                   type="button"
                   disabled={!isHost || !isIdle || busy}
-                  className={`blc-seg-tab ${
-                    room.durationMode === dm ? 'blc-seg-tab--active' : ''
+                  className={`sf-seg-btn ${
+                    room.durationMode === dm ? 'sf-seg-btn--active' : ''
                   }`.trim()}
                   onClick={() => void handleChangeDurationMode(dm)}
                   data-testid={`prep-duration-${dm}`}
                 >
-                  {dm === 'quick' ? '15 分钟' : dm === 'standard' ? '30 分钟' : '60 分钟'}
+                  {dm === 'quick' ? '15分' : dm === 'standard' ? '30分' : '60分'}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="blc-form-group">
-            <div className="blc-field__label">模式</div>
-            <div className="blc-seg-tabs">
+          <div className="sf-prep-control-cluster">
+            <span className="sf-prep-cluster-label">队列</span>
+            <div className="sf-seg-group">
               {(['ranked', 'casual', 'solo'] as const).map((qt) => {
                 const disabledByParty = qt === 'solo' && room.members.length > 1;
                 const disabledByOffline = isOffline && qt !== 'solo';
@@ -424,8 +451,8 @@ export function PrepRoomPage(): React.JSX.Element | null {
                     key={qt}
                     type="button"
                     disabled={!isHost || !isIdle || busy || disabledByParty || disabledByOffline}
-                    className={`blc-seg-tab ${
-                      room.queueType === qt ? 'blc-seg-tab--active' : ''
+                    className={`sf-seg-btn ${
+                      room.queueType === qt ? 'sf-seg-btn--active' : ''
                     }`.trim()}
                     onClick={() => void handleChangeQueueType(qt)}
                     data-testid={`prep-queue-${qt}`}
@@ -437,70 +464,67 @@ export function PrepRoomPage(): React.JSX.Element | null {
             </div>
           </div>
 
-          {room.queueType === 'ranked' ? (
-            <div className="blc-form-group">
-              <div className="blc-field__label">学科</div>
-              <div className="blc-seg-tabs">
-                {(['english', 'math'] as const).map((subj) => (
+          <div className="sf-prep-control-cluster">
+            <span className="sf-prep-cluster-label">学科</span>
+            <div className="sf-seg-group">
+              {(['english', 'math'] as const).map((subj) => {
+                const locked = !isIdle || busy || (room.queueType === 'ranked' && !isHost);
+                return (
                   <button
                     key={subj}
                     type="button"
-                    disabled={!isHost || !isIdle || busy}
-                    className={`blc-seg-tab ${
-                      room.sharedSubject === subj ? 'blc-seg-tab--active' : ''
+                    disabled={locked}
+                    className={`sf-seg-btn ${
+                      activeSubject === subj ? 'sf-seg-btn--active' : ''
                     }`.trim()}
-                    onClick={() => void handleChangeSharedSubject(subj)}
+                    onClick={() => void handleChangeSubject(subj)}
                     data-testid={`prep-shared-subject-${subj}`}
                   >
                     {SHORT_SUBJECT_LABELS[subj]}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          ) : null}
-
-          <div style={{ flex: 1 }} />
-
-          <div
-            className="ui-frosted-panel blc-est-end-box"
-            style={{
-              padding: '10px 14px',
-              border: '1px solid rgba(240, 220, 170, 0.18)',
-              background: 'rgba(11, 14, 21, 0.5)',
-            }}
-            data-testid="estimated-end-time-box"
-          >
-            <strong
-              className="blc-est-end-time"
-              style={{ fontSize: 15, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
-            >
-              预计 {estimatedEndHHMM} 结束
-            </strong>
           </div>
 
           <button
             type="button"
-            className={`blc-btn blc-btn--block blc-btn--lg ${
-              room.status === 'queuing' ? 'blc-btn--ghost' : 'blc-btn--primary'
+            className="sf-prep-chapter-chip"
+            onClick={() => openSettings('learning')}
+            title="前往设置调整起始章节"
+            data-testid="prep-chapter-summary-btn"
+          >
+            <span style={{ color: 'var(--accent-gold)' }}>起点</span>
+            <span className="sf-prep-chapter-chip__text">
+              第 {selectedNodeIndex + 1} 节 · {resolvedNodeTitle}
+            </span>
+            <span style={{ color: 'var(--accent-azure-bright)' }} aria-hidden="true">
+              ✎
+            </span>
+          </button>
+        </div>
+
+        <div className="sf-prep-action-cluster">
+          <div className="sf-prep-eta" data-testid="estimated-end-time-box">
+            <strong>预计 {estimatedEndHHMM} 结束</strong>
+            <span>
+              {modeSpec.learning.length} 节学习 · {modeSpec.rounds} 场战斗
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className={`sf-gold-btn sf-prep-primary-btn ${
+              room.status === 'queuing' ? 'sf-prep-primary-btn--cancel' : ''
             }`.trim()}
             disabled={busy || (isHost && isIdle && !allNonHostReady)}
             onClick={() => void handlePrimaryAction()}
             data-testid="prep-primary-action-btn"
           >
-            {isHost
-              ? room.status === 'queuing'
-                ? '取消匹配'
-                : room.queueType === 'solo'
-                  ? '开始对局'
-                  : !allNonHostReady
-                    ? '等待准备'
-                    : '开始匹配'
-              : selfMember?.ready
-                ? '取消准备'
-                : '准备'}
+            {primaryLabel}
           </button>
-        </section>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 }

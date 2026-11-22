@@ -1,5 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
-import { deferred, english, fail, me, mockUiPage, ok, profile } from './support/mockUi.js';
+import { expect, type Page } from '@playwright/test';
+import { apiResponse, openStudy, openSubpage, settleUi, visitLobby } from './support/flowHelpers.js';
+import { deferred, english, fail, me, ok, profile, test } from './support/mockUi.js';
 
 const check = english.items.find((item) => item.stepRole === 'resource_check')!;
 const practice = english.items.find((item) => item.stepRole === 'practice')!;
@@ -20,16 +21,22 @@ const feedback = (kind = 'resource_check') => ({
   isCorrect: true, isSkipped: false, quality: { numerator: '1', denominator: '1' },
   explanationMd: '已核验解析', stepResults: [],
 });
-async function openStudy(page: Page) {
-  await page.goto('/');
-  await page.getByTestId('bottom-dock-nav').getByText('学习', { exact: true }).click();
-  await page.getByTestId('direct-standalone-study-btn').click();
-  await expect(page.getByTestId('standalone-learning-overlay')).toBeVisible();
+async function visitStudy(page: Page) {
+  await visitLobby(page);
+  await openSubpage(page, 'learning');
+  await openStudy(page);
 }
 
-test('failed advance preserves feedback and offers retry without reopening locked answer', async ({ browser }) => {
+async function openWorkbench(page: Page) {
+  await visitLobby(page);
+  const profilePage = await openSubpage(page, 'profile');
+  await profilePage.getByTestId('open-admin-workbench-btn').click();
+  return page.getByTestId('admin-pack-workbench');
+}
+
+test('failed advance preserves feedback and offers retry without reopening locked answer', async ({ page, mock }) => {
   let advances = 0;
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'POST /api/learning/standalone/start': (route) => ok(route, session()),
     'POST /api/learning/standalone/submit': (route) => {
       const body = route.request().postDataJSON();
@@ -40,7 +47,7 @@ test('failed advance preserves feedback and offers retry without reopening locke
       return ok(route, { feedback: feedback(), session: session('resource_check', true) });
     },
   });
-  await openStudy(page);
+  await visitStudy(page);
   await page.getByTestId('option-A').click();
   await page.getByTestId('submit-answer-btn').click();
   await expect(page.getByTestId('question-feedback-box')).toBeVisible();
@@ -52,58 +59,54 @@ test('failed advance preserves feedback and offers retry without reopening locke
   await page.getByTestId('advance-step-btn').click();
   await expect(page.getByTestId('question-step-card')).toHaveAttribute('data-step-kind', 'verification');
   expect(advances).toBe(2);
-  expect(errors).toEqual([]);
-  await context.close();
 });
 
-test('pending submission is single flight and closing discards its late response', async ({ browser }) => {
+test('pending submission is single flight and closing discards its late response', async ({ page, mock }) => {
   const release = deferred();
   const started = deferred();
   let submits = 0;
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'POST /api/learning/standalone/start': (route) => ok(route, session('practice')),
     'POST /api/learning/standalone/submit': async (route) => {
       submits += 1; started.resolve(); await release.promise;
       return ok(route, { feedback: feedback('practice'), session: session('practice', true) });
     },
   });
-  await openStudy(page);
-  await page.getByTestId('option-A').click();
-  await page.getByTestId('submit-answer-btn').click();
-  await started.promise;
-  const disabled = await page.getByTestId('submit-answer-btn').isDisabled();
-  await page.getByTestId('close-standalone-learning-btn').click();
-  const response = page.waitForResponse((res) => res.url().includes('/api/learning/standalone/submit'));
-  release.resolve();
-  await response;
-  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  await expect(page.getByTestId('learning-home-page')).toBeVisible();
-  await expect(page.getByTestId('standalone-learning-overlay')).toHaveCount(0);
-  expect(disabled).toBe(true);
-  expect(submits).toBe(1);
-  expect(errors).toEqual([]);
-  await context.close();
+  try {
+    await visitStudy(page);
+    await page.getByTestId('option-A').click();
+    await page.getByTestId('submit-answer-btn').click();
+    await started.promise;
+    const disabled = await page.getByTestId('submit-answer-btn').isDisabled();
+    await page.getByTestId('close-standalone-learning-btn').click();
+    const response = apiResponse(page, '/api/learning/standalone/submit', 'POST');
+    release.resolve();
+    await response;
+    await settleUi(page);
+    await expect(page.getByTestId('learning-home-page')).toBeVisible();
+    await expect(page.getByTestId('standalone-learning-overlay')).toHaveCount(0);
+    expect(disabled).toBe(true);
+    expect(submits).toBe(1);
+  } finally { release.resolve(); }
 });
 
-test('remediation displays corrections, not a locked resource question to resubmit', async ({ browser }) => {
-  const { page, context, errors } = await mockUiPage(browser, {
+test('remediation displays corrections, not a locked resource question to resubmit', async ({ page, mock }) => {
+  await mock({
     'POST /api/learning/standalone/start': (route) => ok(route, session('remediation', true)),
     'POST /api/learning/standalone/submit': (route) => ok(route, { ...session('verification'), currentStep: { ...session('verification').currentStep, questions: [] } }),
   });
-  await openStudy(page);
+  await visitStudy(page);
   await expect(page.getByTestId('question-step-card')).toContainText(check.explanationMd);
   await expect(page.getByTestId('submit-answer-btn')).toHaveCount(0);
   await expect(page.getByTestId('advance-step-btn')).toBeVisible();
   await page.getByTestId('advance-step-btn').click();
   await expect(page.getByTestId('question-step-card')).toHaveAttribute('data-step-kind', 'verification');
-  expect(errors).toEqual([]);
-  await context.close();
 });
 
-test('editing or exporting authoring sources invalidates the previous compiled draft', async ({ browser }) => {
+test('editing or exporting authoring sources invalidates the previous compiled draft', async ({ page, mock }) => {
   const admin = { ...me, profile: { ...profile, role: 'admin' } };
   const compiled = { ok: true, draftId: 'old-draft', pack: english, manifest: english.manifest, diagnostics: [] };
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'GET /api/me': (route) => ok(route, admin),
     'GET /api/admin/packs': (route) => ok(route, [{ manifest: english.manifest, isActive: true }]),
     'GET /api/admin/analytics/anonymous-error-rates': (route) => ok(route, []),
@@ -113,9 +116,7 @@ test('editing or exporting authoring sources invalidates the previous compiled d
       meta: { ...english.manifest, knowledgeGraph: english.manifest.knowledgeGraph }, csvText: 'exported source', mdText: '',
     }),
   });
-  await page.goto('/');
-  await page.getByTestId('bottom-dock-nav').getByText('我的', { exact: true }).click();
-  await page.getByTestId('open-admin-workbench-btn').click();
+  await openWorkbench(page);
   await page.getByTestId('pack-step-2').click();
   await page.getByTestId('compile-pack-btn').click();
   await page.getByTestId('pack-step-5').click();
@@ -132,14 +133,12 @@ test('editing or exporting authoring sources invalidates the previous compiled d
   await expect(page.getByTestId('pack-csv-editor')).toHaveValue('exported source');
   await page.getByTestId('pack-step-5').click();
   await expect(page.getByTestId('publish-pack-draft-btn')).toBeDisabled();
-  expect(errors).toEqual([]);
-  await context.close();
 });
 
-test('a compile response cannot restore a draft after the source was changed', async ({ browser }) => {
+test('a compile response cannot restore a draft after the source was changed', async ({ page, mock }) => {
   const release = deferred();
   const started = deferred();
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'GET /api/me': (route) => ok(route, { ...me, profile: { ...profile, role: 'admin' } }),
     'GET /api/admin/packs': (route) => ok(route, []),
     'GET /api/admin/analytics/anonymous-error-rates': (route) => ok(route, []),
@@ -149,24 +148,24 @@ test('a compile response cannot restore a draft after the source was changed', a
       return ok(route, { ok: true, draftId: 'old-draft', pack: english, manifest: english.manifest, diagnostics: [] });
     },
   });
-  await page.goto('/');
-  await page.getByTestId('bottom-dock-nav').getByText('我的', { exact: true }).click();
-  await page.getByTestId('open-admin-workbench-btn').click();
-  await page.getByTestId('pack-step-2').click();
-  await page.getByTestId('compile-pack-btn').click();
-  await started.promise;
-  await page.getByTestId('pack-csv-editor').fill('changed while compiling');
-  release.resolve();
-  await page.waitForLoadState('networkidle');
-  await page.getByTestId('pack-step-5').click();
-  await expect(page.getByTestId('publish-pack-draft-btn')).toBeDisabled();
-  expect(errors).toEqual([]);
-  await context.close();
+  try {
+    await openWorkbench(page);
+    await page.getByTestId('pack-step-2').click();
+    await page.getByTestId('compile-pack-btn').click();
+    await started.promise;
+    await page.getByTestId('pack-csv-editor').fill('changed while compiling');
+    const response = apiResponse(page, '/api/admin/packs/compile-preview', 'POST');
+    release.resolve();
+    await (await response).finished();
+    await settleUi(page);
+    await page.getByTestId('pack-step-5').click();
+    await expect(page.getByTestId('publish-pack-draft-btn')).toBeDisabled();
+  } finally { release.resolve(); }
 });
 
-test('saving a cohort and then restoring its original value sends both updates', async ({ browser }) => {
+test('saving a cohort and then restoring its original value sends both updates', async ({ page, mock }) => {
   const groups: Array<string | null> = [];
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'GET /api/me': (route) => ok(route, { ...me, profile: { ...profile, role: 'admin' } }),
     'GET /api/admin/packs': (route) => ok(route, []),
     'GET /api/admin/analytics/anonymous-error-rates': (route) => ok(route, []),
@@ -176,9 +175,7 @@ test('saving a cohort and then restoring its original value sends both updates',
       return ok(route, { ok: true });
     },
   });
-  await page.goto('/');
-  await page.getByTestId('bottom-dock-nav').getByText('我的', { exact: true }).click();
-  await page.getByTestId('open-admin-workbench-btn').click();
+  await openWorkbench(page);
   await page.getByTestId('wb-tab-users').click();
   const field = page.getByPlaceholder('分组标识', { exact: true });
   await field.fill('B');
@@ -188,11 +185,9 @@ test('saving a cohort and then restoring its original value sends both updates',
   await field.fill('A');
   await field.blur();
   await expect.poll(() => groups).toEqual(['B', 'A']);
-  expect(errors).toEqual([]);
-  await context.close();
 });
 
-test('all six question types keep their typed submissions and practice hint state', async ({ browser }) => {
+test('all six question types keep their typed submissions and practice hint state', async ({ page, mock }) => {
   const base = { ...practice, stepRole: 'practice', hintMd: '先审题再作答', stepsRubric: [] };
   const questions = [
     { ...base, questionId: 'single', questionType: 'single_choice' },
@@ -206,14 +201,14 @@ test('all six question types keep their typed submissions and practice hint stat
   ];
   const state = { ...session('practice'), currentStep: { ...session('practice').currentStep, questions } };
   const submissions: Array<{ questionId: string; submission: { answer: unknown; hintUsed: boolean } }> = [];
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'POST /api/learning/standalone/start': (route) => ok(route, state),
     'POST /api/learning/standalone/submit': (route) => {
       const body = route.request().postDataJSON(); submissions.push(body);
       return ok(route, { feedback: { ...feedback('practice'), questionId: body.questionId }, session: state });
     },
   });
-  await openStudy(page);
+  await visitStudy(page);
   await page.getByTestId('toggle-hint-btn').click();
   await expect(page.getByTestId('practice-hint-content')).toBeVisible();
   await page.getByTestId('option-A').click();
@@ -244,6 +239,4 @@ test('all six question types keep their typed submissions and practice hint stat
     'A', ['A', 'B'], { 左甲: '右甲', 左乙: '右乙' }, 'can learn', '4.5 kg', { first: '2', second: '3' },
   ]);
   expect(submissions.map((body) => body.submission.hintUsed)).toEqual([true, false, false, false, false, false]);
-  expect(errors).toEqual([]);
-  await context.close();
 });

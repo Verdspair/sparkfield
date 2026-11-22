@@ -26,6 +26,33 @@ function cleanBookTitle(rawTitle: string): string {
   return stripped || rawTitle;
 }
 
+function clampCostTier(cost: number): 1 | 2 | 3 | 4 | 5 {
+  if (cost <= 1) return 1;
+  if (cost === 2) return 2;
+  if (cost === 3) return 3;
+  if (cost === 4) return 4;
+  return 5;
+}
+
+function DrawerCornerSvg({ pos }: { readonly pos: 'tl' | 'tr' | 'bl' | 'br' }): React.JSX.Element {
+  return (
+    <svg
+      className={`lui-corner-ornament lui-corner-ornament--${pos}`}
+      viewBox="0 0 14 14"
+      aria-hidden="true"
+    >
+      <path
+        d="M1.2 12.8V4.2L4.2 1.2H12.8"
+        fill="none"
+        stroke="#f2c97d"
+        strokeWidth="1.25"
+      />
+      <polygon points="1.2,1.2 4.6,1.2 1.2,4.6" fill="#f2c97d" />
+      <circle cx="5.4" cy="5.4" r="1.05" fill="#4fd1ff" />
+    </svg>
+  );
+}
+
 export interface RecommendedItemsTreeProps {
   readonly recommendedItemIds: readonly string[];
   readonly ownedComponentIds?: readonly string[];
@@ -86,8 +113,14 @@ export function RecommendedItemsTree({
   }, [ownedComponentIds]);
 
   return (
-    <div className={className} data-testid="recommended-items-tree">
-      <div className="lui-recipe-head">推荐成装</div>
+    <div
+      className={`lui-recipe-tree ${className}`.trim()}
+      data-testid="recommended-items-tree"
+    >
+      <div className="lui-recipe-head">
+        <span className="lui-briefing-diamond" aria-hidden="true" />
+        <span>推荐成装</span>
+      </div>
       <div className="lui-recipe-row">
         {recommendedItemIds.map((itemId) => {
           const entry = lookupItemById(itemId);
@@ -103,7 +136,7 @@ export function RecommendedItemsTree({
               onClick={() => setExpandedItemId(itemId)}
               data-testid={`rec-item-${itemId}`}
             >
-              <span style={{ color: '#9A783B', fontSize: 11 }}>◆</span>
+              <span className="lui-recipe-gem" aria-hidden="true">◆</span>
               <span>{itemName}</span>
             </button>
           );
@@ -116,38 +149,39 @@ export function RecommendedItemsTree({
           className="lui-recipe-formula-card"
           data-testid="active-recipe-formula"
         >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8,
-            }}
-          >
-            <strong style={{ fontSize: 14 }}>{activeCompleted.name}</strong>
+          <div className="lui-recipe-formula-top">
+            <strong className="lui-recipe-formula-name">{activeCompleted.name}</strong>
             {activeCompleted.formula ? (
               <span className="lui-subtle-pill">{activeCompleted.formula}</span>
             ) : null}
           </div>
-          <div style={{ fontSize: 13, margin: '4px 0 8px', color: '#4A5362' }}>
-            {activeCompleted.desc}
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+          <div className="lui-recipe-formula-desc">{activeCompleted.desc}</div>
+          <div className="lui-recipe-chain">
             {(() => {
               const remaining = new Map(ownedCounts);
               return activeCompleted.components.map((compId, idx) => {
                 const compEntry = lookupItemById(compId);
                 const compLabel = compEntry ? compEntry.item.name : compId;
+                const compGlyph =
+                  compEntry && compEntry.kind === 'component'
+                    ? compEntry.item.short
+                    : '◆';
+                const compTitle =
+                  compEntry && 'desc' in compEntry.item ? compEntry.item.desc : undefined;
                 const avail = remaining.get(compId) ?? 0;
                 const isOwned = avail > 0;
                 if (isOwned) remaining.set(compId, avail - 1);
                 return (
                   <React.Fragment key={`${compId}-${idx}`}>
-                    {idx > 0 ? <span style={{ fontWeight: 700, color: '#9A783B' }}>+</span> : null}
+                    {idx > 0 ? <span className="lui-recipe-plus">+</span> : null}
                     <span
                       className={`lui-recipe-comp ${isOwned ? 'lui-recipe-comp--owned' : ''}`.trim()}
                       data-owned={isOwned ? 'true' : 'false'}
+                      title={compTitle}
                     >
+                      <span className="lui-recipe-glyph" aria-hidden="true">
+                        {compGlyph}
+                      </span>
                       <span>{compLabel}</span>
                       {isOwned ? <span className="lui-owned-tag">背包已有</span> : null}
                     </span>
@@ -210,6 +244,7 @@ export function UnitLoreDrawer({
 
   const displayName = unitLore?.name ?? resolvedUnitDef?.name ?? unitId;
   const displayCost = unitLore?.cost ?? resolvedUnitDef?.cost ?? 1;
+  const costTier = clampCostTier(displayCost);
   const displayFaction = unitLore?.faction ?? resolvedUnitDef?.faction ?? '未知派系';
   const displayRole = unitLore?.role ?? resolvedUnitDef?.role ?? '未知职能';
 
@@ -217,19 +252,25 @@ export function UnitLoreDrawer({
     <aside
       className="lui-paper-shell lui-paper-shell--compact"
       data-testid="unit-lore-drawer"
+      data-cost-tier={costTier}
       aria-label={`${displayName} 图鉴详情`}
     >
+      <DrawerCornerSvg pos="tl" />
+      <DrawerCornerSvg pos="tr" />
+      <DrawerCornerSvg pos="bl" />
+      <DrawerCornerSvg pos="br" />
+
       <header className="lui-header">
         <div className="lui-badge-group">
-          <span className="lui-badge lui-badge--role">{displayCost} 费</span>
-          <strong style={{ fontSize: 17 }}>{displayName}</strong>
+          <span className={`lui-cost-badge lui-cost-badge--${costTier}`}>{displayCost} 费</span>
+          <strong className="lui-unit-name">{displayName}</strong>
           <span className="lui-badge">{displayFaction}</span>
           <span className="lui-badge">{displayRole}</span>
           {resolvedUnitDef?.uniqueTrait ? (
             <span className="lui-badge lui-badge--locked">{resolvedUnitDef.uniqueTrait}</span>
           ) : null}
           {highestStarUnlocked ? (
-            <span className="lui-badge">{'★'.repeat(highestStarUnlocked)}</span>
+            <span className="lui-badge lui-badge--stars">{'★'.repeat(highestStarUnlocked)}</span>
           ) : null}
         </div>
         {onClose ? (
@@ -278,29 +319,46 @@ export function UnitLoreDrawer({
             {resolvedUnitDef ? (
               <>
                 <div className="lui-stem-card">
-                  <div style={{ fontSize: 13.5, color: '#4A5362', marginBottom: 10 }}>
+                  <div className="lui-unit-silhouette">
                     {resolvedUnitDef.modelProfile.silhouetteDesc}
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>技能</div>
+                  <div className="lui-unit-skill-label">
+                    <span className="lui-briefing-diamond" aria-hidden="true" />
+                    <span>技能</span>
+                  </div>
                   <MarkdownKatexBlock content={resolvedUnitDef.skillSummary} />
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 6,
-                      marginTop: 12,
-                      fontSize: 12.5,
-                    }}
-                  >
-                    <span className="lui-badge">生命 {resolvedUnitDef.stats.hp}</span>
-                    <span className="lui-badge">攻击 {resolvedUnitDef.stats.atk}</span>
-                    <span className="lui-badge">护甲 {resolvedUnitDef.stats.armor}</span>
-                    <span className="lui-badge">魔抗 {resolvedUnitDef.stats.mr}</span>
-                    <span className="lui-badge">攻速 {resolvedUnitDef.stats.atkSpeed}</span>
-                    <span className="lui-badge">射程 {resolvedUnitDef.stats.range}</span>
-                    <span className="lui-badge">
-                      法力 {resolvedUnitDef.stats.initialMana}/{resolvedUnitDef.stats.maxMana}
-                    </span>
+                  <hr className="lui-metal-divider" style={{ marginTop: 12 }} />
+                  <div className="lui-stat-grid">
+                    <div className="lui-stat-cell">
+                      <span className="lui-stat-label">生命</span>
+                      <span className="lui-stat-value">{resolvedUnitDef.stats.hp}</span>
+                    </div>
+                    <div className="lui-stat-cell">
+                      <span className="lui-stat-label">攻击</span>
+                      <span className="lui-stat-value">{resolvedUnitDef.stats.atk}</span>
+                    </div>
+                    <div className="lui-stat-cell">
+                      <span className="lui-stat-label">护甲</span>
+                      <span className="lui-stat-value">{resolvedUnitDef.stats.armor}</span>
+                    </div>
+                    <div className="lui-stat-cell">
+                      <span className="lui-stat-label">魔抗</span>
+                      <span className="lui-stat-value">{resolvedUnitDef.stats.mr}</span>
+                    </div>
+                    <div className="lui-stat-cell">
+                      <span className="lui-stat-label">攻速</span>
+                      <span className="lui-stat-value">{resolvedUnitDef.stats.atkSpeed}</span>
+                    </div>
+                    <div className="lui-stat-cell">
+                      <span className="lui-stat-label">射程</span>
+                      <span className="lui-stat-value">{resolvedUnitDef.stats.range}</span>
+                    </div>
+                    <div className="lui-stat-cell">
+                      <span className="lui-stat-label">法力</span>
+                      <span className="lui-stat-value">
+                        {resolvedUnitDef.stats.initialMana}/{resolvedUnitDef.stats.maxMana}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -319,7 +377,7 @@ export function UnitLoreDrawer({
           <article key="lore" className="lui-stage-anim" data-testid="unit-story-panel">
             {factionEntry ? (
               <div className="lui-faction-card">
-                <div style={{ fontWeight: 700, fontSize: 13.5, color: '#5C441B' }}>
+                <div className="lui-unit-skill-label" style={{ marginBottom: 0 }}>
                   {factionEntry.faction}
                 </div>
                 <div className="lui-faction-motto">“{factionEntry.motto}”</div>
@@ -327,7 +385,10 @@ export function UnitLoreDrawer({
             ) : null}
 
             <div className="lui-stem-card">
-              <h3 style={{ margin: '0 0 10px', fontSize: 16.5 }}>{displayName}</h3>
+              <h3 className="lui-briefing-title" style={{ marginBottom: 10 }}>
+                <span className="lui-briefing-diamond" aria-hidden="true" />
+                <span>{displayName}</span>
+              </h3>
               <MarkdownKatexBlock content={unitLore?.story ?? '暂无列传记录。'} />
             </div>
 
@@ -352,18 +413,10 @@ export function UnitLoreDrawer({
                 className="lui-voice-card"
                 data-trigger={line.trigger}
               >
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: '#8C6B2F',
-                    marginBottom: 3,
-                    letterSpacing: '0.03em',
-                  }}
-                >
+                <div className="lui-voice-trigger">
                   {VOICE_TRIGGER_LABELS[line.trigger] ?? line.trigger}
                 </div>
-                <div style={{ fontSize: 15, color: '#1C2129' }}>{line.text}</div>
+                <div className="lui-voice-text">{line.text}</div>
               </div>
             ))}
           </div>
@@ -443,14 +496,15 @@ export function LoreArchiveReader({
       className="lui-paper-shell lui-paper-shell--standalone"
       data-testid="lore-archive-reader"
     >
+      <DrawerCornerSvg pos="tl" />
+      <DrawerCornerSvg pos="tr" />
+      <DrawerCornerSvg pos="bl" />
+      <DrawerCornerSvg pos="br" />
+
       <header className="lui-header">
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#1C2129', letterSpacing: '0.04em' }}>
-            {cleanBookTitle(loreData.title)}
-          </div>
-          <div style={{ fontSize: 12.5, color: '#6B5226', marginTop: 1 }}>
-            {loreData.subtitle}
-          </div>
+          <div className="lui-lore-title">{cleanBookTitle(loreData.title)}</div>
+          <div className="lui-lore-subtitle">{loreData.subtitle}</div>
         </div>
 
         <div className="lui-btn-row">
@@ -488,7 +542,7 @@ export function LoreArchiveReader({
                     data-testid={`era-nav-${era.id}`}
                   >
                     <span className="lui-era-scale">{era.scaleLabel}</span>
-                    <span style={{ fontSize: 13.5, fontWeight: 600 }}>{era.title}</span>
+                    <span className="lui-era-name">{era.title}</span>
                   </button>
                 );
               })}
@@ -504,9 +558,8 @@ export function LoreArchiveReader({
                   <div className="lui-badge lui-badge--role" style={{ marginBottom: 10 }}>
                     {currentEra.scaleLabel}
                   </div>
-                  <h2 style={{ margin: '0 0 14px', fontSize: 19, color: '#151921', letterSpacing: '0.02em' }}>
-                    {currentEra.title}
-                  </h2>
+                  <h2 className="lui-era-heading">{currentEra.title}</h2>
+                  <hr className="lui-metal-divider" style={{ marginBottom: 12 }} />
                   <MarkdownKatexBlock content={currentEra.body} />
                 </>
               ) : (
@@ -521,14 +574,10 @@ export function LoreArchiveReader({
                 const factionUnits = loreData.units.filter((u) => u.faction === fac.faction);
                 return (
                   <div key={fac.faction} className="lui-faction-card">
-                    <strong style={{ fontSize: 16, letterSpacing: '0.02em' }}>
-                      {fac.faction}
-                    </strong>
+                    <strong className="lui-faction-title">{fac.faction}</strong>
                     <div className="lui-faction-motto">“{fac.motto}”</div>
-                    <p style={{ margin: '2px 0 4px', fontSize: 13.5, color: '#4A5362' }}>
-                      {fac.summary}
-                    </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 'auto' }}>
+                    <p className="lui-faction-summary">{fac.summary}</p>
+                    <div className="lui-faction-units">
                       {factionUnits.map((u) => (
                         <button
                           key={u.unitId}

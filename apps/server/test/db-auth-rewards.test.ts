@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { ordinal, rate, rating } from 'openskill';
-import type { CoursePack, FinalBoardSnapshot, FsrsCardRecord } from '@pkg/contracts';
+import { DEFAULT_TACTICIAN_ID, type CoursePack, type FinalBoardSnapshot, type FsrsCardRecord } from '@pkg/contracts';
 import { createDatabase, type AppDatabase } from '../src/db/client.js';
 import { DEFAULT_SEASON_TERM_ID, migrateDatabase } from '../src/db/migrate.js';
 import { activateCoursePackVersion, getCoursePack, getPrivateFsrsCards, publishCoursePack,
@@ -68,6 +68,14 @@ describe('real PostgreSQL 17 database, authentication and rewards',()=>{
     expect(gifts.find(g=>g.giftId==='local-notebook')?.stockRemaining).toBe(3);
     const seeded=await db.selectFrom('season_terms').selectAll().where('id','=',seasonTerm).executeTakeFirstOrThrow();
     expect(seeded.label).toContain('赛季'); expect(seeded.rewards_settled).toBe(false);
+  });
+  it('adds the default tactician to an existing account without changing other profile settings', async () => {
+    const person = await user();
+    await db.updateTable('users').set({ avatar_frame_id: 'legacy-frame' }).where('id', '=', person.userId).execute();
+    await sql`ALTER TABLE users DROP COLUMN preferred_tactician_id`.execute(db);
+    await migrateDatabase(db);
+    const session = await auth.login({ username: person.username, password });
+    expect(session.profile).toMatchObject({ preferredTacticianId: DEFAULT_TACTICIAN_ID, avatarFrameId: 'legacy-frame', learningStartSelections: {} });
   });
   it('registers no-email and optional-email accounts; never creates fake addresses',async()=>{
     const noEmail=await user('   '), withEmail=await user('Person@example.test');

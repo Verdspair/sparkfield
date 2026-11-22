@@ -11,7 +11,11 @@ export {
 } from './MarkdownKatexBlock.js';
 
 export {
+  LEARNING_READING_THEME_STORAGE_KEY,
   QuestionStepCard,
+  readStoredReadingTheme,
+  writeStoredReadingTheme,
+  type LearningReadingTheme,
   type LessonStepProgressItem,
   type QuestionAnswerSubmission,
   type QuestionAnswerValue,

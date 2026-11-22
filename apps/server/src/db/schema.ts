@@ -1,5 +1,5 @@
 import type { ColumnType, Generated } from 'kysely';
-import type { ArenaThemeId, DisplaySettings, DurationMode, FinalBoardSnapshot, FsrsCardRecord, SubjectId } from '@pkg/contracts';
+import type { ArenaThemeId, DisplaySettings, DurationMode, FinalBoardSnapshot, FsrsCardRecord, SubjectId, TacticianId } from '@pkg/contracts';
 
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 export type JsonColumn<T> = ColumnType<T, string, string>;
@@ -10,7 +10,8 @@ export interface UsersTable {
   role: Generated<'player' | 'editor' | 'admin'>; session_epoch: Generated<number>;
   onboarding_choice: Generated<'unset' | 'cards' | 'micro_match' | 'skipped'>;
   learning_start_json: Defaulted<JsonColumn<Partial<Record<SubjectId, string>>>>;
-  preferred_arena: Generated<ArenaThemeId>; display_settings_json: Defaulted<JsonColumn<DisplaySettings>>;
+  preferred_arena: Generated<ArenaThemeId>; preferred_tactician_id: Generated<TacticianId>;
+  display_settings_json: Defaulted<JsonColumn<DisplaySettings>>;
   avatar_frame_id: string | null; board_plaque_id: string | null;
   highest_unit_stars_json: Defaulted<JsonColumn<Record<string, number>>>;
   cohort_group: string | null; created_at: Defaulted<Timestamp>;

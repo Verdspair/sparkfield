@@ -5,7 +5,7 @@ import { assertGameIntegrity } from '../src/integrity.js';
 import { createRng, nextRandom, cloneState, hashState } from '../src/rng.js';
 import { createPool, drawShopCard, drawUnitOfCost, assertPoolConservation, releaseShop, takeFromPool, starCopies } from '../src/pool.js';
 import { grantGold, addExperience, applyLearningGoldGrant, buyExperience, populationCap, settleSeatEconomy, assertGoldConservation } from '../src/economy.js';
-import { buyCard, makeUnit, moveUnit, receiveUnit, finalizePrepDeadline, sellUnit } from '../src/board-ops.js';
+import { buyCard, makeUnit, moveUnit, receiveUnit, finalizePrepDeadline, sellUnit, getShopPurchasePreview } from '../src/index.js';
 import { roundRobin, getRoundPairings, victoryPointsFor, finalPlacements } from '../src/schedule.js';
 import type { GameState, SeatState } from '../src/types.js';
 function clearSeat(game: GameState, seat: SeatState) {
@@ -57,6 +57,9 @@ describe('atomic purchases and board operations',()=>{
     const g=createGame('quick');const s=g.seats[0]!;clearSeat(g,s);
     const body=add(g,s,'S01',{zone:'board',row:1,col:3});add(g,s,'S01',{zone:'board',row:2,col:3});
     for(let i=0;i<9;i++) add(g,s,'S02',{zone:'bench',slot:i});putShop(g,s,'S01');
+    const before = hashState(g);
+    expect(getShopPurchasePreview(s, 0)).toEqual({ canBuy: true, canDirectStarUp: true, targetStar: 2, ownedCount: 2, goldCost: 1, reason: null });
+    expect(hashState(g)).toBe(before);
     expect(buyCard(g,s,0)).toEqual({ok:true});expect(s.units.find(u=>u.instanceId===body.instanceId)?.star).toBe(2);expect(s.units.filter(u=>u.location.zone==='bench')).toHaveLength(9);assertPoolConservation(g);
   });
   it('chains a full-bench 1→2→3 purchase and returns duplicate/overflow equipment',()=>{
@@ -65,7 +68,9 @@ describe('atomic purchases and board operations',()=>{
     const second=add(g,s,'S01',{zone:'board',row:1,col:2},2);second.items=['I_LORENTZ_RAIL','I_FUSION_BLADE'];
     add(g,s,'S01',{zone:'bench',slot:0});const pair=add(g,s,'S01',{zone:'bench',slot:1});pair.items=['C_SWORD'];
     for(let i=2;i<9;i++) add(g,s,'S03',{zone:'bench',slot:i});
-    putShop(g,s,'S01');expect(buyCard(g,s,0).ok).toBe(true);
+    putShop(g,s,'S01');
+    expect(getShopPurchasePreview(s, 0)).toMatchObject({ canBuy: true, canDirectStarUp: true, targetStar: 3, ownedCount: 2 });
+    expect(buyCard(g,s,0).ok).toBe(true);
     const result=s.units.find(u=>u.instanceId===body.instanceId)!;expect(result.star).toBe(3);expect(result.location).toEqual({zone:'board',row:0,col:2});
     expect(result.items).toEqual(['I_FUSION_BLADE','I_LORENTZ_RAIL','C_SWORD']);expect(s.inventoryItems.filter(x=>x==='I_FUSION_BLADE')).toHaveLength(1);assertPoolConservation(g);
   });
@@ -73,6 +78,22 @@ describe('atomic purchases and board operations',()=>{
     const g=createGame('quick');const s=g.seats[0]!;clearSeat(g,s);
     for(let i=0;i<9;i++) add(g,s,'S02',{zone:'bench',slot:i});putShop(g,s,'S01');
     const before=hashState(g);expect(buyCard(g,s,0)).toEqual({ok:false,reason:'BENCH_FULL'});expect(hashState(g)).toBe(before);
+  });
+  it('reports a frozen copy, empty slots, and gold failures without writing state', () => {
+    const game = createGame('quick'); const seat = game.seats[0]!; clearSeat(game, seat);
+    add(game, seat, 'S01', { zone: 'board', row: 0, col: 0 });
+    const frozen = add(game, seat, 'S01', { zone: 'board', row: 0, col: 1 });
+    frozen.frozenUntilRound = 2;
+    for (let slot = 0; slot < 9; slot++) add(game, seat, 'S02', { zone: 'bench', slot });
+    putShop(game, seat, 'S01');
+    const before = hashState(game);
+    expect(getShopPurchasePreview(seat, 0)).toEqual({ canBuy: false, canDirectStarUp: false, targetStar: null, ownedCount: 1, goldCost: 1, reason: 'BENCH_FULL' });
+    expect(getShopPurchasePreview(seat, 1)).toEqual({ canBuy: false, canDirectStarUp: false, targetStar: null, ownedCount: 0, goldCost: null, reason: 'EMPTY_SHOP_SLOT' });
+    expect(hashState(game)).toBe(before);
+    frozen.frozenUntilRound = null;
+    seat.gold = 0;
+    expect(getShopPurchasePreview(seat, 0)).toEqual({ canBuy: false, canDirectStarUp: false, targetStar: 2, ownedCount: 2, goldCost: 1, reason: 'INSUFFICIENT_GOLD' });
+    expect(buyCard(game, seat, 0)).toEqual({ ok: false, reason: 'INSUFFICIENT_GOLD' });
   });
   it('swaps occupied hexes and atomically replaces at population cap',()=>{
     const g=createGame('quick');const s=g.seats[0]!;clearSeat(g,s);

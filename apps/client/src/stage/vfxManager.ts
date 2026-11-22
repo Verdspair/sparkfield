@@ -14,8 +14,11 @@ interface RippleSlot {
 }
 
 interface ProjectileSlot {
-  readonly mesh: THREE.Mesh;
+  readonly group: THREE.Group;
+  readonly headMesh: THREE.Mesh;
+  readonly trailMesh: THREE.Mesh;
   readonly mat: THREE.MeshStandardMaterial;
+  readonly trailMat: THREE.MeshBasicMaterial;
   active: boolean;
   elapsedSec: number;
   durationSec: number;
@@ -27,6 +30,7 @@ interface ProjectileSlot {
 interface PillarSlot {
   readonly cylinder: THREE.Mesh;
   readonly collapseRing: THREE.Mesh;
+  readonly shockRing: THREE.Mesh;
   readonly cylMat: THREE.MeshStandardMaterial;
   readonly ringMat: THREE.MeshStandardMaterial;
   active: boolean;
@@ -40,14 +44,16 @@ interface LootOrbActor {
   goldAmount: number;
   readonly group: THREE.Group;
   readonly coreMesh: THREE.Mesh;
-  readonly haloRing: THREE.Mesh;
+  readonly haloRingA: THREE.Mesh;
+  readonly haloRingB: THREE.Mesh;
+  readonly baseHalo: THREE.Mesh;
   collecting: boolean;
 }
 
 const RIPPLE_POOL_SIZE = 8;
 const PROJECTILE_POOL_SIZE = 24;
 const PILLAR_POOL_SIZE = 4;
-const RIPPLE_DURATION_SEC = 0.45; 
+const RIPPLE_DURATION_SEC = 0.45;
 
 export class StageVfxManager {
   public readonly root = new THREE.Group();
@@ -61,10 +67,12 @@ export class StageVfxManager {
   private readonly pillarPool: PillarSlot[] = [];
   private readonly lootOrbs = new Map<string, LootOrbActor>();
 
-  private readonly orbCoreGeo = new THREE.OctahedronGeometry(0.28, 1);
-  private readonly orbRingGeo = new THREE.TorusGeometry(0.38, 0.025, 6, 20);
+  private readonly orbCoreGeo = new THREE.OctahedronGeometry(0.26, 1);
+  private readonly orbRingGeo = new THREE.TorusGeometry(0.39, 0.024, 8, 24);
+  private readonly orbBaseGeo = new THREE.RingGeometry(0.28, 0.44, 24);
   private readonly moteGeo = new THREE.OctahedronGeometry(0.18, 0);
   private readonly goldOrbBloomMat: THREE.MeshStandardMaterial;
+  private readonly orbBaseMat: THREE.MeshBasicMaterial;
 
   private readonly ownedGeometries: THREE.BufferGeometry[] = [];
   private readonly ownedMaterials: THREE.Material[] = [];
@@ -75,9 +83,17 @@ export class StageVfxManager {
     this.tweenGroup = tweenGroup;
 
     this.orbRingGeo.rotateX(Math.PI * 0.5);
-    this.ownedGeometries.push(this.orbCoreGeo, this.orbRingGeo, this.moteGeo);
+    this.orbBaseGeo.rotateX(-Math.PI * 0.5);
+    this.ownedGeometries.push(this.orbCoreGeo, this.orbRingGeo, this.orbBaseGeo, this.moteGeo);
 
-    this.goldOrbBloomMat = materials.createBloomEmissiveMaterial(0xf5c451, 2.15);
+    this.goldOrbBloomMat = materials.createBloomEmissiveMaterial(0xf5c451, 1.18);
+    this.orbBaseMat = new THREE.MeshBasicMaterial({
+      color: 0xfde68a,
+      transparent: true,
+      opacity: 0.45,
+      depthWrite: false,
+    });
+    this.ownedMaterials.push(this.orbBaseMat);
 
     const outerGeo = new THREE.RingGeometry(0.84, 0.92, 28);
     outerGeo.rotateX(-Math.PI * 0.5);
@@ -87,13 +103,13 @@ export class StageVfxManager {
 
     for (let i = 0; i < RIPPLE_POOL_SIZE; i += 1) {
       const outerMat = new THREE.MeshBasicMaterial({
-        color: 0xf0dcaa,
+        color: 0xf2c97d,
         transparent: true,
         opacity: 0,
         depthWrite: false,
       });
       const innerMat = new THREE.MeshBasicMaterial({
-        color: 0x5cc8d6,
+        color: 0x4fd1ff,
         transparent: true,
         opacity: 0,
         depthWrite: false,
@@ -115,19 +131,37 @@ export class StageVfxManager {
       });
     }
 
-    const projGeo = new THREE.ConeGeometry(0.085, 0.44, 6);
+    const projGeo = new THREE.ConeGeometry(0.088, 0.44, 6);
     projGeo.rotateX(Math.PI * 0.5);
-    this.ownedGeometries.push(projGeo);
+    const trailGeo = new THREE.ConeGeometry(0.068, 0.72, 6);
+    trailGeo.rotateX(-Math.PI * 0.5);
+    trailGeo.translate(0, 0, -0.44);
+    this.ownedGeometries.push(projGeo, trailGeo);
 
     for (let i = 0; i < PROJECTILE_POOL_SIZE; i += 1) {
-      const mat = materials.createBloomEmissiveMaterial(0x38bdf8, 2.0);
-      const mesh = new THREE.Mesh(projGeo, mat);
-      mesh.visible = false;
-      this.root.add(mesh);
-      this.bloomTargets.push(mesh);
+      const mat = materials.createBloomEmissiveMaterial(0x38bdf8, 1.25);
+      const trailMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.42,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      this.ownedMaterials.push(trailMat);
+
+      const group = new THREE.Group();
+      const headMesh = new THREE.Mesh(projGeo, mat);
+      const trailMesh = new THREE.Mesh(trailGeo, trailMat);
+      group.add(headMesh, trailMesh);
+      group.visible = false;
+      this.root.add(group);
+      this.bloomTargets.push(headMesh);
       this.projectilePool.push({
-        mesh,
+        group,
+        headMesh,
+        trailMesh,
         mat,
+        trailMat,
         active: false,
         elapsedSec: 0,
         durationSec: 0.35,
@@ -137,39 +171,44 @@ export class StageVfxManager {
       });
     }
 
-    const cylGeo = new THREE.CylinderGeometry(0.46, 0.62, 5.6, 16, 1, true);
-    cylGeo.translate(0, 2.8, 0);
-    const collapseGeo = new THREE.TorusGeometry(1.15, 0.055, 8, 28);
+    const cylGeo = new THREE.CylinderGeometry(0.42, 0.58, 5.4, 18, 1, true);
+    cylGeo.translate(0, 2.7, 0);
+    const collapseGeo = new THREE.TorusGeometry(1.12, 0.052, 8, 28);
     collapseGeo.rotateX(Math.PI * 0.5);
-    this.ownedGeometries.push(cylGeo, collapseGeo);
+    const shockGeo = new THREE.RingGeometry(0.55, 0.92, 28);
+    shockGeo.rotateX(-Math.PI * 0.5);
+    this.ownedGeometries.push(cylGeo, collapseGeo, shockGeo);
 
     for (let i = 0; i < PILLAR_POOL_SIZE; i += 1) {
-      const cylMat = materials.createBloomEmissiveMaterial(0xf0dcaa, 2.4);
+      const cylMat = materials.createBloomEmissiveMaterial(0xf2c97d, 1.28);
       cylMat.transparent = true;
       cylMat.opacity = 0;
       cylMat.side = THREE.DoubleSide;
       cylMat.depthWrite = false;
 
-      const ringMat = materials.createBloomEmissiveMaterial(0xf0dcaa, 2.6);
+      const ringMat = materials.createBloomEmissiveMaterial(0xf2c97d, 1.32);
       ringMat.transparent = true;
       ringMat.opacity = 0;
       ringMat.depthWrite = false;
 
       const cylinder = new THREE.Mesh(cylGeo, cylMat);
       const collapseRing = new THREE.Mesh(collapseGeo, ringMat);
+      const shockRing = new THREE.Mesh(shockGeo, ringMat);
       cylinder.visible = false;
       collapseRing.visible = false;
-      this.root.add(cylinder, collapseRing);
-      this.bloomTargets.push(cylinder, collapseRing);
+      shockRing.visible = false;
+      this.root.add(cylinder, collapseRing, shockRing);
+      this.bloomTargets.push(cylinder, collapseRing, shockRing);
 
       this.pillarPool.push({
         cylinder,
         collapseRing,
+        shockRing,
         cylMat,
         ringMat,
         active: false,
         ageSec: 0,
-        durationSec: 0.72,
+        durationSec: 0.78,
         star: 2,
       });
     }
@@ -204,19 +243,25 @@ export class StageVfxManager {
       if (existing) {
         existing.goldAmount = Math.max(1, Math.floor(orb.goldAmount));
         if (!existing.collecting) {
-          existing.group.position.set(x, 0.38, z);
+          existing.group.position.set(x, 0.42, z);
         }
         continue;
       }
 
       const group = new THREE.Group();
-      group.position.set(x, 0.38, z);
+      group.position.set(x, 0.42, z);
 
       const coreMesh = new THREE.Mesh(this.orbCoreGeo, this.goldOrbBloomMat);
-      const haloRing = new THREE.Mesh(this.orbRingGeo, this.materials.brushedGoldMat);
+      const haloRingA = new THREE.Mesh(this.orbRingGeo, this.materials.brushedGoldMat);
+      const haloRingB = new THREE.Mesh(this.orbRingGeo, this.materials.brushedGoldMat);
+      haloRingB.scale.setScalar(0.78);
+      haloRingB.rotation.set(Math.PI * 0.35, 0.5, 0);
+      const baseHalo = new THREE.Mesh(this.orbBaseGeo, this.orbBaseMat);
+      baseHalo.position.set(0, -0.39, 0);
+
       const scaleBoost = 1 + Math.min(3, Math.max(0, orb.goldAmount - 1)) * 0.14;
       group.scale.setScalar(scaleBoost);
-      group.add(coreMesh, haloRing);
+      group.add(coreMesh, haloRingA, haloRingB, baseHalo);
       this.root.add(group);
 
       newBloomMeshes.push(coreMesh);
@@ -225,12 +270,20 @@ export class StageVfxManager {
         goldAmount: Math.max(1, Math.floor(orb.goldAmount)),
         group,
         coreMesh,
-        haloRing,
+        haloRingA,
+        haloRingB,
+        baseHalo,
         collecting: false,
       });
     }
 
     return newBloomMeshes;
+  }
+
+  public getLootOrbWorldPos(orbId: string): { x: number; z: number } | null {
+    const actor = this.lootOrbs.get(orbId);
+    if (!actor) return null;
+    return { x: actor.group.position.x, z: actor.group.position.z };
   }
 
   public findLootOrbNear(worldX: number, worldZ: number, radius = 0.72): LootOrbActor | null {
@@ -245,7 +298,11 @@ export class StageVfxManager {
     return null;
   }
 
-  public collectLootOrb(orbId: string, onArrived?: (orbId: string, goldAmount: number) => void): boolean {
+  public collectLootOrb(
+    orbId: string,
+    onArrived?: (orbId: string, goldAmount: number) => void,
+    targetWorld?: { x: number; y: number; z: number },
+  ): boolean {
     const actor = this.lootOrbs.get(orbId);
     if (!actor || actor.collecting) return false;
     actor.collecting = true;
@@ -253,13 +310,13 @@ export class StageVfxManager {
     const startX = actor.group.position.x;
     const startY = actor.group.position.y;
     const startZ = actor.group.position.z;
-    const targetX = 0;
-    const targetY = 0.25;
-    const targetZ = 8.4;
+    const targetX = targetWorld?.x ?? -5.6;
+    const targetY = targetWorld?.y ?? 0.65;
+    const targetZ = targetWorld?.z ?? 5.4;
 
     const state = { t: 0 };
     const tw = new Tween(state)
-      .to({ t: 1 }, 380)
+      .to({ t: 1 }, 420)
       .easing(Easing.Cubic.InOut)
       .onUpdate(({ t }) => {
         const arcY = Math.sin(t * Math.PI) * 1.65;
@@ -280,9 +337,12 @@ export class StageVfxManager {
     return true;
   }
 
-  public collectAllLootOrbs(onArrived?: (orbId: string, goldAmount: number) => void): void {
+  public collectAllLootOrbs(
+    onArrived?: (orbId: string, goldAmount: number) => void,
+    targetWorld?: { x: number; y: number; z: number },
+  ): void {
     for (const id of [...this.lootOrbs.keys()]) {
-      this.collectLootOrb(id, onArrived);
+      this.collectLootOrb(id, onArrived, targetWorld);
     }
   }
 
@@ -292,11 +352,12 @@ export class StageVfxManager {
     onConvergenceHit?: () => void,
   ): void {
     const colorHex = newStar === 3 ? 0xf5c451 : 0xe2e8f0;
-    const moteMat = this.materials.createBloomEmissiveMaterial(colorHex, 2.4);
+    const moteMat = this.materials.createBloomEmissiveMaterial(colorHex, 1.32);
 
     const offsets: readonly [number, number][] = [
       [-1.55, 0.95],
       [1.55, 0.95],
+      [0, -1.35],
     ];
 
     let completedMotes = 0;
@@ -307,7 +368,7 @@ export class StageVfxManager {
 
       const anim = { t: 0 };
       const tw = new Tween(anim)
-        .to({ t: 1 }, 240)
+        .to({ t: 1 }, 260)
         .easing(Easing.Cubic.In)
         .onUpdate(({ t }) => {
           const swirl = (1 - t) * 0.55;
@@ -335,7 +396,7 @@ export class StageVfxManager {
     const slot = this.pillarPool.find((p) => !p.active) ?? this.pillarPool[0]!;
     slot.active = true;
     slot.ageSec = 0;
-    slot.durationSec = star === 3 ? 0.92 : 0.68;
+    slot.durationSec = star === 3 ? 0.92 : 0.72;
     slot.star = star;
 
     const color = new THREE.Color(star === 3 ? 0xf5c451 : 0xe2e8f0);
@@ -351,6 +412,10 @@ export class StageVfxManager {
     slot.collapseRing.position.set(worldX, star === 3 ? 2.2 : 0.45, worldZ);
     slot.collapseRing.scale.setScalar(star === 3 ? 1.65 : 0.85);
     slot.collapseRing.visible = true;
+
+    slot.shockRing.position.set(worldX, 0.03, worldZ);
+    slot.shockRing.scale.setScalar(0.35);
+    slot.shockRing.visible = true;
   }
 
   public spawnProjectile(
@@ -377,9 +442,10 @@ export class StageVfxManager {
           : 0x38bdf8;
     slot.mat.color.setHex(hex);
     slot.mat.emissive.setHex(hex);
+    slot.trailMat.color.setHex(hex);
 
-    slot.mesh.position.copy(slot.from);
-    slot.mesh.visible = true;
+    slot.group.position.copy(slot.from);
+    slot.group.visible = true;
   }
 
   public update(dt: number): void {
@@ -403,10 +469,14 @@ export class StageVfxManager {
     }
 
     for (const actor of this.lootOrbs.values()) {
-      actor.coreMesh.rotation.y = this.elapsedSec * 1.9;
-      actor.haloRing.rotation.z = this.elapsedSec * 1.4;
+      actor.coreMesh.rotation.y = this.elapsedSec * 2.1;
+      actor.haloRingA.rotation.z = this.elapsedSec * 1.5;
+      actor.haloRingB.rotation.y = -this.elapsedSec * 1.8;
       if (!actor.collecting) {
-        actor.group.position.y = 0.38 + Math.sin(this.elapsedSec * 3.2) * 0.055;
+        const hover = Math.sin(this.elapsedSec * 3.2) * 0.065;
+        actor.group.position.y = 0.42 + hover;
+        actor.baseHalo.position.y = -0.39 - hover;
+        actor.baseHalo.scale.setScalar(0.92 + Math.sin(this.elapsedSec * 3.2) * 0.12);
       }
     }
 
@@ -417,18 +487,18 @@ export class StageVfxManager {
       const t = p.elapsedSec / p.durationSec;
       if (t >= 1) {
         p.active = false;
-        p.mesh.visible = false;
+        p.group.visible = false;
         continue;
       }
       nextPos.lerpVectors(p.from, p.to, t);
       nextPos.y += Math.sin(t * Math.PI) * p.arcHeight;
 
-      const dir = nextPos.clone().sub(p.mesh.position);
+      const dir = nextPos.clone().sub(p.group.position);
       if (dir.lengthSq() > 1e-6) {
         dir.normalize();
-        p.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
+        p.group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
       }
-      p.mesh.position.copy(nextPos);
+      p.group.position.copy(nextPos);
     }
 
     for (const pil of this.pillarPool) {
@@ -439,14 +509,16 @@ export class StageVfxManager {
         pil.active = false;
         pil.cylinder.visible = false;
         pil.collapseRing.visible = false;
+        pil.shockRing.visible = false;
         continue;
       }
       const fade = t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8;
-      pil.cylMat.opacity = fade * 0.85;
-      pil.ringMat.opacity = fade * 0.95;
+      pil.cylMat.opacity = fade * 0.82;
+      pil.ringMat.opacity = fade * 0.92;
 
       const widthFactor = pil.star === 3 ? 1.35 * (1 - t * 0.55) : 0.95 * (1 - t * 0.45);
       pil.cylinder.scale.set(widthFactor, 1 + t * 0.35, widthFactor);
+      pil.shockRing.scale.setScalar(0.35 + (1 - Math.pow(1 - t, 3)) * (pil.star === 3 ? 2.4 : 1.7));
 
       if (pil.star === 3) {
         pil.collapseRing.position.y = 2.2 * (1 - t) + 0.08;

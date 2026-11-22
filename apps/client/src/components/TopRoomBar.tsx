@@ -15,6 +15,7 @@ export function TopRoomBar(): React.JSX.Element | null {
     lobbyState,
     setActiveTab,
     setViewingPrepRoom,
+    closeRedemption,
     leavePrepRoom,
   } = useAppStore();
 
@@ -45,26 +46,33 @@ export function TopRoomBar(): React.JSX.Element | null {
         : `${room.members.length}/8`;
 
   const handleReturnToRoom = () => {
+    closeRedemption();
     setActiveTab('lobby');
     setViewingPrepRoom(true);
   };
 
   return (
     <header
-      className="ui-frosted-panel blc-top-room-bar"
-      style={{
-        border: '1px solid rgba(240, 220, 170, 0.24)',
-        background: 'rgba(12, 16, 24, 0.8)',
-      }}
+      className="blc-top-room-bar"
       data-testid="top-room-bar"
       role="status"
     >
       <div className="blc-top-room-bar__info">
+        <span
+          className={`blc-top-room-bar__dot ${
+            room.status === 'queuing' || room.status === 'accept_check'
+              ? 'blc-top-room-bar__status--pulse'
+              : ''
+          }`.trim()}
+          aria-hidden="true"
+        />
+        <span className="blc-top-room-bar__lead">正在房间</span>
         <span className="blc-chip blc-chip--gold">
-          {DURATION_MODE_SHORT_LABELS[room.durationMode]}
+          {DURATION_MODE_SHORT_LABELS[room.durationMode]} · {QUEUE_TYPE_LABELS[room.queueType]}
         </span>
-        <span className="blc-chip">{QUEUE_TYPE_LABELS[room.queueType]}</span>
-        <span className="blc-chip">{activeSubject === 'english' ? '英语' : '数学'}</span>
+        <span className="blc-top-room-bar__meta">
+          {activeSubject === 'english' ? '英语' : '数学'}
+        </span>
         {room.queueType !== 'solo' ? (
           <span className="blc-top-room-bar__code">{room.roomCode}</span>
         ) : null}
@@ -73,7 +81,7 @@ export function TopRoomBar(): React.JSX.Element | null {
             room.status === 'queuing' ? 'blc-top-room-bar__status--pulse' : ''
           }`.trim()}
         >
-          ● {statusText}
+          {statusText}
         </span>
       </div>
 
@@ -84,7 +92,7 @@ export function TopRoomBar(): React.JSX.Element | null {
           onClick={handleReturnToRoom}
           data-testid="top-bar-return-prep-btn"
         >
-          返回房间
+          返回备战房
         </button>
         <button
           type="button"

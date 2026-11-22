@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
-import { ClientQuestionViewSchema, FinalBoardSnapshotSchema, MODE_BUDGETS, SEASON1_UNITS_BY_ID,
+import { ClientQuestionViewSchema, DEFAULT_TACTICIAN_ID, FinalBoardSnapshotSchema, MODE_BUDGETS, SEASON1_UNITS_BY_ID, TacticianIdSchema,
   type CoursePack, type DurationMode, type GameCommand, type UserProfile } from '@pkg/contracts';
 import type { SeatState } from '@pkg/game-core';
 import type { LearningGoldSettlement } from '@pkg/learning-core';
@@ -402,6 +402,37 @@ describe('account-keyed prep and global accept coordination over HTTP', () => {
     await ok('/api/lobby/leave', host.token, {});
   });
 
+  it('persists validated tacticians through both PATCH routes and only projects the public ID to other members', async () => {
+    const host = await account(), guest = await account();
+    const prep = await enter(host, 'quick');
+    await ok('/api/lobby/join-code', guest.token, { roomCode: prep.prepRoom!.roomCode });
+    expect(guest.profile.preferredTacticianId).toBe(DEFAULT_TACTICIAN_ID);
+    for (const path of ['/api/me/profile', '/api/lobby/member-prefs']) {
+      const rejected = await http(path, guest.token, { preferredTacticianId: 'custom-pilot' }, 'PATCH');
+      expect(rejected).toMatchObject({ status: 400, body: { error: 'VALIDATION_ERROR' } });
+    }
+    const profileUpdate = await ok<UserProfile>('/api/me/profile', guest.token, {
+      preferredTacticianId: 'tactician_europa_fin', learningStartSelections: { english: 'private-start-node' },
+    }, 'PATCH');
+    expect(profileUpdate.preferredTacticianId).toBe('tactician_europa_fin');
+    const hostView = await lobby(host);
+    expect(hostView.prepRoom!.members.find(({ userId }) => userId === guest.profile.userId)).toMatchObject({ tacticianId: 'tactician_europa_fin', avatarFrameId: null });
+    expect(JSON.stringify(hostView)).not.toContain('private-start-node');
+    expect((await lobby(guest)).selfPrefs?.learningStartSelections).toEqual({ english: 'private-start-node' });
+    const prefsUpdate = await ok<LobbyState & { profile: UserProfile }>('/api/lobby/member-prefs', guest.token,
+      { preferredTacticianId: 'tactician_singularity_mew' }, 'PATCH');
+    expect(prefsUpdate.profile.preferredTacticianId).toBe('tactician_singularity_mew');
+    expect(prefsUpdate.selfPrefs?.preferredTacticianId).toBe('tactician_singularity_mew');
+    const { profile } = await ok<{ profile: UserProfile }>('/api/me', guest.token);
+    expect(profile).toMatchObject({ preferredTacticianId: 'tactician_singularity_mew', avatarFrameId: null });
+    await ok('/api/lobby/leave', guest.token, {});
+    await ok('/api/me/profile', guest.token, { preferredTacticianId: DEFAULT_TACTICIAN_ID }, 'PATCH');
+    const rejoined = await ok<LobbyState>('/api/lobby/join-code', guest.token, { roomCode: prep.prepRoom!.roomCode });
+    expect(rejoined.selfPrefs?.preferredTacticianId).toBe(DEFAULT_TACTICIAN_ID);
+    await ok('/api/lobby/leave', guest.token, {});
+    await ok('/api/lobby/leave', host.token, {});
+  });
+
   it('merges two prep parties globally, cancels eight declines and creates no match for zero acceptances', async () => {
     const people = await Promise.all(Array.from({ length: 8 }, () => account()));
     const first = (await enter(people[0]!, 'quick')).prepRoom!.roomCode;
@@ -442,7 +473,8 @@ function assertPrivateSnapshot(snapshot: Snapshot, queueType: string) {
   expect(snapshot.seats).toHaveLength(8); expect(new Set(snapshot.seats.map((seat) => seat.seatId)).size).toBe(8);
   expect(snapshot.self.id).toBe(snapshot.seatId); expect(snapshot.self.shop).toHaveLength(5);
   for (const seat of snapshot.seats) {
-    for (const key of ['shop', 'gold', 'inventoryItems', 'learningStartSelections', 'learning', 'fsrs', 'submissions', 'answerSpec']) expect(seat).not.toHaveProperty(key);
+    expect(TacticianIdSchema.safeParse(seat.tacticianId).success).toBe(true);
+    for (const key of ['shop', 'gold', 'inventoryItems', 'profile', 'preferredTacticianId', 'learningStartSelections', 'learning', 'fsrs', 'submissions', 'answerSpec']) expect(seat).not.toHaveProperty(key);
     if (queueType !== 'solo') expect(seat).not.toHaveProperty('isBot');
   }
   if (snapshot.learning) safeQuestions(snapshot.learning.clientQuestions);
@@ -455,6 +487,7 @@ describe.each([
     const person = await account(), other = await account(), intruder = await account();
     let selected: LobbyState;
     if (queueType === 'solo') {
+      await ok('/api/me/profile', person.token, { preferredTacticianId: 'tactician_europa_fin' }, 'PATCH');
       const prep = await enter(person, mode, queueType);
       const invite = await http('/api/lobby/join-code', other.token, { roomCode: prep.prepRoom!.roomCode });
       expect(invite.status).toBe(409); expect(invite.body.error).toBe('SOLO_INVITES_DISABLED');
@@ -489,6 +522,12 @@ describe.each([
     expect(initial.matchId).toBe(matchId); assertPrivateSnapshot(initial, queueType);
     expect(initial.versionLock).toMatchObject({ seasonTermId: seasonTerm, gameSetVersion: 'season1-v1', coursePackVersion: englishPack.manifest.coursePackVersion });
     const seatId = initial.seatId;
+    if (queueType === 'solo') {
+      expect(initial.seats.find((seat) => seat.seatId === seatId)?.tacticianId).toBe('tactician_europa_fin');
+      expect(initial.seats.filter((seat) => seat.seatId !== seatId).every((seat) => seat.tacticianId === DEFAULT_TACTICIAN_ID)).toBe(true);
+      await ok('/api/me/profile', person.token, { preferredTacticianId: 'tactician_singularity_mew' }, 'PATCH');
+      expect((await inbox.snapshot()).seats.find((seat) => seat.seatId === seatId)?.tacticianId).toBe('tactician_europa_fin');
+    }
     await expect(sdk.joinById(roomId, { token: intruder.token })).rejects.toBeTruthy();
     const blocked = await inbox.command({ type: 'REFRESH_SHOP' });
     expect(blocked).toMatchObject({ ok: false, reason: 'STRATEGY_PHASE_REQUIRED' });

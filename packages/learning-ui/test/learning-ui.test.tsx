@@ -1,14 +1,18 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import type { ClientQuestionView } from '@pkg/contracts';
 import {
+  LEARNING_READING_THEME_STORAGE_KEY,
+  LEARNING_UI_CSS,
   LoreArchiveReader,
   MarkdownKatexBlock,
   QuestionStepCard,
   RecommendedItemsTree,
   UnitLoreDrawer,
+  readStoredReadingTheme,
   renderMarkdownWithKatexToHtml,
+  writeStoredReadingTheme,
 } from '../src/index.js';
 
 function makeBaseQuestion(overrides: Partial<ClientQuestionView>): ClientQuestionView {
@@ -40,6 +44,12 @@ function makeBaseQuestion(overrides: Partial<ClientQuestionView>): ClientQuestio
   };
 }
 
+afterEach(() => {
+  if ('window' in globalThis) {
+    delete (globalThis as { window?: unknown }).window;
+  }
+});
+
 describe('@pkg/learning-ui', () => {
   it('renders headings, blockquotes, code blocks, and inline/display KaTeX safely', () => {
     const html = renderMarkdownWithKatexToHtml(
@@ -53,6 +63,68 @@ describe('@pkg/learning-ui', () => {
 
     const markup = renderToStaticMarkup(<MarkdownKatexBlock content="向量 $\vec{a}\perp\vec{b}$" />);
     expect(markup).toContain('katex');
+  });
+
+  it('defaults to deep-space eye-care cosmos theme and supports warm parchment localStorage persistence', () => {
+    expect(readStoredReadingTheme()).toBe('cosmos');
+
+    const defaultHtml = renderToStaticMarkup(
+      <QuestionStepCard
+        stepKind="material"
+        lessonTitle="核心概念导学"
+        lessonMaterialMd="### 导学要点\n- 聚焦关键步骤"
+        sharedRemainingSeconds={12}
+        sharedTotalSeconds={60}
+        variant="overlay"
+      />,
+    );
+    expect(defaultHtml).toContain('data-reading-theme="cosmos"');
+    expect(defaultHtml).toContain('lui-paper-shell--cosmos');
+    expect(defaultHtml).toContain('data-testid="learning-theme-toggle"');
+    expect(defaultHtml).toContain('切换至暖羊皮纸护眼态');
+    expect(defaultHtml).toContain('lui-clock-box--urgent');
+    expect(defaultHtml).toContain('lui-briefing-title');
+    expect(defaultHtml).toContain('导学');
+    expect(defaultHtml).toContain('练习');
+    expect(defaultHtml).toContain('测验');
+    expect(defaultHtml).toContain('订正');
+    expect(defaultHtml).toContain('巩固');
+
+    const storageMap = new Map<string, string>();
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      writable: true,
+      value: {
+        localStorage: {
+          getItem: (k: string) => storageMap.get(k) ?? null,
+          setItem: (k: string, v: string) => {
+            storageMap.set(k, v);
+          },
+        },
+      },
+    });
+
+    writeStoredReadingTheme('parchment');
+    expect(storageMap.get(LEARNING_READING_THEME_STORAGE_KEY)).toBe('parchment');
+    expect(readStoredReadingTheme()).toBe('parchment');
+
+    const parchmentHtml = renderToStaticMarkup(
+      <QuestionStepCard
+        question={makeBaseQuestion({})}
+        feedback={{ isCorrect: true, explanationMd: '对称轴公式计算无误。' }}
+      />,
+    );
+    expect(parchmentHtml).toContain('data-reading-theme="parchment"');
+    expect(parchmentHtml).toContain('lui-paper-shell--parchment');
+    expect(parchmentHtml).toContain('切换至深空星图护眼态');
+    expect(parchmentHtml).toContain('lui-option-diamond-frame');
+    expect(parchmentHtml).toContain('回答正确');
+
+    expect(LEARNING_UI_CSS).toContain('#15233e');
+    expect(LEARNING_UI_CSS).toContain('#f1f5f9');
+    expect(LEARNING_UI_CSS).toContain('#eae4d6');
+    expect(LEARNING_UI_CSS).toContain('height: auto;');
+    expect(LEARNING_UI_CSS).not.toContain('height: min(76vh');
   });
 
   it('enforces strict permission isolation across practice, resource_check, and verification', () => {
@@ -137,6 +209,15 @@ describe('@pkg/learning-ui', () => {
     expect(loreHtml).toContain('灰雪纪');
     expect(loreHtml).toContain('视界纪');
 
+    const drawerOverviewHtml = renderToStaticMarkup(
+      <UnitLoreDrawer unitId="S36" initialTab="overview" highestStarUnlocked={3} />,
+    );
+    expect(drawerOverviewHtml).toContain('data-cost-tier="5"');
+    expect(drawerOverviewHtml).toContain('lui-cost-badge--5');
+    expect(drawerOverviewHtml).toContain('lui-badge--stars');
+    expect(drawerOverviewHtml).toContain('★★★');
+    expect(drawerOverviewHtml).toContain('lui-stat-grid');
+
     const drawerVoicesHtml = renderToStaticMarkup(
       <UnitLoreDrawer unitId="S36" initialTab="voices" />,
     );
@@ -150,7 +231,9 @@ describe('@pkg/learning-ui', () => {
         ownedComponentIds={['C_SWORD']}
       />,
     );
+    expect(treeHtml).toContain('lui-recipe-tree');
     expect(treeHtml).toContain('聚变重型钨刃');
+    expect(treeHtml).toContain('lui-recipe-glyph');
     expect(treeHtml).toContain('背包已有');
   });
 });

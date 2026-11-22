@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   AudioEventBus,
   ConfigurableCommunicationPolicy,
+  DEFAULT_TACTICIAN_ID,
   MODE_BUDGETS,
+  PrepRoomMemberSchema,
   QuestionIssueReportSchema,
   QuestionItemSchema,
   RegisterRequestSchema,
@@ -11,12 +13,31 @@ import {
   SEASON1_LORE,
   SEASON1_TRAITS,
   SEASON1_UNITS,
+  TACTICIAN_CATALOG,
+  TacticianIdSchema,
+  UserProfileSchema,
   computeEstimatedEndTimeHHMM,
   isV1SupportedDisplay,
   lookupCraftRecipe,
 } from '../src/index.js';
 
 describe('@pkg/contracts & canonical content invariants', () => {
+  it('defaults legacy tactician fields and accepts exactly the three catalog IDs', () => {
+    const legacyProfile = {
+      userId: 'legacy', username: 'legacy_pilot', nickname: '领航员', emailMasked: null,
+      role: 'player', sessionEpoch: 1, onboardingChoice: 'skipped',
+      displaySettings: { fullscreen: false, orientation: 'landscape' }, avatarFrameId: 'owned-frame',
+    };
+    const legacyMember = { userId: 'legacy', nickname: '领航员', isHost: true, ready: true };
+    expect(UserProfileSchema.parse(legacyProfile)).toMatchObject({ preferredTacticianId: DEFAULT_TACTICIAN_ID, avatarFrameId: 'owned-frame' });
+    expect(PrepRoomMemberSchema.parse(legacyMember).tacticianId).toBe(DEFAULT_TACTICIAN_ID);
+    expect(TACTICIAN_CATALOG.map(({ id }) => id)).toEqual(TacticianIdSchema.options);
+    expect(TACTICIAN_CATALOG.map(({ name }) => name)).toEqual(['星汐 · 小铃', '冰核 · 小鲸', '奇点 · 小猫']);
+    expect(TacticianIdSchema.safeParse('tactician_unknown').success).toBe(false);
+    expect(UserProfileSchema.safeParse({ ...legacyProfile, preferredTacticianId: 'owned-frame' }).success).toBe(false);
+    expect(PrepRoomMemberSchema.safeParse({ ...legacyMember, tacticianId: null }).success).toBe(false);
+  });
+
   it('verifies 36 units, 748 card pool, 1-7 char names, and 100% unique (faction, role) bijection', () => {
     expect(SEASON1_UNITS).toHaveLength(36);
     const totalCopies = SEASON1_UNITS.reduce((acc, u) => acc + u.poolCopies, 0);

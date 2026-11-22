@@ -18,6 +18,7 @@ export async function migrateDatabase(db: AppDatabase): Promise<void> {
         cohort_group text NULL, created_at timestamptz NOT NULL DEFAULT now(),
         CHECK(email IS NULL OR length(trim(email)) > 0)
       );
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_tactician_id TEXT NOT NULL DEFAULT 'tactician_lumina_bell';
       CREATE TABLE IF NOT EXISTS user_sessions (
         token_hash text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id), session_epoch integer NOT NULL,
         expires_at timestamptz NOT NULL, created_at timestamptz NOT NULL DEFAULT now()

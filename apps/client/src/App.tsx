@@ -1,8 +1,8 @@
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import { ensureLearningUiStyles } from '@pkg/learning-ui';
-import { BottomDockNav } from './components/BottomDockNav.js';
 import { GlobalMatchAcceptModal } from './components/GlobalMatchAcceptModal.js';
 import { PersistentStageCanvas } from './components/PersistentStageCanvas.js';
+import { SettingsModal } from './components/SettingsModal.js';
 import { TopRoomBar } from './components/TopRoomBar.js';
 import { AuthPage } from './pages/AuthPage.js';
 import { LobbyPage } from './pages/LobbyPage.js';
@@ -36,7 +36,7 @@ const MatchSummaryModal = lazy(() =>
 
 function RouteLoadingFallback(): React.JSX.Element {
   return (
-    <div style={{ padding: '24px 28px' }}>
+    <div className="sf-route-fallback">
       <span className="stat-skeleton" style={{ width: 220, height: 22 }} />
     </div>
   );
@@ -45,6 +45,7 @@ function RouteLoadingFallback(): React.JSX.Element {
 function AppViewportRouter(): React.JSX.Element {
   const {
     authMode,
+    entryGatePassed,
     inActiveMatch,
     activeTab,
     viewingPrepRoom,
@@ -55,9 +56,49 @@ function AppViewportRouter(): React.JSX.Element {
     dismissToast,
   } = useAppStore();
 
+  const quickDismissTimersRef = useRef<Map<string, number>>(new Map());
+
   useEffect(() => {
     ensureLearningUiStyles();
   }, []);
+
+  useEffect(() => {
+    const timers = quickDismissTimersRef.current;
+    const activeIds = new Set(toasts.map((t) => t.id));
+
+    for (const [id, handle] of timers.entries()) {
+      if (!activeIds.has(id)) {
+        window.clearTimeout(handle);
+        timers.delete(id);
+      }
+    }
+
+    for (const toast of toasts) {
+      if (toast.tone !== 'info' && toast.tone !== 'success') continue;
+      if (timers.has(toast.id)) continue;
+      const handle = window.setTimeout(() => {
+        timers.delete(toast.id);
+        dismissToast(toast.id);
+      }, 2200);
+      timers.set(toast.id, handle);
+    }
+  }, [dismissToast, toasts]);
+
+  useEffect(() => {
+    const timers = quickDismissTimersRef.current;
+    return () => {
+      for (const handle of timers.values()) {
+        window.clearTimeout(handle);
+      }
+      timers.clear();
+    };
+  }, []);
+
+  const visibleToasts = toasts.slice(-2);
+  const showStartGate =
+    authMode === 'unauthenticated' || (authMode === 'authenticated' && !entryGatePassed);
+  const canOpenSettings =
+    (authMode === 'authenticated' && entryGatePassed) || authMode === 'offline_practice';
 
   return (
     <div className="blc-root">
@@ -66,14 +107,12 @@ function AppViewportRouter(): React.JSX.Element {
       <div className="blc-ui-layer">
         {authMode === 'booting' ? (
           <div className="blc-auth-viewport" data-testid="boot-loading-screen">
-            <div className="ui-metal-frame ui-corner-ornaments blc-dialog-sm" style={{ textAlign: 'center' }}>
-              <h3 style={{ margin: '8px 0', color: 'var(--gold-light)' }}>
-                正在连接
-              </h3>
-              <span className="stat-skeleton" style={{ width: '75%', height: 18 }} />
+            <div className="ui-metal-frame ui-corner-ornaments sf-boot-card">
+              <h3 className="sf-boot-card__title">SparkField · 灵光之野</h3>
+              <span className="stat-skeleton" style={{ width: '78%', height: 14 }} />
             </div>
           </div>
-        ) : authMode === 'unauthenticated' ? (
+        ) : showStartGate ? (
           <AuthPage />
         ) : inActiveMatch ? (
           <Suspense fallback={<RouteLoadingFallback />}>
@@ -108,20 +147,23 @@ function AppViewportRouter(): React.JSX.Element {
               )}
             </Suspense>
 
-            <BottomDockNav />
             <GlobalMatchAcceptModal />
           </>
         )}
       </div>
 
-      {toasts.length > 0 ? (
-        <div className="blc-toast-stack" aria-live="polite">
-          {toasts.map((t) => (
-            <div key={t.id} className="ui-metal-frame blc-toast" data-tone={t.tone}>
-              <span>{t.text}</span>
+      {canOpenSettings ? <SettingsModal /> : null}
+
+      {visibleToasts.length > 0 ? (
+        <div className="blc-toast-stack" aria-live="polite" data-testid="toast-banner-stack">
+          {visibleToasts.map((t) => (
+            <div key={t.id} className="blc-toast" data-tone={t.tone}>
+              <span className="blc-toast__dot" aria-hidden="true" />
+              <span className="blc-toast__text">{t.text}</span>
               <button
                 type="button"
-                className="blc-btn blc-btn--ghost blc-btn--xs"
+                className="blc-toast__close"
+                aria-label="关闭提示"
                 onClick={() => dismissToast(t.id)}
               >
                 ✕

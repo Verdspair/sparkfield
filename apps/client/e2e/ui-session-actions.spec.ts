@@ -1,38 +1,113 @@
-import { expect, test, type Page } from '@playwright/test';
-import { deferred, emptyLobby, fail, me, mockUiPage, ok, profile, roomLobby } from './support/mockUi.js';
+import { expect } from '@playwright/test';
+import { deferred, emptyLobby, english, fail, me, ok, profile, roomLobby, test } from './support/mockUi.js';
+import { apiResponse, backToLobby, closeSettings, enterFromStartGate, expectDirectLobby, expectSignedOutStart, expectStartGate, fillAuth, firstEnglishTitle, localToken, login, openAuth, openModeOverlay, openSettings, openSubpage, register, settleUi, skipOnboarding, tacticians, verifyOptionalEmail, visitLobby } from './support/flowHelpers.js';
 
-const settleUi = (page: Page) => page.evaluate(() => new Promise<void>((resolve) =>
-  requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+const credentials = { username: 'audit_user', password: 'audit-password', nickname: '审计样本' };
 
-async function loginForm(page: Page) {
-  await page.getByTestId('splash-enter-btn').click();
-  await page.getByTestId('auth-tab-login').click();
-  await page.getByTestId('auth-username-input').fill('audit_user');
-  await page.getByTestId('auth-password-input').fill('audit-password');
+test('new commander uses the branded launch capsules, skips the guide and enters an eight-seat room', async ({ page, mock }) => {
+  let current = { ...profile, onboardingChoice: 'unset', learningStartSelections: {} };
+  const room = { ...roomLobby, prepRoom: { ...roomLobby.prepRoom, durationMode: 'quick', plannedTotalSeconds: 900 } };
+  await mock({
+    'POST /api/auth/register': (route) => {
+      expect(route.request().postDataJSON()).toEqual({ ...credentials, email: null });
+      return ok(route, { profile: current });
+    },
+    'POST /api/auth/login': (route) => ok(route, {
+      token: 'audit-pilot', profile: current, userId: profile.userId, sessionEpoch: 1, activeSeat: null,
+    }),
+    'GET /api/me': (route) => ok(route, { ...me, profile: current }),
+    'PATCH /api/auth/profile': (route) => {
+      const patch = route.request().postDataJSON();
+      expect(patch).toEqual({ onboardingChoice: 'skipped' });
+      current = { ...current, ...patch };
+      return ok(route, current);
+    },
+    'POST /api/lobby/enter': (route) => {
+      expect(route.request().postDataJSON()).toMatchObject({ durationMode: 'quick' });
+      return ok(route, room);
+    },
+  }, null);
+  await page.goto('/');
+  await expectSignedOutStart(page);
+  await openAuth(page, 'register');
+  await verifyOptionalEmail(page);
+  await fillAuth(page, credentials);
   await page.getByTestId('auth-submit-btn').click();
-}
+  await expect(page.getByTestId('onboarding-three-choices').locator('svg')).toHaveCount(3);
+  await skipOnboarding(page);
+  const overlay = await openModeOverlay(page, 'quick');
+  for (const [mode, minutes] of [['quick', 15], ['standard', 30], ['deep', 60]] as const) {
+    const emblem = overlay.getByTestId(`mode-card-${mode}`);
+    await expect(emblem.locator('svg')).toBeVisible();
+    await expect(emblem).toContainText(`${minutes}分钟`);
+  }
+  await overlay.getByTestId('mode-overlay-confirm-btn').click();
+  await expect(page.getByTestId('persistent-stage-canvas')).toHaveAttribute('data-scene-mode', 'prep');
+  await expect(page.getByTestId('prep-seat-member-0')).toContainText(credentials.nickname);
+  await expect(page.getByTestId(/^prep-invite-slot-/)).toHaveCount(7);
+  await expect(page.getByTestId('prep-chapter-summary-btn')).toContainText(firstEnglishTitle);
+});
 
-test('boot refresh cannot authenticate after another boot request invalidates its session', async ({ browser }) => {
+test('the gear switches actual fullscreen, stages and tacticians and can reopen the guide', async ({ page, mock }) => {
+  let current = profile;
+  await mock({
+    'GET /api/me': (route) => ok(route, { ...me, profile: current }),
+    'PATCH /api/auth/profile': (route) => {
+      current = { ...current, ...route.request().postDataJSON() };
+      return ok(route, current);
+    },
+  });
+  await visitLobby(page);
+  const settings = await openSettings(page, 'display');
+  await expect(settings.getByRole('heading', { name: '设置' })).toBeVisible();
+  for (const [button, enabled, label] of [
+    ['display-landscape-fullscreen-btn', true, '全屏横屏'],
+    ['display-landscape-window-btn', false, '窗口横屏'],
+  ] as const) {
+    await settings.getByTestId(button).click();
+    await expect(settings.locator('.sf-settings-card__head').getByText(label, { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => Boolean(document.fullscreenElement))).toBe(enabled);
+    expect(current.displaySettings.fullscreen).toBe(enabled);
+  }
+  for (const id of ['event_horizon_observatory', 'mercury_dyson_forge', 'orbital_elevator_port']) {
+    const stage = settings.getByTestId(`settings-arena-${id}`);
+    await stage.click();
+    await expect(stage).toContainText('已装备');
+    expect(current.preferredArena).toBe(id);
+  }
+  for (const { id, name } of [tacticians[1], tacticians[2], tacticians[0]]) {
+    const card = settings.getByTestId(`settings-tactician-${id}`);
+    await expect(card).toContainText(name);
+    await card.click();
+    await expect(card).toContainText('出战中');
+    expect(current.preferredTacticianId).toBe(id);
+  }
+  await settings.getByTestId('settings-tab-learning').click();
+  await settings.getByTestId('replay-onboarding-choice-btn').click();
+  await expect(settings).toHaveCount(0);
+  await expect(page.getByTestId('guide-card-slide')).toBeVisible();
+});
+
+test('boot refresh cannot authenticate after another boot request invalidates its session', async ({ page, mock }) => {
   const gate = deferred();
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'GET /api/me': async (route) => { await gate.promise; await ok(route, me); },
     'GET /api/lobby/state': (route) => fail(route, 'SESSION_SUPERSEDED', 401),
   });
   try {
     await page.goto('/');
     await expect(page.getByTestId('session-superseded-banner')).toBeVisible();
-    const response = page.waitForResponse((res) => new URL(res.url()).pathname === '/api/me');
+    const response = apiResponse(page, '/api/me');
     gate.resolve(); await response; await settleUi(page);
     await expect(page.getByTestId('auth-page')).toBeVisible();
     await expect(page.getByTestId('lobby-page')).toHaveCount(0);
-    expect(await page.evaluate(() => localStorage.getItem('blc_auth_token_v1'))).toBeNull();
-    expect(errors).toEqual([]);
-  } finally { gate.resolve(); await context.close(); }
+    expect(await localToken(page)).toBeNull();
+  } finally { gate.resolve(); }
 });
 
-test('choosing offline invalidates an in-flight login before token commit', async ({ browser }) => {
+test('returning to the two-button start screen during a pending login grants no anonymous access', async ({ page, mock }) => {
   const gate = deferred(); const started = deferred();
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'POST /api/auth/login': async (route) => {
       started.resolve(); await gate.promise;
       await ok(route, { token: 'audit-late-token', profile, userId: profile.userId, sessionEpoch: 1,
@@ -40,21 +115,42 @@ test('choosing offline invalidates an in-flight login before token commit', asyn
     },
   }, null);
   try {
-    await page.goto('/'); await loginForm(page); await started.promise;
+    await page.goto('/'); await login(page, credentials); await started.promise;
     await page.getByRole('button', { name: '← 返回', exact: true }).click();
-    await page.getByTestId('enter-offline-practice-btn').click();
-    await expect(page.getByTestId('lobby-page')).toContainText('离线星港领航员');
-    const response = page.waitForResponse((res) => new URL(res.url()).pathname === '/api/auth/login');
-    gate.resolve(); await response; await settleUi(page);
-    await expect(page.getByTestId('lobby-page')).toContainText('离线星港领航员');
-    expect(await page.evaluate(() => localStorage.getItem('blc_auth_token_v1'))).toBeNull();
-    expect(errors).toEqual([]);
-  } finally { gate.resolve(); await context.close(); }
+    await expectSignedOutStart(page);
+    expect(await localToken(page)).toBeNull();
+    gate.resolve();
+    await expectDirectLobby(page);
+    expect(await localToken(page)).toBe('audit-late-token');
+  } finally { gate.resolve(); }
 });
 
-test('old-session unauthorized response cannot invalidate a new login', async ({ browser }) => {
+test('a restored account can enter the 3D lobby or sign out directly from the start gate', async ({ page, mock }) => {
+  let logoutToken: string | undefined;
+  await mock({
+    'POST /api/auth/logout': (route) => {
+      logoutToken = route.request().headers().authorization;
+      return ok(route, { ok: true });
+    },
+  });
+  await visitLobby(page);
+  await page.reload();
+  await expectStartGate(page, profile.nickname);
+  await enterFromStartGate(page);
+  await expectDirectLobby(page);
+  await page.reload();
+  await expectStartGate(page, profile.nickname);
+  await page.getByTestId('start-gate-logout-btn').click();
+  await expectSignedOutStart(page);
+  expect(logoutToken).toBe('Bearer audit-old-token');
+  expect(await localToken(page)).toBeNull();
+  await page.reload();
+  await expectSignedOutStart(page);
+});
+
+test('old-session unauthorized response cannot invalidate a new login', async ({ page, mock }) => {
   const gate = deferred(); const started = deferred(); let requestToken = '';
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'GET /api/learning/dashboard': async (route) => {
       requestToken = route.request().headers().authorization ?? ''; started.resolve();
       await gate.promise; await fail(route, 'SESSION_SUPERSEDED', 401);
@@ -65,27 +161,25 @@ test('old-session unauthorized response cannot invalidate a new login', async ({
     }),
   });
   try {
-    await page.goto('/'); await expect(page.getByTestId('lobby-page')).toBeVisible();
-    const pending = page.evaluate(async () => {
-      const modulePath = '/src/api/httpClient.ts'; const api = await import(modulePath);
-      try { await api.httpClient.getLearningDashboard(); } catch { return; }
-    });
+    await visitLobby(page);
+    await openSubpage(page, 'learning');
     await started.promise;
-    await page.getByTestId('dock-tab-profile').click();
-    await page.getByTestId('explicit-logout-btn').click();
-    await expect(page.getByTestId('auth-page')).toBeVisible();
-    await loginForm(page); await expect(page.getByTestId('lobby-page')).toBeVisible();
+    await backToLobby(page);
+    const settings = await openSettings(page, 'account');
+    await settings.getByTestId('explicit-logout-btn').click();
+    await login(page, credentials);
+    await expectDirectLobby(page);
     expect(requestToken).toBe('Bearer audit-old-token');
-    gate.resolve(); await pending; await settleUi(page);
+    const response = apiResponse(page, '/api/learning/dashboard');
+    gate.resolve(); await (await response).finished(); await settleUi(page);
     await expect(page.getByTestId('lobby-page')).toBeVisible();
-    expect(await page.evaluate(() => localStorage.getItem('blc_auth_token_v1'))).toBe('audit-new-token');
-    expect(errors).toEqual([]);
-  } finally { gate.resolve(); await context.close(); }
+    expect(await localToken(page)).toBe('audit-new-token');
+  } finally { gate.resolve(); }
 });
 
-test('late room preference response cannot restore a room after leave succeeds', async ({ browser }) => {
+test('late room preference response cannot restore a room after leave succeeds', async ({ page, mock }) => {
   const gate = deferred(); const started = deferred(); let left = false;
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'GET /api/lobby/state': (route) => ok(route, left ? emptyLobby : roomLobby),
     'PATCH /api/lobby/member-prefs': async (route) => {
       const saved = { ...roomLobby, selfPrefs: { ...roomLobby.selfPrefs, ...route.request().postDataJSON() } };
@@ -94,29 +188,29 @@ test('late room preference response cannot restore a room after leave succeeds',
     'POST /api/lobby/leave': (route) => { left = true; return ok(route, emptyLobby); },
   });
   try {
-    await page.goto('/'); await expect(page.getByTestId('prep-room-page')).toBeVisible();
-    await page.getByTestId('self-subject-math').click(); await started.promise;
+    await page.goto('/'); await enterFromStartGate(page);
+  await expect(page.getByTestId('prep-room-page')).toBeVisible();
+    await page.getByTestId('prep-shared-subject-math').click(); await started.promise;
     await page.getByTestId('prep-leave-room-btn').click();
     await expect(page.getByTestId('lobby-page')).toBeVisible();
-    const response = page.waitForResponse((res) => new URL(res.url()).pathname === '/api/lobby/member-prefs');
+    const response = apiResponse(page, '/api/lobby/member-prefs', 'PATCH');
     gate.resolve(); await response; await settleUi(page);
     await expect(page.getByTestId('top-room-bar')).toHaveCount(0);
     await expect(page.getByTestId('lobby-resume-prep-btn')).toHaveCount(0);
-    expect(errors).toEqual([]);
-  } finally { gate.resolve(); await context.close(); }
+  } finally { gate.resolve(); }
 });
 
-test('nickname save stays single-flight and applies the confirmed nickname', async ({ browser }) => {
+test('nickname save stays single-flight and applies the confirmed nickname', async ({ page, mock }) => {
   const gate = deferred(); const started = deferred(); let requests = 0;
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'PATCH /api/auth/profile': async (route) => {
       requests++; const saved = { ...profile, ...route.request().postDataJSON() };
       started.resolve(); await gate.promise; await ok(route, saved);
     },
   });
   try {
-    await page.goto('/'); await expect(page.getByTestId('lobby-page')).toBeVisible();
-    await page.getByTestId('dock-tab-profile').click();
+    await visitLobby(page);
+    await openSubpage(page, 'profile');
     await page.getByRole('button', { name: '改名', exact: true }).click();
     const input = page.getByTestId('profile-page').locator('input[maxlength="24"]');
     await input.fill('Confirmed-Nick');
@@ -124,72 +218,88 @@ test('nickname save stays single-flight and applies the confirmed nickname', asy
     await expect(page.getByRole('button', { name: '保存中…', exact: true })).toBeDisabled();
     await expect(input).toBeDisabled(); expect(requests).toBe(1);
     gate.resolve(); await expect(page.getByTestId('profile-page')).toContainText('Confirmed-Nick');
-    await expect(input).toHaveCount(0); expect(requests).toBe(1); expect(errors).toEqual([]);
-  } finally { gate.resolve(); await context.close(); }
+    await expect(input).toHaveCount(0); expect(requests).toBe(1);
+  } finally { gate.resolve(); }
 });
 
-test('fullscreen refusal does not persist fullscreen or claim it was applied', async ({ browser }) => {
+test('fullscreen refusal does not persist fullscreen or claim it was applied', async ({ page, mock }) => {
   let updates = 0;
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'PATCH /api/auth/profile': (route) => { updates++; return ok(route, profile); },
   });
   await page.addInitScript(() => Object.defineProperty(Element.prototype, 'requestFullscreen', {
     configurable: true, value: () => Promise.reject(new DOMException('Audit denied', 'NotAllowedError')),
   }));
-  try {
-    await page.goto('/'); await expect(page.getByTestId('lobby-page')).toBeVisible();
-    await page.getByTestId('dock-tab-profile').click();
-    await page.getByTestId('display-landscape-fullscreen-btn').click();
-    await expect(page.locator('.blc-toast').filter({ hasText: '显示模式未切换' })).toBeVisible();
-    expect(await page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
-    expect(updates).toBe(0);
-    await expect(page.getByTestId('display-landscape-window-btn')).toHaveClass(/blc-btn--primary/);
-    await expect(page.locator('.blc-toast').filter({ hasText: '已切换至全屏显示' })).toHaveCount(0);
-    expect(errors).toEqual([]);
-  } finally { await context.close(); }
+  await visitLobby(page);
+  await openSubpage(page, 'profile');
+  const settings = await openSettings(page, 'display');
+  await settings.getByTestId('display-landscape-fullscreen-btn').click();
+  await expect(page.locator('.blc-toast').filter({ hasText: '显示模式未切换' })).toBeVisible();
+  expect(await page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
+  expect(updates).toBe(0);
+  await expect(settings.locator('.sf-settings-card__head').getByText('窗口横屏', { exact: true })).toBeVisible();
+  await expect(page.locator('.blc-toast').filter({ hasText: '已切换至全屏横屏' })).toHaveCount(0);
 });
 
-test('onboarding failed writes retain the current step and both retries can succeed', async ({ browser }) => {
-  let current = { ...profile, onboardingChoice: 'unset' }; let failed = true;
-  const { page, context, errors } = await mockUiPage(browser, {
+test('onboarding failed writes retain the current step and both retries can succeed', async ({ page, mock }) => {
+  let current = { ...profile, onboardingChoice: 'unset', learningStartSelections: {} };
+  let failed = true;
+  const writes: unknown[] = [];
+  await mock({
     'GET /api/me': (route) => ok(route, { ...me, profile: current }),
     'PATCH /api/auth/profile': (route) => {
+      const patch = route.request().postDataJSON();
+      writes.push(patch);
       if (failed) return fail(route);
-      current = { ...current, ...route.request().postDataJSON() }; return ok(route, current);
+      current = { ...current, ...patch }; return ok(route, current);
     },
   });
-  try {
-    await page.goto('/'); await expect(page.getByTestId('onboarding-three-choices')).toBeVisible();
-    await page.getByTestId('onboarding-opt-skip').click();
-    await expect(page.locator('.blc-toast').filter({ hasText: '启航进度尚未确认保存' })).toBeVisible();
-    await expect(page.getByTestId('onboarding-three-choices')).toBeVisible();
-    failed = false; await page.getByTestId('onboarding-opt-skip').click();
-    await expect(page.getByTestId('learning-start-selector')).toBeVisible();
-    failed = true; await page.getByTestId('save-learning-start-btn').click();
-    await expect(page.locator('.blc-toast').filter({ hasText: '起始章节尚未确认保存' })).toBeVisible();
-    await expect(page.getByTestId('learning-start-selector')).toBeVisible();
-    failed = false; await page.getByTestId('save-learning-start-btn').click();
-    await expect(page.getByTestId('lobby-page')).toBeVisible(); expect(errors).toEqual([]);
-  } finally { await context.close(); }
+  await page.goto('/'); await enterFromStartGate(page);
+  await expect(page.getByTestId('onboarding-three-choices')).toBeVisible();
+  await page.getByTestId('onboarding-opt-skip').click();
+  await expect(page.locator('.blc-toast').filter({ hasText: '启航进度尚未确认保存' })).toBeVisible();
+  await expect(page.getByTestId('onboarding-three-choices')).toBeVisible();
+  failed = false;
+  await skipOnboarding(page);
+  expect(writes).toEqual([{ onboardingChoice: 'skipped' }, { onboardingChoice: 'skipped' }]);
+
+  const settings = await openSettings(page, 'learning');
+  const select = settings.getByTestId('settings-english-start-select');
+  const second = english.manifest.knowledgeGraph[1]!;
+  await expect(select).toHaveValue('ENG_N1_VOCAB_DIALOGUE');
+  await expect(select.locator('option:checked')).toContainText(firstEnglishTitle);
+  await select.selectOption(second.nodeId);
+  failed = true; await settings.getByTestId('save-learning-start-btn').click();
+  await expect(settings.getByTestId('learning-start-save-error')).toContainText('保存失败，请检查连接后重试。');
+  await expect(settings.getByTestId('learning-start-selector')).toBeVisible();
+  await expect(select).toHaveValue(second.nodeId);
+  expect(current.learningStartSelections).toEqual({});
+  failed = false; await settings.getByTestId('save-learning-start-btn').click();
+  await expect(page.getByTestId('toast-banner-stack')).toContainText('学习起始章节已保存');
+  await closeSettings(page);
+  await expectDirectLobby(page);
+  expect(writes).toHaveLength(4);
+  expect(writes[3]).toEqual(writes[2]);
+  expect(current.learningStartSelections).toMatchObject({ english: second.nodeId });
 });
 
-test('arena persistence failure restores the confirmed arena and is visible to the user', async ({ browser }) => {
-  const { page, context, errors } = await mockUiPage(browser, {
+test('arena persistence failure restores the confirmed arena and is visible to the user', async ({ page, mock }) => {
+  await mock({
     'PATCH /api/auth/profile': (route) => fail(route),
   });
-  try {
-    await page.goto('/'); await expect(page.getByTestId('lobby-page')).toBeVisible();
-    await page.getByTestId('arena-theme-event_horizon_observatory').click();
-    await expect(page.locator('.blc-toast').filter({ hasText: 'AUDIT_FAILURE' })).toBeVisible();
-    await expect(page.getByTestId('arena-theme-orbital_elevator_port')).toHaveClass(/blc-pill-btn--active/);
-    await expect(page.getByTestId('arena-theme-event_horizon_observatory')).not.toHaveClass(/blc-pill-btn--active/);
-    expect(errors).toEqual([]);
-  } finally { await context.close(); }
+  await visitLobby(page);
+  const settings = await openSettings(page, 'display');
+  const original = settings.getByTestId('settings-arena-orbital_elevator_port');
+  const rejected = settings.getByTestId('settings-arena-event_horizon_observatory');
+  await rejected.click();
+  await expect(page.locator('.blc-toast').filter({ hasText: 'AUDIT_FAILURE' })).toBeVisible();
+  await expect(original.getByText('已装备', { exact: true })).toBeVisible();
+  await expect(rejected.getByText('已装备', { exact: true })).toHaveCount(0);
 });
 
-test('successful registration with failed auto-login retries only login', async ({ browser }) => {
+test('successful registration with failed auto-login retries only login', async ({ page, mock }) => {
   let registrations = 0; let logins = 0;
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'POST /api/auth/register': (route) => { registrations++; return ok(route, { profile }); },
     'POST /api/auth/login': (route) => {
       logins++;
@@ -199,27 +309,22 @@ test('successful registration with failed auto-login retries only login', async 
       });
     },
   }, null);
-  try {
-    await page.goto('/'); await page.getByTestId('splash-enter-btn').click();
-    await page.getByTestId('auth-tab-register').click();
-    await page.getByTestId('auth-username-input').fill('audit_user');
-    await page.getByTestId('auth-nickname-input').fill('审计样本');
-    await page.getByTestId('auth-password-input').fill('audit-password');
-    await page.getByTestId('auth-submit-btn').click();
-    await expect(page.getByTestId('auth-error-msg')).toContainText('档案已创建，请登录');
-    await expect(page.getByTestId('auth-tab-login')).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByTestId('auth-nickname-input')).toHaveCount(0);
-    await expect(page.getByTestId('auth-username-input')).toHaveValue('audit_user');
-    await page.getByTestId('auth-submit-btn').click();
-    await expect(page.getByTestId('lobby-page')).toBeVisible();
-    expect(registrations).toBe(1); expect(logins).toBe(2); expect(errors).toEqual([]);
-  } finally { await context.close(); }
+  await page.goto('/');
+  await register(page, credentials);
+  await expect(page.getByTestId('auth-error-msg')).toContainText('账号已创建，请登录');
+  await expect(page.getByTestId('auth-tab-login')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('auth-nickname-input')).toHaveCount(0);
+  await expect(page.getByTestId('auth-username-input')).toHaveValue('audit_user');
+  await page.getByTestId('auth-submit-btn').click();
+  await expect(page.getByTestId('lobby-page')).toBeVisible();
+  expect(registrations).toBe(1); expect(logins).toBe(2);
 });
 
-test('prep chapter preference is one authoritative request for room and profile', async ({ browser }) => {
+test('prep chapter preference is one authoritative request for room and profile', async ({ page, mock }) => {
   let memberUpdates = 0; let profileUpdates = 0;
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'GET /api/lobby/state': (route) => ok(route, roomLobby),
+    'POST /api/lobby/leave': (route) => ok(route, emptyLobby),
     'PATCH /api/lobby/member-prefs': (route) => {
       memberUpdates++;
       const patch = route.request().postDataJSON();
@@ -228,24 +333,28 @@ test('prep chapter preference is one authoritative request for room and profile'
     },
     'PATCH /api/auth/profile': (route) => { profileUpdates++; return fail(route); },
   });
-  try {
-    await page.goto('/'); await expect(page.getByTestId('prep-room-page')).toBeVisible();
-    const select = page.getByTestId('prep-start-node-select');
-    const options = await select.locator('option').evaluateAll((rows) => rows.map((row) => (row as HTMLOptionElement).value));
-    await select.selectOption(options[1]!);
-    await expect(select).toHaveValue(options[1]!); await expect(select).toBeEnabled();
-    expect(memberUpdates).toBe(1); expect(profileUpdates).toBe(0);
-    await page.getByTestId('dock-tab-profile').click();
-    await page.getByTestId('edit-learning-start-btn').click();
-    await expect(page.locator('input[name="english-start-node"]:checked')).toHaveValue(options[1]!);
-    expect(errors).toEqual([]);
-  } finally { await context.close(); }
+  await page.goto('/'); await enterFromStartGate(page);
+  await expect(page.getByTestId('prep-room-page')).toBeVisible();
+  const settings = await openSettings(page, 'learning');
+  const select = settings.getByTestId('settings-english-start-select');
+  const second = english.manifest.knowledgeGraph[1]!;
+  await select.selectOption(second.nodeId);
+  await settings.getByTestId('save-learning-start-btn').click();
+  await expect(page.getByTestId('toast-banner-stack')).toContainText('学习起始章节已保存');
+  expect(memberUpdates).toBe(1); expect(profileUpdates).toBe(0);
+  await closeSettings(page);
+  await expect(page.getByTestId('prep-chapter-summary-btn')).toContainText(second.title);
+  await page.getByTestId('prep-leave-room-btn').click();
+  await expectDirectLobby(page);
+  await openSettings(page, 'learning');
+  await expect(select).toHaveValue(second.nodeId);
+  await expect(select).toBeEnabled();
 });
 
-test('idle prep arena preference uses one room command and commits its returned profile', async ({ browser }) => {
+test('idle prep arena preference uses one room command and commits its returned profile', async ({ page, mock }) => {
   let memberUpdates = 0; let profileUpdates = 0;
   const theme = 'event_horizon_observatory';
-  const { page, context, errors } = await mockUiPage(browser, {
+  await mock({
     'GET /api/lobby/state': (route) => ok(route, roomLobby),
     'PATCH /api/lobby/member-prefs': (route) => {
       memberUpdates++;
@@ -254,12 +363,15 @@ test('idle prep arena preference uses one room command and commits its returned 
     },
     'PATCH /api/auth/profile': (route) => { profileUpdates++; return fail(route); },
   });
-  try {
-    await page.goto('/'); await expect(page.getByTestId('prep-room-page')).toBeVisible();
-    const response = page.waitForResponse((res) => new URL(res.url()).pathname === '/api/lobby/member-prefs');
-    await page.getByTestId(`arena-theme-${theme}`).click(); await response; await settleUi(page);
-    expect(memberUpdates).toBe(1); expect(profileUpdates).toBe(0);
-    await expect(page.getByTestId(`arena-theme-${theme}`)).toHaveClass(/blc-pill-btn--active/);
-    expect(errors).toEqual([]);
-  } finally { await context.close(); }
+  await page.goto('/'); await enterFromStartGate(page);
+  await expect(page.getByTestId('prep-room-page')).toBeVisible();
+  const settings = await openSettings(page, 'display');
+  const response = apiResponse(page, '/api/lobby/member-prefs', 'PATCH');
+  const arena = settings.getByTestId(`settings-arena-${theme}`);
+  await arena.click();
+  expect((await response).ok()).toBe(true);
+  expect(memberUpdates).toBe(1); expect(profileUpdates).toBe(0);
+  await closeSettings(page);
+  await openSettings(page, 'display');
+  await expect(arena.getByText('已装备', { exact: true })).toBeVisible();
 });

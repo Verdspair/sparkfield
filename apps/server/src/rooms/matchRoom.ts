@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Room, ServerError, type Client } from '@colyseus/core';
 import { z } from 'zod';
-import { CommunicationClientSendSchema, ConfigurableCommunicationPolicy, FinalBoardSnapshotSchema, GameCommandSchema, getMatchChoiceKind, MODE_BUDGETS,
+import { CommunicationClientSendSchema, ConfigurableCommunicationPolicy, DEFAULT_TACTICIAN_ID, FinalBoardSnapshotSchema, GameCommandSchema, getMatchChoiceKind, MODE_BUDGETS,
   type CommunicationGovernancePolicy, type CoursePack, type GameCommand, type LessonStepKind,
   type MatchPhaseKind, type ModeStandingSummary, type UserProfile } from '@pkg/contracts';
 import { activateLessonRemediation, buildPersonalizedLessonBundle, finalizeLearningGoldCarry,
@@ -408,6 +408,7 @@ export class MatchRoom extends Room {
       seatId:human.seatId,self:structuredClone(this.game.seats.find(s=>s.id===human.seatId)),
       seats:this.game.seats.map(seat=>{const identity=[...this.humans.values()].find(h=>h.seatId===seat.id);
         return {seatId:seat.id,nickname:identity?.profile.nickname ?? `领航员 ${seat.id.slice(5)}`,level:seat.level,
+          tacticianId:identity?.profile.preferredTacticianId ?? DEFAULT_TACTICIAN_ID,
           units:seat.units.filter(u=>u.location.zone==='board'),victoryPoints:seat.victoryPoints,
           ...(this.input.queueType==='solo'?{isBot:seat.isBot}:{}),chosenAugments:seat.chosenAugments};}),
       battle:this.phase==='battle' && this.pendingBattle?{round:this.game.round,battles:this.pendingBattle.battles}:null,

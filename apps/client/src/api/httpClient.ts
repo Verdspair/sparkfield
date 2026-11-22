@@ -21,6 +21,7 @@ import type {
   RedeemOrder,
   RegisterRequest,
   SubjectId,
+  TacticianId,
   UserProfile,
 } from '@pkg/contracts';
 import type { AuthoringCoursePack, CompileCoursePackInput, Diagnostic } from '@pkg/pack-compiler';
@@ -38,6 +39,7 @@ export interface MemberPrefsView {
   subject: SubjectId;
   learningStartSelections: Partial<Record<SubjectId, string>>;
   preferredArena: ArenaThemeId;
+  preferredTacticianId?: TacticianId;
   displaySettings: DisplaySettings;
 }
 
@@ -433,6 +435,7 @@ export const httpClient = {
     onboardingChoice?: 'unset' | 'cards' | 'micro_match' | 'skipped';
     learningStartSelections?: Partial<Record<SubjectId, string>>;
     preferredArena?: ArenaThemeId;
+    preferredTacticianId?: TacticianId;
     displaySettings?: { fullscreen: boolean; orientation: 'landscape' };
   }) => apiRequest<UserProfile>('/api/auth/profile', { method: 'PATCH', body: patch }),
 
@@ -467,6 +470,7 @@ export const httpClient = {
     subject?: SubjectId;
     learningStartSelections?: Partial<Record<SubjectId, string>>;
     preferredArena?: ArenaThemeId;
+    preferredTacticianId?: TacticianId;
     displaySettings?: { fullscreen: boolean; orientation: 'landscape' };
   }) => apiRequest<LobbyStateResponse>('/api/lobby/member-prefs', { method: 'PATCH', body: patch }),
 

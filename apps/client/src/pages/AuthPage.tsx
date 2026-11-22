@@ -1,237 +1,141 @@
 import React, { useEffect, useState } from 'react';
-import { ArenaThemeSwitcher } from '../components/PersistentStageCanvas.js';
+import { TacticianPortrait } from '../components/UnitPortrait.js';
 import { useAppStore } from '../store/appStore.js';
 
-type AuthStage = 'splash' | 'intent' | 'login' | 'register';
+type AuthFormStage = 'intent' | 'login' | 'register';
 
-const AUTH_SCOPED_CSS = `
-@keyframes blcAuthFadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes blcEmblemBreathe {
-  0%, 100% {
-    opacity: 0.84;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.025);
-  }
-}
-@keyframes blcSplashPulse {
-  0%, 100% {
-    opacity: 0.72;
-    border-color: rgba(240, 220, 170, 0.28);
-    box-shadow: 0 0 0 rgba(240, 220, 170, 0);
-  }
-  50% {
-    opacity: 1;
-    border-color: rgba(240, 220, 170, 0.62);
-    box-shadow: 0 0 22px rgba(200, 170, 110, 0.18);
-  }
-}
-.blc-auth-fade-up {
-  animation: blcAuthFadeUp 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.blc-splash-emblem {
-  animation: blcEmblemBreathe 5.2s ease-in-out infinite;
-}
-.blc-splash-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 30px;
-  border-radius: 999px;
-  border: 1px solid rgba(240, 220, 170, 0.36);
-  background: rgba(13, 17, 26, 0.46);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--gold-light);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.24em;
-  text-indent: 0.24em;
-  cursor: pointer;
-  animation: blcSplashPulse 3.6s ease-in-out infinite;
-  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), background 180ms ease;
-}
-.blc-splash-cta:hover {
-  background: rgba(200, 170, 110, 0.18);
-  transform: translateY(-1px);
-}
-.blc-intent-card {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 15px 18px;
-  border-radius: 8px;
-  border: 1px solid rgba(240, 220, 170, 0.2);
-  background: rgba(16, 21, 32, 0.72);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 180ms ease,
-    background 180ms ease,
-    box-shadow 180ms ease;
-}
-.blc-intent-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(240, 220, 170, 0.56);
-  background: rgba(24, 31, 46, 0.86);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
-}
-.blc-intent-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid rgba(240, 220, 170, 0.3);
-  background: rgba(200, 170, 110, 0.08);
-  color: var(--gold-light);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.blc-hairline-back {
-  background: none;
-  border: 0;
-  padding: 4px 2px;
-  color: var(--text-secondary);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: color 140ms ease;
-}
-.blc-hairline-back:hover {
-  color: var(--gold-light);
-}
-.blc-inline-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-}
-.blc-inline-switch__btn {
-  background: none;
-  border: 0;
-  border-bottom: 1.5px solid transparent;
-  margin-bottom: -1px;
-  padding: 4px 10px;
-  color: var(--text-muted);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 140ms ease, border-color 140ms ease;
-}
-.blc-inline-switch__btn--active {
-  color: var(--gold-light);
-  border-bottom-color: var(--gold-light);
-}
-`;
-
-function StarRingEmblem(): React.JSX.Element {
+function BrandCrestSvg(): React.JSX.Element {
   return (
     <svg
-      className="blc-splash-emblem"
-      width="76"
-      height="76"
-      viewBox="0 0 76 76"
+      className="sf-auth-crest sf-auth-crest--compact"
+      width={34}
+      height={34}
+      viewBox="0 0 96 96"
       fill="none"
       aria-hidden="true"
     >
       <circle
-        cx="38"
-        cy="38"
-        r="28"
-        stroke="rgba(240, 220, 170, 0.32)"
-        strokeWidth="0.9"
+        className="sf-crest-ring sf-crest-ring--outer"
+        cx="48"
+        cy="48"
+        r="41"
+        stroke="url(#sfCrestGold)"
+        strokeWidth="1.4"
+        strokeDasharray="6 4"
       />
       <ellipse
-        cx="38"
-        cy="38"
-        rx="34"
-        ry="13"
-        transform="rotate(-24 38 38)"
-        stroke="rgba(240, 220, 170, 0.68)"
-        strokeWidth="1"
+        cx="48"
+        cy="48"
+        rx="44"
+        ry="16"
+        transform="rotate(-24 48 48)"
+        stroke="url(#sfCrestGold)"
+        strokeWidth="1.5"
       />
       <ellipse
-        cx="38"
-        cy="38"
-        rx="34"
-        ry="13"
-        transform="rotate(36 38 38)"
-        stroke="rgba(92, 200, 214, 0.34)"
-        strokeWidth="0.8"
+        cx="48"
+        cy="48"
+        rx="44"
+        ry="16"
+        transform="rotate(34 48 48)"
+        stroke="url(#sfCrestAzure)"
+        strokeWidth="1.2"
       />
       <path
-        d="M38 26L40.4 35.6L50 38L40.4 40.4L38 50L35.6 40.4L26 38L35.6 35.6L38 26Z"
-        stroke="#F0DCAA"
-        strokeWidth="1.1"
-        fill="rgba(240, 220, 170, 0.14)"
+        d="M48 24L52.2 43.8L72 48L52.2 52.2L48 72L43.8 52.2L24 48L43.8 43.8L48 24Z"
+        stroke="#FFF0C4"
+        strokeWidth="1.4"
+        fill="rgba(242, 201, 125, 0.24)"
       />
-      <circle cx="38" cy="38" r="2" fill="#F0DCAA" />
+      <circle cx="48" cy="48" r="3.4" fill="#FFF0C4" />
+      <defs>
+        <linearGradient id="sfCrestGold" x1="8" y1="8" x2="88" y2="88" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFF0C4" />
+          <stop offset="50%" stopColor="#F2C97D" />
+          <stop offset="100%" stopColor="#A87932" />
+        </linearGradient>
+        <linearGradient id="sfCrestAzure" x1="88" y1="12" x2="12" y2="84" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#A5F3FC" />
+          <stop offset="60%" stopColor="#4FD1FF" />
+          <stop offset="100%" stopColor="#A78BFA" />
+        </linearGradient>
+      </defs>
     </svg>
   );
 }
 
 export function AuthPage(): React.JSX.Element {
   const {
+    authMode,
+    profile,
+    preferredTacticianId,
     login,
     registerAndLogin,
-    enterOfflinePractice,
+    logout,
+    enterGameFromStartScreen,
     supersededBanner,
     dismissSupersededBanner,
   } = useAppStore();
 
-  const [stage, setStage] = useState<AuthStage>(() => (supersededBanner ? 'login' : 'splash'));
+  const isPreLoginGate = authMode === 'authenticated';
+
+  const [stage, setStage] = useState<AuthFormStage>(() =>
+    !isPreLoginGate && supersededBanner ? 'login' : 'intent',
+  );
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [nickname, setNickname] = useState<string>('');
   const [email, setEmail] = useState<string>('');
+  const [showOptionalEmail, setShowOptionalEmail] = useState<boolean>(false);
   const [showForgotHelp, setShowForgotHelp] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [loggingOut, setLoggingOut] = useState<boolean>(false);
   const [errorText, setErrorText] = useState<string | null>(null);
 
   useEffect(() => {
-    if (supersededBanner) {
-      setStage((prev) => (prev === 'splash' || prev === 'intent' ? 'login' : prev));
+    if (isPreLoginGate) {
+      setStage('intent');
+      setErrorText(null);
+      setShowForgotHelp(false);
     }
-  }, [supersededBanner]);
+  }, [isPreLoginGate]);
 
   useEffect(() => {
-    if (stage !== 'splash') return;
+    if (!isPreLoginGate && supersededBanner) {
+      setStage((prev) => (prev === 'intent' ? 'login' : prev));
+    }
+  }, [isPreLoginGate, supersededBanner]);
+
+  useEffect(() => {
+    if (isPreLoginGate || (stage !== 'login' && stage !== 'register')) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      const target = e.target as HTMLElement | null;
-      if (target?.closest('[data-testid="arena-theme-switcher"]')) return;
-      e.preventDefault();
-      setStage('intent');
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setStage('intent');
+        setErrorText(null);
+        setShowForgotHelp(false);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [stage]);
+  }, [isPreLoginGate, stage]);
 
   const switchFormMode = (next: 'login' | 'register') => {
     setStage(next);
     setErrorText(null);
     setShowForgotHelp(false);
+  };
+
+  const handleLogoutClick = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await logout();
+      setStage('intent');
+      setErrorText(null);
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -246,11 +150,11 @@ export function AuthPage(): React.JSX.Element {
           username: username.trim(),
           password,
           nickname: nickname.trim(),
-          email: email.trim() ? email.trim() : null,
+          email: showOptionalEmail && email.trim() ? email.trim() : null,
         });
         if (result?.loginRequired) {
           setStage('login');
-          setErrorText(`档案已创建，请登录。${result.message}`);
+          setErrorText(`账号已创建，请登录。${result.message}`);
         }
       }
     } catch (err) {
@@ -260,389 +164,285 @@ export function AuthPage(): React.JSX.Element {
     }
   };
 
-  const isSplash = stage === 'splash';
+  const isModalOpen = !isPreLoginGate && (stage === 'login' || stage === 'register');
+  const displayName = profile?.nickname ?? profile?.username ?? '指挥官';
 
   return (
     <div
-      className="blc-auth-viewport"
-      style={{
-        background: isSplash
-          ? 'radial-gradient(circle at 50% 42%, rgba(11, 14, 21, 0.04) 0%, rgba(11, 14, 21, 0.46) 100%)'
-          : 'radial-gradient(circle at 50% 45%, rgba(11, 14, 21, 0.24) 0%, rgba(11, 14, 21, 0.72) 100%)',
-        transition: 'background 420ms ease',
-      }}
+      className={`blc-auth-viewport ${isPreLoginGate ? 'sf-auth-stage--prelogin' : `sf-auth-stage--${stage}`}`}
       data-testid="auth-page"
     >
-      <style>{AUTH_SCOPED_CSS}</style>
+      <header className="sf-start-topbar">
+        <div className="sf-start-logo">
+          <BrandCrestSvg />
+          <div className="sf-start-logo__copy">
+            <h1 className="sf-start-logo__title">SparkField · 灵光之野</h1>
+            <span className="sf-start-logo__season">S1 · 光锥之外</span>
+          </div>
+        </div>
 
-      {stage === 'splash' ? (
-        <div
-          className="blc-auth-fade-up"
-          onClick={() => setStage('intent')}
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 44,
-            paddingBottom: '6vh',
-            cursor: 'pointer',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 20,
-              pointerEvents: 'none',
-            }}
+        {isPreLoginGate ? (
+          <button
+            type="button"
+            className="sf-start-logout-btn"
+            disabled={loggingOut}
+            onClick={() => void handleLogoutClick()}
+            data-testid="start-gate-logout-btn"
           >
-            <StarRingEmblem />
-            <h1
-              style={{
-                margin: 0,
-                fontSize: 'clamp(28px, 3vw, 42px)',
-                fontWeight: 400,
-                letterSpacing: '0.32em',
-                textIndent: '0.32em',
-                color: 'var(--text-primary)',
-                textShadow: '0 6px 28px rgba(0, 0, 0, 0.72)',
-              }}
-            >
-              光 锥 之 外
-            </h1>
+            {loggingOut ? '退出中…' : '退出登录'}
+          </button>
+        ) : null}
+      </header>
+
+      {isPreLoginGate ? (
+        <div className="sf-start-bottom-dock">
+          <div className="sf-start-account-plate" data-testid="start-gate-account-plate">
+            <TacticianPortrait
+              tacticianId={preferredTacticianId}
+              size="sm"
+              alt={displayName}
+              className="sf-start-account-avatar"
+            />
+            <span className="sf-start-account-dot" aria-hidden="true" />
+            <span className="sf-start-account-name">{displayName}</span>
           </div>
 
           <button
             type="button"
-            className="blc-splash-cta"
-            onClick={(e) => {
-              e.stopPropagation();
-              setStage('intent');
-            }}
+            className="sf-start-game-btn"
+            onClick={enterGameFromStartScreen}
             data-testid="splash-enter-btn"
           >
-            点击启航
+            <span className="sf-start-game-btn__ornament" aria-hidden="true" />
+            <span className="sf-start-game-btn__label">开始游戏</span>
           </button>
         </div>
       ) : null}
 
-      {stage === 'intent' ? (
-        <section
-          className="ui-frosted-panel blc-auth-fade-up"
-          aria-label="选择你的启航方式"
-          style={{
-            width: 'min(390px, 92vw)',
-            padding: '22px 24px 26px',
-            borderRadius: 10,
-            border: '1px solid rgba(240, 220, 170, 0.24)',
-            background: 'rgba(13, 17, 26, 0.78)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 18,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      {!isPreLoginGate && stage === 'intent' ? (
+        <div className="sf-start-bottom-dock">
+          <nav className="sf-auth-dual-dock" aria-label="选择启航入口">
             <button
               type="button"
-              className="blc-hairline-back"
-              aria-label="返回序幕"
-              onClick={() => setStage('splash')}
-            >
-              ←
-            </button>
-            <span style={{ fontSize: 12, letterSpacing: '0.18em', color: 'var(--text-muted)' }}>
-              光锥之外
-            </span>
-          </div>
-
-          <h2
-            style={{
-              margin: '0 0 2px',
-              fontSize: 19,
-              fontWeight: 500,
-              letterSpacing: '0.06em',
-              color: 'var(--text-primary)',
-            }}
-          >
-            选择你的启航方式
-          </h2>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button
-              type="button"
-              className="blc-intent-card"
-              onClick={() => switchFormMode('register')}
-              data-testid="auth-tab-register"
-            >
-              <span className="blc-intent-icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M8 2.5V13.5M2.5 8H13.5"
-                    stroke="currentColor"
-                    strokeWidth="1.3"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <strong style={{ fontSize: 15, fontWeight: 600, color: 'var(--gold-light)' }}>
-                  初建档案
-                </strong>
-                <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>创建新身份</span>
-              </span>
-              <span style={{ color: 'var(--text-muted)', fontSize: 14 }} aria-hidden="true">
-                ›
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className="blc-intent-card"
+              className="sf-auth-action-btn sf-auth-action-btn--gold"
               onClick={() => switchFormMode('login')}
               data-testid="auth-tab-login"
             >
-              <span className="blc-intent-icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="5" stroke="currentColor" strokeWidth="1.3" />
-                  <circle cx="8" cy="8" r="1.6" fill="currentColor" />
-                </svg>
-              </span>
-              <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <strong style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
-                  账号登录
-                </strong>
-                <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>继续已有进度</span>
-              </span>
-              <span style={{ color: 'var(--text-muted)', fontSize: 14 }} aria-hidden="true">
-                ›
-              </span>
+              账号登录
             </button>
 
             <button
               type="button"
-              className="blc-intent-card"
-              onClick={enterOfflinePractice}
-              data-testid="enter-offline-practice-btn"
+              className="sf-auth-action-btn sf-auth-action-btn--azure"
+              onClick={() => switchFormMode('register')}
+              data-testid="auth-tab-register"
             >
-              <span className="blc-intent-icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <polygon
-                    points="8,2.2 13.4,5.3 13.4,10.7 8,13.8 2.6,10.7 2.6,5.3"
-                    stroke="currentColor"
-                    strokeWidth="1.2"
-                  />
-                </svg>
-              </span>
-              <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <strong style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
-                  离线试玩
-                </strong>
-                <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
-                  免登录单机演练
-                </span>
-              </span>
-              <span style={{ color: 'var(--text-muted)', fontSize: 14 }} aria-hidden="true">
-                ›
-              </span>
+              注册新账号
             </button>
-          </div>
-        </section>
+          </nav>
+        </div>
       ) : null}
 
-      {stage === 'login' || stage === 'register' ? (
-        <section
-          className="ui-frosted-panel blc-auth-fade-up"
-          aria-label={stage === 'login' ? '账号登录' : '初建档案'}
-          style={{
-            width: 'min(380px, 92vw)',
-            maxHeight: 'calc(100vh - 96px)',
-            overflowY: 'auto',
-            padding: '22px 24px',
-            borderRadius: 10,
-            border: '1px solid rgba(240, 220, 170, 0.24)',
-            background: 'rgba(13, 17, 26, 0.82)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
+      {isModalOpen ? (
+        <div
+          className="sf-auth-modal-backdrop"
+          onClick={() => {
+            setStage('intent');
+            setErrorText(null);
+            setShowForgotHelp(false);
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <button
-              type="button"
-              className="blc-hairline-back"
-              onClick={() => {
-                setStage('intent');
-                setErrorText(null);
-                setShowForgotHelp(false);
-              }}
-            >
-              ← 返回
-            </button>
+          <section
+            className="ui-metal-frame ui-corner-ornaments sf-auth-modal"
+            aria-label={stage === 'login' ? '账号登录' : '注册新账号'}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sf-auth-modal__top">
+              <button
+                type="button"
+                className="sf-auth-back-link"
+                onClick={() => {
+                  setStage('intent');
+                  setErrorText(null);
+                  setShowForgotHelp(false);
+                }}
+              >
+                ← 返回
+              </button>
 
-            <div className="blc-inline-switch" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={stage === 'login'}
-                className={`blc-inline-switch__btn ${
-                  stage === 'login' ? 'blc-inline-switch__btn--active' : ''
-                }`.trim()}
-                onClick={() => switchFormMode('login')}
-                data-testid="auth-tab-login"
-              >
-                登录
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={stage === 'register'}
-                className={`blc-inline-switch__btn ${
-                  stage === 'register' ? 'blc-inline-switch__btn--active' : ''
-                }`.trim()}
-                onClick={() => switchFormMode('register')}
-                data-testid="auth-tab-register"
-              >
-                注册
-              </button>
+              <div className="sf-auth-switch" role="tablist">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={stage === 'login'}
+                  className={`sf-auth-switch__btn ${
+                    stage === 'login' ? 'sf-auth-switch__btn--active' : ''
+                  }`.trim()}
+                  onClick={() => switchFormMode('login')}
+                  data-testid="auth-tab-login"
+                >
+                  账号登录
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={stage === 'register'}
+                  className={`sf-auth-switch__btn ${
+                    stage === 'register' ? 'sf-auth-switch__btn--active' : ''
+                  }`.trim()}
+                  onClick={() => switchFormMode('register')}
+                  data-testid="auth-tab-register"
+                >
+                  注册新账号
+                </button>
+              </div>
             </div>
-          </div>
 
-          {supersededBanner ? (
-            <div className="blc-alert blc-alert--warning" data-testid="session-superseded-banner">
-              <span style={{ flex: 1 }}>{supersededBanner}</span>
-              <button
-                type="button"
-                className="blc-btn blc-btn--ghost blc-btn--xs"
-                onClick={dismissSupersededBanner}
-              >
-                关闭
-              </button>
-            </div>
-          ) : null}
+            {supersededBanner ? (
+              <div className="blc-alert blc-alert--warning" data-testid="session-superseded-banner">
+                <span style={{ flex: 1 }}>{supersededBanner}</span>
+                <button
+                  type="button"
+                  className="blc-btn blc-btn--ghost blc-btn--xs"
+                  onClick={dismissSupersededBanner}
+                >
+                  关闭
+                </button>
+              </div>
+            ) : null}
 
-          <form className="blc-auth-form" onSubmit={(e) => void handleSubmit(e)}>
-            <label className="blc-field">
-              <span className="blc-field__label">用户名</span>
-              <input
-                type="text"
-                className="blc-input"
-                required
-                minLength={3}
-                maxLength={32}
-                autoComplete="username"
-                placeholder="3–32 位字母或数字"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                data-testid="auth-username-input"
-              />
-            </label>
-
-            {stage === 'register' ? (
+            <form className="blc-auth-form" onSubmit={(e) => void handleSubmit(e)}>
               <label className="blc-field">
-                <span className="blc-field__label">昵称</span>
+                <span className="blc-field__label">用户名</span>
                 <input
                   type="text"
                   className="blc-input"
                   required
-                  minLength={1}
-                  maxLength={24}
-                  placeholder="公开显示名称"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  data-testid="auth-nickname-input"
+                  minLength={3}
+                  maxLength={32}
+                  autoComplete="username"
+                  placeholder="3–32 位字母或数字"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  data-testid="auth-username-input"
                 />
               </label>
-            ) : null}
 
-            <label className="blc-field">
-              <span className="blc-field__label">密码</span>
-              <input
-                type="password"
-                className="blc-input"
-                required
-                minLength={stage === 'register' ? 6 : 1}
-                maxLength={128}
-                autoComplete={stage === 'login' ? 'current-password' : 'new-password'}
-                placeholder={stage === 'register' ? '至少 6 位' : '输入密码'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                data-testid="auth-password-input"
-              />
-            </label>
+              {stage === 'register' ? (
+                <label className="blc-field">
+                  <span className="blc-field__label">昵称</span>
+                  <input
+                    type="text"
+                    className="blc-input"
+                    required
+                    minLength={1}
+                    maxLength={24}
+                    placeholder="输入游戏昵称"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    data-testid="auth-nickname-input"
+                  />
+                </label>
+              ) : null}
 
-            {stage === 'register' ? (
               <label className="blc-field">
-                <span className="blc-field__label">邮箱（选填）</span>
+                <span className="blc-field__label">密码</span>
                 <input
-                  type="email"
+                  type="password"
                   className="blc-input"
-                  placeholder="选填"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  data-testid="auth-email-input"
+                  required
+                  minLength={stage === 'register' ? 6 : 1}
+                  maxLength={128}
+                  autoComplete={stage === 'login' ? 'current-password' : 'new-password'}
+                  placeholder={stage === 'register' ? '至少 6 位字符' : '输入密码'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  data-testid="auth-password-input"
                 />
               </label>
-            ) : null}
 
-            {errorText ? (
-              <div className="blc-alert blc-alert--error" role="alert" data-testid="auth-error-msg">
-                {errorText}
-              </div>
-            ) : null}
+              {stage === 'register' ? (
+                showOptionalEmail ? (
+                  <div className="sf-auth-optional-wrap">
+                    <label className="blc-field" style={{ flex: 1 }}>
+                      <span className="blc-field__label">
+                        邮箱 <small>（选填）</small>
+                      </span>
+                      <input
+                        type="email"
+                        className="blc-input"
+                        placeholder="选填，用于找回密码"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        data-testid="auth-email-input"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="sf-auth-collapse-email"
+                      onClick={() => {
+                        setShowOptionalEmail(false);
+                        setEmail('');
+                      }}
+                    >
+                      收起
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="sf-auth-add-email-btn"
+                    onClick={() => setShowOptionalEmail(true)}
+                    data-testid="toggle-optional-email-btn"
+                  >
+                    + 选填邮箱
+                  </button>
+                )
+              ) : null}
 
-            <button
-              type="submit"
-              className="blc-btn blc-btn--primary blc-btn--block"
-              style={{ marginTop: 4 }}
-              disabled={submitting}
-              data-testid="auth-submit-btn"
-            >
-              {submitting
-                ? stage === 'login'
-                  ? '登录中…'
-                  : '创建中…'
-                : stage === 'login'
-                  ? '登录'
-                  : '创建档案'}
-            </button>
-          </form>
-
-          {stage === 'login' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              <button
-                type="button"
-                className="blc-link-btn"
-                style={{ textDecoration: 'none', color: 'var(--text-muted)' }}
-                onClick={() => setShowForgotHelp((prev) => !prev)}
-                data-testid="forgot-password-help-btn"
-              >
-                忘记密码
-              </button>
-
-              {showForgotHelp ? (
-                <div
-                  className="blc-help-note"
-                  style={{ width: '100%' }}
-                  data-testid="forgot-password-help-box"
-                >
-                  未绑定邮箱的账号请联系管理员核验身份后重置。
+              {errorText ? (
+                <div className="blc-alert blc-alert--error" role="alert" data-testid="auth-error-msg">
+                  {errorText}
                 </div>
               ) : null}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
 
-      <div
-        className="blc-auth-bottom-left"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <ArenaThemeSwitcher compact />
-      </div>
+              <button
+                type="submit"
+                className="blc-btn blc-btn--primary blc-btn--block sf-auth-submit-btn"
+                disabled={submitting}
+                data-testid="auth-submit-btn"
+              >
+                {submitting
+                  ? stage === 'login'
+                    ? '登录中…'
+                    : '注册中…'
+                  : stage === 'login'
+                    ? '登录'
+                    : '注册并进入'}
+              </button>
+            </form>
+
+            {stage === 'login' ? (
+              <div className="sf-auth-modal__footer">
+                <button
+                  type="button"
+                  className="blc-link-btn sf-auth-forgot-btn"
+                  onClick={() => setShowForgotHelp((prev) => !prev)}
+                  data-testid="forgot-password-help-btn"
+                >
+                  忘记密码
+                </button>
+
+                {showForgotHelp ? (
+                  <div className="blc-help-note" data-testid="forgot-password-help-box">
+                    未绑定邮箱的账号请联系管理员重置。
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

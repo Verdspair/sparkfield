@@ -1,6 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import type { ArenaThemeId } from '@pkg/contracts';
-import { BoardStageEngine } from '../stage/index.js';
+import {
+  BoardStageEngine,
+  DEFAULT_TACTICIAN_ID,
+  prebakePortraitsAsync,
+  type ShopCameraLayout,
+  type StageSceneMode,
+  type TacticianId,
+} from '../stage/index.js';
 import { useAppStore } from '../store/appStore.js';
 
 export const ARENA_THEME_OPTIONS: readonly {
@@ -11,24 +18,83 @@ export const ARENA_THEME_OPTIONS: readonly {
   {
     id: 'orbital_elevator_port',
     name: '天梯港',
-    subtitle: '近地轨道天梯',
+    subtitle: '',
   },
   {
     id: 'mercury_dyson_forge',
     name: '戴森熔炉',
-    subtitle: '水星日冕镜阵',
+    subtitle: '',
   },
   {
     id: 'event_horizon_observatory',
     name: '视界观测台',
-    subtitle: '黑洞引力星环',
+    subtitle: '',
   },
 ];
 
-export function PersistentStageCanvas(): React.JSX.Element {
+export interface PersistentStageCanvasProps {
+  readonly sceneMode?: StageSceneMode;
+  readonly tacticianId?: TacticianId;
+  readonly shopCameraLayout?: ShopCameraLayout;
+  readonly onTacticianTap?: (tacticianId: TacticianId, variant: number) => void;
+}
+
+export function PersistentStageCanvas({
+  sceneMode,
+  tacticianId,
+  shopCameraLayout,
+  onTacticianTap,
+}: PersistentStageCanvasProps = {}): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const { audioBus, arenaTheme, registerStageEngine } = useAppStore();
+  const engineRef = useRef<BoardStageEngine | null>(null);
+  const onTacticianTapRef = useRef(onTacticianTap);
+  onTacticianTapRef.current = onTacticianTap;
+
+  const {
+    audioBus,
+    arenaTheme,
+    authMode,
+    entryGatePassed,
+    inActiveMatch,
+    onboardingOpen,
+    onboardingInitialMode,
+    redemptionOpen,
+    activeTab,
+    viewingPrepRoom,
+    lobbyState,
+    preferredTacticianId,
+    shopDockPosition,
+    shopCollapsed,
+    matchSnapshot,
+    registerStageEngine,
+  } = useAppStore();
+
+  const isMicroMatch = onboardingOpen && onboardingInitialMode === 'micro_match';
+  const derivedSceneMode: StageSceneMode =
+    sceneMode ??
+    (authMode === 'booting' || authMode === 'unauthenticated' || (authMode === 'authenticated' && !entryGatePassed)
+      ? 'splash'
+      : inActiveMatch || isMicroMatch
+        ? 'match'
+        : !redemptionOpen && activeTab === 'lobby' && viewingPrepRoom && Boolean(lobbyState.prepRoom)
+          ? 'prep'
+          : !redemptionOpen && activeTab === 'lobby'
+            ? 'lobby'
+            : 'subpage');
+
+  const resolvedTacticianId: TacticianId = tacticianId ?? preferredTacticianId ?? DEFAULT_TACTICIAN_ID;
+  const isStrategyPhase = !inActiveMatch || matchSnapshot?.phase === 'strategy';
+  const derivedShopLayout: ShopCameraLayout =
+    shopCameraLayout ??
+    (isStrategyPhase && shopDockPosition === 'bottom' && !shopCollapsed
+      ? 'bottom_open'
+      : 'top_or_collapsed');
+  const resolvedShopCameraLayout: ShopCameraLayout = derivedShopLayout;
+
   const initialThemeRef = useRef(arenaTheme);
+  const initialModeRef = useRef(derivedSceneMode);
+  const initialTacticianRef = useRef(resolvedTacticianId);
+  const initialLayoutRef = useRef(resolvedShopCameraLayout);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -36,79 +102,58 @@ export function PersistentStageCanvas(): React.JSX.Element {
     const engine = new BoardStageEngine(el, {
       initialTheme: initialThemeRef.current,
       initialPhase: 'strategy',
+      initialSceneMode: initialModeRef.current,
+      initialTacticianId: initialTacticianRef.current,
+      initialShopCameraLayout: initialLayoutRef.current,
       showBuiltInHudOverlay: true,
       interactiveDeployEnabled: true,
       audioBus,
+      callbacks: {
+        onTacticianTap: (tid, variant) => {
+          onTacticianTapRef.current?.(tid, variant);
+        },
+      },
     });
+    engineRef.current = engine;
     registerStageEngine(engine);
-    (window as unknown as { __getStagePerfStats?: () => ReturnType<BoardStageEngine['getPerfStats']> }).__getStagePerfStats =
-      () => engine.getPerfStats();
+
+    const win = window as unknown as {
+      __getStagePerfStats?: () => ReturnType<BoardStageEngine['getPerfStats']>;
+      __getStageEngine?: () => BoardStageEngine;
+    };
+    win.__getStagePerfStats = () => engine.getPerfStats();
+    win.__getStageEngine = () => engine;
+
+    void prebakePortraitsAsync({ renderer: engine.getRenderer() });
 
     return () => {
-      delete (window as unknown as { __getStagePerfStats?: unknown }).__getStagePerfStats;
+      delete win.__getStagePerfStats;
+      delete win.__getStageEngine;
+      engineRef.current = null;
       registerStageEngine(null);
       engine.dispose();
     };
-  }, [audioBus]);
+  }, [audioBus, registerStageEngine]);
+
+  useEffect(() => {
+    engineRef.current?.setSceneMode(derivedSceneMode);
+  }, [derivedSceneMode]);
+
+  useEffect(() => {
+    engineRef.current?.setTactician(resolvedTacticianId);
+  }, [resolvedTacticianId]);
+
+  useEffect(() => {
+    engineRef.current?.setShopCameraLayout(resolvedShopCameraLayout);
+  }, [resolvedShopCameraLayout]);
 
   return (
     <div
       ref={containerRef}
       className="blc-persistent-stage"
       data-testid="persistent-stage-canvas"
-      aria-label="光锥之外棋盘舞台"
+      data-scene-mode={derivedSceneMode}
+      aria-label="SparkField 灵光之野 3D 舞台"
     />
-  );
-}
-
-export function ArenaThemeSwitcher({
-  compact = false,
-}: {
-  readonly compact?: boolean;
-}): React.JSX.Element {
-  const { arenaTheme, setArenaThemeLive } = useAppStore();
-
-  return (
-    <div
-      className="ui-frosted-panel blc-arena-switcher"
-      style={{
-        padding: compact ? '3px' : '4px',
-        borderRadius: 999,
-        border: '1px solid rgba(240, 220, 170, 0.22)',
-        background: 'rgba(12, 16, 24, 0.68)',
-        gap: 3,
-      }}
-      role="group"
-      aria-label="舞台切换"
-      data-testid="arena-theme-switcher"
-    >
-      <div className="blc-arena-switcher__pills" style={{ gap: 3 }}>
-        {ARENA_THEME_OPTIONS.map((opt) => {
-          const active = arenaTheme === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              className={`blc-pill-btn ${active ? 'blc-pill-btn--active' : ''}`.trim()}
-              style={{
-                minHeight: compact ? 28 : 32,
-                padding: compact ? '3px 10px' : '4px 12px',
-                borderRadius: 999,
-                fontSize: compact ? 11.5 : 12,
-                border: active
-                  ? '1px solid rgba(240, 220, 170, 0.55)'
-                  : '1px solid transparent',
-                background: active ? 'rgba(200, 170, 110, 0.2)' : 'transparent',
-              }}
-              onClick={() => void setArenaThemeLive(opt.id)}
-              title={opt.subtitle}
-              data-testid={`arena-theme-${opt.id}`}
-            >
-              {opt.name}
-            </button>
-          );
-        })}
-      </div>
-    </div>
   );
 }

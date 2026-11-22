@@ -9,7 +9,9 @@ import React, {
 } from 'react';
 import {
   AudioEventBus,
+  DEFAULT_TACTICIAN_ID,
   NullAudioAdapter,
+  TacticianIdSchema,
   type ArenaThemeId,
   type DisplaySettings,
   type DurationMode,
@@ -19,6 +21,7 @@ import {
   type QueueType,
   type RedeemOrder,
   type SubjectId,
+  type TacticianId,
   type UnitCombatTelemetry,
   type UserProfile,
 } from '@pkg/contracts';
@@ -55,6 +58,9 @@ import { OfflinePracticeMatchController } from '../offline/offlinePracticeContro
 
 export type AuthMode = 'booting' | 'unauthenticated' | 'authenticated' | 'offline_practice';
 export type BottomNavTab = 'lobby' | 'learning' | 'encyclopedia' | 'ranking' | 'profile';
+export type ShopDockPosition = 'bottom' | 'top';
+export type SettingsTab = 'match' | 'display' | 'learning' | 'account';
+type OnboardingMode = 'choice' | 'cards' | 'micro_match';
 
 export interface ToastNotice {
   id: string;
@@ -68,7 +74,19 @@ const PLANNED_SECONDS_BY_MODE: Readonly<Record<DurationMode, number>> = {
   deep: 3600,
 };
 
+const SHOP_DOCK_POSITION_KEY = 'blc_shop_dock_position_v1';
+const OFFLINE_TACTICIAN_KEY = 'blc_offline_tactician_id_v1';
+
+function readDevicePreference(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
 function makeOfflineProfile(arena: ArenaThemeId = 'orbital_elevator_port'): UserProfile {
+  const storedTactician = TacticianIdSchema.safeParse(readDevicePreference(OFFLINE_TACTICIAN_KEY));
   return {
     userId: 'offline-local-user',
     username: 'offline_commander',
@@ -79,6 +97,7 @@ function makeOfflineProfile(arena: ArenaThemeId = 'orbital_elevator_port'): User
     onboardingChoice: 'skipped',
     learningStartSelections: {},
     preferredArena: arena,
+    preferredTacticianId: storedTactician.data ?? DEFAULT_TACTICIAN_ID,
     displaySettings: { fullscreen: false, orientation: 'landscape' },
     avatarFrameId: null,
     boardPlaqueId: null,
@@ -87,6 +106,8 @@ function makeOfflineProfile(arena: ArenaThemeId = 'orbital_elevator_port'): User
 
 export interface AppStoreValue {
   authMode: AuthMode;
+  entryGatePassed: boolean;
+  enterGameFromStartScreen: () => void;
   profile: UserProfile | null;
   rewardPointsBalance: number | null;
   standings: readonly ModeStandingSummary[];
@@ -112,9 +133,21 @@ export interface AppStoreValue {
   reconcileConfirmedOrders: (serverOrders: readonly RedeemOrder[]) => void;
 
   onboardingOpen: boolean;
-  onboardingInitialMode: 'choice' | 'cards' | 'micro_match' | 'learning_start';
-  openOnboarding: (mode?: 'choice' | 'cards' | 'micro_match' | 'learning_start') => void;
+  onboardingInitialMode: OnboardingMode;
+  openOnboarding: (mode?: OnboardingMode | 'learning_start') => void;
   closeOnboarding: () => void;
+
+  settingsModalOpen: boolean;
+  settingsInitialTab: SettingsTab;
+  openSettings: (tab?: SettingsTab) => void;
+  closeSettings: () => void;
+  openLearningStartEditor: () => void;
+  shopDockPosition: ShopDockPosition;
+  shopCollapsed: boolean;
+  setShopDockPosition: (position: ShopDockPosition) => void;
+  setShopCollapsed: (collapsed: boolean) => void;
+  preferredTacticianId: TacticianId;
+  setPreferredTacticianId: (id: TacticianId) => Promise<void>;
 
   login: (username: string, password: string) => Promise<void>;
   registerAndLogin: (input: {
@@ -131,6 +164,7 @@ export interface AppStoreValue {
     onboardingChoice?: 'unset' | 'cards' | 'micro_match' | 'skipped';
     learningStartSelections?: Partial<Record<SubjectId, string>>;
     preferredArena?: ArenaThemeId;
+    preferredTacticianId?: TacticianId;
     displaySettings?: { fullscreen: boolean; orientation: 'landscape' };
   }) => Promise<UserProfile | null>;
 
@@ -147,6 +181,7 @@ export interface AppStoreValue {
     subject?: SubjectId;
     learningStartSelections?: Partial<Record<SubjectId, string>>;
     preferredArena?: ArenaThemeId;
+    preferredTacticianId?: TacticianId;
     displaySettings?: DisplaySettings;
   }) => Promise<void>;
   startMatchOrQueue: () => Promise<void>;
@@ -207,6 +242,7 @@ const EMPTY_LOBBY_STATE: LobbyStateResponse = {
 
 export function AppStoreProvider({ children }: { readonly children: React.ReactNode }): React.JSX.Element {
   const [authMode, setAuthMode] = useState<AuthMode>('booting');
+  const [entryGatePassed, setEntryGatePassed] = useState<boolean>(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [rewardPointsBalance, setRewardPointsBalance] = useState<number | null>(null);
   const [standings, setStandings] = useState<readonly ModeStandingSummary[]>([]);
@@ -222,9 +258,12 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
   const [pendingVerifyOrders, setPendingVerifyOrders] = useState<RedeemOrder[]>([]);
 
   const [onboardingOpen, setOnboardingOpen] = useState<boolean>(false);
-  const [onboardingInitialMode, setOnboardingInitialMode] = useState<
-    'choice' | 'cards' | 'micro_match' | 'learning_start'
-  >('choice');
+  const [onboardingInitialMode, setOnboardingInitialMode] = useState<OnboardingMode>('choice');
+  const [settingsTab, setSettingsTab] = useState<SettingsTab | null>(null);
+  const [shopDockPosition, setShopDockPositionState] = useState<ShopDockPosition>(() =>
+    readDevicePreference(SHOP_DOCK_POSITION_KEY) === 'top' ? 'top' : 'bottom');
+  const [shopCollapsed, setShopCollapsed] = useState(false);
+  const preferredTacticianId = profile?.preferredTacticianId ?? DEFAULT_TACTICIAN_ID;
 
   const [lobbyState, setLobbyState] = useState<LobbyStateResponse>(EMPTY_LOBBY_STATE);
   const [arenaTheme, setArenaTheme] = useState<ArenaThemeId>('orbital_elevator_port');
@@ -302,6 +341,17 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const setShopDockPosition = useCallback((position: ShopDockPosition) => {
+    setShopDockPositionState(position);
+    try {
+      window.localStorage.setItem(SHOP_DOCK_POSITION_KEY, position);
+    } catch {
+    }
+  }, []);
+  const openSettings = useCallback((tab: SettingsTab = 'match') => setSettingsTab(tab), []);
+  const closeSettings = useCallback(() => setSettingsTab(null), []);
+  const openLearningStartEditor = useCallback(() => openSettings('learning'), [openSettings]);
+
   const cleanupActiveMatchRuntime = useCallback(async () => {
     matchConnectionVersionRef.current += 1;
     connectingRoomIdRef.current = null;
@@ -340,6 +390,8 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
       setViewingPrepRoom(false);
       setRedemptionOpen(false);
       setOnboardingOpen(false);
+      setSettingsTab(null);
+      setShopCollapsed(false);
       setSupersededBanner(message);
       setAuthMode('unauthenticated');
     },
@@ -567,6 +619,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
           : lobby.match?.roomId ?? null;
 
       if (activeRoomId) {
+        setEntryGatePassed(true);
         await joinOnlineMatchRoom(activeRoomId);
         return;
       }
@@ -691,48 +744,58 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     }
   }, [authMode, customStageOverride, matchSnapshot, scoutedSeatId]);
 
-  const registerStageEngine = useCallback(
-    (engine: BoardStageEngine | null) => {
-      stageRef.current = engine;
-      if (!engine) return;
-      engine.setArenaTheme(arenaTheme);
-      engine.setCallbacks({
-        onMoveUnit: (instanceId, to) => {
-          if (!matchSnapshotRef.current) return;
-          sendMatchCommand({ type: 'MOVE_UNIT', instanceId, to });
-        },
-        onSellUnitRequest: (instanceId) => {
-          if (!matchSnapshotRef.current) return;
-          sendMatchCommand({ type: 'SELL_UNIT', instanceId });
-        },
-        onCollectLootOrb: (orbId) => {
-          stageSyncRef.current.markOrbCollected(orbId);
-        },
-        onInspectUnit: (instanceId, screenPos) => {
-          if (!matchSnapshotRef.current || instanceId?.startsWith('ambient:')) {
-            setInspectedUnitId(null);
-            return;
-          }
-          setInspectedUnitId(instanceId);
-          setInspectedScreenPos(screenPos ? { x: screenPos.x, y: screenPos.y } : null);
-        },
-        onDragStateChange: (draggingId, overSell) => {
-          setDraggingUnitId(draggingId);
-          setOverSellDropzone(overSell);
-        },
-      });
+  const arenaThemeRef = useRef<ArenaThemeId>(arenaTheme);
+  arenaThemeRef.current = arenaTheme;
+  const authModeRef = useRef<AuthMode>(authMode);
+  authModeRef.current = authMode;
+  const customStageOverrideRef = useRef<boolean>(customStageOverride);
+  customStageOverrideRef.current = customStageOverride;
+  const sendMatchCommandRef = useRef(sendMatchCommand);
+  sendMatchCommandRef.current = sendMatchCommand;
 
-      if (!customStageOverride && !matchSnapshotRef.current) {
-        if (authMode === 'booting' || authMode === 'unauthenticated') {
-          engine.syncUnits([]);
-          engine.syncLootOrbs([]);
-        } else {
-          stageSyncRef.current.syncAmbientDiorama(engine);
+  useEffect(() => {
+    stageRef.current?.setArenaTheme(arenaTheme);
+  }, [arenaTheme]);
+
+  const registerStageEngine = useCallback((engine: BoardStageEngine | null) => {
+    stageRef.current = engine;
+    if (!engine) return;
+    engine.setArenaTheme(arenaThemeRef.current);
+    engine.setCallbacks({
+      onMoveUnit: (instanceId, to) => {
+        if (!matchSnapshotRef.current) return;
+        sendMatchCommandRef.current({ type: 'MOVE_UNIT', instanceId, to });
+      },
+      onSellUnitRequest: (instanceId) => {
+        if (!matchSnapshotRef.current) return;
+        sendMatchCommandRef.current({ type: 'SELL_UNIT', instanceId });
+      },
+      onCollectLootOrb: (orbId) => {
+        stageSyncRef.current.markOrbCollected(orbId);
+      },
+      onInspectUnit: (instanceId, screenPos) => {
+        if (!matchSnapshotRef.current || instanceId?.startsWith('ambient:')) {
+          setInspectedUnitId(null);
+          return;
         }
+        setInspectedUnitId(instanceId);
+        setInspectedScreenPos(screenPos ? { x: screenPos.x, y: screenPos.y } : null);
+      },
+      onDragStateChange: (draggingId, overSell) => {
+        setDraggingUnitId(draggingId);
+        setOverSellDropzone(overSell);
+      },
+    });
+
+    if (!customStageOverrideRef.current && !matchSnapshotRef.current) {
+      if (authModeRef.current === 'booting' || authModeRef.current === 'unauthenticated') {
+        engine.syncUnits([]);
+        engine.syncLootOrbs([]);
+      } else {
+        stageSyncRef.current.syncAmbientDiorama(engine);
       }
-    },
-    [authMode, arenaTheme, customStageOverride, sendMatchCommand],
-  );
+    }
+  }, []);
 
   const getStageEngine = useCallback(() => stageRef.current, []);
 
@@ -751,6 +814,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
       const result = await httpClient.login({ username, password });
       if (version !== sessionVersionRef.current) return;
       writeStoredSessionToken(result.token);
+      setEntryGatePassed(true);
       await refreshMeAndLobby();
     },
     [refreshMeAndLobby],
@@ -776,6 +840,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
         const result = await httpClient.login({ username: input.username, password: input.password });
         if (version !== sessionVersionRef.current) return;
         writeStoredSessionToken(result.token);
+        setEntryGatePassed(true);
         await refreshMeAndLobby();
       } catch (err) {
         if (version !== sessionVersionRef.current) return;
@@ -803,8 +868,8 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     setViewingPrepRoom(false);
     setActiveTabState('lobby');
     setDataLoading(false);
+    setEntryGatePassed(true);
     setAuthMode('offline_practice');
-    pushToast('已进入离线试玩', 'info');
   }, [arenaTheme, pushToast]);
 
   const logout = useCallback(async () => {
@@ -825,18 +890,37 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     setViewingPrepRoom(false);
     setRedemptionOpen(false);
     setOnboardingOpen(false);
+    setSettingsTab(null);
+    setShopCollapsed(false);
     setActiveTabState('lobby');
+    setEntryGatePassed(false);
     setAuthMode('unauthenticated');
   }, [authMode, cleanupActiveMatchRuntime]);
 
+  const projectSelfProfilePrefs = useCallback((confirmed: UserProfile, patch: Parameters<AppStoreValue['patchUserProfile']>[0]) => {
+    const tacticianId = patch.preferredTacticianId === undefined ? undefined : confirmed.preferredTacticianId ?? DEFAULT_TACTICIAN_ID;
+    const learningStartSelections = patch.learningStartSelections === undefined ? undefined : confirmed.learningStartSelections;
+    if (tacticianId === undefined && learningStartSelections === undefined) return;
+    setLobbyState((prev) => {
+      const room = prev.prepRoom;
+      if (!room || !prev.selfPrefs) return prev;
+      return {
+        ...prev,
+        prepRoom: tacticianId === undefined ? room : {
+          ...room,
+          members: room.members.map((member) => member.userId === confirmed.userId ? { ...member, tacticianId } : member),
+        },
+        selfPrefs: {
+          ...prev.selfPrefs,
+          ...(tacticianId !== undefined ? { preferredTacticianId: tacticianId } : {}),
+          ...(learningStartSelections !== undefined ? { learningStartSelections } : {}),
+        },
+      };
+    });
+  }, []);
+
   const patchUserProfile = useCallback(
-    async (patch: {
-      nickname?: string;
-      onboardingChoice?: 'unset' | 'cards' | 'micro_match' | 'skipped';
-      learningStartSelections?: Partial<Record<SubjectId, string>>;
-      preferredArena?: ArenaThemeId;
-      displaySettings?: { fullscreen: boolean; orientation: 'landscape' };
-    }): Promise<UserProfile | null> => {
+    async (patch: Parameters<AppStoreValue['patchUserProfile']>[0]): Promise<UserProfile | null> => {
       const action = captureSessionAction();
       if (patch.displaySettings) {
         const applied = await applyHostDisplaySettings(patch.displaySettings);
@@ -847,6 +931,14 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
       }
       const version = ++profileRequestVersionRef.current;
       if (authMode === 'offline_practice') {
+        if (patch.preferredTacticianId !== undefined) {
+          const id = TacticianIdSchema.parse(patch.preferredTacticianId);
+          try {
+            window.localStorage.setItem(OFFLINE_TACTICIAN_KEY, id);
+          } catch {
+            throw new Error('无法保存离线领航员偏好。');
+          }
+        }
         if (patch.preferredArena) setArenaTheme(patch.preferredArena);
         const baseProfile = profile ?? makeOfflineProfile(arenaTheme);
         const nextProfile: UserProfile = {
@@ -857,20 +949,31 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
             ? { learningStartSelections: { ...baseProfile.learningStartSelections, ...patch.learningStartSelections } }
             : {}),
           ...(patch.preferredArena !== undefined ? { preferredArena: patch.preferredArena } : {}),
+          ...(patch.preferredTacticianId !== undefined ? { preferredTacticianId: patch.preferredTacticianId } : {}),
           ...(patch.displaySettings !== undefined ? { displaySettings: patch.displaySettings } : {}),
         };
         setProfile(nextProfile);
+        projectSelfProfilePrefs(nextProfile, patch);
         return nextProfile;
       }
       const updated = await httpClient.updateProfile(patch);
       assertCurrentSessionAction(action);
       if (version !== profileRequestVersionRef.current) throw new Error('资料操作已被后续操作替代。');
       setProfile(updated);
+      projectSelfProfilePrefs(updated, patch);
       if (patch.preferredArena) setArenaTheme(patch.preferredArena);
       return updated;
     },
-    [assertCurrentSessionAction, authMode, captureSessionAction, profile],
+    [arenaTheme, assertCurrentSessionAction, authMode, captureSessionAction, profile, projectSelfProfilePrefs],
   );
+
+  const setPreferredTacticianId = useCallback(async (id: TacticianId) => {
+    if (authMode === 'authenticated' && lobbyState.prepRoom?.status === 'idle') {
+      await requestLobbyChange(() => httpClient.updateMemberPrefs({ preferredTacticianId: id }), true);
+    } else {
+      await patchUserProfile({ preferredTacticianId: id });
+    }
+  }, [authMode, lobbyState.prepRoom?.status, patchUserProfile, requestLobbyChange]);
 
   const setArenaThemeLive = useCallback(
     async (theme: ArenaThemeId, persist = true) => {
@@ -953,6 +1056,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
               nickname: selfUser.nickname,
               isHost: true,
               ready: true,
+              tacticianId: selfUser.preferredTacticianId,
               avatarFrameId: null,
               boardPlaqueId: null,
             },
@@ -962,6 +1066,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
           subject,
           learningStartSelections: selfUser.learningStartSelections,
           preferredArena: arenaTheme,
+          preferredTacticianId: selfUser.preferredTacticianId,
           displaySettings: selfUser.displaySettings,
         };
         setLobbyState({
@@ -1053,13 +1158,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
   );
 
   const updateSelfRoomPrefs = useCallback(
-    async (patch: {
-      ready?: boolean;
-      subject?: SubjectId;
-      learningStartSelections?: Partial<Record<SubjectId, string>>;
-      preferredArena?: ArenaThemeId;
-      displaySettings?: DisplaySettings;
-    }) => {
+    async (patch: Parameters<AppStoreValue['updateSelfRoomPrefs']>[0]) => {
       if (authMode === 'offline_practice') {
         const { ready: _ready, subject: _subject, displaySettings, ...sharedPrefs } = patch;
         if (Object.keys(sharedPrefs).length > 0 || displaySettings) {
@@ -1074,14 +1173,6 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
             ? {
                 ...prev.selfPrefs,
                 ...(patch.subject ? { subject: patch.subject } : {}),
-                ...(patch.learningStartSelections
-                  ? {
-                      learningStartSelections: {
-                        ...prev.selfPrefs.learningStartSelections,
-                        ...patch.learningStartSelections,
-                      },
-                    }
-                  : {}),
                 ...(patch.preferredArena ? { preferredArena: patch.preferredArena } : {}),
                 ...(patch.displaySettings ? { displaySettings: patch.displaySettings } : {}),
               }
@@ -1100,7 +1191,8 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
               },
             }
           : {}),
-      }), patch.learningStartSelections !== undefined || patch.preferredArena !== undefined || displaySettings !== undefined);
+      }), patch.learningStartSelections !== undefined || patch.preferredArena !== undefined ||
+        patch.preferredTacticianId !== undefined || displaySettings !== undefined);
     },
     [authMode, patchUserProfile, requestLobbyChange],
   );
@@ -1119,7 +1211,10 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
           lobbyState.selfPrefs?.learningStartSelections ?? profile?.learningStartSelections,
         listeners: {
           onSnapshot: (snap) => {
-            setMatchSnapshot(snap);
+            setMatchSnapshot({
+              ...snap,
+              seats: snap.seats.map((seat) => ({ ...seat, tacticianId: seat.seatId === snap.seatId ? preferredTacticianId : DEFAULT_TACTICIAN_ID })),
+            });
             if (snap.summary) setMatchSummary(snap.summary);
           },
           onBattle: (payload) => {
@@ -1151,6 +1246,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     lobbyState.prepRoom?.durationMode,
     lobbyState.selfPrefs?.learningStartSelections,
     lobbyState.selfPrefs?.subject,
+    preferredTacticianId,
     profile?.learningStartSelections,
     profile?.nickname,
     pushToast,
@@ -1273,12 +1369,20 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
   }, [assertCurrentSessionAction, authMode, captureSessionAction, cleanupActiveMatchRuntime, requestLobbyChange]);
 
   const openOnboarding = useCallback(
-    (mode: 'choice' | 'cards' | 'micro_match' | 'learning_start' = 'choice') => {
+    (mode: OnboardingMode | 'learning_start' = 'choice') => {
+      if (mode === 'learning_start') {
+        openLearningStartEditor();
+        return;
+      }
       setOnboardingInitialMode(mode);
       setOnboardingOpen(true);
     },
-    [],
+    [openLearningStartEditor],
   );
+
+  const enterGameFromStartScreen = useCallback(() => {
+    setEntryGatePassed(true);
+  }, []);
 
   const closeOnboarding = useCallback(() => {
     setOnboardingOpen(false);
@@ -1287,6 +1391,8 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
 
   const value: AppStoreValue = {
     authMode,
+    entryGatePassed,
+    enterGameFromStartScreen,
     profile,
     rewardPointsBalance,
     standings,
@@ -1315,6 +1421,18 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     onboardingInitialMode,
     openOnboarding,
     closeOnboarding,
+
+    settingsModalOpen: settingsTab !== null,
+    settingsInitialTab: settingsTab ?? 'match',
+    openSettings,
+    closeSettings,
+    openLearningStartEditor,
+    shopDockPosition,
+    shopCollapsed,
+    setShopDockPosition,
+    setShopCollapsed,
+    preferredTacticianId,
+    setPreferredTacticianId,
 
     login,
     registerAndLogin,

@@ -182,6 +182,12 @@ export class LiveBattleChoreographer {
         this.emitStepEffects(stage, prevPositions);
         this.pushCombatFrame(stage, snapshot);
       } else {
+        const allyWon =
+          (this.combat.result.winnerSide === 0 && !this.flipPerspective) ||
+          (this.combat.result.winnerSide === 1 && this.flipPerspective);
+        if (allyWon) {
+          stage.triggerTacticianEmote('cheer');
+        }
         if (this.authoritativeTelemetry.length > 0) {
           this.onTelemetryUpdate?.(this.authoritativeTelemetry);
         }
@@ -337,6 +343,7 @@ export class SnapshotStageSynchronizer {
   private prevStarByInstance = new Map<string, 1 | 2 | 3>();
   private collectedOrbKeys = new Set<string>();
   private lastMatchId = '';
+  private lastOrbEmoteKey = '';
 
   public markOrbCollected(orbId: string): void {
     this.collectedOrbKeys.add(orbId);
@@ -347,6 +354,7 @@ export class SnapshotStageSynchronizer {
       this.lastMatchId = snapshot.matchId;
       this.prevStarByInstance.clear();
       this.collectedOrbKeys.clear();
+      this.lastOrbEmoteKey = '';
     }
 
     stage.setPhase(snapshot.phase);
@@ -385,6 +393,13 @@ export class SnapshotStageSynchronizer {
         }))
         .filter((orb) => !this.collectedOrbKeys.has(orb.orbId));
       stage.syncLootOrbs(orbs);
+      if (snapshot.phase === 'resource' && orbs.length > 0) {
+        const orbKey = `${snapshot.matchId}:n${snapshot.nodeIndex}:p${snapshot.phaseIndex}`;
+        if (this.lastOrbEmoteKey !== orbKey) {
+          this.lastOrbEmoteKey = orbKey;
+          stage.triggerTacticianEmote('collect_orb');
+        }
+      }
     } else {
       stage.syncLootOrbs([]);
     }

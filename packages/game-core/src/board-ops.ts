@@ -3,8 +3,11 @@ import { cloneState } from './rng.js';
 import { grantGold, populationCap, spendGold } from './economy.js';
 import { returnToPool, starCopies, takeFromPool } from './pool.js';
 import type { CommandResult, GameState, SeatState, UnitInstance } from './types.js';
+function createUnit(instanceId: string, unitId: string, location: UnitLocation, star: UnitStar): UnitInstance {
+  return { instanceId, unitId, star, location, items: [], cryoRounds: 0, frozenUntilRound: null, bonusHp: 0, bonusSkillEfficiency: 0 };
+}
 export function makeUnit(game: GameState, unitId: string, location: UnitLocation, star: UnitStar = 1): UnitInstance {
-  return { instanceId: 'u' + game.nextInstanceId++, unitId, star, location, items: [], cryoRounds: 0, frozenUntilRound: null, bonusHp: 0, bonusSkillEfficiency: 0 };
+  return createUnit('u' + game.nextInstanceId++, unitId, location, star);
 }
 function locationOrder(a: UnitInstance, b: UnitInstance): number {
   const order = (u: UnitInstance) => u.location.zone === 'board' ? u.location.row * 7 + u.location.col : 100 + u.location.slot;
@@ -18,12 +21,19 @@ function keepItem(items: string[], id: string): boolean {
   if (kind === 'emblem' && items.some(i => lookupItemById(i)?.kind === 'emblem')) return false;
   return true;
 }
-export function combineUnits(seat: SeatState, unitId: string): void {
+type UnitRoster = Pick<SeatState, 'units' | 'inventoryItems'>;
+type ShopBuyer = Pick<SeatState, 'shop' | 'gold'> & UnitRoster;
+
+function canMerge(unit: UnitInstance, unitId: string, star: UnitStar): boolean {
+  return unit.unitId === unitId && unit.star === star && unit.frozenUntilRound === null;
+}
+function mergeUnits(seat: UnitRoster, unitId: string, tracked?: UnitInstance): UnitInstance | undefined {
   for (const star of [1, 2] as const) {
     while (true) {
-      const matches = seat.units.filter(u => u.unitId === unitId && u.star === star && u.frozenUntilRound === null).sort(locationOrder);
+      const matches = seat.units.filter(u => canMerge(u, unitId, star)).sort(locationOrder);
       if (matches.length < 3) break;
       const group = matches.slice(0, 3); const body = group[0]!;
+      if (tracked && group.includes(tracked)) tracked = body;
       const complete = (u: UnitInstance) => u.items.filter(i => !isComponent(i));
       const others = group.slice(1);
       const ordered = [...complete(body), ...others.filter(u => u.location.zone === 'board').flatMap(complete), ...others.filter(u => u.location.zone === 'bench').flatMap(complete), ...group.flatMap(u => u.items.filter(isComponent))];
@@ -33,31 +43,61 @@ export function combineUnits(seat: SeatState, unitId: string): void {
       const removed = new Set(others.map(u => u.instanceId)); seat.units = seat.units.filter(u => !removed.has(u.instanceId));
     }
   }
+  return tracked;
 }
-function simulateReceive(game: GameState, seat: SeatState, unitId: string): SeatState | null {
-  const next = cloneState(seat);
-  const unit: UnitInstance = { instanceId: 'u' + game.nextInstanceId, unitId, star: 1, location: { zone: 'bench', slot: 99 }, items: [], cryoRounds: 0, frozenUntilRound: null, bonusHp: 0, bonusSkillEfficiency: 0 };
-  next.units.push(unit); combineUnits(next, unitId);
-  const unplaced = next.units.find(u => u.location.zone === 'bench' && u.location.slot === 99);
-  if (unplaced) {
-    const occupied = new Set(next.units.filter(u => u.location.zone === 'bench' && u.instanceId !== unplaced.instanceId).map(u => u.location.zone === 'bench' ? u.location.slot : -1));
+export function combineUnits(seat: SeatState, unitId: string): void {
+  mergeUnits(seat, unitId);
+}
+function simulateReceive(seat: UnitRoster, unitId: string, instanceId: string): { roster: UnitRoster; star: UnitStar } | null {
+  const roster = cloneState({ units: seat.units, inventoryItems: seat.inventoryItems });
+  const unit = createUnit(instanceId, unitId, { zone: 'bench', slot: 99 }, 1);
+  roster.units.push(unit);
+  const received = mergeUnits(roster, unitId, unit)!;
+  if (received === unit) {
+    const occupied = new Set(roster.units.flatMap(u => u.location.zone === 'bench' ? [u.location.slot] : []));
     const slot = Array.from({ length: 9 }, (_, i) => i).find(i => !occupied.has(i));
     if (slot === undefined) return null;
-    unplaced.location = { zone: 'bench', slot };
+    unit.location = { zone: 'bench', slot };
   }
-  return next;
+  return { roster, star: received.star };
 }
 export function receiveUnit(game: GameState, seat: SeatState, unitId: string): CommandResult {
   if (!SEASON1_UNITS_BY_ID.has(unitId) || !game.pool[unitId]) return { ok: false, reason: 'POOL_EMPTY' };
-  const next = simulateReceive(game, seat, unitId); if (!next) return { ok: false, reason: 'BENCH_FULL' };
-  takeFromPool(game.pool, unitId); seat.units = next.units; seat.inventoryItems = next.inventoryItems; game.nextInstanceId++; return { ok: true };
+  const next = simulateReceive(seat, unitId, 'u' + game.nextInstanceId); if (!next) return { ok: false, reason: 'BENCH_FULL' };
+  takeFromPool(game.pool, unitId); Object.assign(seat, next.roster); game.nextInstanceId++; return { ok: true };
+}
+export interface ShopPurchasePreview {
+  canBuy: boolean;
+  canDirectStarUp: boolean;
+  targetStar: 2 | 3 | null;
+  ownedCount: number;
+  goldCost: number | null;
+  reason: 'EMPTY_SHOP_SLOT' | 'INSUFFICIENT_GOLD' | 'BENCH_FULL' | null;
+}
+function evaluatePurchase(seat: ShopBuyer, shopIndex: number, instanceId: string) {
+  const unit = SEASON1_UNITS_BY_ID.get(seat.shop[shopIndex] ?? '');
+  if (!unit) return { unit, next: null, reason: 'EMPTY_SHOP_SLOT' } as const;
+  const next = simulateReceive(seat, unit.id, instanceId);
+  if (seat.gold < unit.cost) return { unit, next, reason: 'INSUFFICIENT_GOLD' } as const;
+  if (!next) return { unit, next, reason: 'BENCH_FULL' } as const;
+  return { unit, next, reason: null } as const;
+}
+export function getShopPurchasePreview(seat: ShopBuyer, shopIndex: number): ShopPurchasePreview {
+  const { unit, next, reason } = evaluatePurchase(seat, shopIndex, '');
+  const targetStar = next && next.star !== 1 ? next.star : null;
+  return {
+    canBuy: reason === null,
+    canDirectStarUp: reason === null && targetStar !== null,
+    targetStar,
+    ownedCount: unit ? seat.units.filter(u => canMerge(u, unit.id, 1)).length : 0,
+    goldCost: unit?.cost ?? null,
+    reason,
+  };
 }
 export function buyCard(game: GameState, seat: SeatState, shopIndex: number): CommandResult {
-  const unitId = seat.shop[shopIndex]; if (!unitId) return { ok: false, reason: 'EMPTY_SHOP_SLOT' };
-  const cost = SEASON1_UNITS_BY_ID.get(unitId)!.cost;
-  if (seat.gold < cost) return { ok: false, reason: 'INSUFFICIENT_GOLD' };
-  const next = simulateReceive(game, seat, unitId); if (!next) return { ok: false, reason: 'BENCH_FULL' };
-  spendGold(seat, cost, 'buy_card'); seat.units = next.units; seat.inventoryItems = next.inventoryItems;
+  const { unit, next, reason } = evaluatePurchase(seat, shopIndex, 'u' + game.nextInstanceId);
+  if (reason) return { ok: false, reason };
+  spendGold(seat, unit.cost, 'buy_card'); Object.assign(seat, next.roster);
   seat.shop[shopIndex] = null; game.nextInstanceId++; return { ok: true };
 }
 export function sellUnit(game: GameState, seat: SeatState, instanceId: string): CommandResult {

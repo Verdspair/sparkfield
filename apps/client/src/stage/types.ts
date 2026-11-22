@@ -9,6 +9,17 @@ import type {
 
 export type StageQualityTier = 'high' | 'balanced';
 
+export type StageSceneMode = 'splash' | 'lobby' | 'prep' | 'match' | 'subpage';
+
+export type TacticianId =
+  | 'tactician_lumina_bell'
+  | 'tactician_europa_fin'
+  | 'tactician_singularity_mew';
+
+export type TacticianEmoteKind = 'tap' | 'cheer' | 'collect_orb';
+
+export type ShopCameraLayout = 'bottom_open' | 'top_or_collapsed';
+
 export type DamageFloatKind = 'physical' | 'magic' | 'true';
 
 export interface StageStatusFlags {
@@ -134,6 +145,7 @@ export interface StagePerfStats {
   readonly loopPaused: boolean;
   readonly webglAvailable: boolean;
   readonly fpsEstimate: number;
+  readonly sceneMode?: StageSceneMode;
 }
 
 export interface StageInteractionCallbacks {
@@ -149,11 +161,15 @@ export interface StageInteractionCallbacks {
     screenPos?: { readonly x: number; readonly y: number },
   ) => void;
   readonly onDragStateChange?: (draggingInstanceId: string | null, overSellZone: boolean) => void;
+  readonly onTacticianTap?: (tacticianId: TacticianId, variant: number) => void;
 }
 
 export interface BoardStageEngineOptions {
   readonly initialTheme?: ArenaThemeId;
   readonly initialPhase?: MatchPhaseKind;
+  readonly initialSceneMode?: StageSceneMode;
+  readonly initialTacticianId?: TacticianId;
+  readonly initialShopCameraLayout?: ShopCameraLayout;
   readonly qualityTier?: StageQualityTier;
   readonly showBuiltInHudOverlay?: boolean;
   readonly interactiveDeployEnabled?: boolean;

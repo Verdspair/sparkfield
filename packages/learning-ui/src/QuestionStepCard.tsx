@@ -10,6 +10,33 @@ import type {
 import { MarkdownKatexBlock } from './MarkdownKatexBlock.js';
 import { ensureLearningUiStyles } from './learningUiStyles.js';
 
+export type LearningReadingTheme = 'cosmos' | 'parchment';
+
+export const LEARNING_READING_THEME_STORAGE_KEY = 'sparkfield.learning.reading_theme';
+
+export function readStoredReadingTheme(): LearningReadingTheme {
+  if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+    return 'cosmos';
+  }
+  try {
+    const raw = window.localStorage.getItem(LEARNING_READING_THEME_STORAGE_KEY);
+    return raw === 'parchment' ? 'parchment' : 'cosmos';
+  } catch {
+    return 'cosmos';
+  }
+}
+
+export function writeStoredReadingTheme(theme: LearningReadingTheme): void {
+  if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+    return;
+  }
+  try {
+    window.localStorage.setItem(LEARNING_READING_THEME_STORAGE_KEY, theme);
+  } catch {
+    return;
+  }
+}
+
 export type QuestionAnswerValue =
   | string
   | readonly string[]
@@ -98,6 +125,9 @@ const VERBOSE_STEP_LABELS = new Set([
   '新变式掌握验证',
 ]);
 
+const CLOCK_RING_RADIUS = 7.5;
+const CLOCK_RING_CIRCUMFERENCE = 2 * Math.PI * CLOCK_RING_RADIUS;
+
 function resolveStepLabel(kind: LessonStepKind, customLabel?: string): string {
   if (!customLabel || VERBOSE_STEP_LABELS.has(customLabel)) {
     return SHORT_STEP_LABELS[kind];
@@ -146,16 +176,49 @@ function CornerOrnamentSvg({ pos }: { readonly pos: 'tl' | 'tr' | 'bl' | 'br' })
   return (
     <svg
       className={`lui-corner-ornament lui-corner-ornament--${pos}`}
-      viewBox="0 0 12 12"
+      viewBox="0 0 14 14"
       aria-hidden="true"
     >
       <path
-        d="M1 11V3.5L3.5 1H11"
+        d="M1.2 12.8V4.2L4.2 1.2H12.8"
         fill="none"
-        stroke="#C8AA6E"
+        stroke="#f2c97d"
         strokeWidth="1.25"
       />
-      <polygon points="1,1 3.8,1 1,3.8" fill="#C8AA6E" />
+      <polygon points="1.2,1.2 4.6,1.2 1.2,4.6" fill="#f2c97d" />
+      <circle cx="5.4" cy="5.4" r="1.05" fill="#4fd1ff" />
+    </svg>
+  );
+}
+
+function ThemeToggleIcon({ theme }: { readonly theme: LearningReadingTheme }): React.JSX.Element {
+  if (theme === 'parchment') {
+    return (
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path
+          d="M11.8 9.8A4.8 4.8 0 0 1 6.2 4.2a4.8 4.8 0 1 0 5.6 5.6Z"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M11.6 2.6V4.8M10.5 3.7H12.7"
+          stroke="currentColor"
+          strokeWidth="1.25"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M8 1.8V3.3M8 12.7V14.2M1.8 8H3.3M12.7 8H14.2M3.6 3.6L4.7 4.7M11.3 11.3L12.4 12.4M12.4 3.6L11.3 4.7M4.7 11.3L3.6 12.4"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -170,6 +233,7 @@ export function QuestionStepCard({
   feedback = null,
   explanationMd,
   sharedRemainingSeconds,
+  sharedTotalSeconds,
   isWaitingForRoomDeadline = false,
   variant = 'standalone',
   audioBus = null,
@@ -185,6 +249,16 @@ export function QuestionStepCard({
   useEffect(() => {
     ensureLearningUiStyles();
   }, []);
+
+  const [readingTheme, setReadingTheme] = useState<LearningReadingTheme>(() =>
+    readStoredReadingTheme(),
+  );
+
+  const handleToggleReadingTheme = () => {
+    const nextTheme: LearningReadingTheme = readingTheme === 'cosmos' ? 'parchment' : 'cosmos';
+    setReadingTheme(nextTheme);
+    writeStoredReadingTheme(nextTheme);
+  };
 
   const effectiveStepKind: LessonStepKind =
     stepKind ?? (suppliedQuestion ? suppliedQuestion.stepRole : 'material');
@@ -445,12 +519,27 @@ export function QuestionStepCard({
       (canReviewMaterialCard && hasMaterialContent) ||
       !canReviewMaterialCard);
 
+  const hasClock =
+    typeof sharedRemainingSeconds === 'number' && Number.isFinite(sharedRemainingSeconds);
+  const clockUrgent = hasClock && sharedRemainingSeconds <= 15;
+  const clockRatio =
+    hasClock &&
+    typeof sharedTotalSeconds === 'number' &&
+    Number.isFinite(sharedTotalSeconds) &&
+    sharedTotalSeconds > 0
+      ? Math.max(0, Math.min(1, sharedRemainingSeconds / sharedTotalSeconds))
+      : 1;
+  const clockDashOffset = CLOCK_RING_CIRCUMFERENCE * (1 - clockRatio);
+
   return (
     <section
-      className={`lui-paper-shell lui-paper-shell--${variant}`}
+      className={`lui-paper-shell lui-paper-shell--${variant} ${
+        readingTheme === 'parchment' ? 'lui-paper-shell--parchment' : 'lui-paper-shell--cosmos'
+      }`}
       data-testid="question-step-card"
       data-question-id={question?.questionId ?? ''}
       data-step-kind={effectiveStepKind}
+      data-reading-theme={readingTheme}
     >
       <CornerOrnamentSvg pos="tl" />
       <CornerOrnamentSvg pos="tr" />
@@ -461,12 +550,18 @@ export function QuestionStepCard({
         <ol className="lui-step-rail" aria-label="学习进度">
           {computedProgress.map((item, idx) => {
             const label = resolveStepLabel(item.kind, item.label);
-            const prevDone = idx > 0 && computedProgress[idx - 1]?.status === 'done';
+            const prevStatus = idx > 0 ? computedProgress[idx - 1]?.status : undefined;
+            const lineStateClass =
+              prevStatus === 'done' && item.status === 'active'
+                ? 'lui-step-line--active'
+                : prevStatus === 'done'
+                  ? 'lui-step-line--done'
+                  : '';
             return (
               <li key={item.kind} className="lui-step-item">
                 {idx > 0 ? (
                   <span
-                    className={`lui-step-line ${prevDone ? 'lui-step-line--done' : ''}`.trim()}
+                    className={`lui-step-line ${lineStateClass}`.trim()}
                     aria-hidden="true"
                   />
                 ) : null}
@@ -488,11 +583,60 @@ export function QuestionStepCard({
           })}
         </ol>
 
-        {typeof sharedRemainingSeconds === 'number' && Number.isFinite(sharedRemainingSeconds) ? (
-          <div className="lui-clock-box" data-testid="shared-node-countdown">
-            <span className="lui-clock-time">{formatClockMMSS(sharedRemainingSeconds)}</span>
-          </div>
-        ) : null}
+        <div className="lui-header-actions">
+          {hasClock ? (
+            <div
+              className={`lui-clock-box ${clockUrgent ? 'lui-clock-box--urgent' : ''}`.trim()}
+              data-testid="shared-node-countdown"
+            >
+              <svg className="lui-clock-ring" viewBox="0 0 20 20" aria-hidden="true">
+                <circle
+                  cx="10"
+                  cy="10"
+                  r={CLOCK_RING_RADIUS}
+                  fill="none"
+                  stroke="rgba(141, 162, 192, 0.28)"
+                  strokeWidth="2"
+                />
+                <circle
+                  cx="10"
+                  cy="10"
+                  r={CLOCK_RING_RADIUS}
+                  fill="none"
+                  stroke={clockUrgent ? '#fbbf24' : '#4fd1ff'}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeDasharray={CLOCK_RING_CIRCUMFERENCE}
+                  strokeDashoffset={clockDashOffset}
+                  transform="rotate(-90 10 10)"
+                />
+              </svg>
+              <span className="lui-clock-time">{formatClockMMSS(sharedRemainingSeconds)}</span>
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            className={`lui-theme-toggle ${
+              readingTheme === 'parchment' ? 'lui-theme-toggle--parchment' : ''
+            }`.trim()}
+            aria-pressed={readingTheme === 'parchment'}
+            aria-label={
+              readingTheme === 'parchment'
+                ? '切换至深空星图护眼态'
+                : '切换至暖羊皮纸护眼态'
+            }
+            title={
+              readingTheme === 'parchment'
+                ? '切换至深空星图护眼态'
+                : '切换至暖羊皮纸护眼态'
+            }
+            onClick={handleToggleReadingTheme}
+            data-testid="learning-theme-toggle"
+          >
+            <ThemeToggleIcon theme={readingTheme} />
+          </button>
+        </div>
       </header>
 
       <div className="lui-body">
@@ -507,16 +651,22 @@ export function QuestionStepCard({
           {effectiveStepKind === 'material' && !question ? (
             <>
               {lessonTitle.trim() ? (
-                <h3 className="lui-section-heading">{lessonTitle}</h3>
+                <>
+                  <h3 className="lui-briefing-title">
+                    <span className="lui-briefing-diamond" aria-hidden="true" />
+                    <span>{lessonTitle}</span>
+                  </h3>
+                  <hr className="lui-metal-divider" />
+                </>
               ) : null}
-              <div className="lui-stem-card">
+              <div className="lui-stem-card lui-stem-card--briefing">
                 <MarkdownKatexBlock content={lessonMaterialMd || '阅读本节要点后继续。'} />
               </div>
             </>
           ) : null}
 
           {effectiveStepKind === 'remediation' && !question ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="lui-remediation-list">
               {remediationItems.length === 0 ? (
                 <div className="lui-feedback-box">作答全部正确，可直接继续。</div>
               ) : (
@@ -524,9 +674,9 @@ export function QuestionStepCard({
                   <div key={rem.questionId} className="lui-stem-card">
                     <MarkdownKatexBlock content={cleanRemediationStem(rem.stemMd)} />
                     {rem.submittedSummary ? (
-                      <p style={{ margin: '8px 0 4px', fontSize: 13.5, color: '#7C2D12' }}>
+                      <div className="lui-remediation-submitted">
                         你的作答：{rem.submittedSummary}
-                      </p>
+                      </div>
                     ) : null}
                     <div className="lui-feedback-box" style={{ marginTop: 10 }}>
                       <MarkdownKatexBlock content={rem.explanationMd} />
@@ -653,6 +803,14 @@ export function QuestionStepCard({
                 <div className="lui-options-grid" role="radiogroup" aria-label="单选题选项">
                   {question.options.map((opt) => {
                     const selected = singleChoiceVal === opt.key;
+                    const stateClass =
+                      selected && feedback?.isCorrect
+                        ? 'lui-option-btn--correct'
+                        : selected && feedback && !feedback.isCorrect && !feedback.isSkipped
+                          ? 'lui-option-btn--incorrect'
+                          : selected
+                            ? 'lui-option-btn--selected'
+                            : '';
                     return (
                       <button
                         key={opt.key}
@@ -660,11 +818,14 @@ export function QuestionStepCard({
                         role="radio"
                         aria-checked={selected}
                         disabled={isLocked}
-                        className={`lui-option-btn ${selected ? 'lui-option-btn--selected' : ''}`.trim()}
+                        className={`lui-option-btn ${stateClass}`.trim()}
                         onClick={() => setSingleChoiceVal(opt.key)}
                         data-testid={`option-${opt.key}`}
                       >
-                        <span className="lui-option-key">{opt.key}</span>
+                        <span className="lui-option-diamond" aria-hidden="true">
+                          <span className="lui-option-diamond-frame" />
+                          <span className="lui-option-key">{opt.key}</span>
+                        </span>
                         <MarkdownKatexBlock content={opt.text} inline />
                       </button>
                     );
@@ -676,13 +837,21 @@ export function QuestionStepCard({
                 <div className="lui-options-grid" role="group" aria-label="多选题选项">
                   {question.options.map((opt) => {
                     const selected = multiChoiceVals.includes(opt.key);
+                    const stateClass =
+                      selected && feedback?.isCorrect
+                        ? 'lui-option-btn--correct'
+                        : selected && feedback && !feedback.isCorrect && !feedback.isSkipped
+                          ? 'lui-option-btn--incorrect'
+                          : selected
+                            ? 'lui-option-btn--selected'
+                            : '';
                     return (
                       <button
                         key={opt.key}
                         type="button"
                         aria-pressed={selected}
                         disabled={isLocked}
-                        className={`lui-option-btn ${selected ? 'lui-option-btn--selected' : ''}`.trim()}
+                        className={`lui-option-btn ${stateClass}`.trim()}
                         onClick={() =>
                           setMultiChoiceVals((prev) =>
                             prev.includes(opt.key)
@@ -692,7 +861,10 @@ export function QuestionStepCard({
                         }
                         data-testid={`option-${opt.key}`}
                       >
-                        <span className="lui-option-key">{selected ? '✓' : opt.key}</span>
+                        <span className="lui-option-diamond" aria-hidden="true">
+                          <span className="lui-option-diamond-frame" />
+                          <span className="lui-option-key">{selected ? '✓' : opt.key}</span>
+                        </span>
                         <MarkdownKatexBlock content={opt.text} inline />
                       </button>
                     );
@@ -745,13 +917,11 @@ export function QuestionStepCard({
                         return (
                           <g key={leftItem}>
                             <path
+                              className="lui-matching-curve"
                               d={`M 2 ${y1} C 42 ${y1}, 58 ${y2}, 98 ${y2}`}
-                              fill="none"
-                              stroke="#9C7B3E"
-                              strokeWidth="2"
                             />
-                            <circle cx="4" cy={y1} r="3" fill="#C8AA6E" />
-                            <circle cx="96" cy={y2} r="3" fill="#C8AA6E" />
+                            <circle className="lui-matching-node" cx="4" cy={y1} r="3.2" />
+                            <circle className="lui-matching-node" cx="96" cy={y2} r="3.2" />
                           </g>
                         );
                       })}
@@ -887,13 +1057,26 @@ export function QuestionStepCard({
                   }`.trim()}
                   data-testid="question-feedback-box"
                 >
-                  <div style={{ fontWeight: 700, marginBottom: resolvedExplanationMd ? 6 : 0 }}>
-                    {feedback.isSkipped
-                      ? '已跳过'
-                      : feedback.isCorrect
-                        ? '回答正确'
-                        : '参考解析'}
-                    {feedback.correctAnswerDisplay ? ` · ${feedback.correctAnswerDisplay}` : ''}
+                  <div
+                    className="lui-feedback-head"
+                    style={{ marginBottom: resolvedExplanationMd ? 6 : 0 }}
+                  >
+                    {feedback.isCorrect ? (
+                      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path
+                          d="M8 1.4L9.7 6.3L14.6 8L9.7 9.7L8 14.6L6.3 9.7L1.4 8L6.3 6.3L8 1.4Z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    ) : null}
+                    <span>
+                      {feedback.isSkipped
+                        ? '已跳过'
+                        : feedback.isCorrect
+                          ? '回答正确'
+                          : '参考解析'}
+                      {feedback.correctAnswerDisplay ? ` · ${feedback.correctAnswerDisplay}` : ''}
+                    </span>
                   </div>
                   {resolvedExplanationMd ? (
                     <MarkdownKatexBlock content={resolvedExplanationMd} />

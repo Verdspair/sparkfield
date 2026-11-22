@@ -5,8 +5,10 @@ import {
   lookupItemById,
 } from '@pkg/contracts';
 import { httpClient, type MatchHistoryItem } from '../api/httpClient.js';
-import { ArenaThemeSwitcher } from '../components/PersistentStageCanvas.js';
 import { StatusValueText } from '../components/StatusValueText.js';
+import { SubpageShell } from '../components/SubpageShell.js';
+import { TacticianPortrait, UnitPortrait } from '../components/UnitPortrait.js';
+import { TACTICIAN_CATALOG } from '../stage/index.js';
 import { useAppStore } from '../store/appStore.js';
 import {
   DURATION_MODE_SHORT_LABELS,
@@ -15,6 +17,7 @@ import {
   formatQuarterPoints,
   formatStandingBadgeText,
 } from '../utils/antiFakeZero.js';
+import './subpages.css';
 
 const AdminPackDrawer = lazy(() =>
   import('./AdminPackDrawer.js').then((m) => ({ default: m.AdminPackDrawer })),
@@ -27,8 +30,10 @@ export function ProfilePage(): React.JSX.Element {
     rewardPointsBalance,
     standings,
     dataLoading,
+    preferredTacticianId,
     openRedemption,
-    openOnboarding,
+    openSettings,
+    setActiveTab,
     patchUserProfile,
     logout,
     pushToast,
@@ -85,17 +90,6 @@ export function ProfilePage(): React.JSX.Element {
     }
   };
 
-  const handleDisplayToggle = async (fullscreen: boolean) => {
-    try {
-      await patchUserProfile({
-        displaySettings: { fullscreen, orientation: 'landscape' },
-      });
-      pushToast(fullscreen ? '已切换至全屏显示' : '已切换至窗口显示', 'info');
-    } catch (err) {
-      pushToast(err instanceof Error ? err.message : '更新显示设置失败', 'error');
-    }
-  };
-
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     setChangingPwd(true);
@@ -115,33 +109,49 @@ export function ProfilePage(): React.JSX.Element {
     }
   };
 
+  const handleOpenCollection = () => {
+    try {
+      window.sessionStorage.setItem('sf_enc_open_tab', 'tacticians');
+    } catch {
+    }
+    setActiveTab('encyclopedia');
+  };
+
   const pointsDisplay = formatPointsBalanceDisplay(rewardPointsBalance, {
     loading: dataLoading,
     offline: isOffline,
   });
 
+  const equippedTactician =
+    TACTICIAN_CATALOG.find((t) => t.id === preferredTacticianId) ?? TACTICIAN_CATALOG[0]!;
+
   return (
-    <div className="blc-page-shell blc-scroll-page" data-testid="profile-page">
-      <section
-        className="ui-frosted-panel blc-profile-hero"
-        style={{
-          borderRadius: 10,
-          border: '1px solid rgba(240, 220, 170, 0.24)',
-          background: 'rgba(13, 17, 26, 0.8)',
-        }}
-        aria-label="个人资料"
-      >
-        <div className="blc-profile-hero__identity">
-          <div className="blc-profile-avatar">
-            <span>{(profile?.nickname ?? '星').slice(0, 1)}</span>
+    <SubpageShell
+      title="个人档案"
+      testId="profile-page"
+    >
+      <div className="sf-profile-grid">
+        <section className="sf-card sf-profile-banner-card" aria-label="个人名片">
+          <div className="sf-profile-tactician-stage">
+            <TacticianPortrait
+              tacticianId={preferredTacticianId}
+              size="lg"
+              alt={equippedTactician.name}
+            />
+            <div>
+              <span className="blc-chip blc-chip--gold" style={{ fontSize: 11 }}>
+                {equippedTactician.name}
+              </span>
+            </div>
           </div>
+
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {editingNickname ? (
-                <span style={{ display: 'inline-flex', gap: 6 }}>
+                <span style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap' }}>
                   <input
                     className="blc-input"
-                    style={{ minHeight: 34, width: 160 }}
+                    style={{ minHeight: 34, width: 150 }}
                     maxLength={24}
                     disabled={savingNickname}
                     value={nicknameDraft}
@@ -165,7 +175,9 @@ export function ProfilePage(): React.JSX.Element {
                 </span>
               ) : (
                 <>
-                  <h2 style={{ margin: 0, fontWeight: 600 }}>{profile?.nickname ?? '领航员'}</h2>
+                  <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>
+                    {profile?.nickname ?? '领航员'}
+                  </h2>
                   <button
                     type="button"
                     className="blc-btn blc-btn--ghost blc-btn--xs"
@@ -187,95 +199,144 @@ export function ProfilePage(): React.JSX.Element {
               {profile?.emailMasked ? ` · ${profile.emailMasked}` : ''}
             </div>
           </div>
-        </div>
 
-        <div className="blc-profile-hero__ranks">
-          {(['quick', 'standard', 'deep'] as const).map((m) => {
-            const st = standings.find((s) => s.durationMode === m) ?? null;
-            return (
-              <div
-                key={m}
-                className="ui-frosted-panel blc-mini-stat"
-                style={{ minWidth: 112, padding: '8px 12px' }}
-              >
-                <span>{DURATION_MODE_SHORT_LABELS[m]}</span>
-                <strong>
-                  {isOffline ? (
-                    <span style={{ color: 'var(--text-secondary)' }}>离线</span>
-                  ) : (
-                    <StatusValueText value={formatStandingBadgeText(st, dataLoading)} />
-                  )}
-                </strong>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="blc-profile-hero__vault">
-          <div>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>积分</span>
-            <div
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: 'var(--gold-light)',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              <StatusValueText value={pointsDisplay} />
-            </div>
+          <div className="sf-profile-rank-row">
+            {(['quick', 'standard', 'deep'] as const).map((m) => {
+              const st = standings.find((s) => s.durationMode === m) ?? null;
+              return (
+                <div key={m} className="sf-stat-pill" style={{ minWidth: 0, padding: '8px 10px' }}>
+                  <span>{DURATION_MODE_SHORT_LABELS[m]}</span>
+                  <strong style={{ fontSize: 13 }}>
+                    {isOffline ? (
+                      <span style={{ color: 'var(--text-secondary)' }}>离线</span>
+                    ) : (
+                      <StatusValueText value={formatStandingBadgeText(st, dataLoading)} />
+                    )}
+                  </strong>
+                </div>
+              );
+            })}
           </div>
-          <button
-            type="button"
-            className="blc-btn blc-btn--primary blc-btn--sm"
-            onClick={() => openRedemption('profile')}
-            data-testid="profile-open-redemption-btn"
-          >
-            兑换
-          </button>
-        </div>
-      </section>
 
-      <div className="blc-two-col-grid">
-        <section
-          className="ui-frosted-panel blc-section-card"
-          style={{
-            borderRadius: 8,
-            border: '1px solid rgba(240, 220, 170, 0.2)',
-            background: 'rgba(13, 17, 26, 0.76)',
-          }}
-          data-testid="profile-account-section"
-        >
-          <div className="blc-col-head">
-            <h3 style={{ fontWeight: 600 }}>近期战绩</h3>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {!isOffline ? (
-                <button
-                  type="button"
-                  className="blc-btn blc-btn--ghost blc-btn--xs"
-                  onClick={() => setPwdModalOpen(true)}
-                  data-testid="open-change-password-btn"
-                >
-                  修改密码
-                </button>
-              ) : null}
+          <div
+            className="ui-frosted-panel"
+            style={{
+              padding: '12px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>学习积分</div>
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: 'var(--gold-light)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                <StatusValueText value={pointsDisplay} />
+              </div>
+            </div>
+            <button
+              type="button"
+              className="sf-gold-cta"
+              style={{ minHeight: 34, padding: '0 16px', fontSize: 13 }}
+              onClick={() => openRedemption('profile')}
+              data-testid="profile-open-redemption-btn"
+            >
+              积分兑换
+            </button>
+          </div>
+
+          <div className="sf-profile-quick-actions">
+            <button
+              type="button"
+              className="sf-secondary-cta"
+              style={{ minHeight: 38, fontSize: 13 }}
+              onClick={handleOpenCollection}
+              data-testid="profile-open-collection-btn"
+            >
+              ✨ 前往藏品换装
+            </button>
+            <button
+              type="button"
+              className="sf-secondary-cta"
+              style={{ minHeight: 38, fontSize: 13 }}
+              onClick={() => openSettings('display')}
+              data-testid="profile-open-settings-btn"
+            >
+              ⚙ 打开全部设置
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 8,
+              paddingTop: 12,
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <button
+              type="button"
+              className={`blc-btn ${isStaff ? 'blc-btn--primary' : 'blc-btn--metal'} blc-btn--xs`}
+              onClick={() => setAdminWorkbenchOpen(true)}
+              data-testid="open-admin-workbench-btn"
+            >
+              题库工作台
+            </button>
+
+            {!isOffline ? (
               <button
                 type="button"
                 className="blc-btn blc-btn--ghost blc-btn--xs"
-                onClick={() => void logout()}
-                data-testid="explicit-logout-btn"
+                onClick={() => setPwdModalOpen(true)}
+                data-testid="open-change-password-btn"
               >
-                {isOffline ? '退出试玩' : '退出登录'}
+                修改密码
               </button>
-            </div>
+            ) : null}
+
+            <button
+              type="button"
+              className="blc-btn blc-btn--ghost blc-btn--xs"
+              style={{ marginLeft: 'auto' }}
+              onClick={() => void logout()}
+              data-testid="explicit-logout-btn"
+            >
+              {isOffline ? '退出试玩' : '退出登录'}
+            </button>
+          </div>
+        </section>
+
+        <section
+          className="sf-card sf-section-panel"
+          data-testid="profile-account-section"
+        >
+          <div className="blc-col-head">
+            <h3 style={{ margin: 0, fontWeight: 600 }}>近期战绩</h3>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              {isOffline ? '离线模式' : `共 ${history.length} 场`}
+            </span>
           </div>
 
           {isOffline ? (
-            <div className="blc-empty-box">离线模式不记录战绩</div>
+            <div className="sf-star-empty">
+              <strong>离线模式不记录战绩</strong>
+              <span style={{ fontSize: 12.5 }}>登录后参与对局即可保存完整阵容与学习战绩。</span>
+            </div>
           ) : historyLoading ? (
-            <span className="stat-skeleton" style={{ width: '100%', height: 64 }} />
+            <span className="stat-skeleton" style={{ width: '100%', height: 72 }} />
           ) : history.length === 0 ? (
-            <div className="blc-empty-box">暂无战绩记录</div>
+            <div className="sf-star-empty">
+              <strong>暂无战绩记录</strong>
+              <span style={{ fontSize: 12.5 }}>前往大厅开启一场对局，战绩将自动记录在此处。</span>
+            </div>
           ) : (
             <div className="blc-attempt-list">
               {history.map((item) => {
@@ -338,17 +399,23 @@ export function ProfilePage(): React.JSX.Element {
                               <div
                                 key={`${u.unitId}-${idx}`}
                                 className="blc-history-unit-chip"
+                                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
                               >
-                                <strong>
-                                  {'★'.repeat(u.star)} {def?.name ?? u.unitId}
-                                </strong>
-                                {u.items.length > 0 ? (
-                                  <div style={{ fontSize: 11, color: 'var(--gold-light)' }}>
-                                    {u.items
-                                      .map((iid) => lookupItemById(iid)?.item.name ?? iid)
-                                      .join(' / ')}
-                                  </div>
-                                ) : null}
+                                <UnitPortrait
+                                  unitId={u.unitId}
+                                  size="sm"
+                                  star={u.star as 1 | 2 | 3}
+                                />
+                                <div>
+                                  <strong>{def?.name ?? u.unitId}</strong>
+                                  {u.items.length > 0 ? (
+                                    <div style={{ fontSize: 11, color: 'var(--gold-light)' }}>
+                                      {u.items
+                                        .map((iid) => lookupItemById(iid)?.item.name ?? iid)
+                                        .join(' / ')}
+                                    </div>
+                                  ) : null}
+                                </div>
                               </div>
                             );
                           })}
@@ -360,105 +427,6 @@ export function ProfilePage(): React.JSX.Element {
               })}
             </div>
           )}
-        </section>
-
-        <section
-          className="ui-frosted-panel blc-section-card"
-          style={{
-            borderRadius: 8,
-            border: '1px solid rgba(240, 220, 170, 0.2)',
-            background: 'rgba(13, 17, 26, 0.76)',
-          }}
-          data-testid="profile-prefs-section"
-        >
-          <div className="blc-col-head">
-            <h3 style={{ fontWeight: 600 }}>偏好与工具</h3>
-          </div>
-
-          <div className="blc-form-group">
-            <div className="blc-field__label">棋盘舞台</div>
-            <ArenaThemeSwitcher compact />
-          </div>
-
-          <div className="blc-form-group">
-            <div className="blc-field__label">显示模式</div>
-            <div className="blc-display-grid">
-              <button
-                type="button"
-                className={`blc-btn blc-btn--sm ${
-                  profile?.displaySettings.fullscreen ? 'blc-btn--primary' : 'blc-btn--metal'
-                }`}
-                onClick={() => void handleDisplayToggle(true)}
-                data-testid="display-landscape-fullscreen-btn"
-              >
-                全屏
-              </button>
-              <button
-                type="button"
-                className={`blc-btn blc-btn--sm ${
-                  profile?.displaySettings.fullscreen === false
-                    ? 'blc-btn--primary'
-                    : 'blc-btn--metal'
-                }`}
-                onClick={() => void handleDisplayToggle(false)}
-                data-testid="display-landscape-window-btn"
-              >
-                窗口
-              </button>
-            </div>
-          </div>
-
-          <div className="blc-form-group">
-            <div className="blc-field__label">引导与起点</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              <button
-                type="button"
-                className="blc-btn blc-btn--metal blc-btn--xs"
-                onClick={() => openOnboarding('choice')}
-                data-testid="replay-onboarding-choice-btn"
-              >
-                新手引导
-              </button>
-              <button
-                type="button"
-                className="blc-btn blc-btn--metal blc-btn--xs"
-                onClick={() => openOnboarding('micro_match')}
-                data-testid="replay-micro-scenario-btn"
-              >
-                90 秒演练
-              </button>
-              <button
-                type="button"
-                className="blc-btn blc-btn--metal blc-btn--xs"
-                onClick={() => openOnboarding('learning_start')}
-                data-testid="edit-learning-start-btn"
-              >
-                起始章节
-              </button>
-            </div>
-          </div>
-
-          <div
-            className="ui-frosted-panel"
-            style={{
-              padding: '12px 14px',
-              marginTop: 4,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}
-          >
-            <span className="blc-field__label">题库工作台</span>
-            <button
-              type="button"
-              className={`blc-btn ${isStaff ? 'blc-btn--primary' : 'blc-btn--metal'} blc-btn--xs`}
-              onClick={() => setAdminWorkbenchOpen(true)}
-              data-testid="open-admin-workbench-btn"
-            >
-              打开工作台
-            </button>
-          </div>
         </section>
       </div>
 
@@ -475,7 +443,7 @@ export function ProfilePage(): React.JSX.Element {
               width: 'min(360px, 92vw)',
               borderRadius: 10,
               border: '1px solid rgba(240, 220, 170, 0.28)',
-              background: 'rgba(14, 18, 28, 0.9)',
+              background: 'rgba(14, 18, 28, 0.94)',
             }}
           >
             <div className="blc-dialog-sm__head">
@@ -528,6 +496,6 @@ export function ProfilePage(): React.JSX.Element {
           <AdminPackDrawer onClose={() => setAdminWorkbenchOpen(false)} />
         </Suspense>
       ) : null}
-    </div>
+    </SubpageShell>
   );
 }

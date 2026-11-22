@@ -2,10 +2,11 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { sql } from 'kysely';
+import { sql, type Transaction } from 'kysely';
 import { CoursePackSchema, RegisterRequestSchema } from '@pkg/contracts';
 import { compileCoursePack, serializeCoursePackToAuthoring } from '@pkg/pack-compiler';
 import type { AppDatabase } from './db/client.js';
+import type { Database } from './db/schema.js';
 import { migrateDatabase } from './db/migrate.js';
 import { publishCoursePack } from './db/repositories.js';
 import { hashPassword } from './auth/authService.js';
@@ -31,9 +32,25 @@ export async function bootstrapDatabase(db: AppDatabase, options: BootstrapOptio
     if (!checked.ok || checked.pack.manifest.contentSha256 !== pack.manifest.contentSha256) {
       throw new ServiceError('INVALID_SEED_COURSE_PACK', `Invalid seed pack: ${file}`);
     }
-    const active = await db.selectFrom('course_packs').select('pack_id').where('pack_id', '=', pack.manifest.packId)
-      .where('is_active', '=', true).executeTakeFirst();
-    await publishCoursePack(db, checked.pack, !active);
+    await db.transaction().execute(async (tx) => {
+      await sql`select pg_advisory_xact_lock(hashtextextended(${`pack:${pack.manifest.packId}`},0))`.execute(tx);
+      const active = await tx.selectFrom('course_packs').select('course_pack_version').where('pack_id', '=', pack.manifest.packId)
+        .where('is_active', '=', true).executeTakeFirst();
+      const seedVersion = pack.manifest.coursePackVersion.split('.').map(BigInt);
+      const activeVersion = active?.course_pack_version.split('.').map(BigInt);
+      const newer = !activeVersion || seedVersion.some((part, index) =>
+        part > (activeVersion[index] ?? 0n) && seedVersion.slice(0, index).every((previous, i) => previous === activeVersion[i]));
+      if (newer) {
+        const borrowed = new Proxy(tx, {
+          get(target, key) {
+            if (key === 'transaction') return () => ({ execute: <T>(run: (inner: Transaction<Database>) => Promise<T>) => run(tx) });
+            const value: unknown = Reflect.get(target, key, target);
+            return typeof value === 'function' ? value.bind(target) : value;
+          },
+        });
+        await publishCoursePack(borrowed, checked.pack, true);
+      }
+    });
     packIds.push(pack.manifest.packId);
   }
   let admin = options.defaultAdmin;

@@ -27,11 +27,15 @@ export function toUserProfile(user: Selectable<UsersTable>): UserProfile {
     emailMasked: email ? `${email.slice(0, 1)}***@${email.split('@')[1]}` : null,
     role: user.role, sessionEpoch: user.session_epoch, onboardingChoice: user.onboarding_choice,
     learningStartSelections: user.learning_start_json, preferredArena: user.preferred_arena,
+    preferredTacticianId: user.preferred_tactician_id,
     displaySettings: user.display_settings_json, avatarFrameId: user.avatar_frame_id, boardPlaqueId: user.board_plaque_id });
 }
 export interface AuthenticatedSession { userId: string; sessionEpoch: number; profile: UserProfile }
 export interface LoginResult extends AuthenticatedSession { token: string; expiresAtIso: string; activeSeat: unknown | null }
 export type ActiveSeatResolver = (userId: string) => unknown | null | Promise<unknown | null>;
+
+type ProfilePatch = Partial<Pick<UserProfile,
+  'nickname' | 'onboardingChoice' | 'learningStartSelections' | 'preferredArena' | 'preferredTacticianId' | 'displaySettings'>>;
 
 export class AuthService {
   constructor(private readonly db: AppDatabase, private readonly resolveActiveSeat?: ActiveSeatResolver) {}
@@ -98,17 +102,15 @@ export class AuthService {
     const session = await this.authenticate(token);
     return await this.resolveActiveSeat?.(session.userId) ?? null;
   }
-  async updateProfileInTransaction(session: AuthenticatedSession, tx: Transaction<Database>, patch: Partial<Pick<UserProfile,
-    'nickname' | 'onboardingChoice' | 'learningStartSelections' | 'preferredArena' | 'displaySettings'>>): Promise<UserProfile> {
+  async updateProfileInTransaction(session: AuthenticatedSession, tx: Transaction<Database>, patch: ProfilePatch): Promise<UserProfile> {
     const profile = UserProfileSchema.parse({ ...session.profile, ...patch });
     const user = await tx.updateTable('users').set({ nickname: profile.nickname, onboarding_choice: profile.onboardingChoice,
       learning_start_json: JSON.stringify(profile.learningStartSelections), preferred_arena: profile.preferredArena,
-      display_settings_json: JSON.stringify(profile.displaySettings) }).where('id', '=', session.userId)
+      preferred_tactician_id: profile.preferredTacticianId, display_settings_json: JSON.stringify(profile.displaySettings) }).where('id', '=', session.userId)
       .returningAll().executeTakeFirstOrThrow();
     return toUserProfile(user);
   }
-  async updateProfile(token: string, patch: Partial<Pick<UserProfile,
-    'nickname' | 'onboardingChoice' | 'learningStartSelections' | 'preferredArena' | 'displaySettings'>>): Promise<UserProfile> {
+  async updateProfile(token: string, patch: ProfilePatch): Promise<UserProfile> {
     return this.withAuthenticatedSession(token, (session, tx) => this.updateProfileInTransaction(session, tx, patch));
   }
 }

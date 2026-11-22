@@ -24,6 +24,10 @@ describe('standard course pack compilation and round-trip',() => {
     expect(pack.items.length).toBeGreaterThanOrEqual(18);
     expect(pack.manifest.itemCount).toBe(pack.items.length);
     expect(pack.manifest.syllabusTag).toBe('CC0-1.0');
+    if (packId === 'english-core-starter') {
+      expect(pack.manifest.coursePackVersion).toBe('1.2.1');
+      expect(pack.manifest.knowledgeGraph.find((node) => node.nodeId === 'ENG_N1_VOCAB_DIALOGUE')?.title).toBe('情景交际与日常沟通');
+    }
     expect(pack.items.every((item) => item.sourceLicense==='CC0-1.0')).toBe(true);
     const supportedTypes = packId === 'english-core-starter'
       ? new Set(['single_choice', 'short_fill'])

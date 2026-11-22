@@ -26,7 +26,9 @@
     "postprocessing": "^6.39.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "three": "^0.187.0"
+    "simplex-noise": "^4.0.3",
+    "three": "^0.187.0",
+    "three-subdivide": "^1.1.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",

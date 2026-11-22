@@ -15,6 +15,7 @@ import {
   type DirectLearningSessionView,
   type LearningDashboardResponse,
 } from '../api/httpClient.js';
+import { SubpageShell } from '../components/SubpageShell.js';
 import { STARTER_COURSE_PACKS } from '../content/starterPacks.js';
 import {
   OfflineDirectLearningSession,
@@ -23,6 +24,7 @@ import {
   syncPendingOfflineAttemptsToServer,
 } from '../offline/offlinePracticeController.js';
 import { useAppStore } from '../store/appStore.js';
+import './subpages.css';
 
 const STEP_LABELS: Readonly<Record<LessonStepKind, string>> = {
   material: '例题',
@@ -131,16 +133,32 @@ export function LearningHomePage(): React.JSX.Element {
     return STARTER_COURSE_PACKS.map((p) => p.manifest);
   }, [dashboard]);
 
-  const activeChapterTitle = useMemo(() => {
-    const pack = packs.find((p) => p.subject === focusSubject) ?? packs[0];
-    if (!pack) return '基础章节';
+  const focusPack = useMemo(
+    () => packs.find((p) => p.subject === focusSubject) ?? packs[0] ?? null,
+    [focusSubject, packs],
+  );
+
+  const activeChapterInfo = useMemo(() => {
+    if (!focusPack) {
+      return { title: '基础章节', index: 0, total: 1 };
+    }
     const rec = dashboard?.nextRecommendation;
     const targetNodeId =
       rec && rec.subject === focusSubject
         ? rec.knowledgeNode
-        : (profile?.learningStartSelections?.[focusSubject] ?? pack.knowledgeGraph[0]?.nodeId ?? '');
-    return resolveChapterTitle(packs, focusSubject, targetNodeId);
-  }, [dashboard?.nextRecommendation, focusSubject, packs, profile?.learningStartSelections]);
+        : (profile?.learningStartSelections?.[focusSubject] ??
+          focusPack.knowledgeGraph[0]?.nodeId ??
+          '');
+    const idx = Math.max(
+      0,
+      focusPack.knowledgeGraph.findIndex((n) => n.nodeId === targetNodeId),
+    );
+    return {
+      title: resolveChapterTitle(packs, focusSubject, targetNodeId),
+      index: idx,
+      total: Math.max(1, focusPack.knowledgeGraph.length),
+    };
+  }, [dashboard?.nextRecommendation, focusPack, focusSubject, packs, profile?.learningStartSelections]);
 
   const handleStartStandalone = async (subjectOverride?: SubjectId) => {
     if (directInFlightRef.current) return;
@@ -464,23 +482,27 @@ export function LearningHomePage(): React.JSX.Element {
 
   const dueCount = dashboard?.dueReviews.length ?? null;
   const wrongCount = dashboard?.wrongQuestions.length ?? null;
+  const outerRatio = Math.min(1, (activeChapterInfo.index + 1) / activeChapterInfo.total);
+  const innerRatio = dueCount === 0 ? 1 : dueCount !== null ? Math.max(0.25, 1 - dueCount * 0.1) : 0.4;
+  const outerCirc = 2 * Math.PI * 34;
+  const innerCirc = 2 * Math.PI * 24;
 
   return (
-    <div className="blc-page-shell blc-scroll-page" data-testid="learning-home-page">
+    <SubpageShell
+      title="学习中心"
+      testId="learning-home-page"
+    >
       {!isOffline && unsyncedCount > 0 ? (
         <div
-          className="ui-frosted-panel blc-offline-sync-bar"
-          style={{
-            borderRadius: 8,
-            border: '1px solid rgba(240, 220, 170, 0.22)',
-            background: 'rgba(13, 17, 26, 0.78)',
-          }}
+          className="sf-card blc-offline-sync-bar"
+          style={{ padding: '10px 16px' }}
           data-testid="offline-sync-banner"
         >
           <span>本地有 {unsyncedCount} 条练习记录待同步</span>
           <button
             type="button"
-            className="blc-btn blc-btn--primary blc-btn--xs"
+            className="sf-gold-cta"
+            style={{ minHeight: 32, padding: '0 14px', fontSize: 12.5 }}
             disabled={syncingOffline}
             onClick={() => void handleSyncOffline()}
             data-testid="sync-offline-attempts-btn"
@@ -490,79 +512,109 @@ export function LearningHomePage(): React.JSX.Element {
         </div>
       ) : null}
 
-      <section
-        className="ui-frosted-panel blc-learning-hero"
-        style={{
-          borderRadius: 10,
-          border: '1px solid rgba(240, 220, 170, 0.24)',
-          background: 'rgba(13, 17, 26, 0.8)',
-          padding: '20px 24px',
-        }}
-        aria-label="当前章节"
-      >
-        <div className="blc-learning-hero__main">
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
-            当前章节
-          </div>
-          <h2 style={{ margin: '0 0 14px', fontSize: 21, fontWeight: 600 }}>
-            {loading ? (
-              <span className="stat-skeleton" style={{ width: 200 }} />
-            ) : (
-              activeChapterTitle
-            )}
-          </h2>
-
-          <div className="blc-learning-hero__stats" style={{ alignItems: 'center', gap: 12 }}>
-            <div
-              className="ui-frosted-panel blc-mini-stat"
-              style={{ minWidth: 96, padding: '8px 14px' }}
+      <section className="sf-card sf-learning-hero" aria-label="今日学习焦点">
+        <div className="sf-learning-hero__left">
+          <svg className="sf-ring-gauge" viewBox="0 0 84 84" aria-hidden="true">
+            <circle
+              cx="42"
+              cy="42"
+              r="34"
+              fill="none"
+              stroke="rgba(240, 220, 170, 0.14)"
+              strokeWidth="6"
+            />
+            <circle
+              cx="42"
+              cy="42"
+              r="34"
+              fill="none"
+              stroke="#e5be73"
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={outerCirc}
+              strokeDashoffset={outerCirc * (1 - outerRatio)}
+              transform="rotate(-90 42 42)"
+            />
+            <circle
+              cx="42"
+              cy="42"
+              r="24"
+              fill="none"
+              stroke="rgba(92, 200, 214, 0.14)"
+              strokeWidth="5"
+            />
+            <circle
+              cx="42"
+              cy="42"
+              r="24"
+              fill="none"
+              stroke="#5cc8d6"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeDasharray={innerCirc}
+              strokeDashoffset={innerCirc * (1 - innerRatio)}
+              transform="rotate(-90 42 42)"
+            />
+            <text
+              x="42"
+              y="46"
+              textAnchor="middle"
+              fill="#f3f0e8"
+              fontSize="13"
+              fontWeight="700"
             >
-              <span>待复习</span>
-              <strong
-                style={{ fontSize: 18, fontVariantNumeric: 'tabular-nums' }}
-                data-testid="due-reviews-count"
-              >
-                {loading ? <span className="stat-skeleton" /> : (dueCount ?? '—')}
-              </strong>
-            </div>
+              {activeChapterInfo.index + 1}/{activeChapterInfo.total}
+            </text>
+          </svg>
 
-            <div
-              className="ui-frosted-panel blc-mini-stat"
-              style={{ minWidth: 96, padding: '8px 14px' }}
-            >
-              <span>待巩固</span>
-              <strong style={{ fontSize: 18, fontVariantNumeric: 'tabular-nums' }}>
-                {loading ? <span className="stat-skeleton" /> : (wrongCount ?? '—')}
-              </strong>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
+              今日学习焦点 · {SHORT_SUBJECT[focusSubject]}
             </div>
+            <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: 'var(--gold-light)' }}>
+              {loading ? (
+                <span className="stat-skeleton" style={{ width: 200 }} />
+              ) : (
+                activeChapterInfo.title
+              )}
+            </h2>
 
-            <div className="blc-seg-tabs">
-              {(['english', 'math'] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`blc-seg-tab ${focusSubject === s ? 'blc-seg-tab--active' : ''}`}
-                  onClick={() => setFocusSubject(s)}
-                  data-testid={`learning-focus-${s}`}
-                >
-                  {SHORT_SUBJECT[s]}
-                </button>
-              ))}
+            <div className="sf-learning-hero__metrics">
+              <div className="sf-stat-pill">
+                <span>待复习</span>
+                <strong data-testid="due-reviews-count">
+                  {loading ? <span className="stat-skeleton" /> : (dueCount ?? '—')}
+                </strong>
+              </div>
+
+              <div className="sf-stat-pill">
+                <span>待巩固</span>
+                <strong>
+                  {loading ? <span className="stat-skeleton" /> : (wrongCount ?? '—')}
+                </strong>
+              </div>
+
+              <div className="blc-seg-tabs" role="group" aria-label="学科切换">
+                {(['english', 'math'] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className={`blc-seg-tab ${focusSubject === s ? 'blc-seg-tab--active' : ''}`}
+                    onClick={() => setFocusSubject(s)}
+                    data-testid={`learning-focus-${s}`}
+                  >
+                    {SHORT_SUBJECT[s]}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            flexWrap: 'wrap',
-          }}
-        >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <button
             type="button"
-            className="blc-btn blc-btn--primary"
+            className="sf-secondary-cta"
             disabled={startingDirect}
             onClick={() => void handleStartStandalone()}
             data-testid="direct-standalone-study-btn"
@@ -572,7 +624,7 @@ export function LearningHomePage(): React.JSX.Element {
 
           <button
             type="button"
-            className="blc-btn blc-btn--metal"
+            className="sf-gold-cta"
             onClick={() => void handleBringIntoGame()}
             data-testid="bring-into-game-study-btn"
           >
@@ -581,123 +633,123 @@ export function LearningHomePage(): React.JSX.Element {
         </div>
       </section>
 
-      {dashboard && dashboard.dueReviews.length > 0 ? (
-        <section
-          className="ui-frosted-panel blc-section-card"
-          style={{
-            borderRadius: 8,
-            border: '1px solid rgba(240, 220, 170, 0.2)',
-            background: 'rgba(13, 17, 26, 0.76)',
-          }}
-          data-testid="fsrs-due-list"
-        >
-          <div className="blc-col-head">
-            <h3 style={{ fontWeight: 600 }}>待复习 ({dashboard.dueReviews.length})</h3>
-          </div>
-          <div className="blc-due-chips">
-            {dashboard.dueReviews.map((card) => (
-              <div
-                key={`${card.subject}:${card.familyId}`}
-                className="ui-frosted-panel blc-due-item"
-              >
-                <strong>
-                  {SHORT_SUBJECT[card.subject]} ·{' '}
-                  {resolveChapterTitle(packs, card.subject, card.knowledgeNode)}
-                </strong>
-                <button
-                  type="button"
-                  className="blc-btn blc-btn--primary blc-btn--xs"
-                  onClick={() => void handleStartStandalone(card.subject)}
-                >
-                  复习
-                </button>
+      <div className="sf-two-col">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {dashboard && dashboard.dueReviews.length > 0 ? (
+            <section className="sf-card sf-section-panel" data-testid="fsrs-due-list">
+              <div className="blc-col-head">
+                <h3 style={{ margin: 0, fontWeight: 600 }}>
+                  待复习队列 ({dashboard.dueReviews.length})
+                </h3>
               </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
+              <div className="blc-due-chips">
+                {dashboard.dueReviews.map((card) => (
+                  <div
+                    key={`${card.subject}:${card.familyId}`}
+                    className="ui-frosted-panel blc-due-item"
+                  >
+                    <strong>
+                      {SHORT_SUBJECT[card.subject]} ·{' '}
+                      {resolveChapterTitle(packs, card.subject, card.knowledgeNode)}
+                    </strong>
+                    <button
+                      type="button"
+                      className="blc-btn blc-btn--primary blc-btn--xs"
+                      onClick={() => void handleStartStandalone(card.subject)}
+                    >
+                      复习
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
-      <div className="blc-two-col-grid">
-        <section
-          className="ui-frosted-panel blc-section-card"
-          style={{
-            borderRadius: 8,
-            border: '1px solid rgba(240, 220, 170, 0.2)',
-            background: 'rgba(13, 17, 26, 0.76)',
-          }}
-          data-testid="course-pack-catalog"
-        >
-          <div className="blc-col-head">
-            <h3 style={{ fontWeight: 600 }}>课程目录</h3>
-          </div>
-          <div className="blc-pack-list">
-            {packs.map((pack) => {
-              const currentStart =
-                profile?.learningStartSelections?.[pack.subject] ??
-                pack.knowledgeGraph[0]!.nodeId;
-              return (
-                <div key={pack.packId} className="ui-frosted-panel blc-pack-card">
-                  <div className="blc-pack-card__head">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span className="blc-chip blc-chip--gold">
-                        {SHORT_SUBJECT[pack.subject]}
+          <section className="sf-card sf-section-panel" data-testid="course-pack-catalog">
+            <div className="blc-col-head">
+              <h3 style={{ margin: 0, fontWeight: 600 }}>课程目录</h3>
+            </div>
+            <div className="blc-pack-list">
+              {packs.map((pack) => {
+                const currentStart =
+                  profile?.learningStartSelections?.[pack.subject] ??
+                  pack.knowledgeGraph[0]!.nodeId;
+                return (
+                  <div key={pack.packId} className="ui-frosted-panel blc-pack-card">
+                    <div className="blc-pack-card__head">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className="blc-chip blc-chip--gold">
+                          {SHORT_SUBJECT[pack.subject]}
+                        </span>
+                        <h4 style={{ margin: 0, fontWeight: 600 }}>{pack.title}</h4>
+                      </div>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                        {pack.itemCount} 题
                       </span>
-                      <h4 style={{ margin: 0, fontWeight: 600 }}>{pack.title}</h4>
                     </div>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                      {pack.itemCount} 题
-                    </span>
-                  </div>
 
-                  <div className="blc-chapter-rows">
-                    {pack.knowledgeGraph.map((node, idx) => {
-                      const isStart = currentStart === node.nodeId;
-                      return (
-                        <div key={node.nodeId} className="blc-chapter-row">
-                          <span style={{ fontWeight: 500 }}>
-                            {idx + 1}. {node.title}
-                          </span>
-                          {isStart ? (
-                            <span className="blc-chip blc-chip--gold">当前起点</span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="blc-btn blc-btn--ghost blc-btn--xs"
-                              onClick={() =>
-                                void handleSelectStartNode(pack.subject, node.nodeId, node.title)
-                              }
-                            >
-                              设为起点
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
+                    <div className="blc-chapter-rows">
+                      {pack.knowledgeGraph.map((node, idx) => {
+                        const isStart = currentStart === node.nodeId;
+                        return (
+                          <div key={node.nodeId} className="blc-chapter-row">
+                            <span style={{ fontWeight: 500 }}>
+                              {idx + 1}. {node.title}
+                            </span>
+                            {isStart ? (
+                              <span className="blc-chip blc-chip--gold">当前起点</span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="blc-btn blc-btn--ghost blc-btn--xs"
+                                onClick={() =>
+                                  void handleSelectStartNode(pack.subject, node.nodeId, node.title)
+                                }
+                              >
+                                设为起点
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+                );
+              })}
+            </div>
+          </section>
+        </div>
 
-        <section
-          className="ui-frosted-panel blc-section-card"
-          style={{
-            borderRadius: 8,
-            border: '1px solid rgba(240, 220, 170, 0.2)',
-            background: 'rgba(13, 17, 26, 0.76)',
-          }}
-          data-testid="wrong-questions-archive"
-        >
+        <section className="sf-card sf-section-panel" data-testid="wrong-questions-archive">
           <div className="blc-col-head">
-            <h3 style={{ fontWeight: 600 }}>待巩固</h3>
+            <h3 style={{ margin: 0, fontWeight: 600 }}>错题本</h3>
           </div>
           {loading ? (
-            <div style={{ padding: 16 }}>
+            <div style={{ padding: 12 }}>
               <span className="stat-skeleton" style={{ width: '100%', height: 68 }} />
             </div>
           ) : !dashboard || dashboard.wrongQuestions.length === 0 ? (
-            <div className="blc-empty-box">暂无待巩固题目</div>
+            <div className="sf-star-empty">
+              <svg width="54" height="54" viewBox="0 0 64 64" aria-hidden="true">
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="24"
+                  fill="none"
+                  stroke="rgba(240, 220, 170, 0.35)"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 4"
+                />
+                <path
+                  d="M32 14 L36 28 L50 32 L36 36 L32 50 L28 36 L14 32 L28 28 Z"
+                  fill="rgba(240, 220, 170, 0.28)"
+                  stroke="#f0dcaa"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              <strong>错题星图已清空</strong>
+              <span style={{ fontSize: 12.5 }}>暂无待巩固题目，保持当前节奏继续探索。</span>
+            </div>
           ) : (
             <div className="blc-attempt-list">
               {dashboard.wrongQuestions.slice(0, 15).map((att) => (
@@ -719,6 +771,6 @@ export function LearningHomePage(): React.JSX.Element {
           )}
         </section>
       </div>
-    </div>
+    </SubpageShell>
   );
 }

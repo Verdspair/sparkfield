@@ -18,12 +18,20 @@ import {
   type UnitStar,
 } from '@pkg/contracts';
 import { PbrMaterialLibrary, buildProceduralStudioEnvMap } from './pbrMaterials.js';
-import { ArenaStageAssembly } from './arenaBuilder.js';
+import { ArenaStageAssembly, getArenaThemeLightingPreset } from './arenaBuilder.js';
+import { LobbyStageAssembly } from './lobbyStageBuilder.js';
+import {
+  DEFAULT_TACTICIAN_ID,
+  createTacticianRig,
+  type TacticianRig,
+} from './tacticianMeshFactory.js';
 import { UnitMeshFactory, type UnitActorRig } from './unitMeshFactory.js';
 import { StageVfxManager } from './vfxManager.js';
 import { StageHudOverlayProjector } from './hudOverlayProjector.js';
+import { attachPortraitBakerRenderer } from './unitPortraitBaker.js';
 import {
   SELL_ZONE_Z_THRESHOLD,
+  SpringDamper3D,
   benchSlotToStageXZ,
   boardRowToDeployRow,
   deployRowToBoardRow,
@@ -35,6 +43,7 @@ import {
 import type {
   BoardStageEngineOptions,
   DamageFloatKind,
+  ShopCameraLayout,
   StageDamageEvent,
   StageInteractionCallbacks,
   StageLootOrbState,
@@ -42,17 +51,47 @@ import type {
   StagePickResult,
   StageProjectileSpec,
   StageQualityTier,
+  StageSceneMode,
   StageUnitPlacement,
   StageUnitState,
+  TacticianEmoteKind,
+  TacticianId,
   UnitScreenProjection,
 } from './types.js';
 
-const CAMERA_FOV_DEG = 28;
-const CAMERA_PITCH_RAD = THREE.MathUtils.degToRad(53);
-const BASE_BOARD_LOOK_Z = 0.85;
-const BASE_CAMERA_DISTANCE = 27.2;
+const CAMERA_FOV_DEG = 34;
+const HALF_FOV_TAN = Math.tan(THREE.MathUtils.degToRad(CAMERA_FOV_DEG * 0.5));
+const BOTTOM_OPEN_PITCH_RAD = THREE.MathUtils.degToRad(46);
+const BOTTOM_OPEN_LOOK_Z = 2.35;
+const TOP_COLLAPSED_PITCH_RAD = THREE.MathUtils.degToRad(44);
+const TOP_COLLAPSED_LOOK_Z = 0.85;
+const CAMERA_LAYOUT_TRANSITION_MS = 420;
 const INTRO_DIVE_DURATION_MS = 1100;
 const THEME_PULSE_DURATION_MS = 640;
+const BASE_BLOOM_INTENSITY = 0.36;
+const BASE_EXPOSURE = 0.98;
+const SUBPAGE_EXPOSURE = 0.66;
+const SUBPAGE_FRAME_INTERVAL_MS = 50;
+const MATCH_TACTICIAN_HOME = { x: -5.85, y: 0.08, z: 5.35 } as const;
+
+function computeMatchCameraMetrics(
+  layout: ShopCameraLayout,
+  aspect: number,
+): { pitchRad: number; lookZ: number; distance: number } {
+  const safeAspect = Math.max(0.6, aspect);
+  if (layout === 'bottom_open') {
+    return {
+      pitchRad: BOTTOM_OPEN_PITCH_RAD,
+      lookZ: BOTTOM_OPEN_LOOK_Z,
+      distance: Math.max(23.6, 8.6 / (HALF_FOV_TAN * safeAspect)),
+    };
+  }
+  return {
+    pitchRad: TOP_COLLAPSED_PITCH_RAD,
+    lookZ: TOP_COLLAPSED_LOOK_Z,
+    distance: Math.max(22.0, 8.2 / (HALF_FOV_TAN * safeAspect)),
+  };
+}
 
 export class BoardStageEngine {
   public readonly scene = new THREE.Scene();
@@ -67,16 +106,30 @@ export class BoardStageEngine {
 
   private readonly dirKeyLight: THREE.DirectionalLight;
   private readonly dirRimLight: THREE.DirectionalLight;
+  private readonly dirFillLight: THREE.DirectionalLight;
+  private readonly hemiFillLight: THREE.HemisphereLight;
   private readonly lightGuidePulseGeo: THREE.RingGeometry;
   private readonly lightGuidePulseMat: THREE.MeshBasicMaterial;
   private readonly lightGuidePulseRing: THREE.Mesh;
 
   private readonly materials: PbrMaterialLibrary;
   private readonly arena: ArenaStageAssembly;
+  private readonly lobbyStage: LobbyStageAssembly;
   private readonly unitFactory: UnitMeshFactory;
   private readonly tweenGroup = new TweenGroup();
   private readonly vfx: StageVfxManager;
   private hudOverlay: StageHudOverlayProjector | null = null;
+
+  private readonly matchTacticianRigs = new Map<TacticianId, TacticianRig>();
+  private matchTacticianRig: TacticianRig;
+  private readonly matchTacticianPosSpring = new SpringDamper3D(
+    MATCH_TACTICIAN_HOME.x,
+    MATCH_TACTICIAN_HOME.y,
+    MATCH_TACTICIAN_HOME.z,
+    18,
+    0.76,
+  );
+  private matchTacticianReturnTimerSec = 0;
 
   private readonly unitStates = new Map<string, StageUnitState>();
   private readonly unitRigs = new Map<string, UnitActorRig>();
@@ -92,18 +145,25 @@ export class BoardStageEngine {
   private showBuiltInHudOverlay: boolean;
   private interactiveDeployEnabled: boolean;
   private currentPhase: MatchPhaseKind;
+  private sceneMode: StageSceneMode;
+  private currentTacticianId: TacticianId;
+  private shopCameraLayout: ShopCameraLayout;
   private learningOverlayActive = false;
   private loopPaused = false;
   private webglAvailable = false;
 
   private activeSeatIndex = 0;
-  private readonly cameraLookTarget = new THREE.Vector3(0, 0, BASE_BOARD_LOOK_Z);
-  private cameraDistance = BASE_CAMERA_DISTANCE;
+  private viewportAspect = 16 / 9;
+  private cameraPitchRad = BOTTOM_OPEN_PITCH_RAD;
+  private cameraBaseLookZ = BOTTOM_OPEN_LOOK_Z;
+  private cameraDistance = 23.6;
+  private readonly cameraLookTarget = new THREE.Vector3(0, 0, BOTTOM_OPEN_LOOK_Z);
   private introDistanceOffset = 0;
   private introPitchOffsetRad = 0;
   private introLookZOffset = 0;
-  private themePulseDistanceOffset = 0;
+
   private activeCameraTween: Tween<{ x: number; z: number }> | null = null;
+  private activeLayoutTween: Tween<{ pitch: number; lookZ: number; dist: number }> | null = null;
   private activeIntroTween: Tween<{
     dist: number;
     pitch: number;
@@ -124,10 +184,13 @@ export class BoardStageEngine {
   private selectedInstanceId: string | null = null;
   private draggingInstanceId: string | null = null;
   private pointerDownClient: { x: number; y: number } | null = null;
+  private lastLobbyPointerX = 0;
+  private lobbyPointerDown = false;
   private nudgedFriendlyId: string | null = null;
   private overSellZone = false;
 
   private lastFrameTimestampMs = 0;
+  private lastSubpageRenderMs = 0;
   private elapsedSec = 0;
   private smoothedFps = 60;
   private readonly frameRenderStats = { drawCalls: 0, triangles: 0 };
@@ -146,8 +209,17 @@ export class BoardStageEngine {
       this.tweenGroup.remove(this.activeCameraTween);
       this.activeCameraTween = null;
     }
+    if (this.activeLayoutTween) {
+      this.activeLayoutTween.stop();
+      this.tweenGroup.remove(this.activeLayoutTween);
+      this.activeLayoutTween = null;
+    }
+    const metrics = computeMatchCameraMetrics(this.shopCameraLayout, this.viewportAspect);
+    this.cameraPitchRad = metrics.pitchRad;
+    this.cameraBaseLookZ = metrics.lookZ;
+    this.cameraDistance = metrics.distance;
     const origin = getSeatWorldOrigin(this.activeSeatIndex);
-    this.cameraLookTarget.set(origin.x, 0, origin.z + BASE_BOARD_LOOK_Z);
+    this.cameraLookTarget.set(origin.x, 0, origin.z + this.cameraBaseLookZ);
     this.syncCameraFromLookTarget();
     if (this.loopPaused) this.renderSingleFrame();
   };
@@ -161,6 +233,9 @@ export class BoardStageEngine {
     this.showBuiltInHudOverlay = options?.showBuiltInHudOverlay ?? true;
     this.interactiveDeployEnabled = options?.interactiveDeployEnabled ?? true;
     this.currentPhase = options?.initialPhase ?? 'strategy';
+    this.sceneMode = options?.initialSceneMode ?? 'match';
+    this.currentTacticianId = options?.initialTacticianId ?? DEFAULT_TACTICIAN_ID;
+    this.shopCameraLayout = options?.initialShopCameraLayout ?? 'bottom_open';
     this.callbacks = options?.callbacks ?? {};
 
     if (options?.audioBus) {
@@ -170,23 +245,36 @@ export class BoardStageEngine {
       this.audioBus.setAdapter(NullAudioAdapter);
     }
 
-    this.scene.background = new THREE.Color(0x0b0e15);
-    this.scene.fog = new THREE.FogExp2(0x0b0e15, 0.012);
+    const initialTheme = options?.initialTheme ?? 'orbital_elevator_port';
+    const lightPreset = getArenaThemeLightingPreset(initialTheme);
+    this.scene.background = new THREE.Color(lightPreset.fogColor);
+    this.scene.fog = new THREE.FogExp2(lightPreset.fogColor, lightPreset.fogDensity);
 
-    this.camera = new THREE.PerspectiveCamera(CAMERA_FOV_DEG, 16 / 9, 0.5, 140);
+    this.camera = new THREE.PerspectiveCamera(CAMERA_FOV_DEG, this.viewportAspect, 0.5, 180);
+    const initialMetrics = computeMatchCameraMetrics(this.shopCameraLayout, this.viewportAspect);
+    this.cameraPitchRad = initialMetrics.pitchRad;
+    this.cameraBaseLookZ = initialMetrics.lookZ;
+    this.cameraDistance = initialMetrics.distance;
+    this.cameraLookTarget.set(0, 0, this.cameraBaseLookZ);
     this.syncCameraFromLookTarget();
 
-    this.dirKeyLight = new THREE.DirectionalLight(0xfff3db, 1.65);
-    this.dirKeyLight.position.set(7.5, 16.5, 9.5);
-    this.dirRimLight = new THREE.DirectionalLight(0x67e8f9, 0.72);
-    this.dirRimLight.position.set(-9.5, 10.0, -11.0);
-    const hemiFill = new THREE.HemisphereLight(0xdbeafe, 0x161b26, 0.58);
-    this.scene.add(this.dirKeyLight, this.dirRimLight, hemiFill);
+    this.dirKeyLight = new THREE.DirectionalLight(lightPreset.keyColor, lightPreset.keyIntensity);
+    this.dirKeyLight.position.set(lightPreset.keyPos[0], lightPreset.keyPos[1], lightPreset.keyPos[2]);
+    this.dirRimLight = new THREE.DirectionalLight(lightPreset.rimColor, lightPreset.rimIntensity);
+    this.dirRimLight.position.set(lightPreset.rimPos[0], lightPreset.rimPos[1], lightPreset.rimPos[2]);
+    this.dirFillLight = new THREE.DirectionalLight(lightPreset.fillColor, lightPreset.fillIntensity);
+    this.dirFillLight.position.set(lightPreset.fillPos[0], lightPreset.fillPos[1], lightPreset.fillPos[2]);
+    this.hemiFillLight = new THREE.HemisphereLight(
+      lightPreset.hemiSkyColor,
+      lightPreset.hemiGroundColor,
+      lightPreset.hemiIntensity,
+    );
+    this.scene.add(this.dirKeyLight, this.dirRimLight, this.dirFillLight, this.hemiFillLight);
 
     this.lightGuidePulseGeo = new THREE.RingGeometry(0.92, 1.0, 64);
     this.lightGuidePulseGeo.rotateX(-Math.PI * 0.5);
     this.lightGuidePulseMat = new THREE.MeshBasicMaterial({
-      color: 0xf0dcaa,
+      color: 0xf2c97d,
       transparent: true,
       opacity: 0,
       depthWrite: false,
@@ -198,12 +286,15 @@ export class BoardStageEngine {
     this.lightGuidePulseRing.visible = false;
 
     this.materials = new PbrMaterialLibrary();
-    this.arena = new ArenaStageAssembly(
-      this.materials,
-      options?.initialTheme ?? 'orbital_elevator_port',
-    );
+    this.arena = new ArenaStageAssembly(this.materials, initialTheme);
+    this.lobbyStage = new LobbyStageAssembly(this.materials, this.currentTacticianId);
+    this.lobbyStage.setMode(this.sceneMode, true);
+    (this.lobbyStage as { setTheme?: (t: ArenaThemeId) => void }).setTheme?.(initialTheme);
     this.unitFactory = new UnitMeshFactory(this.materials);
     this.vfx = new StageVfxManager(this.materials, this.tweenGroup);
+
+    this.matchTacticianRig = this.getOrCreateMatchTacticianRig(this.currentTacticianId);
+    this.matchTacticianRig.root.visible = true;
 
     this.scene.add(
       this.arena.root,
@@ -230,6 +321,37 @@ export class BoardStageEngine {
     return this.qualityTier === 'balanced' ? Math.min(raw, 1.25) : Math.min(raw, 2.0);
   }
 
+  private getActiveScene(): THREE.Scene {
+    return this.sceneMode === 'match' ? this.scene : this.lobbyStage.scene;
+  }
+
+  private getActiveCamera(): THREE.PerspectiveCamera {
+    return this.sceneMode === 'match' ? this.camera : this.lobbyStage.camera;
+  }
+
+  private syncComposerSceneAndBloom(): void {
+    if (!this.composer || !this.selectiveBloom) return;
+    const activeScene = this.getActiveScene();
+    const activeCamera = this.getActiveCamera();
+    this.composer.setMainScene(activeScene);
+    this.composer.setMainCamera(activeCamera);
+
+    this.selectiveBloom.selection.clear();
+    if (this.sceneMode === 'match') {
+      for (const obj of this.arena.getActiveBloomTargets()) this.selectiveBloom.selection.add(obj);
+      for (const obj of this.vfx.bloomTargets) this.selectiveBloom.selection.add(obj);
+      for (const obj of this.matchTacticianRig.bloomTargets) this.selectiveBloom.selection.add(obj);
+      this.selectiveBloom.selection.add(this.lightGuidePulseRing);
+      for (const rig of this.unitRigs.values()) {
+        if (rig.manaRatio >= 0.85) this.selectiveBloom.selection.add(rig.weaponGlowMesh);
+      }
+    } else {
+      for (const obj of this.lobbyStage.getActiveBloomTargets()) {
+        this.selectiveBloom.selection.add(obj);
+      }
+    }
+  }
+
   public mount(container: HTMLElement): void {
     if (this.disposed) return;
     this.container = container;
@@ -247,7 +369,7 @@ export class BoardStageEngine {
       renderer.info.autoReset = false;
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.05;
+      renderer.toneMappingExposure = this.sceneMode === 'subpage' ? SUBPAGE_EXPOSURE : BASE_EXPOSURE;
       renderer.shadowMap.enabled = false;
 
       renderer.domElement.style.position = 'absolute';
@@ -261,42 +383,42 @@ export class BoardStageEngine {
       container.appendChild(renderer.domElement);
       this.renderer = renderer;
       this.webglAvailable = true;
+      attachPortraitBakerRenderer(renderer);
 
       const env = buildProceduralStudioEnvMap(renderer);
       this.envRenderTarget = env.renderTarget;
       this.scene.environment = env.envTexture;
-      this.scene.environmentIntensity = 0.88;
+      this.scene.environmentIntensity = getArenaThemeLightingPreset(this.arena.getTheme()).envIntensity;
+      this.lobbyStage.scene.environment = env.envTexture;
+      this.lobbyStage.scene.environmentIntensity = 0.64;
 
       const composer = new EffectComposer(renderer, {
         frameBufferType: THREE.HalfFloatType,
         multisampling: 0,
       });
-      const renderPass = new RenderPass(this.scene, this.camera);
-      const selectiveBloom = new SelectiveBloomEffect(this.scene, this.camera, {
+      const activeScene = this.getActiveScene();
+      const activeCamera = this.getActiveCamera();
+      const renderPass = new RenderPass(activeScene, activeCamera);
+      const selectiveBloom = new SelectiveBloomEffect(activeScene, activeCamera, {
         blendFunction: BlendFunction.ADD,
-        luminanceThreshold: 1.15,
-        luminanceSmoothing: 0.08,
+        luminanceThreshold: 0.94,
+        luminanceSmoothing: 0.26,
         mipmapBlur: true,
-        intensity: 1.1,
-        radius: 0.66,
+        intensity: BASE_BLOOM_INTENSITY,
+        radius: 0.48,
       });
       selectiveBloom.ignoreBackground = true;
-      for (const obj of this.arena.bloomTargets) selectiveBloom.selection.add(obj);
-      for (const obj of this.vfx.bloomTargets) selectiveBloom.selection.add(obj);
-      selectiveBloom.selection.add(this.lightGuidePulseRing);
-      for (const rig of this.unitRigs.values()) {
-        if (rig.manaRatio >= 0.85) selectiveBloom.selection.add(rig.weaponGlowMesh);
-      }
 
       const smaaEffect = new SMAAEffect({
         preset: this.qualityTier === 'high' ? SMAAPreset.HIGH : SMAAPreset.MEDIUM,
       });
-      const compoundPass = new EffectPass(this.camera, selectiveBloom, smaaEffect);
+      const compoundPass = new EffectPass(activeCamera, selectiveBloom, smaaEffect);
 
       composer.addPass(renderPass);
       composer.addPass(compoundPass);
       this.composer = composer;
       this.selectiveBloom = selectiveBloom;
+      this.syncComposerSceneAndBloom();
     } catch {
       this.renderer = null;
       this.composer = null;
@@ -304,7 +426,10 @@ export class BoardStageEngine {
       this.webglAvailable = false;
     }
 
-    this.hudOverlay = new StageHudOverlayProjector(container, this.showBuiltInHudOverlay);
+    this.hudOverlay = new StageHudOverlayProjector(
+      container,
+      this.showBuiltInHudOverlay && this.sceneMode === 'match',
+    );
 
     const eventSurface = this.renderer?.domElement ?? container;
     eventSurface.addEventListener('pointerdown', this.boundOnPointerDown);
@@ -322,12 +447,164 @@ export class BoardStageEngine {
 
     this.handleResize();
     this.setPhase(this.currentPhase);
-    if (this.webglAvailable && !this.learningOverlayActive) {
+    if (this.webglAvailable && this.sceneMode === 'match' && !this.learningOverlayActive) {
       this.playBootDiveTransition();
     }
     if (!this.learningOverlayActive) {
       this.resumeLoop();
     }
+  }
+
+  public getRenderer(): THREE.WebGLRenderer | null {
+    return this.renderer;
+  }
+
+  public setSceneMode(mode: StageSceneMode): void {
+    const prevMode = this.sceneMode;
+    if (prevMode === mode) return;
+    this.sceneMode = mode;
+
+    if (mode !== 'match') {
+      this.cancelActiveInteraction();
+      this.lobbyStage.setMode(mode, this.motionPreference?.matches ?? false);
+      if (this.learningOverlayActive) {
+        this.learningOverlayActive = false;
+        this.resumeLoop();
+      }
+    } else {
+      this.arena.triggerConduitSweep();
+      if (this.webglAvailable && prevMode !== 'match') {
+        this.bootDivePlayed = false;
+        this.playBootDiveTransition();
+      }
+    }
+
+    this.hudOverlay?.setEnabled(this.showBuiltInHudOverlay && mode === 'match');
+    if (this.renderer && !this.activeIntroTween) {
+      this.renderer.toneMappingExposure = mode === 'subpage' ? SUBPAGE_EXPOSURE : BASE_EXPOSURE;
+    }
+    this.syncComposerSceneAndBloom();
+    if (this.loopPaused) {
+      this.renderSingleFrame();
+    }
+  }
+
+  public getSceneMode(): StageSceneMode {
+    return this.sceneMode;
+  }
+
+  public skipSplashIntro(): void {
+    this.lobbyStage.skipSplashIntro();
+  }
+
+  private getOrCreateMatchTacticianRig(tacticianId: TacticianId): TacticianRig {
+    const cached = this.matchTacticianRigs.get(tacticianId);
+    if (cached) return cached;
+    const rig = createTacticianRig(tacticianId, this.materials);
+    rig.root.scale.setScalar(0.86);
+    rig.root.position.set(
+      this.matchTacticianPosSpring.x.value,
+      this.matchTacticianPosSpring.y.value,
+      this.matchTacticianPosSpring.z.value,
+    );
+    rig.root.rotation.y = Math.PI * 0.28;
+    rig.root.visible = false;
+    this.scene.add(rig.root);
+    this.matchTacticianRigs.set(tacticianId, rig);
+    return rig;
+  }
+
+  public setTactician(tacticianId: TacticianId): void {
+    if (this.currentTacticianId === tacticianId) return;
+    this.currentTacticianId = tacticianId;
+    this.lobbyStage.setTactician(tacticianId);
+
+    const prevYaw = this.matchTacticianRig.root.rotation.y;
+    this.matchTacticianRig.root.visible = false;
+    const nextRig = this.getOrCreateMatchTacticianRig(tacticianId);
+    nextRig.root.position.set(
+      this.matchTacticianPosSpring.x.value,
+      this.matchTacticianPosSpring.y.value,
+      this.matchTacticianPosSpring.z.value,
+    );
+    nextRig.root.rotation.y = prevYaw;
+    nextRig.root.visible = true;
+    this.matchTacticianRig = nextRig;
+    this.syncComposerSceneAndBloom();
+    if (this.loopPaused) this.renderSingleFrame();
+  }
+
+  public getTacticianId(): TacticianId {
+    return this.currentTacticianId;
+  }
+
+  public triggerTacticianEmote(kind: TacticianEmoteKind): number {
+    if (this.sceneMode === 'match') {
+      return this.matchTacticianRig.triggerEmote(kind);
+    }
+    return this.lobbyStage.triggerTacticianEmote(kind);
+  }
+
+  public setShopCameraLayout(layout: ShopCameraLayout, instant = false): void {
+    const changed = this.shopCameraLayout !== layout;
+    this.shopCameraLayout = layout;
+    const target = computeMatchCameraMetrics(layout, this.viewportAspect);
+
+    if (this.activeLayoutTween) {
+      this.activeLayoutTween.stop();
+      this.tweenGroup.remove(this.activeLayoutTween);
+      this.activeLayoutTween = null;
+    }
+
+    const origin = getSeatWorldOrigin(this.activeSeatIndex);
+    if (instant || !changed || this.motionPreference?.matches || this.loopPaused) {
+      this.cameraPitchRad = target.pitchRad;
+      this.cameraBaseLookZ = target.lookZ;
+      this.cameraDistance = target.distance;
+      this.cameraLookTarget.set(origin.x, 0, origin.z + this.cameraBaseLookZ);
+      this.syncCameraFromLookTarget();
+      if (this.loopPaused) this.renderSingleFrame();
+      return;
+    }
+
+    const proxy = {
+      pitch: this.cameraPitchRad,
+      lookZ: this.cameraBaseLookZ,
+      dist: this.cameraDistance,
+    };
+    const tw = new Tween(proxy)
+      .to(
+        { pitch: target.pitchRad, lookZ: target.lookZ, dist: target.distance },
+        CAMERA_LAYOUT_TRANSITION_MS,
+      )
+      .easing(Easing.Cubic.Out)
+      .onUpdate(({ pitch, lookZ, dist }) => {
+        this.cameraPitchRad = pitch;
+        this.cameraBaseLookZ = lookZ;
+        this.cameraDistance = dist;
+        const curOrigin = getSeatWorldOrigin(this.activeSeatIndex);
+        this.cameraLookTarget.set(curOrigin.x, 0, curOrigin.z + lookZ);
+        this.syncCameraFromLookTarget();
+      })
+      .onComplete(() => {
+        this.cameraPitchRad = target.pitchRad;
+        this.cameraBaseLookZ = target.lookZ;
+        this.cameraDistance = target.distance;
+        this.activeLayoutTween = null;
+        this.syncCameraFromLookTarget();
+      });
+
+    this.activeLayoutTween = tw;
+    this.tweenGroup.add(tw);
+    tw.start(this.clockMs);
+  }
+
+  public getShopCameraLayout(): ShopCameraLayout {
+    return this.shopCameraLayout;
+  }
+
+  public getLobbyStage(): LobbyStageAssembly {
+    return this.lobbyStage;
   }
 
   private playBootDiveTransition(): void {
@@ -339,15 +616,15 @@ export class BoardStageEngine {
       this.activeIntroTween = null;
     }
 
-    const startPitchOffset = THREE.MathUtils.degToRad(5.6);
-    const startDistOffset = 5.4;
-    const startLookZOffset = -0.42;
+    const startPitchOffset = THREE.MathUtils.degToRad(-12);
+    const startDistOffset = 8.4;
+    const startLookZOffset = -0.55;
 
     this.introDistanceOffset = startDistOffset;
     this.introPitchOffsetRad = startPitchOffset;
     this.introLookZOffset = startLookZOffset;
     if (this.renderer) this.renderer.toneMappingExposure = 0.9;
-    if (this.selectiveBloom) this.selectiveBloom.intensity = 0.86;
+    if (this.selectiveBloom) this.selectiveBloom.intensity = BASE_BLOOM_INTENSITY * 0.78;
     this.arena.triggerConduitSweep();
     this.syncCameraFromLookTarget();
 
@@ -356,17 +633,22 @@ export class BoardStageEngine {
       pitch: startPitchOffset,
       lookZ: startLookZOffset,
       exposure: 0.9,
-      bloom: 0.86,
+      bloom: BASE_BLOOM_INTENSITY * 0.78,
     };
 
     const tw = new Tween(proxy)
-      .to({ dist: 0, pitch: 0, lookZ: 0, exposure: 1.05, bloom: 1.1 }, INTRO_DIVE_DURATION_MS)
+      .to(
+        { dist: 0, pitch: 0, lookZ: 0, exposure: BASE_EXPOSURE, bloom: BASE_BLOOM_INTENSITY },
+        INTRO_DIVE_DURATION_MS,
+      )
       .easing(Easing.Cubic.Out)
       .onUpdate(({ dist, pitch, lookZ, exposure, bloom }) => {
         this.introDistanceOffset = dist;
         this.introPitchOffsetRad = pitch;
         this.introLookZOffset = lookZ;
-        if (this.renderer) this.renderer.toneMappingExposure = exposure;
+        if (this.renderer && this.sceneMode === 'match') {
+          this.renderer.toneMappingExposure = exposure;
+        }
         if (this.selectiveBloom) this.selectiveBloom.intensity = bloom;
         this.syncCameraFromLookTarget();
       })
@@ -374,8 +656,10 @@ export class BoardStageEngine {
         this.introDistanceOffset = 0;
         this.introPitchOffsetRad = 0;
         this.introLookZOffset = 0;
-        if (this.renderer) this.renderer.toneMappingExposure = 1.05;
-        if (this.selectiveBloom) this.selectiveBloom.intensity = 1.1;
+        if (this.renderer && this.sceneMode === 'match') {
+          this.renderer.toneMappingExposure = BASE_EXPOSURE;
+        }
+        if (this.selectiveBloom) this.selectiveBloom.intensity = BASE_BLOOM_INTENSITY;
         this.activeIntroTween = null;
         this.syncCameraFromLookTarget();
       });
@@ -385,8 +669,29 @@ export class BoardStageEngine {
     tw.start(this.clockMs);
   }
 
+  private applyArenaThemeLighting(theme: ArenaThemeId): void {
+    const preset = getArenaThemeLightingPreset(theme);
+    this.dirKeyLight.color.setHex(preset.keyColor);
+    this.dirKeyLight.intensity = preset.keyIntensity;
+    this.dirKeyLight.position.set(preset.keyPos[0], preset.keyPos[1], preset.keyPos[2]);
+    this.dirRimLight.color.setHex(preset.rimColor);
+    this.dirRimLight.intensity = preset.rimIntensity;
+    this.dirRimLight.position.set(preset.rimPos[0], preset.rimPos[1], preset.rimPos[2]);
+    this.dirFillLight.color.setHex(preset.fillColor);
+    this.dirFillLight.intensity = preset.fillIntensity;
+    this.dirFillLight.position.set(preset.fillPos[0], preset.fillPos[1], preset.fillPos[2]);
+    this.hemiFillLight.color.setHex(preset.hemiSkyColor);
+    this.hemiFillLight.groundColor.setHex(preset.hemiGroundColor);
+    this.hemiFillLight.intensity = preset.hemiIntensity;
+    this.scene.environmentIntensity = preset.envIntensity;
+    this.scene.background = new THREE.Color(preset.fogColor);
+    this.scene.fog = new THREE.FogExp2(preset.fogColor, preset.fogDensity);
+  }
+
   private playThemePulseTransition(): void {
-    if (!this.webglAvailable || this.loopPaused || this.motionPreference?.matches) return;
+    if (!this.webglAvailable || this.loopPaused || this.motionPreference?.matches || this.sceneMode !== 'match') {
+      return;
+    }
 
     if (this.activeThemePulseTween) {
       this.activeThemePulseTween.stop();
@@ -394,6 +699,7 @@ export class BoardStageEngine {
       this.activeThemePulseTween = null;
     }
 
+    const preset = getArenaThemeLightingPreset(this.arena.getTheme());
     const centerOrigin = getSeatWorldOrigin(this.activeSeatIndex);
     this.lightGuidePulseRing.position.set(centerOrigin.x, 0.032, centerOrigin.z);
     this.lightGuidePulseRing.scale.setScalar(0.85);
@@ -408,32 +714,28 @@ export class BoardStageEngine {
         const bell = Math.sin(progress * Math.PI);
         const scale = 0.85 + progress * 9.65;
         this.lightGuidePulseRing.scale.setScalar(scale);
-        this.lightGuidePulseMat.opacity = bell * 0.42;
-        this.dirRimLight.intensity = 0.72 + bell * 0.44;
-        this.dirKeyLight.intensity = 1.65 + bell * 0.2;
+        this.lightGuidePulseMat.opacity = bell * 0.36;
+        this.dirRimLight.intensity = preset.rimIntensity + bell * 0.22;
+        this.dirKeyLight.intensity = preset.keyIntensity + bell * 0.10;
         if (this.renderer && !this.activeIntroTween) {
-          this.renderer.toneMappingExposure = 1.05 + bell * 0.09;
+          this.renderer.toneMappingExposure = BASE_EXPOSURE + bell * 0.04;
         }
         if (this.selectiveBloom && !this.activeIntroTween) {
-          this.selectiveBloom.intensity = 1.1 + bell * 0.34;
+          this.selectiveBloom.intensity = BASE_BLOOM_INTENSITY + bell * 0.10;
         }
-        this.themePulseDistanceOffset = -bell * 0.32;
-        this.syncCameraFromLookTarget();
       })
       .onComplete(() => {
         this.lightGuidePulseRing.visible = false;
         this.lightGuidePulseMat.opacity = 0;
-        this.dirRimLight.intensity = 0.72;
-        this.dirKeyLight.intensity = 1.65;
+        this.dirRimLight.intensity = preset.rimIntensity;
+        this.dirKeyLight.intensity = preset.keyIntensity;
         if (this.renderer && !this.activeIntroTween) {
-          this.renderer.toneMappingExposure = 1.05;
+          this.renderer.toneMappingExposure = BASE_EXPOSURE;
         }
         if (this.selectiveBloom && !this.activeIntroTween) {
-          this.selectiveBloom.intensity = 1.1;
+          this.selectiveBloom.intensity = BASE_BLOOM_INTENSITY;
         }
-        this.themePulseDistanceOffset = 0;
         this.activeThemePulseTween = null;
-        this.syncCameraFromLookTarget();
       });
 
     this.activeThemePulseTween = tw;
@@ -455,20 +757,20 @@ export class BoardStageEngine {
     this.introDistanceOffset = 0;
     this.introPitchOffsetRad = 0;
     this.introLookZOffset = 0;
-    this.themePulseDistanceOffset = 0;
     this.lightGuidePulseRing.visible = false;
     this.lightGuidePulseMat.opacity = 0;
-    this.dirRimLight.intensity = 0.72;
-    this.dirKeyLight.intensity = 1.65;
-    if (this.renderer) this.renderer.toneMappingExposure = 1.05;
-    if (this.selectiveBloom) this.selectiveBloom.intensity = 1.1;
+    this.applyArenaThemeLighting(this.arena.getTheme());
+    if (this.renderer) {
+      this.renderer.toneMappingExposure =
+        this.sceneMode === 'subpage' ? SUBPAGE_EXPOSURE : BASE_EXPOSURE;
+    }
+    if (this.selectiveBloom) this.selectiveBloom.intensity = BASE_BLOOM_INTENSITY;
     this.syncCameraFromLookTarget();
   }
 
   private syncCameraFromLookTarget(): void {
-    const pitch = CAMERA_PITCH_RAD + this.introPitchOffsetRad;
-    const distance =
-      this.cameraDistance + this.introDistanceOffset + this.themePulseDistanceOffset;
+    const pitch = this.cameraPitchRad + this.introPitchOffsetRad;
+    const distance = this.cameraDistance + this.introDistanceOffset;
     const lookX = this.cameraLookTarget.x;
     const lookZ = this.cameraLookTarget.z + this.introLookZOffset;
     const y = Math.sin(pitch) * distance;
@@ -485,14 +787,20 @@ export class BoardStageEngine {
     const aspect = width / height;
     const dpr = this.computeEffectiveDpr();
 
+    this.viewportAspect = aspect;
     this.camera.aspect = aspect;
-    const targetHalfWidth = 7.95;
-    const vFovRad = THREE.MathUtils.degToRad(CAMERA_FOV_DEG);
-    const hFovHalfTan = Math.tan(vFovRad * 0.5) * aspect;
-    const distForWidth = targetHalfWidth / Math.max(0.25, hFovHalfTan);
-    this.cameraDistance = Math.max(25.2, Math.min(36.0, distForWidth));
+    const metrics = computeMatchCameraMetrics(this.shopCameraLayout, aspect);
+    this.cameraDistance = metrics.distance;
+    if (!this.activeLayoutTween) {
+      this.cameraPitchRad = metrics.pitchRad;
+      this.cameraBaseLookZ = metrics.lookZ;
+      const origin = getSeatWorldOrigin(this.activeSeatIndex);
+      this.cameraLookTarget.set(origin.x, 0, origin.z + this.cameraBaseLookZ);
+    }
     this.camera.updateProjectionMatrix();
     this.syncCameraFromLookTarget();
+
+    this.lobbyStage.resize(width, height);
 
     if (this.renderer) {
       this.renderer.setPixelRatio(dpr);
@@ -541,8 +849,14 @@ export class BoardStageEngine {
   }
 
   public setArenaTheme(theme: ArenaThemeId): void {
-    if (this.arena.getTheme() === theme) return;
+    (this.lobbyStage as { setTheme?: (t: ArenaThemeId) => void }).setTheme?.(theme);
+    if (this.arena.getTheme() === theme) {
+      if (this.loopPaused) this.renderSingleFrame();
+      return;
+    }
     this.arena.setTheme(theme);
+    this.applyArenaThemeLighting(theme);
+    this.syncComposerSceneAndBloom();
     this.playThemePulseTransition();
     if (this.loopPaused) this.renderSingleFrame();
   }
@@ -583,7 +897,7 @@ export class BoardStageEngine {
     }
 
     if (this.motionPreference?.matches || this.loopPaused) {
-      this.cameraLookTarget.set(origin.x, 0, origin.z + BASE_BOARD_LOOK_Z);
+      this.cameraLookTarget.set(origin.x, 0, origin.z + this.cameraBaseLookZ);
       this.syncCameraFromLookTarget();
       if (this.loopPaused) this.renderSingleFrame();
       return;
@@ -591,7 +905,7 @@ export class BoardStageEngine {
 
     const proxy = { x: this.cameraLookTarget.x, z: this.cameraLookTarget.z };
     const tw = new Tween(proxy)
-      .to({ x: origin.x, z: origin.z + BASE_BOARD_LOOK_Z }, 300)
+      .to({ x: origin.x, z: origin.z + this.cameraBaseLookZ }, 300)
       .easing(Easing.Cubic.Out)
       .onUpdate(({ x, z }) => {
         this.cameraLookTarget.set(x, 0, z);
@@ -688,7 +1002,7 @@ export class BoardStageEngine {
 
       const manaRatio = u.maxMana > 0 ? u.mana / u.maxMana : 0;
       const shouldBloomWeapon = rig.setManaRatio(manaRatio);
-      if (this.selectiveBloom) {
+      if (this.selectiveBloom && this.sceneMode === 'match') {
         if (shouldBloomWeapon) this.selectiveBloom.selection.add(rig.weaponGlowMesh);
         else this.selectiveBloom.selection.delete(rig.weaponGlowMesh);
       }
@@ -700,21 +1014,57 @@ export class BoardStageEngine {
 
   public syncLootOrbs(orbs: readonly StageLootOrbState[]): void {
     const newBloom = this.vfx.syncLootOrbs(orbs);
-    if (this.selectiveBloom) {
+    if (this.selectiveBloom && this.sceneMode === 'match') {
       for (const m of newBloom) this.selectiveBloom.selection.add(m);
     }
   }
 
+  private dashMatchTacticianToward(worldX: number, worldZ: number): void {
+    this.matchTacticianPosSpring.setTarget(worldX, 0.24, worldZ);
+    const dx = worldX - this.matchTacticianRig.root.position.x;
+    const dz = worldZ - this.matchTacticianRig.root.position.z;
+    if (Math.hypot(dx, dz) > 0.05) {
+      this.matchTacticianRig.root.rotation.y = Math.atan2(dx, dz);
+    }
+    this.matchTacticianRig.triggerEmote('collect_orb');
+    this.matchTacticianReturnTimerSec = 0.65;
+  }
+
   public collectLootOrb(orbId: string): boolean {
-    return this.vfx.collectLootOrb(orbId, (id, gold) => {
-      this.callbacks.onCollectLootOrb?.(id, gold);
-    });
+    const orbPos = this.vfx.getLootOrbWorldPos(orbId);
+    if (orbPos) {
+      this.dashMatchTacticianToward(orbPos.x, orbPos.z);
+    }
+    const targetWorld = orbPos
+      ? { x: orbPos.x, y: 0.65, z: orbPos.z }
+      : {
+          x: this.matchTacticianRig.root.position.x,
+          y: 0.65,
+          z: this.matchTacticianRig.root.position.z,
+        };
+    return this.vfx.collectLootOrb(
+      orbId,
+      (id, gold) => {
+        this.matchTacticianRig.triggerEmote('cheer');
+        this.callbacks.onCollectLootOrb?.(id, gold);
+      },
+      targetWorld,
+    );
   }
 
   public collectAllLootOrbs(): void {
-    this.vfx.collectAllLootOrbs((id, gold) => {
-      this.callbacks.onCollectLootOrb?.(id, gold);
-    });
+    this.matchTacticianRig.triggerEmote('collect_orb');
+    this.vfx.collectAllLootOrbs(
+      (id, gold) => {
+        this.matchTacticianRig.triggerEmote('cheer');
+        this.callbacks.onCollectLootOrb?.(id, gold);
+      },
+      {
+        x: this.matchTacticianRig.root.position.x,
+        y: 0.65,
+        z: this.matchTacticianRig.root.position.z,
+      },
+    );
   }
 
   public playStarUpConvergence(instanceId: string, newStar: 2 | 3): void {
@@ -733,6 +1083,7 @@ export class BoardStageEngine {
       if (state) {
         this.unitStates.set(instanceId, { ...state, star: newStar as UnitStar });
       }
+      this.matchTacticianRig.triggerEmote('cheer');
     });
   }
 
@@ -911,6 +1262,7 @@ export class BoardStageEngine {
 
   private canControlUnitsNow(): boolean {
     return (
+      this.sceneMode === 'match' &&
       this.interactiveDeployEnabled &&
       this.currentPhase === 'strategy' &&
       this.activeSeatIndex === 0 &&
@@ -920,6 +1272,22 @@ export class BoardStageEngine {
 
   private handlePointerDown(e: PointerEvent): void {
     if (e.button !== 0) return;
+
+    if (this.sceneMode === 'splash') {
+      this.lobbyStage.skipSplashIntro();
+      return;
+    }
+
+    if (this.sceneMode === 'lobby' || this.sceneMode === 'prep') {
+      this.lobbyPointerDown = true;
+      this.pointerDownClient = { x: e.clientX, y: e.clientY };
+      this.lastLobbyPointerX = e.clientX;
+      this.lobbyStage.beginTacticianDrag();
+      return;
+    }
+
+    if (this.sceneMode !== 'match') return;
+
     const pick = this.pickAtClientPoint(e.clientX, e.clientY);
     if (!pick) return;
 
@@ -971,6 +1339,7 @@ export class BoardStageEngine {
 
   private startDraggingUnit(instanceId: string): void {
     this.draggingInstanceId = instanceId;
+    this.arena.setDeployHighlightActive(true);
     const rig = this.unitRigs.get(instanceId);
     const st = this.unitStates.get(instanceId);
     if (rig && st) {
@@ -987,7 +1356,17 @@ export class BoardStageEngine {
   }
 
   private handlePointerMove(e: PointerEvent): void {
-    if (this.loopPaused || !this.container) return;
+    if (this.loopPaused) return;
+
+    if (this.lobbyPointerDown && (this.sceneMode === 'lobby' || this.sceneMode === 'prep')) {
+      const dx = e.clientX - this.lastLobbyPointerX;
+      this.lastLobbyPointerX = e.clientX;
+      this.lobbyStage.dragTacticianYaw(dx);
+      return;
+    }
+
+    if (this.sceneMode !== 'match' || !this.container) return;
+
     const pick = this.pickAtClientPoint(e.clientX, e.clientY);
     if (!pick) return;
 
@@ -1030,6 +1409,19 @@ export class BoardStageEngine {
   }
 
   private handlePointerUp(e: PointerEvent): void {
+    if (this.lobbyPointerDown) {
+      this.lobbyPointerDown = false;
+      this.lobbyStage.endTacticianDrag();
+      const dragDist = this.pointerDownClient
+        ? Math.hypot(e.clientX - this.pointerDownClient.x, e.clientY - this.pointerDownClient.y)
+        : 999;
+      if (dragDist < 6) {
+        const variant = this.lobbyStage.triggerTacticianEmote('tap');
+        this.callbacks.onTacticianTap?.(this.currentTacticianId, variant);
+      }
+      return;
+    }
+
     if (!this.draggingInstanceId) return;
     const instanceId = this.draggingInstanceId;
     const dragDist = this.pointerDownClient
@@ -1094,6 +1486,7 @@ export class BoardStageEngine {
 
   private clearSelectionAndHelpers(): void {
     this.selectedInstanceId = null;
+    this.arena.setDeployHighlightActive(false);
     this.arena.setRangeHighlight(null, null);
     this.arena.setFriendlySwapArc(null, null);
     this.setNudgedFriendly(null);
@@ -1112,11 +1505,20 @@ export class BoardStageEngine {
       this.overSellZone = false;
       this.callbacks.onDragStateChange?.(null, false);
     }
+    this.lobbyPointerDown = false;
     this.clearSelectionAndHelpers();
   }
 
   private onAnimationFrame(timestampMs: number): void {
     if (this.disposed || this.loopPaused) return;
+
+    if (this.sceneMode === 'subpage') {
+      if (timestampMs - this.lastSubpageRenderMs < SUBPAGE_FRAME_INTERVAL_MS) {
+        return;
+      }
+      this.lastSubpageRenderMs = timestampMs;
+    }
+
     const rawDt =
       this.lastFrameTimestampMs > 0 ? (timestampMs - this.lastFrameTimestampMs) / 1000 : 1 / 60;
     this.lastFrameTimestampMs = timestampMs;
@@ -1132,19 +1534,41 @@ export class BoardStageEngine {
 
   public stepManual(dtSeconds: number): void {
     this.stepSimulation(dtSeconds);
-    this.hudOverlay?.updateAndRender(dtSeconds, this.camera, this.unitStates, this.unitRigs);
+    if (this.sceneMode === 'match') {
+      this.hudOverlay?.updateAndRender(dtSeconds, this.camera, this.unitStates, this.unitRigs);
+    }
   }
 
   private stepSimulation(dt: number): void {
     this.elapsedSec += dt;
     this.clockMs += dt * 1000;
     this.tweenGroup.update(this.clockMs);
-    this.arena.update(dt);
-    for (const rig of this.unitRigs.values()) {
-      rig.update(dt, this.elapsedSec);
+
+    if (this.sceneMode === 'match') {
+      this.arena.update(dt);
+      for (const rig of this.unitRigs.values()) {
+        rig.update(dt, this.elapsedSec);
+      }
+      this.unitFactory.syncGroundBatches(this.unitRigs.values());
+      this.vfx.update(dt);
+
+      if (this.matchTacticianReturnTimerSec > 0) {
+        this.matchTacticianReturnTimerSec = Math.max(0, this.matchTacticianReturnTimerSec - dt);
+        if (this.matchTacticianReturnTimerSec === 0) {
+          this.matchTacticianPosSpring.setTarget(
+            MATCH_TACTICIAN_HOME.x,
+            MATCH_TACTICIAN_HOME.y,
+            MATCH_TACTICIAN_HOME.z,
+          );
+          this.matchTacticianRig.root.rotation.y = Math.PI * 0.28;
+        }
+      }
+      const tp = this.matchTacticianPosSpring.step(dt);
+      this.matchTacticianRig.root.position.set(tp.x, tp.y, tp.z);
+      this.matchTacticianRig.update(dt, this.elapsedSec);
+    } else {
+      this.lobbyStage.update(dt);
     }
-    this.unitFactory.syncGroundBatches(this.unitRigs.values());
-    this.vfx.update(dt);
   }
 
   private renderFrameInternal(dt: number): void {
@@ -1152,12 +1576,14 @@ export class BoardStageEngine {
     if (this.composer && this.renderer) {
       this.composer.render(dt);
     } else if (this.renderer) {
-      this.renderer.render(this.scene, this.camera);
+      this.renderer.render(this.getActiveScene(), this.getActiveCamera());
     }
     const renderInfo = this.renderer?.info.render;
     this.frameRenderStats.drawCalls = renderInfo?.calls ?? 0;
     this.frameRenderStats.triangles = renderInfo?.triangles ?? 0;
-    this.hudOverlay?.updateAndRender(dt, this.camera, this.unitStates, this.unitRigs);
+    if (this.sceneMode === 'match') {
+      this.hudOverlay?.updateAndRender(dt, this.camera, this.unitStates, this.unitRigs);
+    }
   }
 
   public renderSingleFrame(): void {
@@ -1179,6 +1605,7 @@ export class BoardStageEngine {
       loopPaused: this.loopPaused,
       webglAvailable: this.webglAvailable,
       fpsEstimate: Math.round(this.smoothedFps),
+      sceneMode: this.sceneMode,
     };
   }
 
@@ -1189,6 +1616,7 @@ export class BoardStageEngine {
     this.pauseLoop();
     this.tweenGroup.removeAll();
     this.resizeObserver?.disconnect();
+    attachPortraitBakerRenderer(null);
 
     const eventSurface = this.renderer?.domElement ?? this.container;
     eventSurface?.removeEventListener('pointerdown', this.boundOnPointerDown);
@@ -1214,6 +1642,9 @@ export class BoardStageEngine {
     this.unitRigs.clear();
     this.unitStates.clear();
 
+    for (const rig of this.matchTacticianRigs.values()) rig.dispose();
+    this.matchTacticianRigs.clear();
+    this.lobbyStage.dispose();
     this.lightGuidePulseGeo.dispose();
     this.lightGuidePulseMat.dispose();
     this.unitFactory.dispose();

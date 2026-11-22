@@ -1,4 +1,4 @@
-import { type Browser, type Route } from '@playwright/test';
+import { expect, test as base, type Route } from '@playwright/test';
 import english from '../../../../content/courses/compiled/english-core-starter.json' with { type: 'json' };
 import math from '../../../../content/courses/compiled/math-core-starter.json' with { type: 'json' };
 
@@ -7,7 +7,7 @@ export const profile = {
   userId: 'audit-user', username: 'audit_user', nickname: '审计样本', emailMasked: null,
   role: 'player', sessionEpoch: 1, onboardingChoice: 'skipped',
   learningStartSelections: { english: english.manifest.knowledgeGraph[0]!.nodeId },
-  preferredArena: 'orbital_elevator_port',
+  preferredArena: 'orbital_elevator_port', preferredTacticianId: 'tactician_lumina_bell',
   displaySettings: { fullscreen: false, orientation: 'landscape' }, avatarFrameId: null, boardPlaqueId: null,
 };
 export const me = { profile, rewardPointsBalance: 100, standings: [], activeSeat: null };
@@ -21,11 +21,11 @@ export const roomLobby = {
     roomCode: 'AUDIT123', durationMode: 'standard', queueType: 'casual', sharedSubject: 'english',
     hostUserId: profile.userId, status: 'idle', plannedTotalSeconds: 1800,
     members: [{ userId: profile.userId, nickname: profile.nickname, isHost: true, ready: true,
-      avatarFrameId: null, boardPlaqueId: null }],
+      tacticianId: profile.preferredTacticianId, avatarFrameId: null, boardPlaqueId: null }],
   },
   acceptPrompt: null, match: null,
   selfPrefs: { subject: 'english', learningStartSelections: profile.learningStartSelections,
-    preferredArena: profile.preferredArena, displaySettings: profile.displaySettings },
+    preferredArena: profile.preferredArena, preferredTacticianId: profile.preferredTacticianId, displaySettings: profile.displaySettings },
 };
 export const dashboard = {
   dueReviews: [], nextRecommendation: null,
@@ -43,26 +43,36 @@ export function deferred() {
   const promise = new Promise<void>((complete) => { resolve = complete; });
   return { promise, resolve };
 }
-export async function mockUiPage(browser: Browser,
-  overrides: Record<string, (route: Route) => Promise<unknown> | unknown> = {}, token: string | null = 'audit-old-token') {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-  await context.addInitScript((value) => {
-    if (value) localStorage.setItem('blc_auth_token_v1', value);
-    else localStorage.removeItem('blc_auth_token_v1');
-  }, token);
-  const page = await context.newPage();
-  const errors: string[] = [];
-  page.on('pageerror', (err) => errors.push(err.message));
-  const payloads: Record<string, unknown> = {
-    '/api/me': me, '/api/lobby/state': emptyLobby, '/api/seasons/current': season,
-    '/api/learning/dashboard': dashboard, '/api/learning/courses': dashboard.coursePacks,
-    '/api/matches/history': [],
-  };
-  await page.route((url) => url.pathname.startsWith('/api/'), async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const handler = overrides[`${route.request().method()} ${path}`];
-    if (handler) { await handler(route); return; }
-    await ok(route, payloads[path] ?? {});
-  });
-  return { page, context, errors };
-}
+type RouteHandlers = Record<string, (route: Route) => unknown>;
+
+export const test = base.extend<{ mock: (handlers?: RouteHandlers, token?: string | null) => Promise<void> }>({
+  mock: async ({ page, context }, use) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.stack ?? error.message));
+    await use(async (handlers = {}, token = 'audit-old-token') => {
+      await context.addInitScript((value) => {
+        if (sessionStorage.getItem('sparkfield.audit.initialized')) return;
+        sessionStorage.setItem('sparkfield.audit.initialized', 'true');
+        if (value !== null) localStorage.setItem('blc_auth_token_v1', value);
+      }, token);
+      const payloads: Record<string, unknown> = {
+        'GET /api/me': me,
+        'GET /api/lobby/state': emptyLobby,
+        'GET /api/lobby/communication': [],
+        'GET /api/seasons/current': season,
+        'GET /api/learning/dashboard': dashboard,
+        'GET /api/learning/courses': dashboard.coursePacks,
+        'GET /api/matches/history': [],
+        'POST /api/auth/logout': { ok: true },
+      };
+      await page.route((url) => url.pathname.startsWith('/api/'), async (route) => {
+        const request = route.request();
+        const key = `${request.method()} ${new URL(request.url()).pathname}`;
+        if (handlers[key]) await handlers[key](route);
+        else if (key in payloads) await ok(route, payloads[key]);
+        else await fail(route, `UNMOCKED ${key}`, 404);
+      });
+    });
+    expect(errors).toEqual([]);
+  },
+});

@@ -258,8 +258,11 @@ describe('@app/client core invariants & controllers', () => {
         <AuthPage />
       </AppStoreProvider>,
     );
-    expect(authHtml).toContain('data-testid="splash-enter-btn"');
-    expect(authHtml).toContain('光 锥 之 外');
+    expect(authHtml).toContain('data-testid="auth-tab-login"');
+    expect(authHtml).toContain('data-testid="auth-tab-register"');
+    expect(authHtml).not.toContain('data-testid="enter-offline-practice-btn"');
+    expect(authHtml).toContain('SparkField');
+    expect(authHtml).toContain('光锥之外');
     expect(authHtml).not.toContain('data-testid="auth-username-input"');
     expect(authHtml).not.toContain('data-testid="auth-password-input"');
     expect(authHtml).not.toContain('开放自助注册');

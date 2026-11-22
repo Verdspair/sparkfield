@@ -1,13 +1,13 @@
 {
   "packId": "english-core-starter",
-  "coursePackVersion": "1.2.0",
+  "coursePackVersion": "1.2.1",
   "subject": "english",
   "title": "核心英语：情景交际、语法填空与语篇理解",
   "syllabusTag": "CC0-1.0",
   "knowledgeGraph": [
     {
       "nodeId": "ENG_N1_VOCAB_DIALOGUE",
-      "title": "情景交际与日常、职场沟通",
+      "title": "情景交际与日常沟通",
       "prerequisites": []
     },
     {

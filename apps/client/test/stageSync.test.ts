@@ -1,9 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Vector3 } from 'three';
+import { SEASON1_UNITS, type ArenaThemeId } from '@pkg/contracts';
 import { createGame, finalizePrepDeadline, resolveRoundBattles } from '@pkg/game-core';
 import type { MatchRoomSnapshot } from '../src/api/matchSocket.js';
 import { LiveBattleChoreographer, SnapshotStageSynchronizer } from '../src/hud/stageSync.js';
-import { BoardStageEngine, benchSlotToStageXZ, getSeatWorldOrigin, hexToStageXZ, SELL_ZONE_Z_THRESHOLD, type StageUnitState } from '../src/stage/index.js';
+import {
+  BENCH_Z_OFFSET,
+  BoardStageEngine,
+  PbrMaterialLibrary,
+  SELL_ZONE_Z_THRESHOLD,
+  TACTICIAN_IDS,
+  UnitMeshFactory,
+  benchSlotToStageXZ,
+  clearPortraitCache,
+  createTacticianRig,
+  getArenaPreviewUrl,
+  getSeatWorldOrigin,
+  getTacticianPortraitUrl,
+  getUnitPortraitUrl,
+  hexToStageXZ,
+  prebakePortraitsAsync,
+  type StageUnitState,
+} from '../src/stage/index.js';
 
 describe('live battle stage ownership', () => {
   it('enters battle mode and cancels a strategy interaction before the first combat frame', () => {
@@ -93,5 +111,171 @@ describe('scouted board picking uses the viewed seat coordinate space', () => {
       stage['handlePointerUp']({ button: 0, clientX: target.clientX, clientY: target.clientY } as PointerEvent);
       expect(move).toHaveBeenCalledExactlyOnceWith('board-0', { zone: 'board', row: 1, col: 3 }, { row: 5, col: 3 });
     } finally { stage['container'] = null; stage.dispose(); }
+  });
+});
+
+describe('dual-scene starport showcase, 3 tacticians, zero-occlusion camera, 36 bespoke units, and portrait baker', () => {
+  it('switches across splash, lobby, prep, subpage, and match modes with interactive turntable & emotes', () => {
+    const onTap = vi.fn();
+    const stage = new BoardStageEngine(undefined, {
+      initialSceneMode: 'splash',
+      callbacks: { onTacticianTap: onTap },
+    });
+    try {
+      expect(stage.getSceneMode()).toBe('splash');
+      stage.stepManual(0.5);
+      stage.skipSplashIntro();
+      stage.stepManual(0.1);
+      expect(stage.getLobbyStage().isSplashCompleted()).toBe(true);
+
+      stage.setSceneMode('lobby');
+      expect(stage.getSceneMode()).toBe('lobby');
+      stage['handlePointerDown']({ button: 0, clientX: 600, clientY: 360 } as PointerEvent);
+      stage['handlePointerMove']({ clientX: 720, clientY: 360 } as PointerEvent);
+      stage['handlePointerUp']({ button: 0, clientX: 720, clientY: 360 } as PointerEvent);
+      stage.stepManual(0.2);
+      expect(Math.abs(stage.getLobbyStage().getTacticianYaw())).toBeGreaterThan(0.2);
+
+      for (let i = 0; i < 30; i += 1) {
+        stage.stepManual(0.15);
+      }
+      expect(Math.abs(stage.getLobbyStage().getTacticianYaw())).toBeLessThan(0.08);
+
+      stage['handlePointerDown']({ button: 0, clientX: 640, clientY: 360 } as PointerEvent);
+      stage['handlePointerUp']({ button: 0, clientX: 642, clientY: 360 } as PointerEvent);
+      expect(onTap).toHaveBeenCalledWith('tactician_lumina_bell', 0);
+
+      stage.setSceneMode('prep');
+      for (let i = 0; i < 20; i += 1) {
+        stage.stepManual(0.05);
+      }
+      expect(stage.getLobbyStage().camera.position.x).toBeGreaterThan(1.8);
+
+      stage.setSceneMode('subpage');
+      expect(stage.getPerfStats().sceneMode).toBe('subpage');
+
+      stage.setSceneMode('match');
+      expect(stage.getSceneMode()).toBe('match');
+    } finally {
+      stage.dispose();
+    }
+  });
+
+  it('builds and hot-swaps all 3 original tacticians cleanly', () => {
+    const materials = new PbrMaterialLibrary();
+    const stage = new BoardStageEngine(undefined, { initialSceneMode: 'match' });
+    try {
+      for (const tid of TACTICIAN_IDS) {
+        const rig = createTacticianRig(tid, materials);
+        expect(rig.id).toBe(tid);
+        expect(rig.triggerEmote('tap')).toBe(0);
+        expect(rig.triggerEmote('cheer')).toBe(1);
+        expect(rig.triggerEmote('collect_orb')).toBe(0);
+        rig.update(0.05, 1.2);
+        rig.dispose();
+
+        stage.setTactician(tid);
+        expect(stage.getTacticianId()).toBe(tid);
+        stage.triggerTacticianEmote('cheer');
+        stage.stepManual(0.05);
+      }
+      stage.syncLootOrbs([{ orbId: 'orb-1', goldAmount: 3, row: 5, col: 3 }]);
+      expect(stage.collectLootOrb('orb-1')).toBe(true);
+      stage.stepManual(0.2);
+    } finally {
+      stage.dispose();
+      materials.dispose();
+    }
+  });
+
+  it('positions 9 bench slots strictly above bottom shop in bottom_open mode and shifts cleanly in top_or_collapsed mode', () => {
+    const stage = new BoardStageEngine(undefined, {
+      initialSceneMode: 'match',
+      initialShopCameraLayout: 'bottom_open',
+    });
+    try {
+      stage.setShopCameraLayout('bottom_open', true);
+      const benchTopNdc = new Vector3(0, 0, BENCH_Z_OFFSET - 0.65).project(stage.camera);
+      const benchBotNdc = new Vector3(0, 0, BENCH_Z_OFFSET + 0.65).project(stage.camera);
+      const benchTopPct = (1 - benchTopNdc.y) * 50;
+      const benchBotPct = (1 - benchBotNdc.y) * 50;
+      expect(benchTopPct).toBeGreaterThan(69.5);
+      expect(benchTopPct).toBeLessThan(72.5);
+      expect(benchBotPct).toBeGreaterThan(78.0);
+      expect(benchBotPct).toBeLessThan(81.0);
+
+      const landmarkNdc = new Vector3(0, -0.55, -10.4).project(stage.camera);
+      const landmarkPct = (1 - landmarkNdc.y) * 50;
+      expect(landmarkPct).toBeGreaterThan(3.0);
+      expect(landmarkPct).toBeLessThan(15.0);
+
+      stage.setShopCameraLayout('top_or_collapsed', true);
+      const collapsedTopPct = (1 - new Vector3(0, 0, BENCH_Z_OFFSET - 0.65).project(stage.camera).y) * 50;
+      const collapsedBotPct = (1 - new Vector3(0, 0, BENCH_Z_OFFSET + 0.65).project(stage.camera).y) * 50;
+      expect(collapsedTopPct).toBeGreaterThan(81.0);
+      expect(collapsedBotPct).toBeLessThan(94.5);
+
+      const themes: ArenaThemeId[] = [
+        'orbital_elevator_port',
+        'mercury_dyson_forge',
+        'event_horizon_observatory',
+      ];
+      for (const theme of themes) {
+        stage.setArenaTheme(theme);
+        expect(stage.getArenaTheme()).toBe(theme);
+        stage.setGoldAndCharge(50);
+        stage.stepManual(0.05);
+      }
+    } finally {
+      stage.dispose();
+    }
+  });
+
+  it('constructs bespoke 3D models for all 36 Season 1 units and supports 1-3 star scaling', () => {
+    const materials = new PbrMaterialLibrary();
+    const factory = new UnitMeshFactory(materials);
+    try {
+      const registered = new Set(factory.getRegisteredBespokeUnitIds());
+      expect(SEASON1_UNITS.length).toBe(36);
+      for (const unit of SEASON1_UNITS) {
+        expect(registered.has(unit.id)).toBe(true);
+        const rig = factory.createUnitRig(`test-${unit.id}`, unit.id, 1, 'ally');
+        expect(rig.scaleSpring.value).toBeCloseTo(1.0, 2);
+        rig.applyStarTier(2);
+        expect(rig.scaleSpring.target).toBeCloseTo(1.14, 2);
+        rig.applyStarTier(3);
+        expect(rig.scaleSpring.target).toBeCloseTo(1.30, 2);
+        rig.update(0.05, 1.0);
+        rig.dispose();
+      }
+    } finally {
+      factory.dispose();
+      materials.dispose();
+    }
+  });
+
+  it('produces synchronous SVG DataURL portraits for all 36 units, 3 tacticians, and 3 arenas without WebGL errors', async () => {
+    clearPortraitCache();
+    await prebakePortraitsAsync({ size: 512, includeArenas: true });
+
+    for (const unit of SEASON1_UNITS) {
+      const url = getUnitPortraitUrl(unit.id, { size: 512 });
+      expect(url.startsWith('data:image/svg+xml;charset=utf-8,')).toBe(true);
+      expect(decodeURIComponent(url)).toContain(unit.name);
+    }
+
+    for (const tid of TACTICIAN_IDS) {
+      const url = getTacticianPortraitUrl(tid, { size: 512 });
+      expect(url.startsWith('data:image/svg+xml;charset=utf-8,')).toBe(true);
+    }
+
+    for (const theme of [
+      'orbital_elevator_port',
+      'mercury_dyson_forge',
+      'event_horizon_observatory',
+    ] as const) {
+      const url = getArenaPreviewUrl(theme, { size: 512 });
+      expect(url.startsWith('data:image/svg+xml;charset=utf-8,')).toBe(true);
+    }
   });
 });

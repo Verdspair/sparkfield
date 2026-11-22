@@ -161,6 +161,23 @@ describe('HTTP transport failures', () => {
     expect(invalid).not.toHaveBeenCalled();
   });
 
+  it('round-trips a confirmed tactician through the profile and member preferences PATCH transport', async () => {
+    const preferredTacticianId = 'tactician_europa_fin';
+    const profile = { preferredTacticianId, avatarFrameId: 'owned-frame' };
+    const lobby = { profile, selfPrefs: { preferredTacticianId }, prepRoom: { members: [{ tacticianId: preferredTacticianId }] } };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json(profile))
+      .mockResolvedValueOnce(Response.json(lobby));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(httpClient.updateProfile({ preferredTacticianId })).resolves.toEqual(profile);
+    await expect(httpClient.updateMemberPrefs({ preferredTacticianId })).resolves.toEqual(lobby);
+    for (const [url, init] of fetchMock.mock.calls as Array<[string, RequestInit]>) {
+      expect(url).toMatch(/\/api\/(auth\/profile|lobby\/member-prefs)$/);
+      expect(init.method).toBe('PATCH');
+      expect(JSON.parse(init.body as string)).toEqual({ preferredTacticianId });
+    }
+  });
+
   it('returns authentication results without mutating the active identity', async () => {
     const storage = new Map([['blc_auth_token_v1', 'current-token']]);
     vi.stubGlobal('window', { localStorage: {
