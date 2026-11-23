@@ -468,10 +468,10 @@ export class StageHudOverlayProjector {
     }
 
     const isAlly = p.allegiance === 'ally';
-    ctx.fillStyle = isAlly ? '#2dd478' : '#f2556b';
+    ctx.fillStyle = isAlly ? '#3db37a' : '#d66070';
     ctx.fillRect(x0, y0, hpW, hpH);
     if (hpW > 1) {
-      ctx.fillStyle = isAlly ? '#5eead4' : '#fda4af';
+      ctx.fillStyle = isAlly ? '#7fd4a8' : '#e89aa4';
       ctx.fillRect(x0, y0, hpW, 1.5);
     }
 
@@ -495,7 +495,7 @@ export class StageHudOverlayProjector {
     }
 
     const manaRatio = Math.min(1, p.mana / p.maxMana);
-    ctx.fillStyle = manaRatio >= 0.85 ? '#fde047' : '#38bdf8';
+    ctx.fillStyle = manaRatio >= 0.85 ? '#e6c873' : '#4ea3d1';
     ctx.fillRect(x0, y0 + hpH + 1, barW * manaRatio, manaH);
 
     ctx.font = '800 10.5px sans-serif';
@@ -506,7 +506,7 @@ export class StageHudOverlayProjector {
     ctx.lineWidth = 2.4;
     ctx.strokeStyle = 'rgba(10, 14, 24, 0.90)';
     ctx.strokeText(starText, x0 - 4, y0 + hpH * 0.5);
-    ctx.fillStyle = p.star === 3 ? '#fde047' : '#fbbf24';
+    ctx.fillStyle = p.star === 3 ? '#edd07b' : '#dfb664';
     ctx.fillText(starText, x0 - 4, y0 + hpH * 0.5);
   }
 

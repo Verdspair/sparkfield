@@ -56,15 +56,15 @@ export interface SoftSssOptions {
 
 export const FACTION_PALETTES: Readonly<Record<string, FactionVisualPalette>> = {
   戴森工团: {
-    primaryHex: 0xf4c04e,
-    secondaryHex: 0xe88b2e,
-    accentHex: 0xffdf72,
-    primaryRgb: [0.96, 0.75, 0.31],
-    secondaryRgb: [0.91, 0.55, 0.18],
-    accentRgb: [1.0, 0.87, 0.45],
-    backdropTopCss: '#3b230b',
-    backdropMidCss: '#6b3f14',
-    backdropBotCss: '#1a1524',
+    primaryHex: 0xdab266,
+    secondaryHex: 0xc27f42,
+    accentHex: 0xebd196,
+    primaryRgb: [0.85, 0.70, 0.40],
+    secondaryRgb: [0.76, 0.50, 0.26],
+    accentRgb: [0.92, 0.82, 0.59],
+    backdropTopCss: '#2c2014',
+    backdropMidCss: '#4b341d',
+    backdropBotCss: '#171924',
   },
   云端星环: {
     primaryHex: 0xdbeafe,
@@ -89,53 +89,53 @@ export const FACTION_PALETTES: Readonly<Record<string, FactionVisualPalette>> = 
     backdropBotCss: '#0d1c28',
   },
   木卫冰海: {
-    primaryHex: 0x5fd0f5,
-    secondaryHex: 0x1d70b0,
-    accentHex: 0x2ee6a8,
-    primaryRgb: [0.37, 0.82, 0.96],
-    secondaryRgb: [0.11, 0.44, 0.69],
-    accentRgb: [0.18, 0.90, 0.66],
-    backdropTopCss: '#07324a',
-    backdropMidCss: '#126080',
-    backdropBotCss: '#091d2e',
+    primaryHex: 0x68b3d1,
+    secondaryHex: 0x306a94,
+    accentHex: 0x5bb89d,
+    primaryRgb: [0.41, 0.70, 0.82],
+    secondaryRgb: [0.19, 0.42, 0.58],
+    accentRgb: [0.36, 0.72, 0.62],
+    backdropTopCss: '#11293a',
+    backdropMidCss: '#1c465c',
+    backdropBotCss: '#0f1b28',
   },
   深空阵列: {
-    primaryHex: 0x5ba8ec,
-    secondaryHex: 0xe8be66,
-    accentHex: 0x8f7df8,
-    primaryRgb: [0.36, 0.66, 0.93],
-    secondaryRgb: [0.91, 0.75, 0.40],
-    accentRgb: [0.56, 0.49, 0.97],
-    backdropTopCss: '#102658',
-    backdropMidCss: '#22468a',
-    backdropBotCss: '#0c1632',
+    primaryHex: 0x6698c9,
+    secondaryHex: 0xd6b576,
+    accentHex: 0x8b82c4,
+    primaryRgb: [0.40, 0.60, 0.79],
+    secondaryRgb: [0.84, 0.71, 0.46],
+    accentRgb: [0.55, 0.51, 0.77],
+    backdropTopCss: '#142342',
+    backdropMidCss: '#223863',
+    backdropBotCss: '#10182b',
   },
   反物质院: {
-    primaryHex: 0x4c2e7c,
-    secondaryHex: 0xe040fb,
-    accentHex: 0xf47aff,
-    primaryRgb: [0.30, 0.18, 0.49],
-    secondaryRgb: [0.88, 0.25, 0.98],
-    accentRgb: [0.96, 0.48, 1.0],
-    backdropTopCss: '#2f104a',
-    backdropMidCss: '#621c8a',
-    backdropBotCss: '#140b24',
+    primaryHex: 0x523c75,
+    secondaryHex: 0xa86cc2,
+    accentHex: 0xc996df,
+    primaryRgb: [0.32, 0.24, 0.46],
+    secondaryRgb: [0.66, 0.42, 0.76],
+    accentRgb: [0.79, 0.59, 0.87],
+    backdropTopCss: '#231636',
+    backdropMidCss: '#3c2559',
+    backdropBotCss: '#151021',
   },
   星门摆渡: {
-    primaryHex: 0x1fc488,
-    secondaryHex: 0xe8be66,
-    accentHex: 0x6ef0be,
-    primaryRgb: [0.12, 0.77, 0.53],
-    secondaryRgb: [0.91, 0.75, 0.40],
-    accentRgb: [0.43, 0.94, 0.75],
-    backdropTopCss: '#0b362e',
-    backdropMidCss: '#186654',
-    backdropBotCss: '#0b1c1c',
+    primaryHex: 0x4aa888,
+    secondaryHex: 0xd6b576,
+    accentHex: 0x82cbb1,
+    primaryRgb: [0.29, 0.66, 0.53],
+    secondaryRgb: [0.84, 0.71, 0.46],
+    accentRgb: [0.51, 0.80, 0.69],
+    backdropTopCss: '#122b28',
+    backdropMidCss: '#1f4942',
+    backdropBotCss: '#101c1d',
   },
   失控蜂群: {
-    primaryHex: 0xdc354c,
-    secondaryHex: 0xf43f5e,
-    accentHex: 0xff6e84,
+    primaryHex: 0xb8505f,
+    secondaryHex: 0xc95e6d,
+    accentHex: 0xde8794,
     primaryRgb: [0.86, 0.21, 0.30],
     secondaryRgb: [0.96, 0.25, 0.37],
     accentRgb: [1.0, 0.43, 0.52],
@@ -1516,7 +1516,7 @@ export function bakeBenchSlotNumberAtlas(): THREE.DataTexture {
 
 function applyUnitVertexColorVibrancy(
   mat: THREE.MeshStandardMaterial | THREE.MeshPhysicalMaterial,
-  satBoost = 1.08,
+  satBoost = 0.82,
 ): void {
   const satLiteral = satBoost.toFixed(3);
   mat.customProgramCacheKey = () => `sparkfield-unit-vc-lin-${satLiteral}`;
@@ -1771,7 +1771,7 @@ export class PbrMaterialLibrary {
       sheenColor: new THREE.Color(0xfff6e5),
       side: THREE.DoubleSide,
     });
-    applyUnitVertexColorVibrancy(this.unitArmorMat, 1.08);
+    applyUnitVertexColorVibrancy(this.unitArmorMat, 0.82);
 
     this.unitMatteMat = new THREE.MeshPhysicalMaterial({
       vertexColors: true,
@@ -1787,7 +1787,7 @@ export class PbrMaterialLibrary {
       sheenColor: new THREE.Color(0xc8dcf8),
       side: THREE.DoubleSide,
     });
-    applyUnitVertexColorVibrancy(this.unitMatteMat, 1.08);
+    applyUnitVertexColorVibrancy(this.unitMatteMat, 0.82);
 
     this.unitTrimMat = new THREE.MeshPhysicalMaterial({
       vertexColors: true,
@@ -1801,7 +1801,7 @@ export class PbrMaterialLibrary {
       clearcoat: 0.0,
       side: THREE.DoubleSide,
     });
-    applyUnitVertexColorVibrancy(this.unitTrimMat, 1.06);
+    applyUnitVertexColorVibrancy(this.unitTrimMat, 0.82);
 
     this.contactShadowMat = new THREE.MeshBasicMaterial({
       map: this.contactShadowTex,
@@ -1878,7 +1878,7 @@ export class PbrMaterialLibrary {
       side: THREE.DoubleSide,
       toneMapped: false,
     });
-    applyUnitVertexColorVibrancy(mat, 1.08);
+    applyUnitVertexColorVibrancy(mat, 0.82);
     this.extraDisposables.push(mat);
     return mat;
   }
@@ -1905,7 +1905,7 @@ export class PbrMaterialLibrary {
       side: THREE.DoubleSide,
       depthWrite: false,
     });
-    applyUnitVertexColorVibrancy(mat, 1.08);
+    applyUnitVertexColorVibrancy(mat, 0.82);
     this.extraDisposables.push(mat);
     return mat;
   }
