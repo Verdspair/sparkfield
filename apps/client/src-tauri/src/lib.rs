@@ -22,7 +22,42 @@ fn host_platform_info() -> HostPlatformInfo {
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+#[cfg(unix)]
+fn terminate_residual_client_instances() {
+    let self_pid = std::process::id();
+    let Ok(exe) = std::env::current_exe() else {
+        return;
+    };
+    let Some(exe_name) = exe.file_name().and_then(|n| n.to_str()) else {
+        return;
+    };
+    let Ok(output) = std::process::Command::new("pgrep")
+        .args(["-x", exe_name])
+        .output()
+    else {
+        return;
+    };
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stale_pids: Vec<u32> = stdout
+        .lines()
+        .filter_map(|line| line.trim().parse::<u32>().ok())
+        .filter(|&pid| pid != self_pid)
+        .collect();
+    for pid in &stale_pids {
+        let _ = std::process::Command::new("kill")
+            .args(["-TERM", &pid.to_string()])
+            .status();
+    }
+    if !stale_pids.is_empty() {
+        std::thread::sleep(std::time::Duration::from_millis(220));
+    }
+}
+
+#[cfg(not(unix))]
+fn terminate_residual_client_instances() {}
+
 pub fn run() {
+    terminate_residual_client_instances();
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![host_platform_info])
         .run(tauri::generate_context!())

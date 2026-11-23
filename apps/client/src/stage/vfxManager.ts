@@ -705,7 +705,7 @@ export class StageVfxManager {
         continue;
       }
 
-      const scaleBoost = 1 + Math.min(3, Math.max(0, amount - 1)) * 0.08;
+      const scaleBoost = 1.16 + Math.min(3, Math.max(0, amount - 1)) * 0.09;
       const dropDelay = spawnOrder * 0.13;
       spawnOrder += 1;
       const phaseOffset = this.orbPhaseCounter * 1.37;
@@ -1071,9 +1071,9 @@ export class StageVfxManager {
         if (localT < 0) {
           isVisible = false;
         } else {
-          const flightDur = 0.46;
-          const bounce1Dur = 0.26;
-          const bounce2Dur = 0.18;
+          const flightDur = 0.62;
+          const bounce1Dur = 0.3;
+          const bounce2Dur = 0.2;
           const totalDur = flightDur + bounce1Dur + bounce2Dur;
 
           if (localT < flightDur) {
@@ -1081,9 +1081,12 @@ export class StageVfxManager {
             const easeP = 1 - Math.pow(1 - p, 2);
             actor.x = actor.targetX * easeP;
             actor.z = 0.15 + (actor.targetZ - 0.15) * easeP;
-            actor.y = 3.4 * (1 - p) + Math.sin(p * Math.PI) * 1.55 + 0.34 * p;
-            const grow = 0.42 + 0.58 * Math.min(1, p * 1.55);
-            const stretch = p > 0.65 ? 1 + (p - 0.65) * 0.28 : 1;
+            actor.y = 4.6 * (1 - p) + Math.sin(p * Math.PI) * 1.8 + 0.36 * p;
+            if (Math.floor(localT * 28) !== Math.floor(Math.max(0, localT - dt) * 28)) {
+              this.spawnTacticianTrailSpark(actor.x, actor.y, actor.z);
+            }
+            const grow = 0.48 + 0.52 * Math.min(1, p * 1.55);
+            const stretch = p > 0.6 ? 1 + (p - 0.6) * 0.32 : 1;
             actor.scaleX = (actor.baseScale * grow) / Math.sqrt(stretch);
             actor.scaleY = actor.baseScale * grow * stretch;
             actor.scaleZ = (actor.baseScale * grow) / Math.sqrt(stretch);
@@ -1092,10 +1095,10 @@ export class StageVfxManager {
               actor.bouncedOnce = true;
               actor.readyToCollect = true;
               actor.showGroundAndBeam = true;
-              this.spawnGroundClickRipple(actor.targetX, actor.targetZ, true);
+              this.spawnOrbPickupBurst(actor.targetX, 0.34, actor.targetZ);
             }
             const b = (localT - flightDur) / bounce1Dur;
-            const bounceY = 0.36 + Math.sin(b * Math.PI) * 0.54;
+            const bounceY = 0.38 + Math.sin(b * Math.PI) * 0.78;
             const squash = b < 0.22 ? 1 + 0.26 * (1 - b / 0.22) : 1;
             actor.x = actor.targetX;
             actor.y = bounceY;
