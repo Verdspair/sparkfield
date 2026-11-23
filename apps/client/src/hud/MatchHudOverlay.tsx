@@ -11,6 +11,7 @@ import {
   SEASON1_UNITS_BY_ID,
   lookupCraftRecipe,
   lookupItemById,
+  type UnitDef,
 } from '@pkg/contracts';
 import {
   computeActiveTraits,
@@ -25,6 +26,7 @@ import {
   GameEffectText,
   GameItemIcon,
   QuestionStepCard,
+  StatInlineIcon,
   type LessonStepProgressItem,
   type QuestionAnswerSubmission,
   type QuestionFeedbackView,
@@ -50,6 +52,122 @@ const ALL_CRAFT_COMPONENT_IDS: readonly string[] = [
   ...SEASON1_ITEMS.components.map((c) => c.id),
   SEASON1_ITEMS.special.spatulaComponent.id,
 ];
+
+type PositioningIconKind = 'shield' | 'blade' | 'reticle' | 'cross' | 'spark';
+type PositioningTone = 'tank' | 'assassin' | 'support' | 'phys' | 'magic';
+
+interface UnitPositioningInfo {
+  readonly label: string;
+  readonly tone: PositioningTone;
+  readonly iconKind: PositioningIconKind;
+}
+
+const PHYSICAL_MATRIX_UNIT_IDS = new Set(['S22', 'S23', 'S28']);
+
+function resolveUnitPositioning(
+  def: Pick<UnitDef, 'id' | 'role' | 'stats' | 'skillSummary'>,
+): UnitPositioningInfo {
+  const rowLabel =
+    def.stats.range <= 1 ? '前排' : def.stats.range <= 2 ? '中排' : '后排';
+  const isPhysical =
+    PHYSICAL_MATRIX_UNIT_IDS.has(def.id) ||
+    def.skillSummary.includes('物理') ||
+    def.skillSummary.includes('重炮');
+
+  switch (def.role) {
+    case '重装':
+      return { label: `${rowLabel} · 坦克`, tone: 'tank', iconKind: 'shield' };
+    case '维生':
+      return { label: `${rowLabel} · 治疗辅助`, tone: 'support', iconKind: 'cross' };
+    case '跃迁':
+      return { label: `${rowLabel} · 突进刺客`, tone: 'assassin', iconKind: 'blade' };
+    case '磁轨':
+      return { label: `${rowLabel} · 物理输出`, tone: 'phys', iconKind: 'reticle' };
+    case '光子':
+      return { label: `${rowLabel} · 法术输出`, tone: 'magic', iconKind: 'spark' };
+    case '矩阵':
+      return isPhysical
+        ? { label: `${rowLabel} · 物理破甲`, tone: 'phys', iconKind: 'reticle' }
+        : { label: `${rowLabel} · 法术控场`, tone: 'magic', iconKind: 'spark' };
+    default:
+      return isPhysical
+        ? { label: `${rowLabel} · 物理输出`, tone: 'phys', iconKind: 'reticle' }
+        : { label: `${rowLabel} · 法术输出`, tone: 'magic', iconKind: 'spark' };
+  }
+}
+
+function PositioningIcon({ kind }: { readonly kind: PositioningIconKind }): React.JSX.Element {
+  return (
+    <svg
+      className="sf-inspect-pos-icon"
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      aria-hidden="true"
+    >
+      {kind === 'shield' ? (
+        <path
+          d="M6 1.2L10 2.9V6.2C10 8.5 8.3 10.1 6 10.9C3.7 10.1 2 8.5 2 6.2V2.9L6 1.2Z"
+          fill="currentColor"
+          fillOpacity="0.26"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+      ) : null}
+      {kind === 'blade' ? (
+        <g>
+          <path d="M10.2 1.8L5 7L3.8 5.8L8.6 1.8H10.2Z" fill="currentColor" />
+          <path d="M3.2 6.4L5.6 8.8M4 8L2 10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        </g>
+      ) : null}
+      {kind === 'reticle' ? (
+        <g>
+          <circle cx="6" cy="6" r="3.4" stroke="currentColor" strokeWidth="1.2" />
+          <circle cx="6" cy="6" r="1.2" fill="currentColor" />
+          <path d="M6 1.1V2.6M6 9.4V10.9M1.1 6H2.6M9.4 6H10.9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </g>
+      ) : null}
+      {kind === 'cross' ? (
+        <path
+          d="M6 2.1V9.9M2.1 6H9.9"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      ) : null}
+      {kind === 'spark' ? (
+        <path
+          d="M6 1.1L7.3 4.7L10.9 6L7.3 7.3L6 10.9L4.7 7.3L1.1 6L4.7 4.7Z"
+          fill="currentColor"
+        />
+      ) : null}
+    </svg>
+  );
+}
+
+function RangeStatIcon(): React.JSX.Element {
+  return (
+    <svg
+      className="lui-stat-icon"
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="8" r="4.6" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="8" cy="8" r="1.6" fill="currentColor" />
+      <path
+        d="M8 1.5V3.5M8 12.5V14.5M1.5 8H3.5M12.5 8H14.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 const ITEM_KIND_LABELS: Readonly<Record<string, string>> = {
   component: '散件',
@@ -1795,50 +1913,114 @@ export function MatchHudOverlay(): React.JSX.Element | null {
         )}
       </aside>
 
-      {inspectedUnit && inspectedDef ? (
+      {inspectedUnit && inspectedDef ? (() => {
+        const positioning = resolveUnitPositioning(inspectedDef);
+        const starScale = inspectedDef.starMultipliers[String(inspectedUnit.star)] ?? 1;
+        const displayMaxHp = Math.round(inspectedDef.stats.hp * starScale + (inspectedUnit.bonusHp ?? 0));
+        const displayAtk = Math.round(inspectedDef.stats.atk * starScale);
+        const displayAp = Math.round(100 + (inspectedUnit.bonusSkillEfficiency ?? 0));
+        const initialMana = inspectedDef.stats.initialMana;
+        const maxMana = inspectedDef.stats.maxMana;
+        const manaFillPct =
+          maxMana > 0 ? Math.min(100, Math.max(0, Math.round((initialMana / maxMana) * 100))) : 0;
+
+        return (
         <section
           className="ui-metal-frame blc-unit-inspect"
           aria-label="棋子战术检视卡"
           data-testid="unit-inspect-card"
         >
-          <div className="blc-col-head">
-            <div className="sf-inspect-hero">
-              <UnitPortrait unitId={inspectedUnit.unitId} size="md" star={inspectedUnit.star} />
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="sf-inspect-head">
+            <UnitPortrait unitId={inspectedUnit.unitId} size="md" star={inspectedUnit.star} />
+            <div className="sf-inspect-identity">
+              <div className="sf-inspect-top-row">
+                <div className="sf-inspect-name-group">
                   <span className="blc-chip blc-chip--gold">{inspectedDef.cost} 费</span>
-                  <strong style={{ fontSize: 15.5 }}>
+                  <strong className="sf-inspect-name">
                     {'★'.repeat(inspectedUnit.star)} {inspectedDef.name}
                   </strong>
                 </div>
-                <div style={{ marginTop: 2, fontSize: 12, color: 'var(--text-secondary)' }}>
-                  {inspectedDef.faction} · {inspectedDef.role}
-                  {inspectedDef.uniqueTrait ? ` · ${inspectedDef.uniqueTrait}` : ''}
+                <div className="sf-inspect-head-controls">
+                  <DescriptionModeToggle size="xs" />
+                  <button
+                    type="button"
+                    className="blc-btn blc-btn--ghost blc-btn--xs"
+                    onClick={clearInspectedUnit}
+                    aria-label="关闭棋子检视卡"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <DescriptionModeToggle size="xs" />
-              <button
-                type="button"
-                className="blc-btn blc-btn--ghost blc-btn--xs"
-                onClick={clearInspectedUnit}
-              >
-                ✕
-              </button>
+              <div className="sf-inspect-meta-row">
+                <span className="sf-inspect-meta-text">
+                  {inspectedDef.faction} · {inspectedDef.role}
+                  {inspectedDef.uniqueTrait ? ` · ${inspectedDef.uniqueTrait}` : ''}
+                </span>
+                <span
+                  className={`sf-inspect-pos-badge sf-inspect-pos-badge--${positioning.tone}`}
+                  data-testid="unit-inspect-positioning"
+                >
+                  <PositioningIcon kind={positioning.iconKind} />
+                  <span>{positioning.label}</span>
+                </span>
+              </div>
             </div>
           </div>
 
-          <p className="sf-inspect-skill-text">
-            <GameEffectText fullText={inspectedDef.skillSummary} />
-          </p>
+          <div className="sf-inspect-bars" data-testid="unit-inspect-resource-bars">
+            <div className="sf-inspect-bar sf-inspect-bar--hp" title={`最大生命 ${displayMaxHp}`}>
+              <span className="sf-inspect-bar__fill" style={{ width: '100%' }} />
+              <span className="sf-inspect-bar__label">HP</span>
+              <span className="sf-inspect-bar__value">{displayMaxHp}</span>
+            </div>
+            <div
+              className="sf-inspect-bar sf-inspect-bar--mp"
+              title={`初始法力 ${initialMana} / 法力上限 ${maxMana}`}
+            >
+              <span className="sf-inspect-bar__fill" style={{ width: `${manaFillPct}%` }} />
+              <span className="sf-inspect-bar__label">MP</span>
+              <span className="sf-inspect-bar__value">
+                {initialMana}/{maxMana}
+              </span>
+            </div>
+          </div>
 
-          <div className="sf-inspect-stats-row">
-            <span className="blc-chip">射程 {inspectedDef.stats.range} 格</span>
-            <span className="blc-chip">
-              法力 {inspectedDef.stats.initialMana}/{inspectedDef.stats.maxMana}
-            </span>
-            <span className="blc-chip">攻速 {inspectedDef.stats.atkSpeed.toFixed(2)}</span>
+          <div className="sf-inspect-stat-grid" data-testid="unit-inspect-stat-grid">
+            <div className="sf-inspect-stat-cell sf-inspect-stat-cell--phys" title="物理攻击">
+              <StatInlineIcon kind="phys" />
+              <span className="sf-inspect-stat-cell__name">攻击</span>
+              <span className="sf-inspect-stat-cell__val">{displayAtk}</span>
+            </div>
+            <div className="sf-inspect-stat-cell sf-inspect-stat-cell--magic" title="法术强度">
+              <StatInlineIcon kind="magic" />
+              <span className="sf-inspect-stat-cell__name">法强</span>
+              <span className="sf-inspect-stat-cell__val">{displayAp}%</span>
+            </div>
+            <div className="sf-inspect-stat-cell sf-inspect-stat-cell--armor" title="物理护甲">
+              <StatInlineIcon kind="armor" />
+              <span className="sf-inspect-stat-cell__name">护甲</span>
+              <span className="sf-inspect-stat-cell__val">{inspectedDef.stats.armor}</span>
+            </div>
+            <div className="sf-inspect-stat-cell sf-inspect-stat-cell--mr" title="魔法抗性">
+              <StatInlineIcon kind="mr" />
+              <span className="sf-inspect-stat-cell__name">魔抗</span>
+              <span className="sf-inspect-stat-cell__val">{inspectedDef.stats.mr}</span>
+            </div>
+            <div className="sf-inspect-stat-cell sf-inspect-stat-cell--as" title="攻击速度">
+              <StatInlineIcon kind="as" />
+              <span className="sf-inspect-stat-cell__name">攻速</span>
+              <span className="sf-inspect-stat-cell__val">{inspectedDef.stats.atkSpeed.toFixed(2)}</span>
+            </div>
+            <div className="sf-inspect-stat-cell sf-inspect-stat-cell--range" title="攻击射程">
+              <RangeStatIcon />
+              <span className="sf-inspect-stat-cell__name">射程</span>
+              <span className="sf-inspect-stat-cell__val">{inspectedDef.stats.range}格</span>
+            </div>
+          </div>
+
+          <div className="sf-inspect-skill-box" data-testid="unit-inspect-skill">
+            <GameEffectText unitId={inspectedDef.id} fullText={inspectedDef.skillSummary} />
           </div>
 
           <div
@@ -2068,7 +2250,8 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             </div>
           ) : null}
         </section>
-      ) : null}
+        );
+      })() : null}
 
       {isShopExpanded ? (
         <footer

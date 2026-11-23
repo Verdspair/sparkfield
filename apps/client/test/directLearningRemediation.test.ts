@@ -288,7 +288,7 @@ describe('offline learning', () => {
 
       const intro = await advanceToLearning(local, 0);
       const blueprint = intro.blueprint;
-      expect(blueprint).toMatchObject({ arcCount: 4, slotsPerArc: 2 });
+      expect(blueprint).toMatchObject({ arcCount: 3, slotsPerArc: 2 });
       expect(intro.arcMeta).toMatchObject({ arcIndex: 0, slotInArc: 0, stageKind: 'intro' });
       const wrong = advancePastMaterial(local).clientQuestions[0]!;
       const wrongGrade = local.sendLearningSubmit(wrong.questionId, { status: 'submitted', answer: 'not the answer' });
@@ -313,10 +313,10 @@ describe('offline learning', () => {
       expect(nextArc.blueprint).toEqual(blueprint);
       expect(inputFor(2).usedQuestionIds).toEqual([...new Set([intro, mastery].flatMap(selectedIds))]);
       expect(inputFor(2).priorArcAttempts).toEqual([]);
-      const last = await advanceToLearning(local, 7);
-      expect(last.arcMeta).toMatchObject({ arcIndex: 3, slotInArc: 1, stageKind: 'mastery' });
+      const last = await advanceToLearning(local, 5);
+      expect(last.arcMeta).toMatchObject({ arcIndex: 2, slotInArc: 1, stageKind: 'mastery' });
       expect(buildBlueprint).toHaveBeenCalledTimes(1);
-      expect(buildLesson).toHaveBeenCalledTimes(8);
+      expect(buildLesson).toHaveBeenCalledTimes(6);
       const [opening] = buildBlueprint.mock.calls[0]!;
       for (const [input] of buildLesson.mock.calls) {
         expect(input.studyBlueprint).toBe(buildBlueprint.mock.results[0]!.value);
@@ -328,7 +328,7 @@ describe('offline learning', () => {
     }
   });
 
-  it('resets attempts but retains question IDs when a short deep-match arc ends', async () => {
+  it('resets attempts but retains question IDs when a deep-match topic arc ends', async () => {
     vi.spyOn(offlineDb.fsrsCards, 'toArray').mockResolvedValue([]);
     vi.spyOn(offlineDb.fsrsCards, 'put').mockResolvedValue('local-card');
     vi.spyOn(offlineDb.offlineAttempts, 'add').mockResolvedValue(1);
@@ -338,26 +338,26 @@ describe('offline learning', () => {
     try {
       await local.start();
       const secondArc = await advanceToLearning(local, 4);
-      expect(secondArc.arcMeta).toMatchObject({ arcIndex: 1, slotInArc: 0, slotsPerArc: 3 });
+      expect(secondArc.arcMeta).toMatchObject({ arcIndex: 1, slotInArc: 0, slotsPerArc: 4 });
       const question = advancePastMaterial(local).clientQuestions[0]!;
       expect(local.sendLearningSubmit(question.questionId, { status: 'submitted', answer: 'not the answer' }).ok).toBe(true);
 
-      const secondArcLast = await advanceToLearning(local, 6);
-      expect(secondArcLast.arcMeta).toMatchObject({ arcIndex: 1, slotInArc: 2, stageKind: 'mastery' });
+      const secondArcLast = await advanceToLearning(local, 7);
+      expect(secondArcLast.arcMeta).toMatchObject({ arcIndex: 1, slotInArc: 3, stageKind: 'mastery' });
       expect(buildLesson.mock.lastCall?.[0].priorArcAttempts).toEqual([
         { questionId: question.questionId, familyId: question.familyId, isCorrect: false, slotInArc: 0 },
       ]);
 
-      const thirdArc = await advanceToLearning(local, 7);
-      expect(thirdArc.arcMeta).toMatchObject({ arcIndex: 2, slotInArc: 0, slotsPerArc: 3 });
+      const thirdArc = await advanceToLearning(local, 8);
+      expect(thirdArc.arcMeta).toMatchObject({ arcIndex: 2, slotInArc: 0, slotsPerArc: 4 });
       expect(buildLesson.mock.lastCall?.[0]).toMatchObject({
         usedQuestionIds: expect.arrayContaining([question.questionId]),
         priorArcAttempts: [],
       });
 
-      const last = await advanceToLearning(local, 9);
-      expect(last.arcMeta).toMatchObject({ arcIndex: 2, slotInArc: 2, stageKind: 'mastery' });
-      expect(buildLesson).toHaveBeenCalledTimes(10);
+      const last = await advanceToLearning(local, 11);
+      expect(last.arcMeta).toMatchObject({ arcIndex: 2, slotInArc: 3, stageKind: 'mastery' });
+      expect(buildLesson).toHaveBeenCalledTimes(12);
     } finally {
       local.dispose();
     }

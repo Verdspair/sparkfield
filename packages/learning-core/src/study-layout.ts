@@ -8,13 +8,13 @@ const stages: Readonly<Record<StudyArcSlots, readonly ArcStageKind[]>> = {
 };
 
 const englishArcLayouts: Readonly<Record<DurationMode, readonly StudyArcSlots[]>> = {
-  quick: [2, 2], standard: [2, 2, 2, 2], deep: [2, 2, 2, 2, 2],
+  quick: [2, 2], standard: [2, 2, 2], deep: [2, 2, 2, 2, 2, 2],
 };
 
 export function studyArcLayout(mode: DurationMode, arcSlots?: readonly StudyArcSlots[], subject: SubjectId = 'math', focused = false): StudyArcSlots[] {
   const config = MODE_BUDGETS.modes[mode];
   const defaults = subject !== 'english' ? config.study_arc_slots
-    : mode === 'deep' && focused ? [3, 2, 2, 3] : englishArcLayouts[mode];
+    : mode === 'deep' && focused ? [3, 3, 2, 2, 2] : englishArcLayouts[mode];
   const layout = (arcSlots ?? defaults).map(slots => StudyArcSlotsSchema.parse(slots));
   if (layout.reduce((sum, slots) => sum + slots, 0) !== config.learning.length) throw new RangeError('Study arc layout must fill the shared mode timeline');
   return layout;

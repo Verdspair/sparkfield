@@ -1,6 +1,7 @@
 import { LearningArcMetaSchema, MatchStudyBlueprintSchema, MODE_BUDGETS, type CoursePack } from '@pkg/contracts';
 import { describe, expect, it } from 'vitest';
 import { activateLessonRemediation, buildMatchStudyBlueprint, buildPersonalizedLessonBundle, evaluateLearningBonusDrops, learningNodePolicy, locateMatchStudySlot, settleLearningNodeGold, type ArcAttempt } from '../src/index.js';
+import { activeStudyCatalog } from '../src/study-blueprint.js';
 import { card, NOW, pack, question } from './fixtures.js';
 
 const math = () => {
@@ -39,20 +40,55 @@ describe('adaptive match study arcs', () => {
   const english = () => pack('english', ['dialogue', 'grammar', 'cloze', 'usage', 'reading', 'syntax']);
 
   it.each([
-    ['quick', [2, 2], [4]], ['standard', [2, 2, 2, 2], [4, 4]], ['deep', [2, 2, 2, 2, 2], [4, 3, 3]],
+    ['quick', [2, 2], [4]], ['standard', [2, 2, 2], [3, 3]], ['deep', [2, 2, 2, 2, 2, 2], [4, 4, 4]],
   ] as const)('gives %s mode independent English modules and preserves math topic lengths', (mode, englishSlots, mathSlots) => {
     const p = english();
     const study = buildMatchStudyBlueprint({ packs: [p], mode, subject: 'english', now: NOW });
     expect(MatchStudyBlueprintSchema.parse(study)).toEqual(study);
     expect(study.slotsPerArc).toBe(2);
     expect(study.arcs.map(a => a.slotsInArc)).toEqual(englishSlots);
-    expect(study.arcs.map(a => a.primaryNodeId)).toEqual(['dialogue', 'grammar', 'cloze', 'usage', 'reading'].slice(0, englishSlots.length));
+    expect(study.arcs.map(a => a.primaryNodeId)).toEqual(['dialogue', 'grammar', 'cloze', 'usage', 'reading', 'syntax'].slice(0, englishSlots.length));
     for (const arc of study.arcs) {
       expect(arc).toMatchObject({ title: arc.primaryNodeId, strategy: 'modular_pack', topicNodeIds: [arc.primaryNodeId], slotStages: ['intro', 'mastery'] });
       expect(arc.tags).toHaveLength(1);
       expect(arc.loadScore).toBeGreaterThan(0);
     }
     expect(buildMatchStudyBlueprint({ packs: [math()], mode, subject: 'math', now: NOW }).arcs.map(a => a.slotsInArc)).toEqual(mathSlots);
+  });
+
+  it('reuses the same CoursePack knowledge cards and question units in all three mode layouts', () => {
+    for (const course of [math(), english()]) {
+      const subject = course.manifest.subject;
+      const canonical = structuredClone(course);
+      const items = new Map(course.items.map(q => [q.questionId, q]));
+      const memory = card({ familyId: course.items[0]!.familyId, knowledgeNode: course.items[0]!.knowledgeNode, subject });
+      const options = { packs: [course], subject, now: NOW, cards: [memory] } as const;
+      const layouts = subject === 'math' ? [[4], [3, 3], [4, 4, 4]] : [[2, 2], [2, 2, 2], [3, 3, 2, 2, 2]];
+      for (const [ordinal, mode] of (['quick', 'standard', 'deep'] as const).entries()) {
+        const catalog = activeStudyCatalog({ ...options, mode });
+        expect(catalog.items).toHaveLength(items.size);
+        for (const unit of catalog.items) expect(unit).toBe(items.get(unit.questionId));
+        for (const node of course.manifest.knowledgeGraph) expect(catalog.nodes.get(node.nodeId)).toBe(node);
+        expect(catalog.cards.get(memory.familyId)).toBe(memory);
+
+        const blueprint = buildMatchStudyBlueprint({ ...options, mode });
+        expect(blueprint.arcs.map(arc => arc.slotsInArc)).toEqual(layouts[ordinal]);
+        const slots = blueprint.arcs.reduce((sum, arc) => sum + arc.slotsInArc, 0);
+        expect(slots).toBe([4, 6, 12][ordinal]);
+        for (let nodeIndex = 0; nodeIndex < slots; nodeIndex++) {
+          const lesson = buildPersonalizedLessonBundle({ ...options, mode, nodeIndex, queueType: 'solo',
+            selectedSubjects: [subject], studyBlueprint: blueprint });
+          expect(lesson.questions.length).toBeGreaterThan(0);
+          for (const { stepRole, hintMd, allowMaterialReview, materialMd, assessmentKind, ...unit } of lesson.questions) {
+            expect(items.get(unit.questionId)).toMatchObject(unit);
+          }
+          for (const material of lesson.steps.flatMap(step => step.materials)) {
+            expect(course.items.some(unit => unit.familyId === material.familyId && unit.materialMd === material.materialMd)).toBe(true);
+          }
+        }
+      }
+      expect(course).toEqual(canonical);
+    }
   });
 
   it('gives high-priority due and weak English modules longer deep-mode reviews without mixing nodes', () => {
@@ -62,10 +98,10 @@ describe('adaptive match study arcs', () => {
     } as const;
     const study = buildMatchStudyBlueprint(opts);
     expect(buildMatchStudyBlueprint({ ...opts, seed: 0 })).toEqual(study);
-    expect(study.arcs.map(a => a.slotsInArc)).toEqual([3, 2, 2, 3]);
-    expect([study.arcs[0]!.primaryNodeId, study.arcs[3]!.primaryNodeId]).toEqual(['reading', 'grammar']);
+    expect(study.arcs.map(a => a.slotsInArc)).toEqual([3, 3, 2, 2, 2]);
+    expect([study.arcs[0]!.primaryNodeId, study.arcs[1]!.primaryNodeId]).toEqual(['reading', 'grammar']);
     expect(study.arcs[0]!.slotStages).toEqual(['intro', 'deepen', 'mastery']);
-    expect(new Set(study.arcs.map(arc => arc.primaryNodeId)).size).toBe(4);
+    expect(new Set(study.arcs.map(arc => arc.primaryNodeId)).size).toBe(5);
     expect(study.arcs.every(arc => arc.topicNodeIds.length === 1)).toBe(true);
     const fresh = { ...opts, cards: [], recentPerformance: [] };
     const ahead = buildMatchStudyBlueprint({ ...fresh, progress: [{ subject: 'english', knowledgeNode: 'usage' }] });
@@ -111,7 +147,7 @@ describe('adaptive match study arcs', () => {
     expect(intro.clientQuestions[0]!.materialMd).not.toContain(intro.questions[0]!.explanationMd);
   });
 
-  it.each([['quick', 42], ['standard', 58], ['deep', 78]] as const)('conserves %s match gold at %iG for both tracks', (mode, expectedGold) => {
+  it.each([['quick', 42], ['standard', 54], ['deep', 78]] as const)('conserves %s match gold at %iG for both tracks', (mode, expectedGold) => {
     const due = card({ familyId: 'english_reading_f1', subject: 'english', knowledgeNode: 'reading' });
     for (const options of [{ subject: 'math', packs: [math()] }, { subject: 'english', packs: [english()] },
       { subject: 'english', packs: [english()], cards: [due] }] as const) {
@@ -222,8 +258,8 @@ describe('adaptive match study arcs', () => {
   it('merges first-round errors into a compact arc without leaking attempts to another arc', () => {
     const p = math();
     const common = { packs: [p], mode: 'deep', subject: 'math', now: NOW } as const;
-    const studyBlueprint = buildMatchStudyBlueprint(common);
-    expect(studyBlueprint.arcs.map(arc => arc.slotsInArc)).toEqual([4, 3, 3]);
+    const studyBlueprint = buildMatchStudyBlueprint({ ...common, arcSlots: [4, 3, 3, 2] });
+    expect(studyBlueprint.arcs.map(arc => arc.slotsInArc)).toEqual([4, 3, 3, 2]);
     const build = (nodeIndex: number, priorArcAttempts: readonly ArcAttempt[] = []) => buildPersonalizedLessonBundle({
       ...common, nodeIndex, queueType: 'solo', selectedSubjects: ['math'], studyBlueprint, priorArcAttempts,
       usedQuestionIds: priorArcAttempts.map(a => a.questionId),
@@ -238,10 +274,10 @@ describe('adaptive match study arcs', () => {
     expect(locateMatchStudySlot(studyBlueprint, 7)).toMatchObject({ arcIndex: 2, slotInArc: 0, slotsInArc: 3 });
   });
 
-  it('supports a shared three-plus-five-slot timeline and gives the longer arc a dedicated diagnostic', () => {
+  it('supports a mixed twelve-slot timeline and gives the five-slot arc a dedicated diagnostic', () => {
     const p = math();
-    const common = { packs: [p], mode: 'standard', subject: 'math', now: NOW } as const;
-    const studyBlueprint = buildMatchStudyBlueprint({ ...common, arcSlots: [3, 5] });
+    const common = { packs: [p], mode: 'deep', subject: 'math', now: NOW } as const;
+    const studyBlueprint = buildMatchStudyBlueprint({ ...common, arcSlots: [3, 5, 2, 2] });
     expect(MatchStudyBlueprintSchema.parse(studyBlueprint)).toEqual(studyBlueprint);
     expect(() => buildMatchStudyBlueprint({ ...common, arcSlots: [3, 3] })).toThrow('timeline');
     const build = (nodeIndex: number, priorArcAttempts: readonly ArcAttempt[] = []) => buildPersonalizedLessonBundle({
@@ -256,11 +292,11 @@ describe('adaptive match study arcs', () => {
     const challenge = build(6, [{ questionId: q.questionId, familyId: q.familyId, slotInArc: 2, isCorrect: true }]);
     expect(challenge.arcMeta).toMatchObject({ stageKind: 'stretch', adaptiveBranch: 'stretch_promoted' });
     expect(challenge.verificationWeightPercent).toBe(30);
-    expect(settleLearningNodeGold({ mode: 'standard', nodeIndex: 6, questions: challenge.questions, studyBlueprint,
+    expect(settleLearningNodeGold({ mode: 'deep', nodeIndex: 6, questions: challenge.questions, studyBlueprint,
       submissions: Object.fromEntries(challenge.questions.map(q => [q.questionId, 'A'])),
-    }).rawEarnedCents).toBe(750);
-    expect(Array.from({ length: 8 }, (_, index) => learningNodePolicy('standard', index, studyBlueprint).centBudget))
-      .toEqual([...MODE_BUDGETS.modes.standard.learning_gold_cap_by_block_cents]);
+    }).rawEarnedCents).toBe(650);
+    expect(Array.from({ length: 12 }, (_, index) => learningNodePolicy('deep', index, studyBlueprint).centBudget))
+      .toEqual([...MODE_BUDGETS.modes.deep.learning_gold_cap_by_block_cents]);
     expect(activeKinds(build(7))).toEqual(['verification']);
   });
 

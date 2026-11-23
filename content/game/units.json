@@ -942,22 +942,22 @@
         "3": 3.24
       },
       "recommendedItems": [
-        "I_FALLOUT_BRAND",
-        "I_IONOSPHERE_RING",
-        "I_POLAR_SHIELD_ARMOR"
+        "I_ARMOR_PIERCER",
+        "I_LORENTZ_RAIL",
+        "I_LIFE_AXE"
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
         "silhouetteDesc": "上千枚银灰六角纳米机械虫聚合成的变形几何阵列"
       },
-      "skillSummary": "纳米虫群涌向最密集敌群最多3人，造成0.85P魔法伤害并降低20%攻速2秒。",
+      "skillSummary": "纳米虫群撕裂最密集敌群最多3人，造成0.85P物理伤害并降低20%攻速2.5秒。",
       "skillSpec": {
-        "kind": "cluster_magic_slow",
-        "damageType": "magic",
+        "kind": "cluster_physical_slow",
+        "damageType": "physical",
         "powerRatio": 0.85,
         "maxTargets": 3,
         "asSlowPct": 20,
-        "durationSec": 2
+        "durationSec": 2.5
       }
     },
     {
@@ -1208,23 +1208,23 @@
         "3": 3.24
       },
       "recommendedItems": [
-        "I_POLAR_SHIELD_ARMOR",
-        "I_FALLOUT_BRAND",
-        "I_SUPERCOMP_ARRAY"
+        "I_HULL_BREAKER",
+        "I_KEEL_FIELD",
+        "I_LIFE_AXE"
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
         "silhouetteDesc": "三叉戟行星破拆母舰，舰首悬三道引力破碎束"
       },
-      "skillSummary": "引力重锤轰击前中排最多3敌，造成0.85P魔法伤害、眩晕1.0秒并击碎30%双抗4秒。",
+      "skillSummary": "引力重锤砸击前中排最多3敌，造成0.85P物理伤害、眩晕1.0秒并击碎30%护甲4秒。",
       "skillSpec": {
         "kind": "aoe_stun_sunder",
-        "damageType": "magic",
+        "damageType": "physical",
         "powerRatio": 0.85,
         "maxTargets": 3,
         "stunSec": 1.0,
-        "dualShredPct": 30,
-        "durationSec": 4
+        "durationSec": 4,
+        "armorShredPct": 30
       }
     },
     {
@@ -1526,7 +1526,7 @@
         "archetype": "humanoid_rig",
         "silhouetteDesc": "立于纯机械手摇火控舰桥、免疫木马的独眼老统帅"
       },
-      "skillSummary": "全队前排获0.80P防辐射装甲盾4秒，并对目标区降下1.05P重炮压制。",
+      "skillSummary": "全队前排获0.80P防辐射装甲盾4秒，并对目标区降下1.05P物理重炮压制。",
       "skillSpec": {
         "kind": "frontline_shield_barrage",
         "damageType": "physical",

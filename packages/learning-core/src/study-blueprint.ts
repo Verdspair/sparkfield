@@ -145,14 +145,14 @@ function planModularArcs(nodes: ReturnType<typeof modularNodes>, arcSlots: reado
   const rank = (entry: typeof nodes[number]) => entry.priority + (seed ? seededUnit(seed, entry.node.nodeId) : 0);
   const ranked = [...nodes].sort((a, b) => rank(b) - rank(a) || a.index - b.index);
   const byFocus = [...ranked].sort((a, b) => b.focus - a.focus);
-  const first = focused ? byFocus[0] : nodes.find(entry => entry.node.nodeId === startId);
-  const last = focused ? (byFocus[1] ?? byFocus[0]) : undefined;
+  const first = nodes.find(entry => entry.node.nodeId === startId);
+  const extended = focused ? byFocus.slice(0, 2) : [];
   const used = new Set<typeof nodes[number]>();
   const covered = new Set<(typeof nodes[number])['skill']>();
   return arcSlots.map((_, index) => {
-    const distinct = ranked.filter(entry => !used.has(entry) && entry !== last);
-    const pool = distinct.length ? distinct : ranked.filter(entry => entry !== last);
-    const next = (index === 0 ? first : index === arcSlots.length - 1 ? last : undefined)
+    const distinct = ranked.filter(entry => !used.has(entry));
+    const pool = distinct.length ? distinct : ranked;
+    const next = extended[index] ?? (index === 0 ? first : undefined)
       ?? skillSignals.filter(skill => !covered.has(skill)).map(skill => pool.find(entry => entry.skill === skill)).find(Boolean)
       ?? pool[0] ?? ranked[0]!;
     used.add(next);

@@ -54,15 +54,31 @@ describe('@pkg/contracts & canonical content invariants', () => {
     expect(SEASON1_UNITS.every((u) => u.nameLength === u.name.length && u.nameLength >= 1 && u.nameLength <= 4)).toBe(true);
   });
 
-  it('verifies closed 900s / 1800s / 3600s mode timelines, 50s prep windows, and Lv3-Lv10 shop odds = 100%', () => {
-    const expectedTotals = { quick: 900, standard: 1800, deep: 3600 } as const;
-    for (const [modeKey, totalSec] of Object.entries(expectedTotals)) {
-      const m = MODE_BUDGETS.modes[modeKey as keyof typeof expectedTotals];
+  it('classifies fourteen units as pure physical skill damage and lists matching recommendations', () => {
+    expect(SEASON1_UNITS.filter(unit => unit.skillSpec.damageType === 'physical')).toHaveLength(14);
+    const recommendations = {
+      S22: ['I_ARMOR_PIERCER', 'I_LORENTZ_RAIL', 'I_LIFE_AXE'],
+      S28: ['I_HULL_BREAKER', 'I_KEEL_FIELD', 'I_LIFE_AXE'],
+      S35: ['I_MAGNETOSPHERE_GARB', 'I_POLAR_SHIELD_ARMOR', 'I_ECOSPHERE_FILM'],
+    };
+    for (const [id, recommendedItems] of Object.entries(recommendations)) {
+      const unit = SEASON1_UNITS.find(unit => unit.id === id)!;
+      expect(unit).toMatchObject({ skillSpec: { damageType: 'physical' }, recommendedItems });
+      expect(unit.skillSummary).toContain(id === 'S35' ? '1.05P物理重炮压制' : '0.85P物理伤害');
+      expect(recommendedItems.every(id => SEASON1_ITEMS.completedItems.some(item => item.id === id))).toBe(true);
+    }
+  });
+
+  it('verifies closed 900s / 1800s / 3600s mode timelines, 38s/42s/46s prep windows, and Lv3-Lv10 shop odds = 100%', () => {
+    const cases = [['quick', 900, 38], ['standard', 1800, 42], ['deep', 3600, 46]] as const;
+    for (const [mode, totalSec, prepSeconds] of cases) {
+      const m = MODE_BUDGETS.modes[mode];
       const timelineSum = m.timeline.reduce((s, seg) => s + seg.duration, 0);
       expect(timelineSum).toBe(totalSec);
       expect(m.total).toBe(totalSec);
       const prepSegments = m.timeline.filter((seg) => seg.kind === 'strategy');
-      expect(prepSegments.every((seg) => seg.duration === 50)).toBe(true);
+      expect(m.strategy).toBe(prepSeconds);
+      expect(prepSegments.map(seg => seg.duration)).toEqual(Array(m.rounds).fill(prepSeconds));
       for (const seg of m.timeline) {
         expect(['entry', 'learning', 'resource', 'choice', 'strategy', 'battle', 'settlement', 'rest', 'exit']).toContain(seg.kind);
       }
@@ -76,16 +92,18 @@ describe('@pkg/contracts & canonical content invariants', () => {
 
   it('validates adaptive arc dimensions and the active stage without requiring uniform arc lengths', () => {
     const blueprint = {
-      mode: 'deep', subject: 'math', arcCount: 3, slotsPerArc: 4, difficultyTier: 'foundational', seed: 37,
-      arcs: [4, 3, 3].map((slotsInArc, arcIndex) => ({
+      mode: 'deep', subject: 'math', arcCount: 4, slotsPerArc: 4, difficultyTier: 'foundational', seed: 37,
+      arcs: [4, 3, 3, 2].map((slotsInArc, arcIndex) => ({
         arcIndex, subject: 'math', slotsInArc, topicNodeIds: [`n${arcIndex}`], primaryNodeId: `n${arcIndex}`,
         title: '核心专题', strategy: 'structured_topic', tags: ['核心'], loadScore: 36,
-        slotStages: slotsInArc === 4 ? ['intro', 'deepen', 'remediate', 'mastery'] : ['intro', 'deepen', 'mastery'],
+        slotStages: slotsInArc === 4 ? ['intro', 'deepen', 'remediate', 'mastery']
+          : slotsInArc === 3 ? ['intro', 'deepen', 'mastery'] : ['intro', 'mastery'],
       })),
     };
     expect(MatchStudyBlueprintSchema.parse(blueprint)).toEqual(blueprint);
     expect(MatchStudyBlueprintSchema.safeParse({ ...blueprint, slotsPerArc: 3 }).success).toBe(false);
     expect(MatchStudyBlueprintSchema.safeParse({ ...blueprint, difficultyTier: 'uniform' }).success).toBe(false);
+    expect(MatchStudyBlueprintSchema.safeParse({ ...blueprint, arcCount: 3, arcs: blueprint.arcs.slice(0, 3) }).success).toBe(false);
     expect(MatchStudyBlueprintSchema.safeParse({ ...blueprint, mode: 'quick' }).success).toBe(false);
     const meta = {
       arcIndex: 1, arcCount: 3, slotInArc: 1, slotsPerArc: 3, stageKind: 'remediate', stageLabel: '错题订正',
@@ -109,6 +127,10 @@ describe('@pkg/contracts & canonical content invariants', () => {
         slotStages: ['intro', 'mastery'] })),
     };
     expect(MatchStudyBlueprintSchema.parse(blueprint)).toEqual(blueprint);
+    const standard = (arcCount: number) => ({ ...blueprint, mode: 'standard', arcCount,
+      arcs: Array.from({ length: arcCount }, (_, arcIndex) => ({ ...blueprint.arcs[0]!, arcIndex })) });
+    expect(MatchStudyBlueprintSchema.parse(standard(3))).toEqual(standard(3));
+    expect(MatchStudyBlueprintSchema.safeParse(standard(4)).success).toBe(false);
     expect(MatchStudyBlueprintSchema.safeParse({ ...blueprint, arcs: [{ ...blueprint.arcs[0], slotStages: ['intro', 'stretch'] }, blueprint.arcs[1]] }).success).toBe(false);
     const meta = {
       arcIndex: 0, arcCount: 2, slotInArc: 1, slotsPerArc: 2, stageKind: 'mastery', stageLabel: '终测',

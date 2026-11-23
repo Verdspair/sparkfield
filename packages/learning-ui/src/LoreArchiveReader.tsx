@@ -311,7 +311,7 @@ export function UnitLoreDrawer({
                     <DescriptionModeToggle size="xs" />
                   </div>
                   <div className="lui-unit-skill-desc">
-                    <GameEffectText fullText={resolvedUnitDef.skillSummary} />
+                    <GameEffectText unitId={resolvedUnitDef.id} fullText={resolvedUnitDef.skillSummary} />
                   </div>
                   <hr className="lui-metal-divider" style={{ marginTop: 12 }} />
                   <div className="lui-stat-grid">

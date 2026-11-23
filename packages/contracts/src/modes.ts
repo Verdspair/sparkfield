@@ -4,7 +4,7 @@ export const DurationModeSchema = z.enum(['quick', 'standard', 'deep']);
 export type DurationMode = z.infer<typeof DurationModeSchema>;
 
 export const MATCH_STUDY_ARC_SLOTS: Readonly<Record<DurationMode, readonly [min: number, max: number]>> = {
-  quick: [4, 4], standard: [6, 8], deep: [8, 10],
+  quick: [4, 4], standard: [6, 6], deep: [12, 12],
 };
 
 export const QueueTypeSchema = z.enum(['ranked', 'casual', 'solo']);

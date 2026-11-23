@@ -583,13 +583,14 @@ describe.each([
       expect((await requestLearning(secondInbox!, 'advance')).ok).toBe(true);
       const secondAssessment = await secondInbox!.snapshot();
       expect(secondAssessment.learning!.blueprint.subject).toBe('math');
+      expect(secondAssessment.learning!.blueprint.arcs.map((arc) => arc.slotsInArc)).toEqual([3, 3]);
       expect(secondAssessment.learning!.blueprint.arcs[0]!.primaryNodeId).toBe(secondStartNode);
       expect(secondAssessment.learning!.clientQuestions.length).toBeGreaterThan(0);
       expect(secondAssessment.learning!.clientQuestions.every((q) => q.subject === 'math')).toBe(true);
       safeQuestions(secondAssessment.learning!.clientQuestions);
     }
     const firstBlueprint = lesson.learning!.blueprint;
-    const expectedArcSlots = { quick: [2, 2], standard: [2, 2, 2, 2], deep: [2, 2, 2, 2, 2] }[mode];
+    const expectedArcSlots = { quick: [2, 2], standard: [2, 2, 2], deep: [2, 2, 2, 2, 2, 2] }[mode];
     expect(firstBlueprint).toMatchObject({ mode, subject: 'english', arcCount: expectedArcSlots.length });
     expect(firstBlueprint.arcs.map((arc) => arc.slotsInArc)).toEqual(expectedArcSlots);
     expect(firstBlueprint).toEqual(startingBlueprint);
@@ -641,9 +642,11 @@ describe.each([
       expect((await ok<{ balance: number }>('/api/rewards/balance', person.token)).balance).toBe(persistedLearning.rewardPointsGranted);
     }
     const strategy = await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'strategy' && s.round === 1);
+    const expectedPrepSeconds = { quick: 38, standard: 42, deep: 46 }[mode];
+    expect(MODE_BUDGETS.modes[mode].timeline[strategy.phaseIndex]!.duration).toBe(expectedPrepSeconds);
+    expect(strategy.remainingSeconds).toBeGreaterThanOrEqual(expectedPrepSeconds - 1);
+    expect(strategy.remainingSeconds).toBeLessThanOrEqual(expectedPrepSeconds);
     if (queueType === 'ranked') {
-      expect(MODE_BUDGETS.modes[mode].timeline[strategy.phaseIndex]!.duration).toBe(50);
-      expect(strategy.remainingSeconds).toBeGreaterThan(49); expect(strategy.remainingSeconds).toBeLessThanOrEqual(50);
       expect(await studyInbox.command({ type: 'PICK_AUGMENT', slotIndex: 0 })).toMatchObject({ ok: false, reason: 'CHOICE_WINDOW_REQUIRED' });
       expect(strategy.self).toMatchObject({ rerollVouchers: 1, voucherRound: 1 });
       expect(strategy.self.shop[0]).toBe('S07');

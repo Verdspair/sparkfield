@@ -131,7 +131,7 @@ describe('all 36 concrete skill specs',()=>{
       case 'ally_heal_cleanse_as':expect(caster.telemetry.healingAndShielding).toBeGreaterThan(0);break;
       case 'flank_strike':expect(buffed('shieldReduce')).toBe(true);break;
       case 'chain_magic':expect(foes.filter(x=>x.telemetry.damageTaken>0).length).toBeGreaterThanOrEqual(2);break;
-      case 'aoe_magic_slow':case 'cluster_magic_slow':expect(buffed('asSlow')).toBe(true);break;
+      case 'aoe_magic_slow':case 'cluster_physical_slow':expect(buffed('asSlow')).toBe(true);break;
       case 'cleave_antiheal':expect(buffed('antiHeal')).toBe(true);expect(foes.filter(x=>x.telemetry.damageTaken>0)).toHaveLength(2);break;
       case 'line_pierce':expect(caster.telemetry.physicalDealt).toBeGreaterThan(0);break;
       case 'single_strike_shield':expect(caster.shields.length).toBeGreaterThan(0);break;
@@ -149,7 +149,7 @@ describe('all 36 concrete skill specs',()=>{
       case 'shield_front_wave':expect(caster.shields.length).toBeGreaterThan(0);break;
       case 'dash_dual_torpedo':expect(caster.telemetry.physicalDealt).toBeGreaterThan(0);expect(caster.telemetry.magicDealt).toBeGreaterThan(0);break;
       case 'mega_shield_taunt_arc':expect(caster.shields.length).toBeGreaterThan(0);expect(foes.some(x=>x.targetId===caster.id)).toBe(true);break;
-      case 'aoe_stun_sunder':expect(buffed('armorShred')).toBe(true);expect(buffed('mrShred')).toBe(true);break;
+      case 'aoe_stun_sunder':expect(buffed('armorShred')).toBe(true);expect(buffed('mrShred')).toBe(false);break;
       case 'cone_barrage_reset':expect(caster.telemetry.physicalDealt).toBeGreaterThan(0);break;
       case 'dual_focus_blast':expect(foes.filter(x=>x.telemetry.damageTaken>0).length).toBeGreaterThan(1);break;
       case 'sanctuary_pure_support':expect(caster.telemetry.healingAndShielding).toBeGreaterThan(0);expect(friends.every(x=>x.shields.length>0)).toBe(true);break;
@@ -184,9 +184,34 @@ describe('skill ratios are content values, not generic flat damage',()=>{
   it.each([
     ['S03',110,0],['S06',0,240],['S08',170,0],['S10',168,0],['S13',161,0],['S14',168,0],
     ['S16',0,378],['S17',0,266],['S19',0,427.5],['S20',408.5,0],['S21',0,399],
-    ['S22',0,484.5],['S23',228,0],['S24',273.6,0],['S25',0,427.5],['S28',0,663],
+    ['S22',484.5,0],['S23',228,0],['S24',273.6,0],['S25',0,427.5],['S28',663,0],
     ['S32',858,0],['S33',0,918],['S34',522,0],['S35',1134,0],
   ] as const)('%s uses exact skillSpec coefficients',(id,physical,magic)=>{const {s,caster}=fixture(id);for(const enemy of s.units.filter(x=>x.side===1)){enemy.armor=0;enemy.mr=0;}stepCombat(s,1600);expect(caster.telemetry.physicalDealt).toBeCloseTo(physical);expect(caster.telemetry.magicDealt).toBeCloseTo(magic);});
+  it('S22 applies exactly 20% attack-speed slow for 2.5 seconds on physical hits',()=>{
+    const {s,caster}=fixture('S22');
+    stepCombat(s,300);
+    const projectiles=s.projectiles.filter(p=>p.sourceId===caster.id);
+    expect(projectiles).toHaveLength(3);
+    for(const p of projectiles){
+      expect(p.damageType).toBe('physical');
+      expect(p.effects).toMatchObject([{key:'asSlow',value:20,until:2500}]);
+    }
+  });
+  it('S28 hits front and middle ranks with physical armor shred, no MR shred or rear hit',()=>{
+    const {s,caster}=fixture('S28');
+    const foes=s.units.filter(u=>u.side===1);
+    foes[1]!.deployRow=2;
+    foes[2]!.deployRow=3;
+    stepCombat(s,300);
+    const projectiles=s.projectiles.filter(p=>p.sourceId===caster.id);
+    expect(projectiles.map(p=>p.targetId).sort()).toEqual(foes.slice(0,2).map(u=>u.id).sort());
+    for(const p of projectiles){
+      expect(p.damageType).toBe('physical');
+      expect(p.effects).toMatchObject([{key:'stun',value:1},{key:'armorShred',value:30,until:4000}]);
+    }
+    stepCombat(s,700);
+    expect(foes[2]!.telemetry.damageTaken).toBe(0);
+  });
   it('S17 single-target bonus and S23 isolated bonus are conditional',()=>{for(const [id,expected] of [['S17',166.25],['S23',285]] as const){const {s,caster}=fixture(id);const foes=s.units.filter(x=>x.side===1);foes[0]!.armor=foes[0]!.mr=0;for(const u of foes.slice(1))u.alive=false;stepCombat(s,1400);expect(caster.telemetry.physicalDealt+caster.telemetry.magicDealt).toBeCloseTo(expected);}});
   it('S31 real heal/shield coefficients are exact and damage remains zero',()=>{const {s,caster}=fixture('S31');stepCombat(s,1600);expect(caster.telemetry.healingAndShielding).toBeCloseTo(3*0.95*260+4*0.4*260);expect(caster.telemetry.magicDealt+caster.telemetry.physicalDealt).toBe(0);});
 });

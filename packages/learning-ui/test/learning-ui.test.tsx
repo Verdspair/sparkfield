@@ -34,6 +34,7 @@ import {
   writeStoredDescriptionMode,
   writeStoredReadingTheme,
 } from '../src/index.js';
+import { COMPACT_UNIT_SKILL_DESCRIPTIONS } from '../src/GameDescriptionMode.js';
 
 function makeBaseQuestion(overrides: Partial<ClientQuestionView>): ClientQuestionView {
   return {
@@ -347,9 +348,26 @@ describe('@pkg/learning-ui', () => {
       expect(COMPACT_TRAIT_DESCRIPTIONS[tr.name]).not.toMatch(/\d/);
     }
     for (const u of SEASON1_UNITS) {
+      const unitSkillCompact = COMPACT_UNIT_SKILL_DESCRIPTIONS[u.id];
+      expect(unitSkillCompact).toBeTruthy();
+      expect(unitSkillCompact!.length).toBeGreaterThanOrEqual(6);
+      expect(unitSkillCompact!.length).toBeLessThanOrEqual(14);
+      expect(unitSkillCompact!).not.toMatch(/\d/);
       const compactSkill = summarizeCompactGameText(u.skillSummary);
       expect(compactSkill.length).toBeGreaterThan(4);
       expect(compactSkill).not.toMatch(/\d/);
+    }
+    for (const v of Object.values(COMPACT_ITEM_DESCRIPTIONS)) {
+      expect(v.length).toBeLessThanOrEqual(14);
+      expect(v).not.toMatch(/\d/);
+    }
+    for (const v of Object.values(COMPACT_AUGMENT_DESCRIPTIONS)) {
+      expect(v.length).toBeLessThanOrEqual(14);
+      expect(v).not.toMatch(/\d/);
+    }
+    for (const v of Object.values(COMPACT_TRAIT_DESCRIPTIONS)) {
+      expect(v.length).toBeLessThanOrEqual(14);
+      expect(v).not.toMatch(/\d/);
     }
 
     const storageMap = new Map<string, string>();
@@ -373,7 +391,7 @@ describe('@pkg/learning-ui', () => {
           <GameEffectText itemId="I_FUSION_BLADE" fullText="额外提高 25% 攻击力（纯物理基座）。" />
           <GameEffectText augmentId="AUG_S05" fullText="前两排友军开战获得 16% 最大生命护盾5秒。" />
           <GameEffectText traitName="戴森工团" fullText="阵亡触发【质量投射回收】：最近存活工团友军获亡者最大生命 12%/18%/25%/35% 等离子盾(4秒)与12法力。" />
-          <GameEffectText fullText="架起六角等离子磁盾获1.35P护盾4秒，期间受普攻伤害降低12%。" />
+          <GameEffectText unitId="S01" fullText="架起六角等离子磁盾获1.35P护盾4秒，期间受普攻伤害降低12%。" />
         </div>
       </DescriptionModeProvider>,
     );
@@ -382,6 +400,7 @@ describe('@pkg/learning-ui', () => {
     expect(compactHtml).toContain('详细');
     expect(compactText).toContain('纯物理基座，大幅提升攻击力');
     expect(compactText).toContain('前两排友军开战获得高额护盾');
+    expect(compactText).toContain('自获护盾并减免普攻');
     expect(compactText).not.toContain('25%');
     expect(compactText).not.toContain('1.35P');
 
@@ -395,7 +414,7 @@ describe('@pkg/learning-ui', () => {
           <DescriptionModeToggle />
           <GameEffectText itemId="I_FUSION_BLADE" fullText="额外提高 25% 攻击力（纯物理基座）。" />
           <GameEffectText augmentId="AUG_S05" fullText="前两排友军开战获得 16% 最大生命护盾5秒。" />
-          <GameEffectText fullText="架起六角等离子磁盾获1.35P护盾4秒，期间受普攻伤害降低12%。" />
+          <GameEffectText unitId="S01" fullText="架起六角等离子磁盾获1.35P护盾4秒，期间受普攻伤害降低12%。" />
         </div>
       </DescriptionModeProvider>,
     );

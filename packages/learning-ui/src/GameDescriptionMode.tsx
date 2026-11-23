@@ -23,108 +23,144 @@ export const COMPACT_ITEM_DESCRIPTIONS: Readonly<Record<string, string>> = {
   C_CLOAK: '提升魔法抗性',
   C_BELT: '提升最大生命',
   C_GLOVE: '提升暴击率',
-  C_RUBBING: '合成派系纹章与远征战旗',
-  C_SPATULA: '合成派系纹章与远征战旗',
-
+  C_RUBBING: '合成纹章与远征战旗',
+  C_SPATULA: '合成纹章与远征战旗',
   I_FUSION_BLADE: '纯物理基座，大幅提升攻击力',
   I_LORENTZ_RAIL: '普攻命中持续叠加攻速',
-  I_MASS_CONVERTER: '技能伤害按比例转化为生命恢复',
-  I_FUSION_IGNITER: '普攻命中额外回复法力，物理启动装',
+  I_MASS_CONVERTER: '技能伤害按比例回血',
+  I_FUSION_IGNITER: '普攻额外回蓝，物理启动装',
   I_KEEL_FIELD: '低血触发强力护盾并加攻',
   I_HULL_BREAKER: '对高生命目标造成额外伤害',
-  I_LIFE_AXE: '普攻与物理技能吸血，低血获短暂护盾',
-  I_STRONG_CRIT_EDGE: '物理技能可暴击并提升暴伤',
+  I_LIFE_AXE: '物理吸血，低血获短暂护盾',
+  I_STRONG_CRIT_EDGE: '物理技能可暴击并提暴伤',
   I_HYPER_SWARM: '大幅提升攻速并增加射程',
-  I_PLASMA_SUBCANNON: '每第三次普攻附加额外魔法伤害',
-  I_PULSE_ACCELERATOR: '每第三次普攻额外回复法力',
-  I_ARMOR_PIERCER: '【物理破甲】普攻与物理技能降低目标护甲',
-  I_SPECTRUM_MAG: '【双系破防】普攻降低目标魔抗',
-  I_TACTICAL_EXO: '每第三次普攻恢复自身最大生命',
-  I_LASER_SIGHT: '开战获伤害增幅，前几次普攻必暴击',
-  I_STELLAR_CROWN: '纯法核基座，大幅提升技能效能',
+  I_PLASMA_SUBCANNON: '周期普攻附带额外魔法伤害',
+  I_PULSE_ACCELERATOR: '周期普攻额外回复法力',
+  I_ARMOR_PIERCER: '物理破甲：普攻与技能降护甲',
+  I_SPECTRUM_MAG: '双系破防：普攻降敌魔抗',
+  I_TACTICAL_EXO: '周期普攻按最大生命回血',
+  I_LASER_SIGHT: '开战增伤，起手普攻必暴击',
+  I_STELLAR_CROWN: '纯法核基座，大幅提技能效能',
   I_SUPERCOMP_ARRAY: '每次施法后额外回复法力',
-  I_FARADAY_COAT: '受近身普攻时对邻格敌人反震魔法伤害',
-  I_IONOSPHERE_RING: '【魔抗击碎】技能降低目标魔抗并震击施法敌军',
-  I_FALLOUT_BRAND: '【法系重伤】技能施加持续灼烧与治疗削减',
-  I_NON_EUCLID_LENS: '魔法技能可暴击并提升暴伤',
-  I_ZERO_POINT_SPRING: '降低最大法力，参与击杀后获得增伤',
-  I_POLAR_SHIELD_ARMOR: '开战及首次施法各获护盾，前排启动装',
-  I_ZERO_STASIS_FILM: '【开场免控】开战免疫硬控并持续叠攻速',
-  I_REVIVAL_PUMP: '施法后为自身与最近友军恢复生命',
-  I_QUANTUM_TRIGGER: '获初始法力，低血时技能获得全能吸血',
-  I_NEUTRON_PLATE: '高额护甲并降低所受普攻与暴击伤害',
-  I_MAGNETOSPHERE_GARB: '受越多人锁定，叠加越多双抗',
-  I_RED_GIANT_MAIL: '【前排重伤】周期灼烧邻格敌军并挂减疗',
-  I_INERTIA_GAUNTLET: '普攻减缓目标攻速，半血以下获减伤',
-  I_SLOW_FOG_CLOAK: '高额魔抗并降低所受技能魔法伤害',
-  I_ECOSPHERE_FILM: '周期恢复自身生命，持盾时提升双抗',
-  I_PHASE_TALISMAN: '【单次挡控】抵消首次硬控并立即回复法力',
-  I_ONEILL_ARMOR: '大幅提升基础与百分比最大生命',
-  I_DEADHAND_BELT: '低血时净化负面并获护盾与短暂免控',
-  I_BLINDSPOT_LENS: '提升暴击率，溢出暴击率转为暴击伤害',
-
-  E_DYSON: '佩戴者获得【戴森工团】派系羁绊',
-  E_CLOUD: '佩戴者获得【云端星环】派系羁绊',
-  E_DILATION: '佩戴者获得【钟慢远征】派系羁绊',
-  E_EUROPA: '佩戴者获得【木卫冰海】派系羁绊',
-  E_ARRAY: '佩戴者获得【深空阵列】派系羁绊',
-  E_ANTIMATTER: '佩戴者获得【反物质院】派系羁绊',
-  E_STARGATE: '佩戴者获得【星门摆渡】派系羁绊',
-  E_SWARM: '佩戴者获得【失控蜂群】派系羁绊',
-
+  I_FARADAY_COAT: '受近身普攻反震魔法伤害',
+  I_IONOSPHERE_RING: '魔抗击碎：降魔抗并震施法敌',
+  I_FALLOUT_BRAND: '法系重伤：技能灼烧并减疗',
+  I_NON_EUCLID_LENS: '魔法技能可暴击并提暴伤',
+  I_ZERO_POINT_SPRING: '降最大法力，参与击杀增伤',
+  I_POLAR_SHIELD_ARMOR: '开战与首施各获盾，前排装',
+  I_ZERO_STASIS_FILM: '开场免控并持续叠加攻速',
+  I_REVIVAL_PUMP: '施法治疗自身与最近友军',
+  I_QUANTUM_TRIGGER: '初始法力，低血技能全能吸血',
+  I_NEUTRON_PLATE: '高额护甲并减免普攻暴伤',
+  I_MAGNETOSPHERE_GARB: '受越多敌人锁定，叠加双抗',
+  I_RED_GIANT_MAIL: '前排重伤：周期灼烧邻敌减疗',
+  I_INERTIA_GAUNTLET: '普攻降敌攻速，半血获减伤',
+  I_SLOW_FOG_CLOAK: '高额魔抗并减免技能法伤',
+  I_ECOSPHERE_FILM: '周期回血，持盾时提升双抗',
+  I_PHASE_TALISMAN: '抵消首次硬控并立即回蓝',
+  I_ONEILL_ARMOR: '大幅提升基础与百分比生命',
+  I_DEADHAND_BELT: '低血净化负面并获盾免控',
+  I_BLINDSPOT_LENS: '提暴击，溢出暴击转暴伤',
+  E_DYSON: '获得【戴森工团】羁绊',
+  E_CLOUD: '获得【云端星环】羁绊',
+  E_DILATION: '获得【钟慢远征】羁绊',
+  E_EUROPA: '获得【木卫冰海】羁绊',
+  E_ARRAY: '获得【深空阵列】羁绊',
+  E_ANTIMATTER: '获得【反物质院】羁绊',
+  E_STARGATE: '获得【星门摆渡】羁绊',
+  E_SWARM: '获得【失控蜂群】羁绊',
   I_MOTHERSHIP_FLAG: '提升上场人口上限',
   TOOL_MAGNETIC_REMOVER: '无损卸下棋子全部装备',
-  TOOL_REFORGER: '将目标装备重铸为同阶其他装备',
-  ANVIL_COMPONENT_3: '从三件基础散件中自选一件',
-  ANVIL_COMPLETED_4: '从四件成装中自选一件',
+  TOOL_REFORGER: '将装备重铸为同阶其他装备',
+  ANVIL_COMPONENT_3: '从散件中自选一件',
+  ANVIL_COMPLETED_4: '从成装中自选一件',
 };
 
 export const COMPACT_AUGMENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
-  AUG_S01: '立即获得金币与免费商店刷新',
-  AUG_S02: '大幅提高休眠解冻属性加成并获二费弈子',
-  AUG_S03: '立即获得重铸器与基础散件铁砧',
-  AUG_S04: '后两排友军开战提升射程并获得增伤',
+  AUG_S01: '立即获得金币与免费刷新',
+  AUG_S02: '大幅强化休眠加成并获二费子',
+  AUG_S03: '获得重铸器与散件铁砧',
+  AUG_S04: '后两排开战增射程并获增伤',
   AUG_S05: '前两排友军开战获得高额护盾',
-  AUG_S06: '开战孤立站位的友军获得护盾与攻速',
-  AUG_S07: '全队获得双抗与初始法力加成',
-  AUG_S08: '每战首个低血友军立即恢复高额生命',
-  AUG_G01: '获得队伍经验与散件铁砧，升级送免费刷新',
-  AUG_G02: '获得整备金币，后续准备期获赠限时刷新',
-  AUG_G03: '延长云端星环开战减伤，获星环弈子与防具',
-  AUG_G04: '戴森工团回收护盾附带攻速并获工团弈子',
-  AUG_G05: '钟慢远征孤立增伤对半孤立目标生效并获弈子',
-  AUG_G06: '木卫冰海防辐射幕扩展至前排并获弈子与魔抗',
-  AUG_G07: '扩大深空阵列焦点范围并获阵列弈子与法强',
-  AUG_G08: '提前反物质院解限触发并获弈子与攻击散件',
-  AUG_G09: '前排单坦获高额双抗，阵亡赋能全队攻速',
-  AUG_G10: '立即获得成装铁砧与装备拆卸充能',
-  AUG_P01: '获得星环拓片，每战定时降下全图伽马轰击',
-  AUG_P02: '大幅提升购经验效率并立即获得金币',
-  AUG_P03: '立即获得两座成装铁砧与重铸器',
-  AUG_P04: '获得主派系纹章、契合成装与高费核心弈子',
-  AUG_P05: '开战短暂缓速全场，己方获高额护盾与回蓝',
-  AUG_P06: '友军阵亡时将部分攻击与效能平分给存活友军',
+  AUG_S06: '孤立友军开战获护盾与攻速',
+  AUG_S07: '全队获得双抗与初始法力',
+  AUG_S08: '首个低血友军立即大额回血',
+  AUG_G01: '获经验散件铁砧，升级送刷新',
+  AUG_G02: '立即获金币并逐轮送限时刷新',
+  AUG_G03: '延长星环减伤并获弈子防具',
+  AUG_G04: '工团传盾附带攻速并获弈子',
+  AUG_G05: '半孤立也触发远征增伤并获子',
+  AUG_G06: '冰海护盾扩至前排并获子魔抗',
+  AUG_G07: '扩大阵列焦点并获弈子法强',
+  AUG_G08: '反物质提前解限并获子与攻装',
+  AUG_G09: '单坦获高双抗，阵亡提全队攻速',
+  AUG_G10: '获成装铁砧与装备拆卸充能',
+  AUG_P01: '获星环拓片并定时全图轰击',
+  AUG_P02: '大幅降经验成本并立即获金币',
+  AUG_P03: '获两座成装铁砧与重铸器',
+  AUG_P04: '获主派系纹章、成装与高费子',
+  AUG_P05: '开战缓速全场，己方获盾回蓝',
+  AUG_P06: '友军阵亡平分攻击效能给队友',
 };
 
 export const COMPACT_TRAIT_DESCRIPTIONS: Readonly<Record<string, string>> = {
-  戴森工团: '阵亡将护盾与法力传递给工团友军，高阶召唤日冕聚光镜',
-  云端星环: '开战获高额减伤，单位低血触发全图过载脉冲并挂易伤',
-  钟慢远征: '对孤立目标造成更高伤害，减员时吸收尾迹回血并叠攻速',
-  木卫冰海: '后排降低暴击与范围伤害，周期为冰海单位提供护盾',
-  深空阵列: '开战投射焦点削减高血区双抗，高阶降下伽马轰击并升法力',
-  反物质院: '获得双穿，延迟解除磁约束净化控制并大幅增益至战末',
-  星门摆渡: '开战获初始法力与移速，首次施法留下减速与灼烧航迹',
-  失控蜂群: '开战抬升对位敌军法力上限，高阶免疫破防并斩杀残血',
-  重装: '全队获双抗加成，重装单位大幅提升最大生命与开战减伤',
-  矩阵: '开战获得护盾，大幅提升技能效能与护盾强度',
-  磁轨: '获得高额攻速，连续普攻同一目标附带电磁穿甲弹片',
-  光子: '全队提升技能效能，光子单位大幅增效并在施法后回蓝',
-  维生: '提升治疗护盾效能，可将备战席弈子封入低温休眠舱养成',
-  跃迁: '获得全能吸血且技能可暴击，对低血目标造成更高伤害',
-  彭罗斯能层: '开战降低敌全体伤害，首次濒死锁血并引爆全图伽马射流',
-  光锥错位: '前排激活近距重轰与吸血，后排无限射程狙杀敌最高伤主C',
-  老舰不沉: '周期为最近友军主核校准火控，攻击与技能无视部分护盾双抗',
-  事件视界: '战斗中段展开引力红移力场，削减敌军受到的治疗与护盾',
+  戴森工团: '阵亡传盾回蓝，高阶招聚光镜',
+  云端星环: '开战减伤，低血触发全图脉冲',
+  钟慢远征: '打孤立增伤，减员吸尾迹回血',
+  木卫冰海: '后排抗爆伤，周期全员获护盾',
+  深空阵列: '聚焦削减双抗，高阶伽马轰击',
+  反物质院: '双穿，延迟净化控制并大幅增益',
+  星门摆渡: '开战回蓝加速，首施留灼烧带',
+  失控蜂群: '抬敌法力上限，高阶免破斩杀',
+  重装: '全队加双抗，重装高血并减伤',
+  矩阵: '开战获护盾，大幅提效能与盾量',
+  磁轨: '高额攻速，连击附带破甲弹片',
+  光子: '提技能效能，光子施法后回蓝',
+  维生: '提治疗护盾，可低温休眠养成',
+  跃迁: '全能吸血与技能暴击，斩低血',
+  彭罗斯能层: '降敌全伤，濒死锁血引爆射流',
+  光锥错位: '前排重轰吸血，后排无限狙杀',
+  老舰不沉: '周期校准主核，无视部分护盾',
+  事件视界: '展开红移力场，削减敌军治疗',
+};
+
+export const COMPACT_UNIT_SKILL_DESCRIPTIONS: Readonly<Record<string, string>> = {
+  S01: '自获护盾并减免普攻',
+  S02: '治疗低血友军并加双抗',
+  S03: '切入侧翼物理伤害并削盾',
+  S04: '电浆弹连击双敌魔法伤害',
+  S05: '治疗双友军并提技能效能',
+  S06: '范围魔法伤害并减攻速',
+  S07: '治疗低血友军并解减速',
+  S08: '横扫双敌物理伤害并重伤',
+  S09: '直线穿透，造成物理伤害',
+  S10: '单体物理重击并自获护盾',
+  S11: '自身与相邻友军获护盾',
+  S12: '前排友军获护盾并提攻速',
+  S13: '切入物理伤害并击碎护盾',
+  S14: '切入物理斩击并吸血回复',
+  S15: '自疗并提升自身后排双抗',
+  S16: '范围魔法灼烧并削减魔抗',
+  S17: '范围魔法轰击，单敌增伤',
+  S18: '标记敌易伤并助友军回蓝',
+  S19: '电浆束连跳三敌魔法伤害',
+  S20: '单体物理重创并溅射邻敌',
+  S21: '光子脉冲弹射三敌法伤',
+  S22: '虫群范围物理伤害并减速',
+  S23: '浮游炮物理齐射，孤立增伤',
+  S24: '多波物理连射并叠攻速',
+  S25: '自获护盾并震击前方敌军',
+  S26: '安全滑步并连射双鱼雷',
+  S27: '获巨盾嘲讽邻敌并震击',
+  S28: '重锤物理眩晕并击碎护甲',
+  S29: '锥形物理连射，击杀回蓝',
+  S30: '双区范围魔法伤害轰击',
+  S31: '群疗三友，全队获盾提速',
+  S32: '连续折线贯穿物理并获盾',
+  S33: '延迟全图法伤并挂易伤',
+  S34: '前排物理重击，后排狙杀',
+  S35: '前排获盾并降下物理重炮',
+  S36: '范围法伤，持续百分比灼烧',
 };
 
 const TRAIT_ID_TO_NAME: Readonly<Record<string, string>> = {
@@ -287,6 +323,7 @@ export function summarizeCompactGameText(fullText: string): string {
 }
 
 export interface ResolveGameEffectTextInput {
+  readonly unitId?: string;
   readonly itemId?: string;
   readonly augmentId?: string;
   readonly traitName?: string;
@@ -296,6 +333,7 @@ export interface ResolveGameEffectTextInput {
 }
 
 export function resolveGameEffectText({
+  unitId,
   itemId,
   augmentId,
   traitName,
@@ -308,6 +346,10 @@ export function resolveGameEffectText({
   }
   if (shortText) {
     return shortText;
+  }
+  if (unitId) {
+    const unitCompact = COMPACT_UNIT_SKILL_DESCRIPTIONS[unitId];
+    if (unitCompact) return unitCompact;
   }
   if (itemId) {
     const normalizedItemId = itemId === 'C_SPATULA' ? 'C_RUBBING' : itemId;
@@ -464,6 +506,7 @@ export function DescriptionModeToggle({
 }
 
 export interface GameEffectTextProps {
+  readonly unitId?: string;
   readonly itemId?: string;
   readonly augmentId?: string;
   readonly traitName?: string;
@@ -473,6 +516,7 @@ export interface GameEffectTextProps {
 }
 
 export function GameEffectText({
+  unitId,
   itemId,
   augmentId,
   traitName,
@@ -484,6 +528,7 @@ export function GameEffectText({
   const resolved = useMemo(
     () =>
       resolveGameEffectText({
+        unitId,
         itemId,
         augmentId,
         traitName,
@@ -491,7 +536,7 @@ export function GameEffectText({
         shortText,
         mode,
       }),
-    [augmentId, fullText, itemId, mode, shortText, traitName],
+    [augmentId, fullText, itemId, mode, shortText, traitName, unitId],
   );
 
   return <RichGameText text={resolved} className={className} />;

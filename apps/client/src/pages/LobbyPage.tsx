@@ -33,14 +33,14 @@ const MODE_CARDS: readonly ModeCardMeta[] = [
     mode: 'standard',
     title: '标准',
     minutes: 30,
-    arcSummary: '2 专题 / 4 小轮次',
+    arcSummary: '约 30 分钟 · 2 专题 / 3 小轮次',
     recommended: true,
   },
   {
     mode: 'deep',
     title: '深度',
     minutes: 60,
-    arcSummary: '3 专题 / 5 小轮次',
+    arcSummary: '约 60 分钟 · 3 专题 / 6 小轮次',
   },
 ];
 

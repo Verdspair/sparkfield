@@ -310,11 +310,11 @@ describe('@app/client core invariants & controllers', () => {
     );
 
     const engDeep = buildClientStudyBlueprint({ mode: 'deep', subject: 'english', seed: 0 });
-    expect(engDeep).toMatchObject({ arcCount: 5, slotsPerArc: 2 });
-    expect(engDeep.arcs.map(arc => arc.slotsInArc)).toEqual([2, 2, 2, 2, 2]);
+    expect(engDeep).toMatchObject({ arcCount: 6, slotsPerArc: 2 });
+    expect(engDeep.arcs.map(arc => arc.slotsInArc)).toEqual([2, 2, 2, 2, 2, 2]);
     expect(engDeep.arcs.every(arc => arc.topicNodeIds.length === 1)).toBe(true);
     const totalSlots = engDeep.arcs.reduce((sum, arc) => sum + arc.slotsInArc, 0);
-    expect(totalSlots).toBe(10);
+    expect(totalSlots).toBe(12);
 
     const unlockedHtml = renderToStaticMarkup(
       <MatchStudyBlueprintCard
@@ -328,7 +328,9 @@ describe('@app/client core invariants & controllers', () => {
     expect(unlockedHtml).toContain('标准进阶档');
 
     const mathStd = buildClientStudyBlueprint({ mode: 'standard', subject: 'math', seed: 0 });
-    expect(mathStd.arcs.map(arc => arc.slotsInArc)).toEqual([4, 4]);
+    expect(mathStd.arcs.map(arc => arc.slotsInArc)).toEqual([3, 3]);
+    const engStd = buildClientStudyBlueprint({ mode: 'standard', subject: 'english', seed: 0 });
+    expect(engStd.arcs.map(arc => arc.slotsInArc)).toEqual([2, 2, 2]);
     const lockedHtml = renderToStaticMarkup(
       <MatchStudyBlueprintCard blueprint={mathStd} locked emphasizing compact />,
     );

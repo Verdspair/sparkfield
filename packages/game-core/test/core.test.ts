@@ -103,7 +103,7 @@ describe('atomic purchases and board operations',()=>{
     const target=s.units[1]!;expect(moveUnit(g,s,b.instanceId,target.location).ok).toBe(true);expect(target.location).toEqual({zone:'board',row:0,col:0});
     expect(moveUnit(g,s,original.instanceId,{zone:'board',row:3,col:6}).ok).toBe(false);assertGameIntegrity(g);
   });
-  it('at the 50s deadline clears unsubmitted state and deploys bench left-to-right except cryo',()=>{
+  it('at the strategy deadline clears unsubmitted state and deploys bench left-to-right except cryo',()=>{
     const g=createGame('quick');const s=g.seats[0]!;clearSeat(g,s);
     const ranged=add(g,s,'S02',{zone:'bench',slot:0});const melee=add(g,s,'S01',{zone:'bench',slot:1});const frozen=add(g,s,'S03',{zone:'bench',slot:8});frozen.frozenUntilRound=2;
     s.pendingCommands=[{dragging:melee.instanceId}];finalizePrepDeadline(g);
@@ -153,8 +153,8 @@ describe('integer economy and public schedule',()=>{
   });
   const modeCases = [
     { mode: 'quick', total: 900, rounds: 6, pvp: 6, startingGold: 16, baseIncome: 35, learningGold: 4200, earnedShare: 55, arcCaps: [[700, 950, 1050, 1500]] },
-    { mode: 'standard', total: 1800, rounds: 8, pvp: 7, startingGold: 14, baseIncome: 42, learningGold: 5800, earnedShare: 58, arcCaps: [[450, 700, 750, 1000], [450, 700, 750, 1000]] },
-    { mode: 'deep', total: 3600, rounds: 12, pvp: 10, startingGold: 12, baseIncome: 55, learningGold: 7800, earnedShare: 59, arcCaps: [[400, 650, 700, 950], [500, 850, 1200], [500, 850, 1200]] },
+    { mode: 'standard', total: 1800, rounds: 8, pvp: 7, startingGold: 14, baseIncome: 42, learningGold: 5400, earnedShare: 56, arcCaps: [[600, 900, 1200], [600, 900, 1200]] },
+    { mode: 'deep', total: 3600, rounds: 12, pvp: 10, startingGold: 12, baseIncome: 55, learningGold: 7800, earnedShare: 59, arcCaps: [[450, 600, 650, 900], [450, 600, 650, 900], [450, 600, 650, 900]] },
   ] as const;
   it.each(modeCases)('$mode schedules complete arcs and legal battle windows', ({ mode, total, arcCaps, rounds, pvp }) => {
     const budget = MODE_BUDGETS.modes[mode];
@@ -175,7 +175,7 @@ describe('integer economy and public schedule',()=>{
     expect(budget.groups.flat()).toEqual(Array.from({ length: rounds }, (_, i) => i + 1));
     expect(budget.timeline.filter(segment => segment.kind === 'learning').map(segment => segment.duration)).toEqual(budget.learning);
     expect(budget.timeline.filter(segment => segment.kind === 'resource')).toHaveLength(slots);
-    expect(budget.timeline.filter(segment => segment.kind === 'strategy').map(segment => segment.duration)).toEqual(Array(rounds).fill(50));
+    expect(budget.timeline.filter(segment => segment.kind === 'strategy').map(segment => segment.duration)).toEqual(Array(rounds).fill(budget.strategy));
     expect(budget.timeline.filter(segment => segment.kind === 'battle' && segment.label.endsWith('PVP'))).toHaveLength(pvp);
     expect(budget.timeline.filter(segment => segment.kind === 'battle' && segment.label.endsWith('PVE'))).toHaveLength(rounds - pvp);
     for (const event of budget.events_detail) {
@@ -198,6 +198,18 @@ describe('integer economy and public schedule',()=>{
     expect(budget.total).toBe(total);
     expect(budget.computed).toBe(total);
     expect(budget.budget_gap).toBe(0);
+  });
+  it('pairs every deep learning slot with one battle and preserves breaks after PvE', () => {
+    const deep = MODE_BUDGETS.modes.deep;
+    expect(deep.groups).toEqual(Array.from({ length: 12 }, (_, i) => [i + 1]));
+    expect(deep.learning.every(seconds => seconds >= 120 && seconds <= 195)).toBe(true);
+    expect(deep.rest_after_blocks).toEqual([4, 8]);
+    expect(deep.timeline[0]).toMatchObject({ kind: 'entry', duration: 30 });
+    expect(deep.timeline.at(-1)).toMatchObject({ kind: 'exit', duration: 30 });
+    for (const round of deep.pve_rounds) {
+      const loot = deep.timeline.findIndex(segment => segment.label.startsWith(`R${round} PVE补给选择`));
+      expect(deep.timeline[loot + 1]).toMatchObject({ kind: 'rest', duration: 30 });
+    }
   });
   it.each(modeCases)('$mode reaches exact earned gold share, XP, voucher and component budgets', ({ mode, startingGold, baseIncome, learningGold, earnedShare, arcCaps }) => {
     const game = createGame(mode, 2);
