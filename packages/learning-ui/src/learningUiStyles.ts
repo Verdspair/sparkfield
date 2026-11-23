@@ -359,7 +359,7 @@ export const LEARNING_UI_CSS = `
   align-items: center;
   gap: 7px;
   padding: 3px 11px 3px 6px;
-  border-radius: 999px;
+  border-radius: 5px;
   background: linear-gradient(180deg, rgba(16, 28, 52, 0.95) 0%, rgba(10, 18, 36, 0.98) 100%);
   color: #f8fafc;
   border: 1px solid rgba(79, 209, 255, 0.45);
@@ -488,7 +488,7 @@ export const LEARNING_UI_CSS = `
   align-items: center;
   gap: 4px;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: 5px;
   font-size: 11.5px;
   font-weight: 600;
   color: var(--lui-subtle-pill-ink, #bae6fd);
@@ -639,7 +639,7 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-ref-btn--highlight {
-  border-radius: 999px;
+  border-radius: 5px;
   padding: 4px 13px;
   border-color: var(--lui-gold-base, #f2c97d);
   background: linear-gradient(135deg, rgba(242, 201, 125, 0.2) 0%, rgba(168, 121, 50, 0.14) 100%);
@@ -1184,7 +1184,7 @@ export const LEARNING_UI_CSS = `
   display: inline-flex;
   align-items: center;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: 5px;
   font-size: 11px;
   font-weight: 700;
   background: linear-gradient(135deg, #f2c97d, #c6923f);
@@ -1742,7 +1742,7 @@ export const LEARNING_UI_CSS = `
 .lui-owned-tag {
   font-size: 10.5px;
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: 5px;
   background: rgba(52, 211, 153, 0.22);
   border: 1px solid rgba(52, 211, 153, 0.42);
   color: #6ee7b7;
@@ -2012,7 +2012,7 @@ export const LEARNING_UI_CSS = `
   display: inline-flex;
   align-items: center;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: 5px;
   background: linear-gradient(135deg, rgba(242, 201, 125, 0.24), rgba(168, 121, 50, 0.16));
   border: 1px solid rgba(242, 201, 125, 0.54);
   color: #fff0c4;
@@ -2038,7 +2038,7 @@ export const LEARNING_UI_CSS = `
 }
 .lui-arc-tag {
   padding: 1px 7px;
-  border-radius: 999px;
+  border-radius: 5px;
   background: rgba(79, 209, 255, 0.12);
   border: 1px solid rgba(79, 209, 255, 0.3);
   color: #a5f3fc;
@@ -2058,7 +2058,7 @@ export const LEARNING_UI_CSS = `
   align-items: center;
   gap: 5px;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: 5px;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -2092,7 +2092,7 @@ export const LEARNING_UI_CSS = `
   width: 14px;
   height: 1.5px;
   margin: 0 4px;
-  border-radius: 999px;
+  border-radius: 5px;
   background: rgba(141, 162, 192, 0.28);
 }
 .lui-arc-connector--done {
@@ -2103,7 +2103,7 @@ export const LEARNING_UI_CSS = `
   align-items: center;
   gap: 4px;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: 5px;
   font-size: 11px;
   font-weight: 600;
   border: 1px solid transparent;

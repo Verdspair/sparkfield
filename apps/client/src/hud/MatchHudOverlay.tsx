@@ -899,7 +899,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                 data-testid="battle-overtime-badge"
                 style={{
                   padding: '1px 7px',
-                  borderRadius: '999px',
+                  borderRadius: '5px',
                   fontSize: '10.5px',
                   fontWeight: 800,
                   letterSpacing: '0.04em',
@@ -917,7 +917,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                 data-testid="battle-finished-badge"
                 style={{
                   padding: '1px 7px',
-                  borderRadius: '999px',
+                  borderRadius: '5px',
                   fontSize: '10.5px',
                   fontWeight: 800,
                   letterSpacing: '0.04em',

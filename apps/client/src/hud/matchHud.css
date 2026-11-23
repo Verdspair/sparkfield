@@ -190,7 +190,7 @@
   font-size: 10px;
   line-height: 1;
   padding: 2px 4px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   background: rgba(9, 14, 28, 0.86);
   color: var(--accent-gold-bright);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
@@ -326,7 +326,7 @@
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   border: 1px solid rgba(254, 240, 138, 0.75);
   background: linear-gradient(180deg, rgba(223, 195, 138, 0.92), rgba(168, 121, 50, 0.95));
   color: #151109;
@@ -470,7 +470,7 @@
   justify-content: center;
   gap: 4px;
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   border: 1px solid rgba(223, 195, 138, 0.56);
   background: linear-gradient(155deg, rgba(223, 195, 138, 0.2), rgba(168, 121, 50, 0.14));
   color: var(--accent-gold-bright);
@@ -556,7 +556,7 @@
   top: 3px;
   right: 4px;
   padding: 1px 4px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   background: rgba(6, 11, 24, 0.88);
   border: 1px solid rgba(223, 195, 138, 0.52);
   color: var(--accent-gold-bright);
@@ -943,7 +943,7 @@
   display: inline-flex;
   align-items: center;
   padding: 1px 5px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   font-size: 9.5px;
   font-weight: 700;
   color: var(--accent-azure-bright);
@@ -958,7 +958,7 @@
   width: fit-content;
   max-width: 100%;
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   background: rgba(20, 34, 62, 0.88);
   border: 1px solid rgba(154, 178, 214, 0.24);
   font-size: 10.5px;
@@ -978,7 +978,7 @@
 
 .sf-craft-sheet__mini-btn {
   padding: 3px 7px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   border: 1px solid rgba(223, 195, 138, 0.45);
   background: rgba(223, 195, 138, 0.14);
   color: var(--accent-gold-bright);
@@ -1020,7 +1020,7 @@
   min-width: 18px;
   height: 16px;
   padding: 0 5px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1516,7 +1516,7 @@
   top: -6px;
   right: 4px;
   padding: 1px 5px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   background: linear-gradient(135deg, #a7f3d0, var(--semantic-success));
   color: #052e22;
   font-size: 9px;
@@ -1618,7 +1618,7 @@
 
 .blc-match-hud .blc-ally-quick-strip .blc-unit-pill {
   padding: 2.5px 8px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   border: 1px solid rgba(154, 178, 214, 0.22);
   background: rgba(11, 19, 36, 0.72);
   color: rgba(226, 232, 240, 0.86);
@@ -1741,7 +1741,7 @@
   gap: 5px;
   height: 26px;
   padding: 0 8px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   background: rgba(9, 14, 28, 0.78);
   border: 1px solid rgba(223, 195, 138, 0.42);
   white-space: nowrap;
@@ -1860,7 +1860,7 @@
 
 .sf-shop-act-btn__cost {
   padding: 1.5px 6px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   background: rgba(8, 13, 25, 0.56);
   border: 1px solid rgba(223, 195, 138, 0.34);
   font-size: 11.5px;
@@ -1958,7 +1958,7 @@
   align-items: center;
   gap: 3px;
   padding: 1.5px 6px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   background: rgba(9, 14, 28, 0.78);
   border: 1px solid rgba(154, 178, 214, 0.28);
   color: #e2e8f0;
@@ -2051,7 +2051,7 @@
   right: 5px;
   z-index: 4;
   padding: 2px 6px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   background: linear-gradient(135deg, #efe0be, #dfc38a);
   color: #161108;
   font-size: 10px;
@@ -2067,7 +2067,7 @@
   right: 5px;
   z-index: 4;
   padding: 1.5px 5px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   background: rgba(15, 23, 42, 0.86);
   border: 1px solid rgba(226, 232, 240, 0.65);
   color: #f1f5f9;
@@ -2082,7 +2082,7 @@
   transform: translate(-50%, -50%);
   z-index: 4;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   background: rgba(9, 14, 28, 0.88);
   border: 1px solid rgba(251, 113, 133, 0.6);
   color: #fecdd3;
@@ -2121,7 +2121,7 @@
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   border: 1px solid var(--hairline-accent);
   background: linear-gradient(180deg, rgba(20, 32, 58, 0.92), rgba(10, 17, 34, 0.96));
   box-shadow: inset 0 1px 0 rgba(239, 224, 190, 0.22), 0 10px 28px rgba(3, 8, 20, 0.56);
@@ -2133,7 +2133,7 @@
   align-items: center;
   gap: 5px;
   padding: 5px 13px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   border: 1px solid rgba(239, 224, 190, 0.78);
   background: linear-gradient(180deg, #f2c97d 0%, #b48236 100%);
   color: #191206;
@@ -2226,7 +2226,7 @@
   align-items: center;
   gap: 7px;
   padding: 5px 14px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   border: 1px solid rgba(223, 195, 138, 0.42);
   background: rgba(11, 19, 38, 0.68);
   backdrop-filter: blur(8px);
@@ -2368,7 +2368,7 @@
 .sf-drag-equip-preview__unit-tag,
 .sf-drag-equip-preview__hint {
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   font-size: 10px;
   font-weight: 700;
   color: var(--text-primary);
@@ -2606,7 +2606,7 @@
 
 .sf-augment-tier-tag {
   padding: 2px 10px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -2685,7 +2685,7 @@
   min-width: 112px;
   height: 34px;
   padding: 0 14px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   border: 1px solid rgba(154, 178, 214, 0.42);
   background: linear-gradient(180deg, rgba(28, 44, 74, 0.92), rgba(14, 23, 42, 0.96));
   color: var(--text-primary);
@@ -2712,7 +2712,7 @@
   gap: 7px;
   height: 40px;
   padding: 0 20px;
-  border-radius: 999px;
+  border-radius: var(--sf-radius-pill, 5px);
   border: 1px solid rgba(223, 195, 138, 0.52);
   background: linear-gradient(180deg, rgba(26, 40, 68, 0.92), rgba(12, 20, 38, 0.96));
   color: var(--accent-gold-bright);

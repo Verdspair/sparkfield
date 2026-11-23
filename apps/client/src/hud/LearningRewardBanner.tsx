@@ -346,7 +346,7 @@ export function LearningRewardBanner({
           min-width: 488px;
           max-width: 668px;
           padding: 18px 26px 18px 20px;
-          border-radius: 14px;
+          border-radius: 10px;
           border: 1.5px solid rgba(223, 195, 138, 0.72);
           background: linear-gradient(165deg, rgba(21, 33, 55, 0.96) 0%, rgba(13, 21, 37, 0.98) 100%);
           box-shadow:
@@ -405,7 +405,7 @@ export function LearningRewardBanner({
         .sf-reward-emblem {
           width: 58px;
           height: 58px;
-          border-radius: 12px;
+          border-radius: 9px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -448,7 +448,7 @@ export function LearningRewardBanner({
         }
         .sf-reward-perfect {
           padding: 3px 10px;
-          border-radius: 999px;
+          border-radius: var(--sf-radius-pill, 5px);
           background: linear-gradient(135deg, #efe0be 0%, #dfc38a 100%);
           color: #161108;
           font-size: 11.5px;
@@ -460,7 +460,7 @@ export function LearningRewardBanner({
         }
         .sf-reward-excellent {
           padding: 3px 10px;
-          border-radius: 999px;
+          border-radius: var(--sf-radius-pill, 5px);
           background: linear-gradient(135deg, #bce3f5 0%, #79c4e6 55%, #dfc38a 100%);
           color: #0d1525;
           font-size: 11.5px;
@@ -482,7 +482,7 @@ export function LearningRewardBanner({
           align-items: center;
           gap: 6px;
           padding: 5px 12px;
-          border-radius: 999px;
+          border-radius: var(--sf-radius-pill, 5px);
           background: linear-gradient(135deg, rgba(223, 195, 138, 0.20) 0%, rgba(157, 126, 69, 0.16) 100%);
           border: 1px solid rgba(223, 195, 138, 0.62);
           color: #efe0be;
@@ -501,7 +501,7 @@ export function LearningRewardBanner({
           align-items: center;
           gap: 6px;
           padding: 5px 11px;
-          border-radius: 999px;
+          border-radius: var(--sf-radius-pill, 5px);
           background: rgba(121, 196, 230, 0.12);
           border: 1px solid rgba(121, 196, 230, 0.44);
           color: #bce3f5;
