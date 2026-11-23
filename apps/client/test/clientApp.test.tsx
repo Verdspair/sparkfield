@@ -304,13 +304,15 @@ describe('@app/client core invariants & controllers', () => {
     expect(rankHtml).not.toContain('正确率');
   });
 
-  it('renders MatchStudyBlueprintCard with accurate slot sum, English pack tags, reroll button, and lock emphasis', async () => {
+  it('renders MatchStudyBlueprintCard with English micro rounds, reroll button, and lock emphasis', async () => {
     const { MatchStudyBlueprintCard, buildClientStudyBlueprint } = await import(
       '../src/components/MatchStudyBlueprintCard.js'
     );
 
     const engDeep = buildClientStudyBlueprint({ mode: 'deep', subject: 'english', seed: 0 });
-    expect(engDeep.arcCount).toBe(3);
+    expect(engDeep).toMatchObject({ arcCount: 5, slotsPerArc: 2 });
+    expect(engDeep.arcs.map(arc => arc.slotsInArc)).toEqual([2, 2, 2, 2, 2]);
+    expect(engDeep.arcs.every(arc => arc.topicNodeIds.length === 1)).toBe(true);
     const totalSlots = engDeep.arcs.reduce((sum, arc) => sum + arc.slotsInArc, 0);
     expect(totalSlots).toBe(10);
 
@@ -322,23 +324,15 @@ describe('@app/client core invariants & controllers', () => {
       />,
     );
     expect(unlockedHtml).toContain('data-testid="prep-study-blueprint-card"');
-    expect(unlockedHtml).toContain('3 个学习大轮次');
-    expect(unlockedHtml).toContain('共 10 轮递进学习');
-    expect(unlockedHtml).toContain('拿分智能拼包 · 4 轮');
-    expect(unlockedHtml).toContain('拿分智能拼包 · 3 轮');
     expect(unlockedHtml).toContain('data-testid="prep-reroll-blueprint-btn"');
-    expect(unlockedHtml).toContain('换一组拼包');
     expect(unlockedHtml).toContain('标准进阶档');
-    expect(unlockedHtml).toContain('诊断/动态分支');
 
     const mathStd = buildClientStudyBlueprint({ mode: 'standard', subject: 'math', seed: 0 });
+    expect(mathStd.arcs.map(arc => arc.slotsInArc)).toEqual([4, 4]);
     const lockedHtml = renderToStaticMarkup(
       <MatchStudyBlueprintCard blueprint={mathStd} locked emphasizing compact />,
     );
     expect(lockedHtml).toContain('data-testid="accept-study-blueprint-card"');
-    expect(lockedHtml).toContain('本局学习蓝图已锁定 · 匹配平衡就绪');
-    expect(lockedHtml).toContain('完整专题 · 4 轮');
-    expect(lockedHtml).toContain('共 8 轮递进学习');
     expect(lockedHtml).not.toContain('prep-reroll-blueprint-btn');
   });
 });

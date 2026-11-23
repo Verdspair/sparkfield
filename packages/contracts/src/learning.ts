@@ -11,7 +11,7 @@ export const StudyArcStrategySchema = z.enum(['structured_topic', 'modular_pack'
 export const StudyDifficultyTierSchema = z.enum(['foundational', 'standard', 'advanced']);
 export type StudyDifficultyTier = z.infer<typeof StudyDifficultyTierSchema>;
 
-export const StudyArcSlotsSchema = z.union([z.literal(3), z.literal(4), z.literal(5)]);
+export const StudyArcSlotsSchema = z.union([z.literal(2), z.literal(3), z.literal(4), z.literal(5)]);
 export type StudyArcSlots = z.infer<typeof StudyArcSlotsSchema>;
 
 export const MatchStudyArcPlanSchema = z.object({
@@ -24,7 +24,7 @@ export const MatchStudyArcPlanSchema = z.object({
   tags: z.array(z.string().min(1)),
   loadScore: z.number().nonnegative(),
   slotsInArc: StudyArcSlotsSchema,
-  slotStages: z.array(ArcStageKindSchema).min(3).max(5),
+  slotStages: z.array(ArcStageKindSchema).min(2).max(5),
 }).refine(arc => arc.topicNodeIds.includes(arc.primaryNodeId), { path: ['primaryNodeId'] })
   .refine(arc => arc.slotStages.length === arc.slotsInArc && arc.slotStages[0] === 'intro'
     && arc.slotStages.at(-1) === 'mastery', { path: ['slotStages'] });
@@ -63,7 +63,7 @@ export const LearningArcMetaSchema = z.object({
     kind: ArcStageKindSchema,
     label: z.string().min(1),
     status: z.enum(['done', 'active', 'upcoming']),
-  })).min(3).max(5),
+  })).min(2).max(5),
 }).refine(meta => meta.arcIndex < meta.arcCount && meta.slotInArc < meta.slotsPerArc
   && meta.stageOutline.length === meta.slotsPerArc
   && meta.stageOutline.every((stage, index) => stage.slot === index

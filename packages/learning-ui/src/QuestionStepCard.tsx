@@ -235,6 +235,48 @@ function CornerOrnamentSvg({ pos }: { readonly pos: 'tl' | 'tr' | 'bl' | 'br' })
   );
 }
 
+function shouldDefaultExpandMaterial(
+  question: ClientQuestionView | QuestionItem | null,
+  arcMeta: LearningArcMeta | null,
+  effectiveStepKind: LessonStepKind,
+): boolean {
+  if (!question) return false;
+  const canReview =
+    question.allowMaterialReview === true && question.assessmentKind !== 'retrieval';
+  const hasContent = question.materialMd.trim().length > 0;
+  if (!canReview || !hasContent) return false;
+  return (
+    arcMeta?.stageKind === 'intro' ||
+    arcMeta?.stageKind === 'remediate' ||
+    effectiveStepKind === 'practice'
+  );
+}
+
+function resolveScaffoldTitle(stageKind?: ArcStageKind): string {
+  if (stageKind === 'intro') return '本节核心知识点 · 对照熟悉';
+  if (stageKind === 'remediate') return '靶向知识点 · 错题复盘';
+  return '知识点精讲';
+}
+
+function ScaffoldBookSvg(): React.JSX.Element {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M2.5 3.4C2.5 2.9 2.9 2.5 3.4 2.5H6.4C7.3 2.5 8 3.2 8 4.1V13.2C8 12.6 7.4 12.2 6.8 12.2H3.4C2.9 12.2 2.5 11.8 2.5 11.3V3.4Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13.5 3.4C13.5 2.9 13.1 2.5 12.6 2.5H9.6C8.7 2.5 8 3.2 8 4.1V13.2C8 12.6 8.6 12.2 9.2 12.2H12.6C13.1 12.2 13.5 11.8 13.5 11.3V3.4Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function ThemeToggleIcon({ theme }: { readonly theme: LearningReadingTheme }): React.JSX.Element {
   if (theme === 'parchment') {
     return (
@@ -362,7 +404,14 @@ export function QuestionStepCard({
   const [multiStepVals, setMultiStepVals] = useState<Record<string, string>>({});
   const [hintExpanded, setHintExpanded] = useState<boolean>(false);
   const [hintUsedFlag, setHintUsedFlag] = useState<boolean>(false);
-  const [materialExpanded, setMaterialExpanded] = useState<boolean>(false);
+  const shouldAutoExpandMaterial = shouldDefaultExpandMaterial(
+    question,
+    arcMeta,
+    effectiveStepKind,
+  );
+  const [materialExpanded, setMaterialExpanded] = useState<boolean>(
+    () => shouldAutoExpandMaterial,
+  );
 
   useEffect(() => {
     setSingleChoiceVal('');
@@ -374,8 +423,8 @@ export function QuestionStepCard({
     setMultiStepVals({});
     setHintExpanded(false);
     setHintUsedFlag(false);
-    setMaterialExpanded(false);
-  }, [activeQuestionId]);
+    setMaterialExpanded(shouldAutoExpandMaterial);
+  }, [activeQuestionId, shouldAutoExpandMaterial]);
 
   const isLocked = readOnly || busy || Boolean(feedback) || isWaitingForRoomDeadline;
 
@@ -559,11 +608,16 @@ export function QuestionStepCard({
     });
   };
 
+  const isDualMaterialScaffold =
+    canReviewMaterialCard && hasMaterialContent && materialExpanded;
+  const showRightExpandMaterialBtn =
+    canReviewMaterialCard && hasMaterialContent && !materialExpanded;
+
   const showUtilityRow =
     Boolean(question) &&
     (question!.questionType === 'multi_choice' ||
       hasValidAudioRef ||
-      (canReviewMaterialCard && hasMaterialContent) ||
+      showRightExpandMaterialBtn ||
       !canReviewMaterialCard);
 
   const hasClock =
@@ -601,7 +655,7 @@ export function QuestionStepCard({
         >
           <div className="lui-arc-ribbon__left">
             <span className="lui-arc-counter">
-              大轮次 {arcMeta.arcIndex + 1}/{arcMeta.arcCount}
+              {arcMeta.slotsPerArc === 2 ? '小轮次' : '大轮次'} {arcMeta.arcIndex + 1}/{arcMeta.arcCount}
             </span>
             <span className="lui-arc-topic" title={arcMeta.topicTitle}>
               {arcMeta.topicTitle}
@@ -773,7 +827,7 @@ export function QuestionStepCard({
 
         <div key={`${effectiveStepKind}-${activeQuestionId}`} className="lui-stage-anim">
           {effectiveStepKind === 'material' && !question ? (
-            <>
+            <div className="lui-briefing-canvas">
               {lessonTitle.trim() ? (
                 <>
                   <h3 className="lui-briefing-title">
@@ -786,7 +840,7 @@ export function QuestionStepCard({
               <div className="lui-stem-card lui-stem-card--briefing">
                 <MarkdownKatexBlock content={lessonMaterialMd || '阅读本节要点后继续。'} />
               </div>
-            </>
+            </div>
           ) : null}
 
           {effectiveStepKind === 'remediation' && !question ? (
@@ -812,114 +866,127 @@ export function QuestionStepCard({
           ) : null}
 
           {question ? (
-            <>
-              {showUtilityRow ? (
-                <div className="lui-utility-row">
-                  <div className="lui-utility-left">
-                    {question.questionType === 'multi_choice' ? (
-                      <span className="lui-subtle-pill">多选</span>
-                    ) : null}
-                    {hasValidAudioRef ? (
-                      <button
-                        type="button"
-                        className="lui-ref-btn"
-                        onClick={handlePlayAudio}
-                        data-testid="lesson-audio-btn"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                          <path
-                            d="M2.5 5.3H5L8.2 2.6V11.4L5 8.7H2.5V5.3Z"
-                            stroke="currentColor"
-                            strokeWidth="1.25"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M10.2 4.8C11.1 5.8 11.1 8.2 10.2 9.2"
-                            stroke="currentColor"
-                            strokeWidth="1.25"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        <span>语音</span>
-                      </button>
-                    ) : null}
+            <div
+              className={`lui-study-workspace ${
+                isDualMaterialScaffold
+                  ? 'lui-study-workspace--dual'
+                  : 'lui-study-workspace--single'
+              }`}
+            >
+              {isDualMaterialScaffold ? (
+                <aside className="lui-material-scaffold" data-testid="material-review-drawer">
+                  <div className="lui-material-scaffold__head">
+                    <span className="lui-material-scaffold__title">
+                      <ScaffoldBookSvg />
+                      <span>{resolveScaffoldTitle(arcMeta?.stageKind)}</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="lui-scaffold-collapse-btn"
+                      aria-expanded={true}
+                      onClick={() => setMaterialExpanded(false)}
+                      data-testid="collapse-material-btn"
+                    >
+                      <span>收起</span>
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path
+                          d="M7.5 2.5L4 6L7.5 9.5"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
                   </div>
-
-                  <div className="lui-utility-right">
-                    {canReviewMaterialCard && hasMaterialContent ? (
-                      <button
-                        type="button"
-                        className="lui-ref-btn"
-                        aria-expanded={materialExpanded}
-                        onClick={() => setMaterialExpanded((prev) => !prev)}
-                      >
-                        <span>参考资料</span>
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 12 12"
-                          fill="none"
-                          aria-hidden="true"
-                          className={`lui-ref-chevron ${
-                            materialExpanded ? 'lui-ref-chevron--open' : ''
-                          }`.trim()}
-                        >
-                          <path
-                            d="M2.5 4.5L6 8L9.5 4.5"
-                            stroke="currentColor"
-                            strokeWidth="1.4"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
-                    ) : !canReviewMaterialCard ? (
-                      <span
-                        className="lui-lock-icon"
-                        data-testid="material-locked-badge"
-                        title="定义卡已收起"
-                        aria-label="定义卡已收起"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 14 14"
-                          fill="none"
-                          aria-hidden="true"
-                        >
-                          <rect
-                            x="3"
-                            y="6.2"
-                            width="8"
-                            height="5.8"
-                            rx="1.4"
-                            stroke="currentColor"
-                            strokeWidth="1.2"
-                          />
-                          <path
-                            d="M4.8 6.2V4.6a2.2 2.2 0 0 1 4.4 0v1.6"
-                            stroke="currentColor"
-                            strokeWidth="1.2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                      </span>
-                    ) : null}
+                  <div className="lui-material-scaffold__body">
+                    <MarkdownKatexBlock content={question.materialMd} />
                   </div>
-                </div>
+                </aside>
               ) : null}
 
-              {canReviewMaterialCard && hasMaterialContent ? (
-                <div className="lui-material-drawer" data-testid="material-review-drawer">
-                  {materialExpanded ? (
-                    <div className="lui-material-content">
-                      <MarkdownKatexBlock content={question.materialMd} />
+              <div className="lui-study-main">
+                {showUtilityRow ? (
+                  <div className="lui-utility-row">
+                    <div className="lui-utility-left">
+                      {question.questionType === 'multi_choice' ? (
+                        <span className="lui-subtle-pill">多选</span>
+                      ) : null}
+                      {hasValidAudioRef ? (
+                        <button
+                          type="button"
+                          className="lui-ref-btn"
+                          onClick={handlePlayAudio}
+                          data-testid="lesson-audio-btn"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                            <path
+                              d="M2.5 5.3H5L8.2 2.6V11.4L5 8.7H2.5V5.3Z"
+                              stroke="currentColor"
+                              strokeWidth="1.25"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M10.2 4.8C11.1 5.8 11.1 8.2 10.2 9.2"
+                              stroke="currentColor"
+                              strokeWidth="1.25"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <span>语音</span>
+                        </button>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
-              ) : null}
 
-              <div className="lui-stem-card" data-testid="question-stem">
+                    <div className="lui-utility-right">
+                      {showRightExpandMaterialBtn ? (
+                        <button
+                          type="button"
+                          className="lui-ref-btn lui-ref-btn--highlight"
+                          aria-expanded={false}
+                          onClick={() => setMaterialExpanded(true)}
+                          data-testid="expand-material-btn"
+                        >
+                          <ScaffoldBookSvg />
+                          <span>展开知识点</span>
+                        </button>
+                      ) : !canReviewMaterialCard ? (
+                        <span
+                          className="lui-lock-icon"
+                          data-testid="material-locked-badge"
+                          title="定义卡已收起"
+                          aria-label="定义卡已收起"
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <rect
+                              x="3"
+                              y="6.2"
+                              width="8"
+                              height="5.8"
+                              rx="1.4"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                            />
+                            <path
+                              d="M4.8 6.2V4.6a2.2 2.2 0 0 1 4.4 0v1.6"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="lui-stem-card" data-testid="question-stem">
                 <MarkdownKatexBlock content={question.stemMd} />
               </div>
 
@@ -1225,7 +1292,8 @@ export function QuestionStepCard({
                   ) : null}
                 </div>
               ) : null}
-            </>
+              </div>
+            </div>
           ) : null}
         </div>
       </div>

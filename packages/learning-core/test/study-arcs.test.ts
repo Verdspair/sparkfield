@@ -1,6 +1,6 @@
-import { LearningArcMetaSchema, MatchStudyBlueprintSchema, type CoursePack } from '@pkg/contracts';
+import { LearningArcMetaSchema, MatchStudyBlueprintSchema, MODE_BUDGETS, type CoursePack } from '@pkg/contracts';
 import { describe, expect, it } from 'vitest';
-import { activateLessonRemediation, buildMatchStudyBlueprint, buildPersonalizedLessonBundle, learningNodePolicy, locateMatchStudySlot, settleLearningNodeGold, type ArcAttempt } from '../src/index.js';
+import { activateLessonRemediation, buildMatchStudyBlueprint, buildPersonalizedLessonBundle, evaluateLearningBonusDrops, learningNodePolicy, locateMatchStudySlot, settleLearningNodeGold, type ArcAttempt } from '../src/index.js';
 import { card, NOW, pack, question } from './fixtures.js';
 
 const math = () => {
@@ -36,27 +36,118 @@ describe('adaptive match study arcs', () => {
     expect(single.arcs.map(a => a.primaryNodeId)).toEqual(['n1', 'n1', 'n1']);
   });
 
-  it('assembles deterministic, bounded, complementary English packs and uses progress, due cards, weak families and seed', () => {
-    const p = pack('english', ['phrases', 'grammar', 'cloze', 'reading', 'usage']);
-    const opts = { packs: [p], mode: 'deep', subject: 'english', now: NOW,
-      progress: [{ subject: 'english', knowledgeNode: 'grammar' }],
+  const english = () => pack('english', ['dialogue', 'grammar', 'cloze', 'usage', 'reading', 'syntax']);
+
+  it.each([
+    ['quick', [2, 2], [4]], ['standard', [2, 2, 2, 2], [4, 4]], ['deep', [2, 2, 2, 2, 2], [4, 3, 3]],
+  ] as const)('gives %s mode independent English modules and preserves math topic lengths', (mode, englishSlots, mathSlots) => {
+    const p = english();
+    const study = buildMatchStudyBlueprint({ packs: [p], mode, subject: 'english', now: NOW });
+    expect(MatchStudyBlueprintSchema.parse(study)).toEqual(study);
+    expect(study.slotsPerArc).toBe(2);
+    expect(study.arcs.map(a => a.slotsInArc)).toEqual(englishSlots);
+    expect(study.arcs.map(a => a.primaryNodeId)).toEqual(['dialogue', 'grammar', 'cloze', 'usage', 'reading'].slice(0, englishSlots.length));
+    for (const arc of study.arcs) {
+      expect(arc).toMatchObject({ title: arc.primaryNodeId, strategy: 'modular_pack', topicNodeIds: [arc.primaryNodeId], slotStages: ['intro', 'mastery'] });
+      expect(arc.tags).toHaveLength(1);
+      expect(arc.loadScore).toBeGreaterThan(0);
+    }
+    expect(buildMatchStudyBlueprint({ packs: [math()], mode, subject: 'math', now: NOW }).arcs.map(a => a.slotsInArc)).toEqual(mathSlots);
+  });
+
+  it('gives high-priority due and weak English modules longer deep-mode reviews without mixing nodes', () => {
+    const opts = { packs: [english()], mode: 'deep', subject: 'english', now: NOW,
       cards: [card({ familyId: 'english_reading_f1', subject: 'english', knowledgeNode: 'reading', stability: 0.5 })],
-      recentPerformance: [{ familyId: 'english_reading_f2', independentAccuracy: 0.25, hintRate: 0.5 }],
+      recentPerformance: [{ familyId: 'english_grammar_f2', independentAccuracy: 0.25, hintRate: 0.5 }],
     } as const;
     const study = buildMatchStudyBlueprint(opts);
     expect(buildMatchStudyBlueprint({ ...opts, seed: 0 })).toEqual(study);
-    expect(study.arcs[0]!.topicNodeIds).toEqual(expect.arrayContaining(['grammar', 'reading']));
-    expect(new Set(study.arcs.map(arc => [...arc.topicNodeIds].sort().join(','))).size).toBe(3);
-    for (const arc of study.arcs) {
-      expect(arc.strategy).toBe('modular_pack');
-      expect(arc.topicNodeIds.length).toBeGreaterThanOrEqual(2);
-      expect(arc.topicNodeIds.length).toBeLessThanOrEqual(3);
-      expect(arc.loadScore).toBeGreaterThan(0);
-      expect(arc.loadScore).toBeLessThanOrEqual(65);
-      expect(arc.tags).toHaveLength(arc.topicNodeIds.length);
+    expect(study.arcs.map(a => a.slotsInArc)).toEqual([3, 2, 2, 3]);
+    expect([study.arcs[0]!.primaryNodeId, study.arcs[3]!.primaryNodeId]).toEqual(['reading', 'grammar']);
+    expect(study.arcs[0]!.slotStages).toEqual(['intro', 'deepen', 'mastery']);
+    expect(new Set(study.arcs.map(arc => arc.primaryNodeId)).size).toBe(4);
+    expect(study.arcs.every(arc => arc.topicNodeIds.length === 1)).toBe(true);
+    const fresh = { ...opts, cards: [], recentPerformance: [] };
+    const ahead = buildMatchStudyBlueprint({ ...fresh, progress: [{ subject: 'english', knowledgeNode: 'usage' }] });
+    expect(ahead.arcs[0]!.primaryNodeId).toBe('usage');
+    const rerolls = Array.from({ length: 8 }, (_, i) => buildMatchStudyBlueprint({ ...fresh, seed: i + 1 }).arcs[1]!.primaryNodeId);
+    expect(new Set(rerolls)).toEqual(new Set(['grammar', 'syntax']));
+  });
+
+  it('gives launch scaffolds in compact intro and retests the missed family closed-book before moving to the next topic', () => {
+    const p = english();
+    const expectedMiss = p.items.find(q => q.questionId === 'english_dialogue_f2_resource_check')!;
+    expectedMiss.materialMd = '';
+    expectedMiss.assessmentKind = 'retrieval';
+    expectedMiss.allowMaterialReview = false;
+    const familyCard = p.items.find(q => q.familyId === expectedMiss.familyId && q.stepRole === 'practice')!;
+    familyCard.materialMd = 'Reference: choose a response that fits the setting.';
+    const build = arcLessons(p);
+    const intro = build(0);
+    expect(LearningArcMetaSchema.parse(intro.arcMeta)).toEqual(intro.arcMeta);
+    expect(intro.arcMeta).toMatchObject({ stageKind: 'intro', stageLabel: '熟悉与精讲', slotsPerArc: 2 });
+    expect(activeKinds(intro)).toEqual(['material', 'resource_check']);
+    expect(intro.verificationWeightPercent).toBe(0);
+    expect(intro.clientQuestions[0]).toMatchObject({ questionId: expectedMiss.questionId, assessmentKind: 'application',
+      allowMaterialReview: true, materialMd: familyCard.materialMd });
+    const mastery = build(1, intro.questions.map(q => q.questionId), [{
+      questionId: expectedMiss.questionId, familyId: expectedMiss.familyId, isCorrect: false, slotInArc: 0,
+    }]);
+    expect(LearningArcMetaSchema.parse(mastery.arcMeta)).toEqual(mastery.arcMeta);
+    expect(mastery.arcMeta).toMatchObject({ stageKind: 'mastery', stageLabel: '综合终测验收', adaptiveBranch: 'standard' });
+    expect(activeKinds(mastery)).toEqual(['verification']);
+    expect(mastery.verificationWeightPercent).toBe(100);
+    expect(mastery.clientQuestions[0]).toMatchObject({ familyId: expectedMiss.familyId, materialMd: '', allowMaterialReview: false });
+    expect(mastery.clientQuestions[0]!.questionId).not.toBe(expectedMiss.questionId);
+    expect(build(2).arcMeta).toMatchObject({ arcIndex: 1, stageKind: 'intro', topicTitle: 'grammar' });
+  });
+
+  it('keeps a nonempty intro scaffold with no authored study material and never exposes the answer explanation', () => {
+    const p = english();
+    for (const q of p.items) q.materialMd = ' ';
+    const intro = arcLessons(p)(0);
+    expect(intro.clientQuestions[0]!.materialMd.trim()).not.toEqual('');
+    expect(intro.clientQuestions[0]!.materialMd).toContain('dialogue');
+    expect(intro.clientQuestions[0]!.materialMd).not.toContain(intro.questions[0]!.explanationMd);
+  });
+
+  it.each([['quick', 42], ['standard', 58], ['deep', 78]] as const)('conserves %s match gold at %iG for both tracks', (mode, expectedGold) => {
+    const due = card({ familyId: 'english_reading_f1', subject: 'english', knowledgeNode: 'reading' });
+    for (const options of [{ subject: 'math', packs: [math()] }, { subject: 'english', packs: [english()] },
+      { subject: 'english', packs: [english()], cards: [due] }] as const) {
+      const blueprint = buildMatchStudyBlueprint({ ...options, mode, now: NOW });
+      const otherPlayer = structuredClone(blueprint);
+      otherPlayer.difficultyTier = 'advanced';
+      let carryInCents = 0;
+      let earnedGold = 0;
+      let earnedCents = 0;
+      for (let nodeIndex = 0; nodeIndex < MODE_BUDGETS.modes[mode].learning.length; nodeIndex++) {
+        const { arc, slotInArc } = locateMatchStudySlot(blueprint, nodeIndex);
+        const stage = arc.slotStages[slotInArc]!;
+        const lesson = buildPersonalizedLessonBundle({ ...options, mode, now: NOW, nodeIndex, queueType: 'solo',
+          selectedSubjects: [options.subject], studyBlueprint: blueprint });
+        const policy = learningNodePolicy(mode, nodeIndex, blueprint);
+        expect(policy).toEqual(learningNodePolicy(mode, nodeIndex, otherPlayer));
+        const gold = settleLearningNodeGold({ mode, nodeIndex, studyBlueprint: blueprint, questions: lesson.questions, carryInCents,
+          submissions: Object.fromEntries(lesson.questions.map(q => [q.questionId, 'A'])) });
+        expect(gold.rawEarnedCents).toBe(policy.centBudget);
+        expect(gold.centBudget).toBe(MODE_BUDGETS.modes[mode].learning_gold_cap_by_block_cents[nodeIndex]);
+        if (arc.slotsInArc === 2) {
+          expect(gold.verificationWeightPercent).toBe(stage === 'intro' ? 0 : 100);
+          if (stage === 'mastery') {
+            for (const [score, performanceTier] of [[gold.exactScore, 'perfect'], [{ numerator: '9', denominator: '10' }, 'excellent']] as const) {
+              expect(evaluateLearningBonusDrops(score, stage)).toEqual({ performanceTier, bonusComponents: 1, bonusRerollVouchers: 2 });
+            }
+          }
+        }
+        earnedCents += gold.rawEarnedCents;
+        earnedGold += gold.grantedIntegerGold;
+        carryInCents = gold.carryOutCents;
+      }
+      expect(earnedCents).toBe(expectedGold * 100);
+      expect(earnedGold).toBe(expectedGold);
+      expect(carryInCents).toBe(0);
     }
-    const rerolls = Array.from({ length: 8 }, (_, i) => buildMatchStudyBlueprint({ ...opts, seed: i + 1 }).arcs.map(a => a.topicNodeIds));
-    expect(rerolls.some(plan => JSON.stringify(plan) !== JSON.stringify(study.arcs.map(a => a.topicNodeIds)))).toBe(true);
   });
 
   it('keeps the same budget across personal difficulty tiers while preferring their difficulty bands', () => {
@@ -100,11 +191,12 @@ describe('adaptive match study arcs', () => {
     expect(remediate.arcMeta).toMatchObject({ stageKind: 'remediate', adaptiveBranch: 'remediation_inserted' });
     expect(remediate.steps[0]!.materials[0]).toMatchObject({ familyId: wrong.familyId, materialMd: expect.stringContaining(wrong.explanationMd) });
     expect(remediate.questions.some(q => q.familyId === wrong.familyId && q.questionId !== wrong.questionId)).toBe(true);
+    expect(remediate.clientQuestions.every(q => q.allowMaterialReview && q.materialMd.trim() && q.assessmentKind === 'application')).toBe(true);
     const correction = activateLessonRemediation(remediate, { [remediate.questions[0]!.questionId]: 'B' }, true);
     expect(correction.steps.find(s => s.kind === 'remediation')?.active).toBe(true);
     const stretch = build(2, used, evidence.map(q => ({ ...q, isCorrect: true })));
     expect(stretch.arcMeta).toMatchObject({ stageKind: 'stretch', adaptiveBranch: 'stretch_promoted' });
-    expect(stretch.questions.every(q => q.difficulty >= 3)).toBe(true);
+    expect(stretch.questions.every(q => q.difficulty >= 3 && !q.allowMaterialReview && q.materialMd === '')).toBe(true);
     expect(build(2).arcMeta).toMatchObject({ stageKind: 'remediate', stageLabel: '诊断与巩固', adaptiveBranch: 'standard' });
     expect(LearningArcMetaSchema.parse(stretch.arcMeta)).toEqual(stretch.arcMeta);
   });
@@ -159,22 +251,17 @@ describe('adaptive match study arcs', () => {
     const diagnostic = build(5);
     expect(diagnostic.arcMeta).toMatchObject({ arcIndex: 1, slotInArc: 2, slotsPerArc: 5, stageKind: 'diagnose' });
     expect(activeKinds(diagnostic)).toEqual(['resource_check']);
+    expect(diagnostic.clientQuestions.every(q => !q.allowMaterialReview && !q.materialMd && !q.hintMd)).toBe(true);
     const q = diagnostic.questions[0]!;
     const challenge = build(6, [{ questionId: q.questionId, familyId: q.familyId, slotInArc: 2, isCorrect: true }]);
     expect(challenge.arcMeta).toMatchObject({ stageKind: 'stretch', adaptiveBranch: 'stretch_promoted' });
     expect(challenge.verificationWeightPercent).toBe(30);
     expect(settleLearningNodeGold({ mode: 'standard', nodeIndex: 6, questions: challenge.questions, studyBlueprint,
       submissions: Object.fromEntries(challenge.questions.map(q => [q.questionId, 'A'])),
-    }).rawEarnedCents).toBe(667);
+    }).rawEarnedCents).toBe(750);
     expect(Array.from({ length: 8 }, (_, index) => learningNodePolicy('standard', index, studyBlueprint).centBudget))
-      .toEqual([580, 957, 1363, 290, 464, 551, 667, 928]);
+      .toEqual([...MODE_BUDGETS.modes.standard.learning_gold_cap_by_block_cents]);
     expect(activeKinds(build(7))).toEqual(['verification']);
-  });
-
-  it('defaults to complementary scoring skills without embedding an exam name', () => {
-    const p = pack('english', ['dialogue', 'grammar', 'reading', 'usage', 'cloze', 'syntax']);
-    const study = buildMatchStudyBlueprint({ packs: [p], subject: 'english', mode: 'quick', now: NOW });
-    expect(study.arcs[0]!.tags).toEqual(expect.arrayContaining(['情景交际', '语法填空', '阅读推理']));
   });
 
   it('only reuses a question from an exhausted tiny bank and never duplicates it inside one bundle', () => {

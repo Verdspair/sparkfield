@@ -329,12 +329,12 @@ export function LearningRewardBanner({
         }
         .sf-reward-aura {
           position: absolute;
-          top: -28px;
+          top: -24px;
           left: 50%;
-          width: 680px;
-          height: 170px;
+          width: 640px;
+          height: 150px;
           border-radius: 50%;
-          background: radial-gradient(ellipse at center, rgba(246, 201, 106, 0.38) 0%, rgba(56, 189, 248, 0.16) 45%, rgba(10, 17, 34, 0) 74%);
+          background: radial-gradient(ellipse at center, rgba(223, 195, 138, 0.22) 0%, rgba(121, 196, 230, 0.08) 48%, rgba(10, 17, 34, 0) 74%);
           animation: sfRewardGlowWave 2400ms ease-out forwards;
         }
         .sf-reward-card {
@@ -342,27 +342,27 @@ export function LearningRewardBanner({
           overflow: hidden;
           display: flex;
           align-items: center;
-          gap: 18px;
-          min-width: 480px;
-          max-width: 660px;
-          padding: 16px 24px 16px 18px;
-          border-radius: 20px;
-          border: 2px solid rgba(246, 204, 118, 0.9);
-          background: linear-gradient(160deg, rgba(24, 39, 72, 0.96) 0%, rgba(10, 18, 36, 0.98) 100%);
+          gap: 20px;
+          min-width: 488px;
+          max-width: 668px;
+          padding: 18px 26px 18px 20px;
+          border-radius: 14px;
+          border: 1.5px solid rgba(223, 195, 138, 0.72);
+          background: linear-gradient(165deg, rgba(21, 33, 55, 0.96) 0%, rgba(13, 21, 37, 0.98) 100%);
           box-shadow:
-            inset 0 1px 0 rgba(255, 245, 212, 0.55),
-            inset 0 -1px 0 rgba(79, 209, 255, 0.3),
-            0 20px 54px rgba(2, 6, 18, 0.78),
-            0 0 38px rgba(246, 201, 106, 0.34);
-          color: #f8fafc;
+            inset 0 1px 0 rgba(239, 224, 190, 0.28),
+            inset 0 -1px 0 rgba(121, 196, 230, 0.14),
+            0 18px 46px rgba(3, 7, 16, 0.68),
+            0 0 24px rgba(223, 195, 138, 0.20);
+          color: #f3f6fb;
         }
         .sf-reward-card::before {
           content: '';
           position: absolute;
           inset: 0;
-          width: 44%;
-          background: linear-gradient(90deg, rgba(255, 244, 204, 0) 0%, rgba(255, 244, 204, 0.24) 50%, rgba(255, 244, 204, 0) 100%);
-          animation: sfRewardSheen 2800ms ease-in-out infinite;
+          width: 42%;
+          background: linear-gradient(90deg, rgba(239, 224, 190, 0) 0%, rgba(239, 224, 190, 0.13) 50%, rgba(239, 224, 190, 0) 100%);
+          animation: sfRewardSheen 3200ms ease-in-out infinite;
         }
         .sf-reward-ring {
           position: relative;
@@ -377,7 +377,7 @@ export function LearningRewardBanner({
           width: 68px;
           height: 68px;
           transform: rotate(-90deg);
-          filter: drop-shadow(0 0 10px rgba(246, 201, 106, 0.45));
+          filter: drop-shadow(0 0 6px rgba(223, 195, 138, 0.24));
         }
         .sf-reward-ring__prog {
           animation: sfRewardRingDraw 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -391,34 +391,34 @@ export function LearningRewardBanner({
           font-variant-numeric: tabular-nums;
         }
         .sf-reward-ring__ratio {
-          font-size: 17px;
-          font-weight: 900;
-          color: #fff4cc;
-          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+          font-size: 16.5px;
+          font-weight: 800;
+          color: #efe0be;
+          text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
         }
         .sf-reward-ring__sub {
           font-size: 10px;
           font-weight: 700;
-          color: #93c5fd;
+          color: #bce3f5;
           margin-top: 2px;
         }
         .sf-reward-emblem {
-          width: 60px;
-          height: 60px;
-          border-radius: 16px;
+          width: 58px;
+          height: 58px;
+          border-radius: 12px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          border: 1.5px solid rgba(246, 204, 118, 0.72);
-          background: radial-gradient(circle at 35% 30%, rgba(246, 201, 106, 0.28), rgba(16, 28, 54, 0.92));
-          box-shadow: 0 0 22px rgba(246, 201, 106, 0.26);
-          color: #fde68a;
+          border: 1px solid rgba(223, 195, 138, 0.56);
+          background: radial-gradient(circle at 35% 30%, rgba(223, 195, 138, 0.18), rgba(13, 21, 37, 0.94));
+          box-shadow: inset 0 1px 0 rgba(239, 224, 190, 0.18), 0 0 14px rgba(223, 195, 138, 0.16);
+          color: #efe0be;
         }
         .sf-reward-body {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 9px;
           flex: 1;
           min-width: 0;
         }
@@ -426,10 +426,10 @@ export function LearningRewardBanner({
           display: flex;
           align-items: center;
           gap: 8px;
-          font-size: 12px;
-          font-weight: 800;
+          font-size: 11.5px;
+          font-weight: 700;
           letter-spacing: 0.08em;
-          color: #93c5fd;
+          color: #bce3f5;
         }
         .sf-reward-title-row {
           display: flex;
@@ -438,22 +438,22 @@ export function LearningRewardBanner({
           flex-wrap: wrap;
         }
         .sf-reward-title {
-          font-size: 21px;
-          font-weight: 900;
-          letter-spacing: 0.02em;
-          background: linear-gradient(180deg, #fff9e6 0%, #f6c96a 100%);
+          font-size: 20.5px;
+          font-weight: 800;
+          letter-spacing: 0.03em;
+          background: linear-gradient(180deg, #f7edd6 0%, #dfc38a 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+          filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.45));
         }
         .sf-reward-perfect {
           padding: 3px 10px;
           border-radius: 999px;
-          background: linear-gradient(135deg, #fff5cf 0%, #f59e0b 100%);
-          color: #1f1404;
-          font-size: 12px;
-          font-weight: 900;
-          box-shadow: 0 0 14px rgba(246, 201, 106, 0.55);
+          background: linear-gradient(135deg, #efe0be 0%, #dfc38a 100%);
+          color: #161108;
+          font-size: 11.5px;
+          font-weight: 800;
+          box-shadow: 0 0 10px rgba(223, 195, 138, 0.28);
           display: inline-flex;
           align-items: center;
           gap: 4px;
@@ -461,11 +461,11 @@ export function LearningRewardBanner({
         .sf-reward-excellent {
           padding: 3px 10px;
           border-radius: 999px;
-          background: linear-gradient(135deg, #e0f7ff 0%, #38bdf8 48%, #f6c96a 100%);
-          color: #0b1628;
-          font-size: 12px;
-          font-weight: 900;
-          box-shadow: 0 0 16px rgba(56, 189, 248, 0.55);
+          background: linear-gradient(135deg, #bce3f5 0%, #79c4e6 55%, #dfc38a 100%);
+          color: #0d1525;
+          font-size: 11.5px;
+          font-weight: 800;
+          box-shadow: 0 0 10px rgba(121, 196, 230, 0.24);
           display: inline-flex;
           align-items: center;
           gap: 4px;
@@ -483,18 +483,18 @@ export function LearningRewardBanner({
           gap: 6px;
           padding: 5px 12px;
           border-radius: 999px;
-          background: linear-gradient(135deg, rgba(246, 201, 106, 0.28) 0%, rgba(217, 119, 6, 0.24) 100%);
-          border: 1.5px solid rgba(251, 211, 128, 0.85);
-          color: #fff6d6;
-          font-size: 13.5px;
-          font-weight: 900;
+          background: linear-gradient(135deg, rgba(223, 195, 138, 0.20) 0%, rgba(157, 126, 69, 0.16) 100%);
+          border: 1px solid rgba(223, 195, 138, 0.62);
+          color: #efe0be;
+          font-size: 13px;
+          font-weight: 800;
           font-variant-numeric: tabular-nums;
-          box-shadow: 0 0 18px rgba(246, 201, 106, 0.28);
+          box-shadow: 0 0 12px rgba(223, 195, 138, 0.16);
         }
         .sf-reward-pill--orb {
-          font-size: 12px;
-          font-weight: 700;
-          color: #fde68a;
+          font-size: 11.5px;
+          font-weight: 600;
+          color: #dfc38a;
         }
         .sf-reward-pill--charge {
           display: inline-flex;
@@ -502,11 +502,11 @@ export function LearningRewardBanner({
           gap: 6px;
           padding: 5px 11px;
           border-radius: 999px;
-          background: rgba(56, 189, 248, 0.16);
-          border: 1.5px solid rgba(103, 232, 249, 0.62);
-          color: #cffafe;
-          font-size: 12.5px;
-          font-weight: 800;
+          background: rgba(121, 196, 230, 0.12);
+          border: 1px solid rgba(121, 196, 230, 0.44);
+          color: #bce3f5;
+          font-size: 12px;
+          font-weight: 700;
           font-variant-numeric: tabular-nums;
         }
         .sf-reward-pill--item {
@@ -514,30 +514,30 @@ export function LearningRewardBanner({
           align-items: center;
           gap: 6px;
           padding: 3px 10px 3px 5px;
-          border-radius: 10px;
-          background: rgba(30, 48, 86, 0.88);
-          border: 1.5px solid rgba(246, 204, 118, 0.68);
-          color: #fff7db;
-          font-size: 12.5px;
-          font-weight: 800;
+          border-radius: 8px;
+          background: rgba(20, 32, 54, 0.90);
+          border: 1px solid rgba(223, 195, 138, 0.48);
+          color: #efe0be;
+          font-size: 12px;
+          font-weight: 700;
         }
         .sf-reward-aug-desc {
           font-size: 12.5px;
-          line-height: 1.45;
-          color: #dbeafe;
+          line-height: 1.48;
+          color: #c5d1e3;
         }
         .sf-reward-bar {
           width: 48px;
-          height: 6px;
+          height: 5px;
           border-radius: 999px;
-          background: rgba(148, 179, 224, 0.25);
+          background: rgba(154, 178, 214, 0.22);
           overflow: hidden;
         }
         .sf-reward-bar > i {
           display: block;
           height: 100%;
           border-radius: 999px;
-          background: linear-gradient(90deg, #38bdf8, #a5f3fc);
+          background: linear-gradient(90deg, #4e9bc2, #bce3f5);
         }
       `}</style>
       <div className="sf-reward-aura" aria-hidden="true" />
@@ -554,14 +554,14 @@ export function LearningRewardBanner({
             <>
               <div className="sf-reward-ring" aria-hidden="true">
                 <svg viewBox="0 0 68 68">
-                  <circle cx="34" cy="34" r={ringR} fill="none" stroke="rgba(148, 179, 224, 0.22)" strokeWidth="5.5" />
+                  <circle cx="34" cy="34" r={ringR} fill="none" stroke="rgba(154, 178, 214, 0.20)" strokeWidth="5.5" />
                   <circle
                     className="sf-reward-ring__prog"
                     cx="34"
                     cy="34"
                     r={ringR}
                     fill="none"
-                    stroke={perfect ? '#fbbf24' : '#34d399'}
+                    stroke={perfect ? '#dfc38a' : '#5bbf9b'}
                     strokeWidth="5.5"
                     strokeLinecap="round"
                     strokeDasharray={ringC}

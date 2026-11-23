@@ -38,9 +38,11 @@ export {
 } from './LoreArchiveReader.js';
 
 export {
+  GAME_ITEM_ICON_URLS,
   GameItemIcon,
   RichGameText,
   StatInlineIcon,
+  getGameItemIconUrl,
   tokenizeRichGameText,
   type GameItemIconProps,
   type GameItemIconSize,

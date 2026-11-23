@@ -92,12 +92,14 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-paper-shell {
-  --lui-shell-bg: linear-gradient(180deg, rgba(20, 33, 58, 0.95) 0%, rgba(15, 26, 48, 0.97) 52%, rgba(10, 18, 35, 0.98) 100%);
+  --lui-shell-bg: linear-gradient(180deg, rgba(16, 28, 52, 0.985) 0%, rgba(11, 20, 39, 0.992) 52%, rgba(8, 15, 30, 0.995) 100%);
   --lui-header-bg: linear-gradient(180deg, rgba(25, 40, 70, 0.94) 0%, rgba(15, 26, 48, 0.96) 100%);
   --lui-footer-bg: linear-gradient(180deg, rgba(13, 22, 41, 0.96) 0%, rgba(9, 16, 31, 0.98) 100%);
   --lui-body-bg: radial-gradient(ellipse at 50% 0%, rgba(79, 209, 255, 0.07) 0%, rgba(15, 26, 48, 0) 64%);
   --lui-card-bg: #15233e;
   --lui-card-elevated: #1a2b4c;
+  --lui-scaffold-bg: linear-gradient(165deg, rgba(23, 38, 69, 0.97) 0%, rgba(14, 25, 47, 0.98) 100%);
+  --lui-scaffold-head-bg: linear-gradient(90deg, rgba(242, 201, 125, 0.14) 0%, rgba(79, 209, 255, 0.06) 100%);
   --lui-card-muted: rgba(24, 39, 68, 0.86);
   --lui-card-border: rgba(141, 162, 192, 0.24);
   --lui-card-gold-border: rgba(242, 201, 125, 0.44);
@@ -143,8 +145,6 @@ export const LEARNING_UI_CSS = `
   position: relative;
   box-sizing: border-box;
   background: var(--lui-shell-bg);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
   color: var(--lui-ink-primary);
   border: 1px solid rgba(242, 201, 125, 0.54);
   box-shadow:
@@ -164,6 +164,8 @@ export const LEARNING_UI_CSS = `
   --lui-body-bg: linear-gradient(180deg, #eae4d6 0%, #e4ddcd 100%);
   --lui-card-bg: #f3eee2;
   --lui-card-elevated: #f8f4ea;
+  --lui-scaffold-bg: linear-gradient(165deg, #f8f3e7 0%, #f1eadb 100%);
+  --lui-scaffold-head-bg: linear-gradient(90deg, rgba(168, 121, 50, 0.14) 0%, rgba(14, 111, 140, 0.06) 100%);
   --lui-card-muted: #e3dbc9;
   --lui-card-border: rgba(122, 97, 54, 0.24);
   --lui-card-gold-border: rgba(168, 121, 50, 0.48);
@@ -208,21 +210,24 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-paper-shell--overlay {
-  width: min(840px, 92vw);
-  max-height: min(590px, 78vh);
+  width: min(1240px, 94vw);
+  max-width: 100%;
+  min-height: min(640px, 76vh);
+  max-height: min(820px, 88vh);
   height: auto;
   margin: auto;
 }
 
 .lui-paper-shell--standalone {
   width: 100%;
-  max-width: 980px;
+  max-width: min(1240px, 94vw);
+  min-height: min(640px, 78vh);
   margin-inline: auto;
 }
 
 .lui-paper-shell--sandbox {
   width: 100%;
-  max-width: 860px;
+  max-width: min(1160px, 94vw);
   margin-inline: auto;
 }
 
@@ -433,11 +438,11 @@ export const LEARNING_UI_CSS = `
 .lui-body {
   flex: 1 1 auto;
   overflow-y: auto;
-  padding: 18px 22px;
+  padding: 22px 26px;
   background: var(--lui-body-bg);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   scrollbar-width: thin;
   scrollbar-color: rgba(242, 201, 125, 0.38) transparent;
   transition: background 220ms var(--lui-ease), color 220ms var(--lui-ease);
@@ -633,12 +638,151 @@ export const LEARNING_UI_CSS = `
   transform: rotate(180deg);
 }
 
+.lui-ref-btn--highlight {
+  border-radius: 999px;
+  padding: 4px 13px;
+  border-color: var(--lui-gold-base, #f2c97d);
+  background: linear-gradient(135deg, rgba(242, 201, 125, 0.2) 0%, rgba(168, 121, 50, 0.14) 100%);
+  box-shadow: 0 0 12px rgba(242, 201, 125, 0.18);
+}
+
+.lui-study-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.lui-study-workspace--single {
+  max-width: 920px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.lui-study-workspace--dual {
+  display: grid;
+  grid-template-columns: minmax(340px, 40%) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 919px) {
+  .lui-study-workspace--dual {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+.lui-study-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.lui-material-scaffold {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 10px;
+  border: 1px solid var(--lui-card-gold-border);
+  background: var(--lui-scaffold-bg, var(--lui-card-elevated));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 196, 0.14),
+    0 10px 26px rgba(4, 10, 22, 0.26);
+  overflow: hidden;
+  animation: lui-panel-reveal 200ms var(--lui-ease) both;
+}
+
+.lui-material-scaffold__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 16px;
+  background: var(--lui-scaffold-head-bg);
+  border-bottom: 1px solid var(--lui-card-gold-border);
+}
+
+.lui-material-scaffold__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--lui-gold-base);
+  letter-spacing: 0.02em;
+}
+
+.lui-scaffold-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 2px 9px;
+  border-radius: 5px;
+  border: 1px solid var(--lui-ref-border, rgba(242, 201, 125, 0.42));
+  background: transparent;
+  color: var(--lui-ref-ink, #f2c97d);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms var(--lui-ease), border-color 160ms var(--lui-ease);
+}
+
+.lui-scaffold-collapse-btn:hover {
+  border-color: var(--lui-gold-base);
+  background: rgba(242, 201, 125, 0.12);
+}
+
+.lui-material-scaffold__body {
+  padding: 16px 18px;
+  max-height: min(560px, 60vh);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(242, 201, 125, 0.38) transparent;
+}
+
+.lui-material-scaffold__body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.lui-material-scaffold__body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lui-material-scaffold__body::-webkit-scrollbar-thumb {
+  background: rgba(242, 201, 125, 0.34);
+  border-radius: 999px;
+}
+
+@media (max-width: 919px) {
+  .lui-material-scaffold__body {
+    max-height: 280px;
+  }
+}
+
+.lui-material-scaffold__body .lui-md,
+.lui-material-content .lui-md {
+  font-size: 15px;
+  line-height: 1.75;
+}
+
 .lui-material-content {
-  padding: 13px 16px;
+  padding: 15px 18px;
   border-radius: 8px;
   border: 1px solid var(--lui-card-gold-border);
   background: var(--lui-card-elevated);
   animation: lui-panel-reveal 200ms var(--lui-ease) both;
+}
+
+.lui-briefing-canvas {
+  max-width: 920px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .lui-briefing-title {
@@ -646,7 +790,7 @@ export const LEARNING_UI_CSS = `
   align-items: center;
   gap: 9px;
   margin: 0;
-  font-size: 15.5px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--lui-heading-ink);
   letter-spacing: 0.02em;
@@ -679,7 +823,7 @@ export const LEARNING_UI_CSS = `
 
 .lui-stem-card {
   position: relative;
-  padding: 16px 20px;
+  padding: 20px 24px;
   background: var(--lui-card-bg);
   color: var(--lui-ink-primary);
   border: 1px solid var(--lui-card-border);
@@ -690,11 +834,22 @@ export const LEARNING_UI_CSS = `
     0 6px 18px rgba(5, 10, 22, 0.16);
 }
 
+.lui-stem-card .lui-md {
+  font-size: 17px;
+  line-height: 1.74;
+}
+
 .lui-stem-card--briefing {
+  padding: 24px 28px;
   border-left-color: var(--lui-azure);
   box-shadow:
     inset 0 1px 0 rgba(165, 243, 252, 0.08),
     0 6px 20px rgba(5, 10, 22, 0.18);
+}
+
+.lui-stem-card--briefing .lui-md {
+  font-size: 16px;
+  line-height: 1.78;
 }
 
 .lui-remediation-list {
@@ -832,6 +987,9 @@ export const LEARNING_UI_CSS = `
 }
 
 @media (max-width: 640px) {
+  .lui-body {
+    padding: 14px 16px;
+  }
   .lui-options-grid {
     grid-template-columns: 1fr;
   }
@@ -839,17 +997,18 @@ export const LEARNING_UI_CSS = `
 
 .lui-option-btn {
   position: relative;
-  min-height: 50px;
+  min-height: 54px;
   display: flex;
   align-items: center;
   gap: 13px;
-  padding: 11px 15px;
+  padding: 13px 17px;
   border-radius: 8px;
   background: var(--lui-option-bg);
   color: var(--lui-ink-primary);
   border: 1px solid var(--lui-card-border);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  font-size: 15px;
+  font-size: 15.5px;
+  line-height: 1.6;
   text-align: left;
   cursor: pointer;
   transition:
@@ -1589,41 +1748,148 @@ export const LEARNING_UI_CSS = `
   color: #6ee7b7;
 }
 .lui-item-icon {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   line-height: 0;
   vertical-align: middle;
-  filter: drop-shadow(0 2px 4px rgba(2, 6, 23, 0.55));
+  box-sizing: border-box;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0b1120;
+  border: 1.5px solid var(--lui-item-accent, #f2c97d);
+  box-shadow:
+    0 2px 6px rgba(2, 6, 23, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.48);
+}
+.lui-item-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 42%);
 }
 .lui-item-icon--xs {
   width: 20px;
   height: 20px;
+  border-radius: 5px;
+  border-width: 1.25px;
 }
 .lui-item-icon--sm {
   width: 26px;
   height: 26px;
+  border-radius: 6px;
 }
 .lui-item-icon--md {
   width: 38px;
   height: 38px;
+  border-radius: 8px;
 }
 .lui-item-icon--lg {
   width: 44px;
   height: 44px;
+  border-radius: 9px;
+  border-width: 2px;
 }
-.lui-item-icon__svg {
+.lui-item-icon--component {
+  border-color: var(--lui-item-accent, #f59e0b);
+  box-shadow:
+    0 2px 6px rgba(2, 6, 23, 0.6),
+    0 0 8px color-mix(in srgb, var(--lui-item-accent, #f59e0b) 32%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.lui-item-icon--completed {
+  border-color: #f0c975;
+  box-shadow:
+    0 2px 8px rgba(2, 6, 23, 0.7),
+    0 0 10px rgba(242, 201, 125, 0.34),
+    inset 0 0 0 1px rgba(255, 248, 220, 0.28);
+}
+.lui-item-icon--emblem {
+  border-color: #d8a7f5;
+  box-shadow:
+    0 2px 8px rgba(2, 6, 23, 0.72),
+    0 0 10px color-mix(in srgb, var(--lui-item-accent, #c084fc) 44%, transparent),
+    inset 0 0 0 1px rgba(254, 240, 138, 0.36);
+}
+.lui-item-icon--flag {
+  border-color: #fde047;
+  box-shadow:
+    0 2px 10px rgba(2, 6, 23, 0.75),
+    0 0 12px rgba(253, 224, 71, 0.45),
+    inset 0 0 0 1px rgba(255, 252, 230, 0.45);
+}
+.lui-item-icon--tool-remover {
+  border-color: #38bdf8;
+  box-shadow:
+    0 2px 8px rgba(2, 6, 23, 0.68),
+    0 0 10px rgba(56, 189, 248, 0.42),
+    inset 0 0 0 1px rgba(224, 242, 254, 0.32);
+}
+.lui-item-icon--tool-reforger {
+  border-color: #fb923c;
+  box-shadow:
+    0 2px 8px rgba(2, 6, 23, 0.68),
+    0 0 10px rgba(249, 115, 22, 0.42),
+    inset 0 0 0 1px rgba(254, 243, 199, 0.32);
+}
+.lui-item-icon--anvil-comp {
+  border-color: #7dd3fc;
+  box-shadow:
+    0 2px 8px rgba(2, 6, 23, 0.68),
+    0 0 9px rgba(125, 211, 252, 0.36);
+}
+.lui-item-icon--anvil-completed {
+  border-color: #f5c451;
+  box-shadow:
+    0 2px 8px rgba(2, 6, 23, 0.72),
+    0 0 11px rgba(245, 196, 81, 0.42);
+}
+.lui-item-icon__img {
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  user-select: none;
+  pointer-events: none;
+}
+.lui-item-icon__dots {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5px;
+  padding: 1.5px 2.5px;
+  border-radius: 999px;
+  background: rgba(7, 11, 22, 0.84);
+  border: 0.75px solid rgba(254, 240, 138, 0.42);
+  pointer-events: none;
+}
+.lui-item-icon__dot {
+  display: block;
+  width: 4.5px;
+  height: 4.5px;
+  border-radius: 999px;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.85);
+}
+.lui-item-icon--sm .lui-item-icon__dots {
+  right: 1px;
+  bottom: 1px;
+  padding: 1px 2px;
+}
+.lui-item-icon--sm .lui-item-icon__dot {
+  width: 3.5px;
+  height: 3.5px;
 }
 .lui-item-icon.lui-recipe-glyph {
   width: 20px;
   height: 20px;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
 }
 .lui-unit-skill-desc {
   font-size: 13.5px;

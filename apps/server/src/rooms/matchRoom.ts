@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { CommunicationClientSendSchema, ConfigurableCommunicationPolicy, DEFAULT_TACTICIAN_ID, FinalBoardSnapshotSchema, GameCommandSchema, getMatchChoiceKind, MODE_BUDGETS,
   type CommunicationGovernancePolicy, type CoursePack, type GameCommand,
   type MatchPhaseKind, type MatchStudyBlueprint, type ModeStandingSummary, type SubjectId, type UserProfile } from '@pkg/contracts';
-import { activateLessonRemediation, buildMatchStudyBlueprint, buildPersonalizedLessonBundle, evaluateLearningBonusDrops, finalizeLearningGoldCarry,
+import { activateLessonRemediation, buildMatchStudyBlueprint, buildPersonalizedLessonBundle, evaluateLearningBonusDrops, finalizeLearningGoldCarry, roomSlotBonusStage,
   gradeFrozenLearningUnits, gradeQuestionSubmission, locateMatchStudySlot, settleLearningNodeGold,
   type ArcAttempt, type LearningGoldSettlement, type MatchStudyBlueprintInput, type PersonalizedLessonBundle,
   type RecentLearningPerformance, type SubmissionInput } from '@pkg/learning-core';
@@ -266,16 +266,22 @@ export class MatchRoom extends Room {
     if (!this.humans.has(userId) || this.completed || this.failure) return null;
     return this.snapshot(userId);
   }
+  private choiceKind() {
+    return getMatchChoiceKind(this.phase,MODE_BUDGETS.modes[this.game.mode].timeline[this.phaseIndex]?.label ?? '');
+  }
   private allowedChoice(command:GameCommand):boolean {
-    const label=MODE_BUDGETS.modes[this.game.mode].timeline[this.phaseIndex]?.label ?? '';
-    const kind=getMatchChoiceKind(this.phase,label);
+    const kind=this.choiceKind();
     return kind==='augment' ? ['PICK_AUGMENT','REROLL_AUGMENT_SLOT'].includes(command.type)
       : kind==='anvil' && command.type==='PICK_ANVIL_OPTION';
   }
-  private canActInStrategy(seatId:string):boolean {
-    if (this.phase==='strategy') return true;
+  private canActInStrategy(seat:SeatState):boolean {
+    if (this.game.phase!=='prep') return false;
+    if (['entry','resource','rest','strategy'].includes(this.phase)) return true;
+    if (this.phase==='choice') {
+      return this.choiceKind()==='augment' ? !seat.augmentOffer : seat.anvils.length===0;
+    }
     if (this.phase==='learning') {
-      const human=[...this.humans].find(([,h])=>h.seatId===seatId);
+      const human=[...this.humans].find(([,h])=>h.seatId===seat.id);
       return Boolean(human && this.lessons.get(human[0])?.complete);
     }
     return false;
@@ -286,7 +292,7 @@ export class MatchRoom extends Room {
     if (command.type==='SET_LINEUP_PLAN') {seat.lineupPlan=[...command.unitIds]; return {ok:true};}
     if (CHOICE_COMMANDS.has(command.type)) {
       if (!this.allowedChoice(command)) return {ok:false,reason:'CHOICE_WINDOW_REQUIRED'};
-    } else if (!this.canActInStrategy(seatId)) return {ok:false,reason:'STRATEGY_PHASE_REQUIRED'};
+    } else if (!this.canActInStrategy(seat)) return {ok:false,reason:'STRATEGY_PHASE_REQUIRED'};
     return applyGameCommand(this.game,seatId,command);
   }
   private normalizeStep(progress:LearningProgress):void {
@@ -303,7 +309,7 @@ export class MatchRoom extends Room {
     const seat=this.game.seats.find(s=>s.id===this.humans.get(userId)!.seatId)!;
     const gold=settleLearningNodeGold({mode:this.game.mode,blockIndex:this.nodeIndex,studyBlueprint:progress.bundle.blueprint,
       gradedUnits:gradeFrozenLearningUnits(progress.bundle.questions,progress.submissions),carryInCents:seat.learningChargeCents});
-    const bonus=evaluateLearningBonusDrops(gold.exactScore,progress.bundle.arcMeta.stageKind);
+    const bonus=evaluateLearningBonusDrops(gold.exactScore,roomSlotBonusStage(this.game.mode,this.nodeIndex));
     const settlement={...gold,...applyLearningBonusGrant(this.game,seat,this.nodeIndex,bonus),performanceTier:bonus.performanceTier};
     applyLearningGoldGrant(seat,settlement.grantedIntegerGold,settlement.carryOutCents);
     seat.learningGoldOrbs=[...settlement.orbSplits]; progress.settled=true;

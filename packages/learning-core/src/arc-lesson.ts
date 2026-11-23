@@ -17,9 +17,9 @@ function arcBranch(attempts: readonly ArcAttempt[], branchSlot: number, compact:
 
 export function lessonArcMeta(blueprint: MatchStudyBlueprint, nodeIndex: number, attempts: readonly ArcAttempt[] = []): LearningArcMeta {
   const { arcIndex, slotInArc, slotsInArc, arc } = locateMatchStudySlot(blueprint, nodeIndex);
-  const branchSlot = slotsInArc - 2;
+  const branchSlot = slotsInArc === 2 ? -1 : slotsInArc - 2;
   const compact = slotsInArc === 3;
-  const branch = arcBranch(attempts, branchSlot, compact);
+  const branch = branchSlot < 0 ? 'standard' : arcBranch(attempts, branchSlot, compact);
   const stageOutline: LearningArcMeta['stageOutline'] = arc.slotStages.map((planned, slot) => {
     const isBranch = slot === branchSlot;
     const kind = isBranch && slotInArc >= branchSlot
@@ -52,8 +52,8 @@ export function selectArcLesson(input: PersonalizedLessonInput, blueprint: Match
   if (blueprint.mode !== input.mode || !input.selectedSubjects.includes(blueprint.subject)
     || (input.queueType === 'ranked' && input.rankedSubject !== blueprint.subject)) throw new Error('Study blueprint scope mismatch');
   const catalog = activeStudyCatalog({ ...input, subject: blueprint.subject });
-  const attempts = input.priorArcAttempts ?? [];
-  const arcMeta = lessonArcMeta(blueprint, input.nodeIndex, attempts);
+  const arcMeta = lessonArcMeta(blueprint, input.nodeIndex, input.priorArcAttempts);
+  const attempts = (input.priorArcAttempts ?? []).filter(a => a.slotInArc === undefined || a.slotInArc < arcMeta.slotInArc);
   const arc = blueprint.arcs[arcMeta.arcIndex]!;
   if (!arc.topicNodeIds.every(id => catalog.nodes.has(id))) throw new Error('Study blueprint contains unknown topic nodes');
   const stage = arcMeta.stageKind;
@@ -68,6 +68,10 @@ export function selectArcLesson(input: PersonalizedLessonInput, blueprint: Match
   const retestedFamilies = new Set<string>();
   const chosenIds = new Set<string>();
   const phaseIndex = { resource_check: 2, verification: 4 } as const;
+  const reviewMaterial = (question: QuestionItem) => question.materialMd.trim() ? question.materialMd
+    : pool.find(item => item.familyId === question.familyId && item.materialMd.trim())?.materialMd
+      ?? pool.find(item => item.knowledgeNode === question.knowledgeNode && item.materialMd.trim())?.materialMd
+      ?? `**${catalog.nodes.get(question.knowledgeNode)!.title}**\n\n先找出题目中的已知条件和关键词，再回想适用的概念或规则。逐项核对你的选择是否符合题意。`;
 
   function addQuestions(role: 'resource_check' | 'verification', count: number) {
     let seconds = 0;
@@ -75,7 +79,10 @@ export function selectArcLesson(input: PersonalizedLessonInput, blueprint: Match
       const available = pool.filter(q => !chosenIds.has(q.questionId)
         && (!index || seconds + q.estSeconds <= policy.phaseSeconds[phaseIndex[role]]!));
       const fresh = available.filter(q => !used.has(q.questionId));
-      const ranked = fresh.length ? fresh : index === 0 ? available : [];
+      const variants = stage === 'mastery' && arcMeta.slotsPerArc === 2
+        ? available.filter(q => wrongFamilies.has(q.familyId) && !retestedFamilies.has(q.familyId) && !wrongIds.has(q.questionId)) : [];
+      const newVariants = variants.filter(q => !used.has(q.questionId));
+      const ranked = newVariants.length ? newVariants : variants.length ? variants : fresh.length ? fresh : index === 0 ? available : [];
       const retest = (stage === 'remediate' && arcMeta.adaptiveBranch === 'remediation_inserted') || (stage === 'mastery' && (index < count - 1 || !retestedFamilies.size));
       const score = (q: QuestionItem) => difficultyFit(q, stage, blueprint.difficultyTier)
         + (q.stepRole === role ? 4 : q.stepRole === 'practice' ? 0 : -3)
@@ -90,9 +97,13 @@ export function selectArcLesson(input: PersonalizedLessonInput, blueprint: Match
       const question = structuredClone(chosen);
       question.stepRole = role;
       question.hintMd = '';
-      if (stage === 'mastery' || stage === 'diagnose') {
+      if (stage === 'mastery' || stage === 'diagnose' || stage === 'stretch') {
         question.allowMaterialReview = false;
         question.materialMd = '';
+      } else if (stage === 'intro' || stage === 'remediate') {
+        question.assessmentKind = 'application';
+        question.allowMaterialReview = true;
+        question.materialMd = reviewMaterial(question);
       }
       selected.push(question);
       chosenIds.add(question.questionId);

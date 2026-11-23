@@ -102,6 +102,24 @@ describe('@pkg/contracts & canonical content invariants', () => {
     expect(LearningArcMetaSchema.safeParse({ ...meta, stageKind: 'stretch' }).success).toBe(false);
   });
 
+  it('accepts a two-slot outline and rejects mismatched stages or arc dimensions', () => {
+    const blueprint = {
+      mode: 'quick', subject: 'english', arcCount: 2, slotsPerArc: 2, difficultyTier: 'standard', seed: 0,
+      arcs: [0, 1].map(arcIndex => ({ arcIndex, subject: 'english', slotsInArc: 2, topicNodeIds: [`n${arcIndex}`],
+        primaryNodeId: `n${arcIndex}`, title: '语法填空', strategy: 'modular_pack', tags: ['语法'], loadScore: 36,
+        slotStages: ['intro', 'mastery'] })),
+    };
+    expect(MatchStudyBlueprintSchema.parse(blueprint)).toEqual(blueprint);
+    expect(MatchStudyBlueprintSchema.safeParse({ ...blueprint, arcs: [{ ...blueprint.arcs[0], slotStages: ['intro', 'stretch'] }, blueprint.arcs[1]] }).success).toBe(false);
+    const meta = {
+      arcIndex: 0, arcCount: 2, slotInArc: 1, slotsPerArc: 2, stageKind: 'mastery', stageLabel: '终测',
+      topicTitle: '语法填空', strategy: 'modular_pack', blueprintTags: ['语法'], adaptiveBranch: 'standard',
+      stageOutline: [{ slot: 0, kind: 'intro', label: '熟悉', status: 'done' }, { slot: 1, kind: 'mastery', label: '终测', status: 'active' }],
+    };
+    expect(LearningArcMetaSchema.parse(meta)).toEqual(meta);
+    expect(LearningArcMetaSchema.safeParse({ ...meta, stageOutline: meta.stageOutline.slice(0, 1) }).success).toBe(false);
+  });
+
   it('verifies 8 components -> 36 completed items + 8 faction emblems + mothership flag', () => {
     expect(SEASON1_ITEMS.components).toHaveLength(8);
     expect(SEASON1_ITEMS.completedItems).toHaveLength(36);

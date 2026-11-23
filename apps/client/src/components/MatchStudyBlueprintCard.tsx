@@ -164,6 +164,8 @@ export function MatchStudyBlueprintCard({
   compact = false,
 }: MatchStudyBlueprintCardProps): React.JSX.Element {
   const totalSlots = blueprint.arcs.reduce((sum, arc) => sum + arc.slotsInArc, 0);
+  const allMiniArcs = blueprint.arcs.length > 0 && blueprint.arcs.every((arc) => arc.slotsInArc === 2);
+  const useCompactTwoColGrid = blueprint.arcs.length >= 3;
   const tierLabel = DIFFICULTY_TIER_LABELS[blueprint.difficultyTier];
   const canReroll = !locked && !compact && blueprint.subject === 'english' && Boolean(onRerollPack);
   const canSwitchTopic = !locked && !compact && blueprint.subject === 'math' && Boolean(onOpenChapterSelect);
@@ -190,7 +192,7 @@ export function MatchStudyBlueprintCard({
           </span>
           <div className="sf-blueprint-card__metrics">
             <strong className="sf-blueprint-metric-main">
-              {blueprint.arcCount} 个学习大轮次
+              {blueprint.arcCount} {allMiniArcs ? '个碎片小轮次' : '个学习大轮次'}
             </strong>
             <span className="sf-blueprint-metric-dot" aria-hidden="true" />
             <span className="sf-blueprint-metric-sub">共 {totalSlots} 轮递进学习</span>
@@ -246,23 +248,47 @@ export function MatchStudyBlueprintCard({
       </div>
 
       <div
-        className={`sf-blueprint-arcs-grid sf-blueprint-arcs-grid--count-${Math.min(3, blueprint.arcs.length)}`}
+        className={`sf-blueprint-arcs-grid sf-blueprint-arcs-grid--count-${
+          useCompactTwoColGrid ? 2 : Math.min(2, blueprint.arcs.length)
+        }`}
+        style={
+          useCompactTwoColGrid
+            ? {
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: compact ? 6 : 8,
+              }
+            : undefined
+        }
       >
         {blueprint.arcs.map((arc) => {
           const isEnglishPack = arc.strategy === 'modular_pack';
-          const strategyText = isEnglishPack
-            ? `拿分智能拼包 · ${arc.slotsInArc} 轮`
-            : `完整专题 · ${arc.slotsInArc} 轮`;
+          const isMiniArc = arc.slotsInArc === 2;
+          const arcIndexLabel = isMiniArc
+            ? `小轮次 ${arc.arcIndex + 1}`
+            : `大轮次 ${arc.arcIndex + 1}`;
+          const strategyText = isMiniArc
+            ? '2 轮速通'
+            : isEnglishPack
+              ? `拿分智能拼包 · ${arc.slotsInArc} 轮`
+              : `完整专题 · ${arc.slotsInArc} 轮`;
 
           return (
             <article
               key={arc.arcIndex}
               className="sf-blueprint-arc-item"
+              style={
+                useCompactTwoColGrid
+                  ? {
+                      padding: compact ? '6px 9px' : '9px 11px',
+                      gap: compact ? 4 : 6,
+                    }
+                  : undefined
+              }
               data-testid={`blueprint-arc-${arc.arcIndex}`}
             >
               <div className="sf-blueprint-arc-item__top">
                 <div className="sf-blueprint-arc-item__badges">
-                  <span className="sf-blueprint-arc-index">大轮次 {arc.arcIndex + 1}</span>
+                  <span className="sf-blueprint-arc-index">{arcIndexLabel}</span>
                   <span
                     className={`sf-blueprint-arc-strategy ${
                       isEnglishPack

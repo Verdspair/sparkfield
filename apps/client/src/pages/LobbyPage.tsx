@@ -27,20 +27,20 @@ const MODE_CARDS: readonly ModeCardMeta[] = [
     mode: 'quick',
     title: '超快',
     minutes: 15,
-    arcSummary: '1 个大轮次',
+    arcSummary: '1 专题 / 2 小轮次',
   },
   {
     mode: 'standard',
     title: '标准',
     minutes: 30,
-    arcSummary: '2 个大轮次',
+    arcSummary: '2 专题 / 4 小轮次',
     recommended: true,
   },
   {
     mode: 'deep',
     title: '深度',
     minutes: 60,
-    arcSummary: '3 个弹性大轮次',
+    arcSummary: '3 专题 / 5 小轮次',
   },
 ];
 

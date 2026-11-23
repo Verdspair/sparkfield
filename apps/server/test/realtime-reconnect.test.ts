@@ -4,7 +4,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { sql } from 'kysely';
 import { createAppServer } from '../src/index.js';
 import { createDatabase, type AppDatabase } from '../src/db/client.js';
-import type { ClientQuestionView, LearningArcMeta, LessonStepKind } from '@pkg/contracts';
+import type { ClientQuestionView, GameCommand, LearningArcMeta, LessonStepKind, SubjectId } from '@pkg/contracts';
 import type { RoundBattle, SeatState } from '@pkg/game-core';
 
 interface ActionAck { requestId?: string; ok: boolean; reason?: string }
@@ -16,7 +16,7 @@ interface MatchRoomSnapshot {
 }
 interface ConnectedMatchSocket {
   sessionId: string;
-  sendCommand(command: { type: string; unitIds?: string[]; shopIndex?: number }): Promise<ActionAck>;
+  sendCommand(command: GameCommand): Promise<ActionAck>;
   sendLearningSubmit(questionId: string, submission: { answer: string | null; status: 'submitted' | 'skipped' | 'timed_out'; questionId: string }): Promise<ActionAck>;
   sendLearningAdvance(): Promise<ActionAck>;
   leave(consented?: boolean): Promise<void>;
@@ -78,11 +78,11 @@ function stream<T>() {
   };
 }
 
-async function startMatch() {
+async function startMatch(sharedSubject: SubjectId = 'english') {
   const profile = await server.auth.register({ username: `reconnect_${randomUUID().replaceAll('-', '').slice(0, 18)}`,
     password: 'network-reconnect-test-password', nickname: '重连回归同学' });
   const { token } = await server.auth.login({ username: profile.username, password: 'network-reconnect-test-password' });
-  await server.lobby.enterMode(profile, { durationMode: 'quick', queueType: 'solo', sharedSubject: 'english' });
+  await server.lobby.enterMode(profile, { durationMode: 'quick', queueType: 'solo', sharedSubject });
   const lobby = await server.lobby.start(profile.userId);
   const room = server.matches.getRoom(lobby.match!.roomId)!;
   return { profile, token, room };
@@ -147,6 +147,30 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     expect((await snapshots.wait((snapshot) => snapshot.self.lineupPlan.includes('S01'), after)).self.lineupPlan).toEqual(['S01']);
   });
 
+  it('allows buying and moving during entry but rejects both before learning is complete', async () => {
+    const { token, room } = await startMatch();
+    const snapshots = stream<MatchRoomSnapshot>();
+    const socket = await connectAuthoritativeMatch(room.roomId, token, { onSnapshot: snapshots.push });
+    sockets.add(socket);
+    const entry = await snapshots.wait();
+    expect(entry.phase).toBe('entry');
+
+    const instanceId = entry.self.units.find((unit) => unit.location.zone === 'bench')!.instanceId;
+    const to = { zone: 'board', row: 0, col: 0 } as const;
+    expect(await socket.sendCommand({ type: 'MOVE_UNIT', instanceId, to })).toMatchObject({ ok: true });
+    expect(snapshots.values.at(-1)!.self.units.find((unit) => unit.instanceId === instanceId)?.location).toEqual(to);
+
+    const shopIndex = entry.self.shop.findIndex((unit) => unit !== null);
+    expect(await socket.sendCommand({ type: 'BUY_CARD', shopIndex })).toMatchObject({ ok: true });
+    expect(snapshots.values.at(-1)).toMatchObject({ phase: 'entry' });
+    expect(snapshots.values.at(-1)!.self.shop[shopIndex]).toBeNull();
+    const learning = await snapshots.wait((snapshot) => snapshot.phase === 'learning');
+    expect(learning.learning?.complete).toBe(false);
+    const nextShopIndex = learning.self.shop.findIndex((unit) => unit !== null);
+    await expect(socket.sendCommand({ type: 'BUY_CARD', shopIndex: nextShopIndex })).rejects.toThrow('STRATEGY_PHASE_REQUIRED');
+    await expect(socket.sendCommand({ type: 'MOVE_UNIT', instanceId, to: { ...to, col: 1 } })).rejects.toThrow('STRATEGY_PHASE_REQUIRED');
+  });
+
   it('rejects a second action until its acknowledgement and snapshot, then unlocks after success or rejection', async () => {
     const { token, room } = await startMatch();
     const snapshots = stream<MatchRoomSnapshot>();
@@ -159,7 +183,7 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     await expect(socket.sendCommand({ type: 'SET_LINEUP_PLAN', unitIds: ['S02'] })).rejects.toThrow('MATCH_ACTION_PENDING');
     expect(await first).toMatchObject({ ok: true });
     expect(snapshots.values.at(-1)!.self.lineupPlan).toEqual(['S01']);
-    await expect(socket.sendCommand({ type: 'BUY_CARD', shopIndex: 0 })).rejects.toThrow('STRATEGY_PHASE_REQUIRED');
+    await expect(socket.sendCommand({ type: 'PICK_AUGMENT', slotIndex: 0 })).rejects.toThrow('CHOICE_WINDOW_REQUIRED');
     expect(await socket.sendCommand({ type: 'SET_LINEUP_PLAN', unitIds: ['S06'] })).toMatchObject({ ok: true });
     expect(pending.values).toEqual([true, false, true, false, true, false]);
   });
@@ -229,7 +253,7 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
   });
 
   it('keeps skipped resource evidence frozen while remediation advances to verification', async () => {
-    const { token, room, profile } = await startMatch();
+    const { token, room, profile } = await startMatch('math');
     const snapshots = stream<MatchRoomSnapshot>();
     const socket = await connectAuthoritativeMatch(room.roomId, token, { onSnapshot: snapshots.push }); sockets.add(socket);
     const intro = await snapshots.wait((value) => value.phase === 'learning' && value.nodeIndex === 0);
@@ -358,6 +382,9 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     }
     const bothStrat = await s1.wait((s) => s.phase === 'strategy', 0, 5000);
     expect(bothStrat.phase).toBe('strategy');
+    const [gold1, gold2] = [u1, u2].map(user => room['settlements'].get(user.profile.userId)?.[0]);
+    expect(gold1).toMatchObject({ nodeIndex: 0, centBudget: 700, verificationWeightPercent: 0 });
+    expect(gold2).toMatchObject({ nodeIndex: 0, centBudget: 700, verificationWeightPercent: 0 });
   }, 15_000);
 
   it('clears stale lobby match state and unlocks prep room after a match room disposes', async () => {

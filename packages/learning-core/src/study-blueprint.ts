@@ -1,5 +1,5 @@
 import {
-   type CoursePack, type DurationMode, type FsrsCardRecord, type KnowledgeNodeDef,
+  type CoursePack, type DurationMode, type FsrsCardRecord, type KnowledgeNodeDef,
   type MatchStudyArcPlan, type MatchStudyBlueprint, type StudyArcSlots, type StudyDifficultyTier, type SubjectId,
 } from '@pkg/contracts';
 import { forgettingCurve, FSRS6_DEFAULT_WEIGHTS } from 'ts-fsrs/models/fsrs-6';
@@ -27,7 +27,6 @@ export interface FamilyStudyEvidence {
 }
 
 const mean = (xs: readonly number[]) => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0;
-const stableIdOrder = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 
 export function activeStudyCatalog(input: MatchStudyBlueprintInput) {
   const packs = input.packs.filter(p => p.manifest.subject === input.subject);
@@ -115,95 +114,83 @@ function nodeStats(catalog: Catalog, nodeId: string) {
   const families = [...new Set(questions.map(q => q.familyId))];
   const priority = mean(families.map(id => catalog.evidence.get(id)!.priority).sort((a, b) => b - a).slice(0, 3));
   const load = mean(questions.map(q => Math.min(100, q.difficulty * 12 + q.estSeconds * 0.55)));
-  return { priority, capacity: questions.length, load };
+  return { families, priority, capacity: questions.length, load };
 }
 
 const skillSignals = [
-  { axis: 'communication', label: '情景交际', weight: 0.2, pattern: /dialog|conversation|communicat|情景|交际|沟通/i },
-  { axis: 'communication', label: '应用表达与高频词块', weight: 0.2, pattern: /vocab|phrase|usage|expression|词块|词汇|表达/i },
-  { axis: 'grammar', label: '语法填空', weight: 0.1, pattern: /grammar|clause|syntax|nonfinite|语法|句法|非谓语/i },
-  { axis: 'reading', label: '阅读推理', weight: 0.4, pattern: /reading|infer|comprehension|passage|阅读|推断|语篇|信息获取/i },
-  { axis: 'reading', label: '完形填空', weight: 0.1, pattern: /cloze|完形/i },
+  { label: '情景交际', pattern: /dialog|conversation|communicat|情景|交际|沟通/i },
+  { label: '语法填空', pattern: /grammar|clause|syntax|nonfinite|语法|句法|非谓语/i },
+  { label: '完形填空', pattern: /cloze|完形/i },
+  { label: '应用表达与高频词块', pattern: /vocab|phrase|usage|expression|词块|词汇|表达/i },
+  { label: '阅读推理', pattern: /reading|infer|comprehension|passage|阅读|推断|语篇|信息获取/i },
 ] as const;
 
-function nodeSkills(node: KnowledgeNodeDef) {
-  return skillSignals.filter(skill => skill.pattern.test(`${node.nodeId} ${node.title}`));
-}
-
-function modularNodePacks(catalog: Catalog, arcSlots: readonly StudyArcSlots[], seed: number): KnowledgeNodeDef[][] {
-  const nodes = [...catalog.nodes.values()].map(node => ({ node, skills: nodeSkills(node), ...nodeStats(catalog, node.nodeId) })).filter(n => n.capacity > 0);
-  const usage = new Map<string, number>();
-  const primaryUsage = new Map<string, number>();
-  const priorPacks = new Set<string>();
-  const result: KnowledgeNodeDef[][] = [];
-  for (let arcIndex = 0; arcIndex < arcSlots.length; arcIndex++) {
-    const score = (entry: typeof nodes[number]) => {
-      const id = entry.node.nodeId;
-      return entry.priority * 0.8 + (id === catalog.startId && arcIndex === 0 ? 2.5 : 0)
-        - (usage.get(id) ?? 0) * 1.5 + seededUnit(seed, `${arcIndex}/${id}`) * 2;
-    };
-    const pool = [...nodes].sort((a, b) => score(b) - score(a) || stableIdOrder(a.node.nodeId, b.node.nodeId)).slice(0, 16);
-    const key = (members: readonly typeof nodes[number][]) => members.map(n => n.node.nodeId).sort(stableIdOrder).join('\n');
-    const rank = (members: readonly typeof nodes[number][]) => {
-      const capacity = members.reduce((sum, n) => sum + n.capacity, 0);
-      const load = mean(members.map(n => n.load)) + Math.max(0, members.length - 2) * 9;
-      const uniqueSkills = new Set(members.flatMap(n => n.skills));
-      const coveredAxes = new Set(members.flatMap(n => n.skills.length ? [n.skills[0]!.axis] : []));
-      const scoringCoverage = [...uniqueSkills].reduce((total, skill) => total + skill.weight, 0);
-      const span = arcSlots[arcIndex]!;
-      const targetLoad = 38 + (span - 3) * 8;
-      const allComplementary = coveredAxes.size === 3;
-      return mean(members.map(score)) + 1.6 * coveredAxes.size + 4 * scoringCoverage + (allComplementary && span >= 4 ? 2 : 0)
-        - Math.abs(load - targetLoad) / 16 - Math.max(0, span * 2 - capacity) * 0.85
-        - (priorPacks.has(key(members)) ? 7 : 0) - (coveredAxes.size < members.length && members.length > 2 ? 2.5 : 0);
-    };
-    let best = pool.slice(0, Math.min(2, pool.length));
-    for (let a = 0; a < pool.length; a++) for (let b = a + 1; b < pool.length; b++) {
-      const pair = [pool[a]!, pool[b]!];
-      if (rank(pair) > rank(best)) best = pair;
-      for (let c = b + 1; c < pool.length; c++) {
-        const trio = [...pair, pool[c]!];
-        if (rank(trio) > rank(best)) best = trio;
+function modularNodes(catalog: Catalog) {
+  return [...catalog.nodes.values()].map((node, index) => {
+    const { families, ...stats } = nodeStats(catalog, node.nodeId);
+    let focus = 0;
+    for (const family of families) {
+      const evidence = catalog.evidence.get(family)!;
+      const perf = catalog.performance.get(family);
+      if (evidence.due || (perf && (perf.independentAccuracy < 0.65 || perf.hintRate > 0.5 || (perf.remediationAccuracy ?? 1) < 0.65))) {
+        focus = Math.max(focus, evidence.priority);
       }
     }
-    priorPacks.add(key(best));
-    best.sort((a, b) => score(b) - score(a) + 4 * ((primaryUsage.get(a.node.nodeId) ?? 0) - (primaryUsage.get(b.node.nodeId) ?? 0)));
-    const primary = best[0]!.node.nodeId;
-    primaryUsage.set(primary, (primaryUsage.get(primary) ?? 0) + 1);
-    for (const { node } of best) usage.set(node.nodeId, (usage.get(node.nodeId) ?? 0) + 1);
-    result.push(best.map(n => n.node));
-  }
-  return result;
+    return { node, index, focus, ...stats,
+      skill: skillSignals.find(skill => skill.pattern.test(`${node.nodeId} ${node.title}`)) };
+  }).filter(entry => entry.capacity > 0);
+}
+
+function planModularArcs(nodes: ReturnType<typeof modularNodes>, arcSlots: readonly StudyArcSlots[], startId: string, seed: number, focused: boolean) {
+  const rank = (entry: typeof nodes[number]) => entry.priority + (seed ? seededUnit(seed, entry.node.nodeId) : 0);
+  const ranked = [...nodes].sort((a, b) => rank(b) - rank(a) || a.index - b.index);
+  const byFocus = [...ranked].sort((a, b) => b.focus - a.focus);
+  const first = focused ? byFocus[0] : nodes.find(entry => entry.node.nodeId === startId);
+  const last = focused ? (byFocus[1] ?? byFocus[0]) : undefined;
+  const used = new Set<typeof nodes[number]>();
+  const covered = new Set<(typeof nodes[number])['skill']>();
+  return arcSlots.map((_, index) => {
+    const distinct = ranked.filter(entry => !used.has(entry) && entry !== last);
+    const pool = distinct.length ? distinct : ranked.filter(entry => entry !== last);
+    const next = (index === 0 ? first : index === arcSlots.length - 1 ? last : undefined)
+      ?? skillSignals.filter(skill => !covered.has(skill)).map(skill => pool.find(entry => entry.skill === skill)).find(Boolean)
+      ?? pool[0] ?? ranked[0]!;
+    used.add(next);
+    covered.add(next.skill);
+    return next;
+  });
 }
 
 export function buildMatchStudyBlueprint(input: MatchStudyBlueprintInput): MatchStudyBlueprint {
   const catalog = activeStudyCatalog(input);
-  const arcSlots = studyArcLayout(input.mode, input.arcSlots);
-  const arcCount = arcSlots.length;
+  const modules = input.subject === 'english' ? modularNodes(catalog) : [];
+  const focused = input.mode === 'deep' && !input.arcSlots && modules.some(entry => entry.focus > 0);
+  const arcSlots = studyArcLayout(input.mode, input.arcSlots, input.subject, focused);
   const seed = input.seed ?? 0;
   if (!Number.isSafeInteger(seed)) throw new RangeError('Study seed must be a safe integer');
-  let groups: KnowledgeNodeDef[][];
+  const arcCount = arcSlots.length;
+  const strategy = input.subject === 'math' ? 'structured_topic' : 'modular_pack';
+  let topics: { node: KnowledgeNodeDef; load: number; skill?: { label: string } | undefined }[];
   if (input.subject === 'math') {
-    const ordered = topoNodes(catalog.nodes);
-    const next = ordered.slice(ordered.findIndex(n => n.nodeId === catalog.startId))
-      .filter(n => n.nodeId === catalog.startId || nodeStats(catalog, n.nodeId).capacity > 0);
-    const review = ordered.map((node, i) => ({ node, i, ...nodeStats(catalog, node.nodeId) }))
-      .filter(n => n.capacity > 0).sort((a, b) => b.priority - a.priority || a.i - b.i);
-    groups = Array.from({ length: arcCount }, (_, index) => [next[index] ?? review[(index - next.length) % review.length]!.node]);
+    const ordered = topoNodes(catalog.nodes).map(node => ({ node, ...nodeStats(catalog, node.nodeId) }));
+    const next = ordered.slice(ordered.findIndex(n => n.node.nodeId === catalog.startId))
+      .filter(n => n.node.nodeId === catalog.startId || n.capacity > 0);
+    const review = ordered.filter(n => n.capacity > 0).sort((a, b) => b.priority - a.priority);
+    topics = Array.from({ length: arcCount }, (_, index) => next[index] ?? review[(index - next.length) % review.length]!);
   } else {
-    groups = modularNodePacks(catalog, arcSlots, seed);
+    topics = planModularArcs(modules, arcSlots, catalog.startId, seed, focused);
   }
-  const arcs: MatchStudyArcPlan[] = groups.map((nodes, arcIndex) => ({
+  const arcs: MatchStudyArcPlan[] = topics.map(({ node, load, skill }, arcIndex) => ({
     arcIndex,
-    topicNodeIds: nodes.map(n => n.nodeId),
-    primaryNodeId: nodes[0]!.nodeId,
-    title: nodes.map(n => n.title).join(' · '),
+    topicNodeIds: [node.nodeId],
+    primaryNodeId: node.nodeId,
+    title: node.title,
     subject: input.subject,
-    strategy: input.subject === 'math' ? 'structured_topic' : 'modular_pack',
-    tags: input.subject === 'math' ? nodes.map(n => n.title) : [...new Set(nodes.map(n => nodeSkills(n)[0]?.label ?? n.title))],
-    loadScore: Math.min(100, Math.round(mean(nodes.map(n => nodeStats(catalog, n.nodeId).load)) + Math.max(0, nodes.length - 2) * 9)),
+    strategy,
+    tags: [skill?.label ?? node.title],
+    loadScore: Math.round(load),
     slotsInArc: arcSlots[arcIndex]!,
     slotStages: plannedArcStages(arcSlots[arcIndex]!),
   }));
-  return { mode: input.mode, subject: input.subject, arcCount, slotsPerArc: arcSlots.reduce((max, length) => max > length ? max : length, 3 as StudyArcSlots), difficultyTier: studyDifficulty(catalog), seed, arcs };
+  return { mode: input.mode, subject: input.subject, arcCount, slotsPerArc: arcSlots.reduce((max, length) => max > length ? max : length, 2), difficultyTier: studyDifficulty(catalog), seed, arcs };
 }

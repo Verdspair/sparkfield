@@ -116,6 +116,9 @@ export class BoardStageEngine {
   private readonly lightGuidePulseGeo: THREE.RingGeometry;
   private readonly lightGuidePulseMat: THREE.MeshBasicMaterial;
   private readonly lightGuidePulseRing: THREE.Mesh;
+  private readonly itemDropRingGeo: THREE.RingGeometry;
+  private readonly itemDropRingMat: THREE.MeshBasicMaterial;
+  private readonly itemDropRingMesh: THREE.Mesh;
 
   private readonly materials: PbrMaterialLibrary;
   private readonly arena: ArenaStageAssembly;
@@ -150,6 +153,7 @@ export class BoardStageEngine {
   private readonly scratchNdc = new THREE.Vector2();
   private readonly scratchHit = new THREE.Vector3();
   private readonly scratchLookAt = new THREE.Vector3();
+  private readonly scratchProj = new THREE.Vector3();
 
   private qualityTier: StageQualityTier;
   private showBuiltInHudOverlay: boolean;
@@ -200,6 +204,7 @@ export class BoardStageEngine {
   private lastLobbyPointerX = 0;
   private lobbyPointerDown = false;
   private nudgedFriendlyId: string | null = null;
+  private itemDropTargetUnitId: string | null = null;
   private overSellZone = false;
 
   private lastFrameTimestampMs = 0;
@@ -298,6 +303,20 @@ export class BoardStageEngine {
     this.lightGuidePulseRing.position.set(0, 0.032, 0);
     this.lightGuidePulseRing.visible = false;
 
+    this.itemDropRingGeo = new THREE.RingGeometry(0.54, 0.72, 48);
+    this.itemDropRingGeo.rotateX(-Math.PI * 0.5);
+    this.itemDropRingMat = new THREE.MeshBasicMaterial({
+      color: 0xf7cf78,
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    });
+    this.itemDropRingMesh = new THREE.Mesh(this.itemDropRingGeo, this.itemDropRingMat);
+    this.itemDropRingMesh.position.set(0, 0.048, 0);
+    this.itemDropRingMesh.visible = false;
+
     this.materials = new PbrMaterialLibrary();
     this.arena = new ArenaStageAssembly(this.materials, initialTheme);
     this.lobbyStage = new LobbyStageAssembly(this.materials, this.currentTacticianId);
@@ -315,6 +334,7 @@ export class BoardStageEngine {
       this.unitsGroup,
       this.vfx.root,
       this.lightGuidePulseRing,
+      this.itemDropRingMesh,
     );
 
     if (container) {
@@ -355,6 +375,7 @@ export class BoardStageEngine {
       for (const obj of this.vfx.getActiveBloomTargets()) this.selectiveBloom.selection.add(obj);
       for (const obj of this.matchTacticianRig.bloomTargets) this.selectiveBloom.selection.add(obj);
       this.selectiveBloom.selection.add(this.lightGuidePulseRing);
+      this.selectiveBloom.selection.add(this.itemDropRingMesh);
       for (const rig of this.unitRigs.values()) {
         if (rig.manaRatio >= 0.85) this.selectiveBloom.selection.add(rig.weaponGlowMesh);
       }
@@ -886,7 +907,7 @@ export class BoardStageEngine {
       this.arena.triggerConduitSweep();
       this.audioBus.emit('onPhaseChange', { phase, roundIndex: 0 });
     }
-    if (phase !== 'strategy') {
+    if (!this.isControllablePhase(phase)) {
       this.cancelActiveInteraction();
     }
     if (phase === 'battle') {
@@ -896,7 +917,7 @@ export class BoardStageEngine {
     }
     if (phase === 'learning') {
       this.setLearningOverlayActive(true);
-    } else if (this.learningOverlayActive && phase === 'strategy') {
+    } else if (this.learningOverlayActive) {
       this.setLearningOverlayActive(false);
     }
   }
@@ -976,6 +997,10 @@ export class BoardStageEngine {
 
     for (const [id, rig] of this.unitRigs.entries()) {
       if (!incomingIds.has(id)) {
+        if (this.itemDropTargetUnitId === id) {
+          this.itemDropTargetUnitId = null;
+          this.itemDropRingMesh.visible = false;
+        }
         this.selectiveBloom?.selection.delete(rig.weaponGlowMesh);
         this.unitsGroup.remove(rig.root);
         rig.dispose();
@@ -1003,7 +1028,12 @@ export class BoardStageEngine {
         this.unitsGroup.add(rig.root);
         this.unitRigs.set(u.instanceId, rig);
       } else {
-        if (rig.star !== u.star) rig.applyStarTier(u.star);
+        if (rig.star !== u.star) {
+          rig.applyStarTier(u.star);
+          if (this.itemDropTargetUnitId === u.instanceId) {
+            rig.scaleSpring.setTarget(rig.scaleSpring.target * 1.12);
+          }
+        }
         if (rig.allegiance !== u.allegiance) rig.applyAllegiance(u.allegiance);
         if (this.draggingInstanceId !== u.instanceId) {
           rig.posSpring.setTarget(resolved.x, targetY, resolved.z);
@@ -1310,6 +1340,100 @@ export class BoardStageEngine {
     return this.pickAtNdc(ndcX, ndcY);
   }
 
+  private projectUnitPointToClient(
+    instanceId: string,
+    heightY: number,
+    rect: DOMRect,
+  ): { screenX: number; screenY: number } | null {
+    const st = this.unitStates.get(instanceId);
+    if (!st) return null;
+    const rig = this.unitRigs.get(instanceId);
+    const pos = rig
+      ? { x: rig.root.position.x, z: rig.root.position.z }
+      : this.resolvePlacementWorldXZ(st.location, st.seatIndex ?? 0);
+    this.scratchProj.set(pos.x, heightY, pos.z).project(this.camera);
+    if (this.scratchProj.z < -1 || this.scratchProj.z > 1) return null;
+    return {
+      screenX: rect.left + (this.scratchProj.x * 0.5 + 0.5) * rect.width,
+      screenY: rect.top + (-this.scratchProj.y * 0.5 + 0.5) * rect.height,
+    };
+  }
+
+  public pickAllyUnitAtClientPoint(
+    clientX: number,
+    clientY: number,
+  ): { instanceId: string; screenX: number; screenY: number } | null {
+    if (this.sceneMode !== 'match' || this.activeSeatIndex !== 0) return null;
+    const surface = this.renderer?.domElement ?? this.container;
+    if (!surface) return null;
+    const rect = surface.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+
+    const pick = this.pickAtClientPoint(clientX, clientY);
+    if (pick && (pick.kind === 'board_hex' || pick.kind === 'bench_slot') && pick.unitInstanceId) {
+      const st = this.unitStates.get(pick.unitInstanceId);
+      if (st && st.allegiance === 'ally' && (st.seatIndex ?? 0) === 0) {
+        const head = this.projectUnitPointToClient(st.instanceId, 1.38, rect);
+        return {
+          instanceId: st.instanceId,
+          screenX: head?.screenX ?? clientX,
+          screenY: head?.screenY ?? clientY,
+        };
+      }
+    }
+
+    let bestId: string | null = null;
+    let bestDistSq = Number.POSITIVE_INFINITY;
+    for (const [id, st] of this.unitStates.entries()) {
+      if (st.allegiance !== 'ally' || (st.seatIndex ?? 0) !== 0) continue;
+      const torso = this.projectUnitPointToClient(id, 0.72, rect);
+      if (!torso) continue;
+      const dx = clientX - torso.screenX;
+      const dy = clientY - torso.screenY;
+      if (Math.abs(dx) > 36 || dy < -54 || dy > 24) continue;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < bestDistSq) {
+        bestDistSq = distSq;
+        bestId = id;
+      }
+    }
+    if (!bestId) return null;
+    const head = this.projectUnitPointToClient(bestId, 1.38, rect);
+    return {
+      instanceId: bestId,
+      screenX: head?.screenX ?? clientX,
+      screenY: head?.screenY ?? clientY,
+    };
+  }
+
+  public setItemDropTargetUnit(instanceId: string | null): void {
+    if (this.itemDropTargetUnitId === instanceId) return;
+    if (this.itemDropTargetUnitId) {
+      const prevSt = this.unitStates.get(this.itemDropTargetUnitId);
+      const prevRig = this.unitRigs.get(this.itemDropTargetUnitId);
+      if (prevSt && prevRig) {
+        prevRig.applyStarTier(prevSt.star);
+      }
+    }
+    this.itemDropTargetUnitId = null;
+    if (!instanceId) {
+      this.itemDropRingMesh.visible = false;
+      return;
+    }
+    const nextSt = this.unitStates.get(instanceId);
+    const nextRig = this.unitRigs.get(instanceId);
+    if (!nextSt || !nextRig || nextSt.allegiance !== 'ally' || (nextSt.seatIndex ?? 0) !== 0) {
+      this.itemDropRingMesh.visible = false;
+      return;
+    }
+    this.itemDropTargetUnitId = instanceId;
+    nextRig.applyStarTier(nextSt.star);
+    nextRig.scaleSpring.setTarget(nextRig.scaleSpring.target * 1.12);
+    this.itemDropRingMesh.position.set(nextRig.root.position.x, 0.048, nextRig.root.position.z);
+    this.itemDropRingMesh.scale.setScalar(1);
+    this.itemDropRingMesh.visible = true;
+  }
+
   private findViewedUnitAtBoardHex(boardRow: number, col: number): string | null {
     for (const [id, st] of this.unitStates.entries()) {
       if ((st.seatIndex ?? 0) !== this.activeSeatIndex || st.location.zone !== 'board') continue;
@@ -1330,11 +1454,21 @@ export class BoardStageEngine {
     return null;
   }
 
+  private isControllablePhase(phase: MatchPhaseKind): boolean {
+    return (
+      phase === 'entry' ||
+      phase === 'resource' ||
+      phase === 'rest' ||
+      phase === 'choice' ||
+      phase === 'strategy'
+    );
+  }
+
   private canControlUnitsNow(): boolean {
     return (
       this.sceneMode === 'match' &&
       this.interactiveDeployEnabled &&
-      this.currentPhase === 'strategy' &&
+      this.isControllablePhase(this.currentPhase) &&
       this.activeSeatIndex === 0 &&
       !this.learningOverlayActive
     );
@@ -1427,7 +1561,7 @@ export class BoardStageEngine {
     if (
       this.activeSeatIndex === 0 &&
       !this.learningOverlayActive &&
-      (this.currentPhase === 'strategy' || this.currentPhase === 'resource') &&
+      this.isControllablePhase(this.currentPhase) &&
       pick.kind !== 'sell_zone'
     ) {
       this.moveTacticianTo(pick.worldX, pick.worldZ);
@@ -1684,6 +1818,7 @@ export class BoardStageEngine {
       this.callbacks.onDragStateChange?.(null, false);
     }
     this.lobbyPointerDown = false;
+    this.setItemDropTargetUnit(null);
     this.clearSelectionAndHelpers();
   }
 
@@ -1726,6 +1861,16 @@ export class BoardStageEngine {
       this.arena.update(dt);
       for (const rig of this.unitRigs.values()) {
         rig.update(dt, this.elapsedSec);
+      }
+      if (this.itemDropTargetUnitId) {
+        const dropRig = this.unitRigs.get(this.itemDropTargetUnitId);
+        if (dropRig && dropRig.root.visible) {
+          this.itemDropRingMesh.position.set(dropRig.root.position.x, 0.048, dropRig.root.position.z);
+          this.itemDropRingMesh.scale.setScalar(1 + Math.sin(this.elapsedSec * 7.5) * 0.08);
+          this.itemDropRingMesh.visible = true;
+        } else {
+          this.itemDropRingMesh.visible = false;
+        }
       }
       this.unitFactory.syncGroundBatches(this.unitRigs.values());
       this.vfx.update(dt);
@@ -1918,6 +2063,8 @@ export class BoardStageEngine {
     this.lobbyStage.dispose();
     this.lightGuidePulseGeo.dispose();
     this.lightGuidePulseMat.dispose();
+    this.itemDropRingGeo.dispose();
+    this.itemDropRingMat.dispose();
     this.unitFactory.dispose();
     this.vfx.dispose();
     this.arena.dispose();

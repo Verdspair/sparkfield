@@ -43,6 +43,7 @@ import {
   buildMatchStudyBlueprint,
   buildPersonalizedLessonBundle,
   evaluateLearningBonusDrops,
+  roomSlotBonusStage,
   finalizeLearningGoldCarry,
   gradeFrozenLearningUnits,
   gradeQuestionSubmission,
@@ -527,16 +528,19 @@ export class OfflinePracticeMatchController {
       this.emitSnapshot();
       return { ok: true };
     }
+    const choiceKind = getMatchChoiceKind(
+      this.phase, MODE_BUDGETS.modes[this.mode].timeline[this.phaseIndex]?.label ?? '',
+    );
     if (CHOICE_COMMANDS.has(command.type)) {
-      const kind = getMatchChoiceKind(
-        this.phase, MODE_BUDGETS.modes[this.mode].timeline[this.phaseIndex]?.label ?? '',
-      );
-      const allowed = kind === 'augment'
+      const allowed = choiceKind === 'augment'
         ? command.type === 'PICK_AUGMENT' || command.type === 'REROLL_AUGMENT_SLOT'
-        : kind === 'anvil' && command.type === 'PICK_ANVIL_OPTION';
+        : choiceKind === 'anvil' && command.type === 'PICK_ANVIL_OPTION';
       if (!allowed) return { ok: false, reason: 'CHOICE_WINDOW_REQUIRED' };
-    } else if (this.phase !== 'strategy') {
-      return { ok: false, reason: 'STRATEGY_PHASE_REQUIRED' };
+    } else {
+      const canAct = choiceKind === 'augment' ? !selfSeat.augmentOffer
+        : choiceKind === 'anvil' ? selfSeat.anvils.length === 0
+        : ['entry', 'resource', 'rest', 'strategy'].includes(this.phase);
+      if (!canAct || this.game.phase !== 'prep') return { ok: false, reason: 'STRATEGY_PHASE_REQUIRED' };
     }
     const res = applyGameCommand(this.game, this.playerSeatId, command);
     if (res.ok) this.emitSnapshot();
@@ -691,7 +695,7 @@ export class OfflinePracticeMatchController {
           ),
           carryInCents: selfSeat.learningChargeCents,
         });
-        const bonus = evaluateLearningBonusDrops(gold.exactScore, this.lessonProgress.bundle.arcMeta.stageKind);
+        const bonus = evaluateLearningBonusDrops(gold.exactScore, roomSlotBonusStage(this.mode, this.nodeIndex));
         const settlement = {
           ...gold,
           ...applyLearningBonusGrant(this.game, selfSeat, this.nodeIndex, bonus),

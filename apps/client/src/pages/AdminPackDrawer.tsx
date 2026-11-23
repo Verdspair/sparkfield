@@ -654,7 +654,7 @@ export function AdminPackDrawer({
                         </div>
                       </div>
 
-                      <div style={{ maxHeight: '56vh', overflow: 'auto' }}>
+                      <div style={{ maxHeight: '78vh', overflow: 'auto' }}>
                         <QuestionStepCard
                           stepKind={activeSandboxItem.stepRole}
                           question={activeSandboxItem}

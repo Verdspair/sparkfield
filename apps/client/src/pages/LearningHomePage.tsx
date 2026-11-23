@@ -418,7 +418,15 @@ export function LearningHomePage(): React.JSX.Element {
 
     return (
       <div className="learning-briefing-backdrop" data-testid="standalone-learning-overlay">
-        <div className="learning-briefing-modal">
+        <div
+          className="learning-briefing-modal"
+          style={{
+            width: 'min(1260px, 95vw)',
+            maxWidth: '95vw',
+            minHeight: 'min(660px, 80vh)',
+            maxHeight: '94vh',
+          }}
+        >
           <div className="blc-standalone-topstrip">
             <div>
               <strong>独立练习</strong>
@@ -451,7 +459,7 @@ export function LearningHomePage(): React.JSX.Element {
             </div>
           </div>
 
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
             <QuestionStepCard
               stepKind={step.kind}
               stepsProgress={stepsProgress}

@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
 import { ClientQuestionViewSchema, DEFAULT_TACTICIAN_ID, FinalBoardSnapshotSchema, LearningArcMetaSchema,
   MatchStudyBlueprintSchema, MODE_BUDGETS, SEASON1_UNITS_BY_ID, TacticianIdSchema,
-  type CoursePack, type DurationMode, type GameCommand, type LearningArcMeta, type MatchStudyBlueprint, type UserProfile } from '@pkg/contracts';
+  type ClientQuestionView, type CoursePack, type DurationMode, type GameCommand, type LearningArcMeta, type MatchStudyBlueprint, type UserProfile } from '@pkg/contracts';
 import type { SeatState } from '@pkg/game-core';
 import type { LearningGoldSettlement } from '@pkg/learning-core';
 import { compileCoursePack, serializeCoursePackToAuthoring } from '@pkg/pack-compiler';
@@ -88,7 +88,7 @@ interface Snapshot {
   deadlineEpochMs: number; remainingSeconds: number; round: number; nodeIndex: number;
   versionLock: { seasonTermId: string; gameSetVersion: string; coursePackVersion: string };
   seatId: string; self: SeatState; seats: Record<string, unknown>[];
-  learning: null | { currentStep: string | null; complete: boolean; clientQuestions: { questionId: string; stepRole: string; subject: string }[];
+  learning: null | { currentStep: string | null; complete: boolean; clientQuestions: ClientQuestionView[];
     arcMeta: LearningArcMeta; blueprint: MatchStudyBlueprint;
     steps: { kind: string; active: boolean; questionIds: string[] }[]; submittedQuestionIds: string[]; feedback: Record<string, unknown> };
   resourceSettlement: LearningGoldSettlement | null;
@@ -541,8 +541,8 @@ describe.each([
       expect((await inbox.snapshot()).seats.find((seat) => seat.seatId === seatId)?.tacticianId).toBe('tactician_europa_fin');
     }
     await expect(sdk.joinById(roomId, { token: intruder.token })).rejects.toBeTruthy();
-    const blocked = await inbox.command({ type: 'REFRESH_SHOP' });
-    expect(blocked).toMatchObject({ ok: false, reason: 'STRATEGY_PHASE_REQUIRED' });
+    expect(await inbox.command({ type: 'TOGGLE_LOCK_SHOP' })).toMatchObject({ ok: true });
+    expect(await inbox.command({ type: 'TOGGLE_LOCK_SHOP' })).toMatchObject({ ok: true });
     const noReturn = await http('/api/matches/return-to-prep', person.token, {});
     expect(noReturn.status).toBe(409); expect(noReturn.body.error).toBe('MATCH_IN_PROGRESS');
 
@@ -589,12 +589,13 @@ describe.each([
       safeQuestions(secondAssessment.learning!.clientQuestions);
     }
     const firstBlueprint = lesson.learning!.blueprint;
-    const expectedArcSlots = { quick: [4], standard: [4, 4], deep: [4, 3, 3] }[mode];
+    const expectedArcSlots = { quick: [2, 2], standard: [2, 2, 2, 2], deep: [2, 2, 2, 2, 2] }[mode];
     expect(firstBlueprint).toMatchObject({ mode, subject: 'english', arcCount: expectedArcSlots.length });
     expect(firstBlueprint.arcs.map((arc) => arc.slotsInArc)).toEqual(expectedArcSlots);
     expect(firstBlueprint).toEqual(startingBlueprint);
     let current = lesson;
     const firstNodeQuestionIds = new Set<string>();
+    let missedIntro: { questionId: string; familyId: string } | undefined;
     for (let step = 0; step < 8 && current.phase === 'learning' && current.learning && !current.learning.complete; step++) {
       safeQuestions(current.learning.clientQuestions);
       expect(current.learning.clientQuestions.every((q) => q.subject === 'english')).toBe(true);
@@ -609,14 +610,19 @@ describe.each([
             const poison = await requestLearning(studyInbox, 'submit', q.questionId, { questionId: 'wrong-question-id', answer: 'x' });
             expect(poison).toMatchObject({ ok: false, reason: 'INVALID_MESSAGE' });
           }
-          expect((await requestLearning(studyInbox, 'submit', q.questionId, answerFor(q.questionId))).ok).toBe(true);
+          expect(q).toMatchObject({ assessmentKind: 'application', allowMaterialReview: true });
+          expect(q.materialMd.trim()).not.toBe('');
+          const intentionallyWrong = queueType === 'casual' && !missedIntro;
+          if (intentionallyWrong) missedIntro = q;
+          const submission = intentionallyWrong ? { answer: 'wrong answer' } : answerFor(q.questionId);
+          expect((await requestLearning(studyInbox, 'submit', q.questionId, submission)).ok).toBe(true);
           firstNodeQuestionIds.add(q.questionId);
         }
       }
       current = await studyInbox.snapshot();
     }
     expect(study.attempts.map((attempt) => attempt.questionId)).toEqual([...firstNodeQuestionIds]);
-    expect(study.attempts.every((attempt) => attempt.isCorrect && attempt.slotInArc === 0)).toBe(true);
+    expect(study.attempts.every(attempt => attempt.isCorrect === (attempt.questionId !== missedIntro?.questionId) && attempt.slotInArc === 0)).toBe(true);
     if (queueType === 'ranked') {
       const resource = current.phase === 'resource' && current.nodeIndex === 0
         ? current
@@ -701,6 +707,8 @@ describe.each([
       expect(await studyInbox.command({ type: 'REROLL_AUGMENT_SLOT', slotIndex: 0 })).toMatchObject({ ok: true });
       expect(await studyInbox.command({ type: 'PICK_AUGMENT', slotIndex: 0 })).toMatchObject({ ok: true });
       expect((await studyInbox.snapshot()).self.chosenAugments).toHaveLength(choice.self.chosenAugments.length + 1);
+      expect(await studyInbox.command({ type: 'TOGGLE_LOCK_SHOP' })).toMatchObject({ ok: true });
+      expect(await studyInbox.command({ type: 'TOGGLE_LOCK_SHOP' })).toMatchObject({ ok: true });
       const roundTwo = await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'strategy' && s.round === 2);
       const roundThree = await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'strategy' && s.round === 3);
       expect(roundTwo.resourceSettlement).toMatchObject({ nodeIndex: 1, rawEarnedCents: 0, carryInCents: 0, grantedIntegerGold: 0, carryOutCents: 0,
@@ -732,6 +740,11 @@ describe.each([
         if (slotStages[slotInArc] === 'mastery') {
           expect(learning.currentStep).toBe('verification');
           expect(learning.steps.filter((step) => step.active).map((step) => step.kind)).toEqual(['verification']);
+          expect(learning.clientQuestions.every(q => !q.allowMaterialReview && q.materialMd === '')).toBe(true);
+          if (nodeIndex === 1 && missedIntro) {
+            expect(learning.clientQuestions[0]).toMatchObject({ familyId: missedIntro.familyId });
+            expect(learning.clientQuestions[0]!.questionId).not.toBe(missedIntro.questionId);
+          }
         }
         for (const questionId of learning.steps.flatMap((step) => step.questionIds)) {
           expect(questionIds.has(questionId)).toBe(false);

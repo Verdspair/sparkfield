@@ -28,7 +28,7 @@ import {
   type QuestionAnswerSubmission,
   type QuestionFeedbackView,
 } from '@pkg/learning-ui';
-import type { MatchLearningFeedbackItem } from '../api/matchSocket.js';
+import type { MatchLearningFeedbackItem, MatchRoomSnapshot } from '../api/matchSocket.js';
 import { TacticianPortrait, UnitPortrait } from '../components/UnitPortrait.js';
 import { useAppStore } from '../store/appStore.js';
 import {
@@ -130,6 +130,24 @@ type TargetAction = { phaseIndex: number } & (
   | { kind: 'remover' | 'reforger' }
 );
 
+type ItemDragPayload =
+  | { readonly kind: 'equip'; readonly inventoryItemIndex: number; readonly itemId: string }
+  | { readonly kind: 'remover'; readonly itemId: 'TOOL_MAGNETIC_REMOVER' }
+  | { readonly kind: 'reforger'; readonly itemId: 'TOOL_REFORGER' };
+
+interface ActiveItemDrag {
+  readonly pointerId: number;
+  readonly payload: ItemDragPayload;
+  readonly startX: number;
+  readonly startY: number;
+  readonly clientX: number;
+  readonly clientY: number;
+  readonly dragging: boolean;
+  readonly targetUnitId: string | null;
+  readonly targetScreenX: number;
+  readonly targetScreenY: number;
+}
+
 function targetCommand(action: TargetAction, targetInstanceId: string): GameCommand {
   if (action.kind === 'equip') {
     return {
@@ -142,6 +160,43 @@ function targetCommand(action: TargetAction, targetInstanceId: string): GameComm
     type: action.kind === 'remover' ? 'USE_MAGNETIC_REMOVER' : 'USE_REFORGER',
     targetInstanceId,
   };
+}
+
+function hasReforgeableUnitItem(unit: UnitInstance): boolean {
+  return unit.items.some((itemId) => {
+    const kind = lookupItemById(itemId)?.kind;
+    return kind === 'component' || kind === 'completed' || kind === 'emblem';
+  });
+}
+
+function describeEquipBlockReason(reason: string | undefined): string {
+  switch (reason) {
+    case 'item-slots-full':
+      return '装备槽已满 (3/3)';
+    case 'duplicate-unique-item':
+      return '不可重复佩戴唯一装备';
+    case 'one-emblem-per-unit':
+      return '每枚棋子限戴 1 件纹章';
+    case 'unit-frozen':
+      return '棋子休眠冻结中';
+    default:
+      return '当前不可佩戴';
+  }
+}
+
+function isInteractivePrepPhase(
+  snapshot: MatchRoomSnapshot | null,
+  hasChoiceModal: boolean,
+): boolean {
+  if (!snapshot) return false;
+  return (
+    snapshot.phase === 'strategy' ||
+    snapshot.phase === 'entry' ||
+    snapshot.phase === 'resource' ||
+    snapshot.phase === 'rest' ||
+    (snapshot.phase === 'choice' && !hasChoiceModal) ||
+    (snapshot.phase === 'learning' && Boolean(snapshot.learning?.complete))
+  );
 }
 
 export function MatchHudOverlay(): React.JSX.Element | null {
@@ -185,15 +240,31 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   const [codexInitialTab, setCodexInitialTab] = useState<'items' | 'units'>('units');
   const [codexInitialItemId, setCodexInitialItemId] = useState<string | null>(null);
   const [hoveredBagIndex, setHoveredBagIndex] = useState<number | null>(null);
+  const [hoveredCraftPartnerId, setHoveredCraftPartnerId] = useState<string | null>(null);
   const [hoveredInspectItemId, setHoveredInspectItemId] = useState<string | null>(null);
   const [expandedTraitName, setExpandedTraitName] = useState<string | null>(null);
 
+  const [itemDrag, setItemDrag] = useState<ActiveItemDrag | null>(null);
+  const itemDragRef = useRef<ActiveItemDrag | null>(null);
+  itemDragRef.current = itemDrag;
+  const suppressSlotClickRef = useRef<boolean>(false);
+
+  const modeSpecTop = matchSnapshot ? MODE_BUDGETS.modes[matchSnapshot.mode] : null;
+  const timelineEventTop =
+    matchSnapshot && modeSpecTop ? modeSpecTop.timeline[matchSnapshot.phaseIndex] : undefined;
+  const choiceKindTop = matchSnapshot
+    ? getMatchChoiceKind(matchSnapshot.phase, timelineEventTop?.label ?? '')
+    : null;
+  const showAugmentChoiceTop =
+    choiceKindTop === 'augment' && Boolean(matchSnapshot?.self.augmentOffer);
+  const activeAnvilTop = matchSnapshot?.self.anvils[0] ?? null;
+  const showAnvilChoiceTop = choiceKindTop === 'anvil' && Boolean(activeAnvilTop);
+  const hasChoiceModalTop = showAugmentChoiceTop || showAnvilChoiceTop;
+  const isStrategyTop = isInteractivePrepPhase(matchSnapshot, hasChoiceModalTop);
+
   const [targetAction, setTargetAction] = useState<TargetAction | null>(null);
-  const isEarlyStrategyActive =
-    matchSnapshot?.phase === 'learning' && Boolean(matchSnapshot.learning?.complete);
   const activeTargetAction =
-    (matchSnapshot?.phase === 'strategy' || isEarlyStrategyActive) &&
-    targetAction?.phaseIndex === matchSnapshot.phaseIndex
+    isStrategyTop && matchSnapshot && targetAction?.phaseIndex === matchSnapshot.phaseIndex
       ? targetAction
       : null;
   const pendingEquipIndex =
@@ -237,17 +308,31 @@ export function MatchHudOverlay(): React.JSX.Element | null {
     setPeekingBattlefield(false);
     setTargetAction(null);
     setHoveredBagIndex(null);
+    setHoveredCraftPartnerId(null);
+    setItemDrag(null);
+    getStageEngine()?.setItemDropTargetUnit(null);
     setLearningReview(null);
     if (matchSnapshot?.phase === 'battle') {
       setRightTab('score');
     }
-  }, [matchSnapshot?.phase, matchSnapshot?.phaseIndex]);
+  }, [matchSnapshot?.phase, matchSnapshot?.phaseIndex, getStageEngine]);
 
   useEffect(() => {
     if (leftTab !== 'items') {
       setHoveredBagIndex(null);
+      setHoveredCraftPartnerId(null);
     }
   }, [leftTab]);
+
+  useEffect(() => {
+    setHoveredCraftPartnerId(null);
+  }, [hoveredBagIndex, pendingEquipIndex]);
+
+  useEffect(() => {
+    return () => {
+      getStageEngine()?.setItemDropTargetUnit(null);
+    };
+  }, [getStageEngine]);
 
   useEffect(() => {
     setHoveredInspectItemId(null);
@@ -321,18 +406,115 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   const serverCommandsLocked = matchActionPending || matchConnectionState !== 'connected';
 
   useEffect(() => {
-    if (!matchSnapshot) return;
-    const modeSpecForKey = MODE_BUDGETS.modes[matchSnapshot.mode];
-    const timelineForKey = modeSpecForKey.timeline[matchSnapshot.phaseIndex];
-    const choiceKindForKey = getMatchChoiceKind(matchSnapshot.phase, timelineForKey?.label ?? '');
-    const inStrategyWindow =
-      matchSnapshot.phase === 'strategy' ||
-      (matchSnapshot.phase === 'learning' && Boolean(matchSnapshot.learning?.complete));
+    if (!isStrategyTop || serverCommandsLocked) {
+      if (itemDragRef.current) {
+        getStageEngine()?.setItemDropTargetUnit(null);
+        setItemDrag(null);
+      }
+    }
+  }, [isStrategyTop, serverCommandsLocked, getStageEngine]);
+
+  const hasActiveItemDrag = itemDrag !== null;
+  useEffect(() => {
+    if (!hasActiveItemDrag) return;
+    const handleMove = (event: PointerEvent) => {
+      const current = itemDragRef.current;
+      if (!current || event.pointerId !== current.pointerId) return;
+      const moved = Math.hypot(event.clientX - current.startX, event.clientY - current.startY);
+      const nowDragging = current.dragging || moved >= 6;
+      if (!nowDragging) return;
+      if (!current.dragging) {
+        setHoveredBagIndex(null);
+        setHoveredCraftPartnerId(null);
+        clearInspectedUnit();
+      }
+      const stage = getStageEngine();
+      const hit = stage?.pickAllyUnitAtClientPoint(event.clientX, event.clientY) ?? null;
+      stage?.setItemDropTargetUnit(hit?.instanceId ?? null);
+      setItemDrag({
+        ...current,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        dragging: true,
+        targetUnitId: hit?.instanceId ?? null,
+        targetScreenX: hit?.screenX ?? event.clientX,
+        targetScreenY: hit?.screenY ?? event.clientY,
+      });
+    };
+
+    const handleEnd = (event: PointerEvent) => {
+      const current = itemDragRef.current;
+      if (!current || event.pointerId !== current.pointerId) return;
+      const stage = getStageEngine();
+      stage?.setItemDropTargetUnit(null);
+      if (current.dragging && event.type === 'pointerup') {
+        suppressSlotClickRef.current = true;
+        window.setTimeout(() => {
+          suppressSlotClickRef.current = false;
+        }, 0);
+        const finalHit = stage?.pickAllyUnitAtClientPoint(event.clientX, event.clientY) ?? null;
+        const dropUnitId = finalHit?.instanceId ?? current.targetUnitId;
+        if (dropUnitId && matchSnapshot) {
+          const targetUnit = matchSnapshot.self.units.find((u) => u.instanceId === dropUnitId);
+          if (targetUnit) {
+            if (current.payload.kind === 'equip') {
+              const preview = previewItemEquip(targetUnit, current.payload.itemId);
+              if (preview.ok) {
+                sendMatchCommand({
+                  type: 'EQUIP_ITEM',
+                  inventoryItemIndex: current.payload.inventoryItemIndex,
+                  targetInstanceId: dropUnitId,
+                });
+                setTargetAction(null);
+              }
+            } else if (current.payload.kind === 'remover') {
+              if (
+                targetUnit.frozenUntilRound === null &&
+                targetUnit.items.length > 0 &&
+                matchSnapshot.self.magneticCharges >= 1
+              ) {
+                sendMatchCommand({
+                  type: 'USE_MAGNETIC_REMOVER',
+                  targetInstanceId: dropUnitId,
+                });
+                setTargetAction(null);
+              }
+            } else if (current.payload.kind === 'reforger') {
+              if (
+                targetUnit.frozenUntilRound === null &&
+                hasReforgeableUnitItem(targetUnit) &&
+                matchSnapshot.self.reforgerCharges >= 1
+              ) {
+                sendMatchCommand({
+                  type: 'USE_REFORGER',
+                  targetInstanceId: dropUnitId,
+                });
+                setTargetAction(null);
+              }
+            }
+          }
+        }
+      }
+      setItemDrag(null);
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleEnd);
+    window.addEventListener('pointercancel', handleEnd);
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleEnd);
+      window.removeEventListener('pointercancel', handleEnd);
+    };
+  }, [hasActiveItemDrag, matchSnapshot, getStageEngine, sendMatchCommand, clearInspectedUnit]);
+
+  useEffect(() => {
+    if (!matchSnapshot || !modeSpecTop) return;
+    const inStrategyWindow = isStrategyTop;
     const modalBlocking =
       (matchSnapshot.phase === 'learning' && !matchSnapshot.learning?.complete) ||
-      (choiceKindForKey === 'augment' && Boolean(matchSnapshot.self.augmentOffer)) ||
-      (choiceKindForKey === 'anvil' && matchSnapshot.self.anvils.length > 0);
-    const xpCapReached = matchSnapshot.self.level >= modeSpecForKey.economy.base_level_cap;
+      hasChoiceModalTop;
+    const xpCapReached = matchSnapshot.self.level >= modeSpecTop.economy.base_level_cap;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
@@ -345,7 +527,10 @@ export function MatchHudOverlay(): React.JSX.Element | null {
       }
 
       if (event.key === 'Escape') {
-        if (activeTargetAction) {
+        if (itemDragRef.current) {
+          getStageEngine()?.setItemDropTargetUnit(null);
+          setItemDrag(null);
+        } else if (activeTargetAction) {
           setTargetAction(null);
         } else if (inspectedUnitId) {
           clearInspectedUnit();
@@ -397,13 +582,17 @@ export function MatchHudOverlay(): React.JSX.Element | null {
     scoutedSeatId,
     scoutMatchSeat,
     sendMatchCommand,
+    modeSpecTop,
+    isStrategyTop,
+    hasChoiceModalTop,
+    getStageEngine,
   ]);
 
   if (!matchSnapshot) return null;
 
   const self = matchSnapshot.self;
-  const modeSpec = MODE_BUDGETS.modes[matchSnapshot.mode];
-  const timelineEvent = modeSpec.timeline[matchSnapshot.phaseIndex];
+  const modeSpec = modeSpecTop!;
+  const timelineEvent = timelineEventTop;
   const activeBattle = matchSnapshot.phase === 'battle' ? (matchSnapshot.battle ?? null) : null;
   const totalPhaseSec =
     activeBattle?.startedAtEpochMs &&
@@ -429,9 +618,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
       ? Math.max(0, Math.min(100, ((totalPhaseSec - liveRemainingSec) / totalPhaseSec) * 100))
       : 0;
 
-  const isStrategy =
-    matchSnapshot.phase === 'strategy' ||
-    (matchSnapshot.phase === 'learning' && Boolean(matchSnapshot.learning?.complete));
+  const isStrategy = isStrategyTop;
   const isShopExpanded = isStrategy && !shopCollapsed;
   const isBottomOpen = isShopExpanded && shopDockPosition === 'bottom';
   const isUrgentCountdown = isStrategy && liveRemainingSec > 0 && liveRemainingSec <= 5;
@@ -478,11 +665,26 @@ export function MatchHudOverlay(): React.JSX.Element | null {
       starCopies(draggingUnit.star)
     : 1;
 
-  const choiceKind = getMatchChoiceKind(matchSnapshot.phase, timelineEvent?.label ?? '');
-  const showAugmentChoice = choiceKind === 'augment' && Boolean(self.augmentOffer);
-  const activeAnvil = self.anvils[0] ?? null;
-  const showAnvilChoice = choiceKind === 'anvil' && Boolean(activeAnvil);
-  const hasChoiceModal = showAugmentChoice || showAnvilChoice;
+  const showAugmentChoice = showAugmentChoiceTop;
+  const hasChoiceModal = hasChoiceModalTop;
+
+  const beginItemPointerDrag = (event: React.PointerEvent, payload: ItemDragPayload) => {
+    if (serverCommandsLocked || !isStrategy) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    suppressSlotClickRef.current = false;
+    setItemDrag({
+      pointerId: event.pointerId,
+      payload,
+      startX: event.clientX,
+      startY: event.clientY,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      dragging: false,
+      targetUnitId: null,
+      targetScreenX: event.clientX,
+      targetScreenY: event.clientY,
+    });
+  };
 
   const openCodex = (tab: 'items' | 'units', itemId: string | null = null) => {
     setCodexInitialTab(tab);
@@ -960,31 +1162,71 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                 <button
                   type="button"
                   disabled={self.magneticCharges < 1 || !isStrategy}
-                  className={`blc-btn blc-btn--xs ${
-                    pendingTool === 'remover' ? 'blc-btn--primary' : 'blc-btn--metal'
-                  }`}
+                  className={`sf-tool-slot sf-tool-slot--remover ${
+                    pendingTool === 'remover' ? 'sf-bag-slot--armed' : ''
+                  } ${
+                    itemDrag?.dragging && itemDrag.payload.kind === 'remover'
+                      ? 'sf-bag-slot--dragging'
+                      : ''
+                  }`.trim()}
+                  onPointerDown={(event) => {
+                    if (self.magneticCharges < 1) return;
+                    beginItemPointerDrag(event, {
+                      kind: 'remover',
+                      itemId: 'TOOL_MAGNETIC_REMOVER',
+                    });
+                  }}
                   onClick={() => {
+                    if (suppressSlotClickRef.current) {
+                      suppressSlotClickRef.current = false;
+                      return;
+                    }
                     armTargetAction({ kind: 'remover', phaseIndex: matchSnapshot.phaseIndex });
                   }}
-                  title="无损卸下目标友军全部装备退回背包"
+                  title="拖拽至友军棋子或点击：无损卸下全部装备退回背包"
+                  aria-label={`磁拆 ×${self.magneticCharges}`}
                   data-testid="tool-magnetic-remover-btn"
                 >
-                  磁拆 ×{self.magneticCharges}
+                  <span className="sf-tool-slot__icon">
+                    <GameItemIcon itemId="TOOL_MAGNETIC_REMOVER" size="md" />
+                  </span>
+                  <span className="sf-tool-slot__count">×{self.magneticCharges}</span>
+                  <span className="sf-tool-slot__label">磁拆</span>
                 </button>
 
                 <button
                   type="button"
                   disabled={self.reforgerCharges < 1 || !isStrategy}
-                  className={`blc-btn blc-btn--xs ${
-                    pendingTool === 'reforger' ? 'blc-btn--primary' : 'blc-btn--metal'
-                  }`}
+                  className={`sf-tool-slot sf-tool-slot--reforger ${
+                    pendingTool === 'reforger' ? 'sf-bag-slot--armed' : ''
+                  } ${
+                    itemDrag?.dragging && itemDrag.payload.kind === 'reforger'
+                      ? 'sf-bag-slot--dragging'
+                      : ''
+                  }`.trim()}
+                  onPointerDown={(event) => {
+                    if (self.reforgerCharges < 1) return;
+                    beginItemPointerDrag(event, {
+                      kind: 'reforger',
+                      itemId: 'TOOL_REFORGER',
+                    });
+                  }}
                   onClick={() => {
+                    if (suppressSlotClickRef.current) {
+                      suppressSlotClickRef.current = false;
+                      return;
+                    }
                     armTargetAction({ kind: 'reforger', phaseIndex: matchSnapshot.phaseIndex });
                   }}
-                  title="重铸目标友军装备为同阶其他装备"
+                  title="拖拽至友军棋子或点击：重铸装备为同阶其他装备"
+                  aria-label={`重铸 ×${self.reforgerCharges}`}
                   data-testid="tool-reforger-btn"
                 >
-                  重铸 ×{self.reforgerCharges}
+                  <span className="sf-tool-slot__icon">
+                    <GameItemIcon itemId="TOOL_REFORGER" size="md" />
+                  </span>
+                  <span className="sf-tool-slot__count">×{self.reforgerCharges}</span>
+                  <span className="sf-tool-slot__label">重铸</span>
                 </button>
               </div>
 
@@ -1114,14 +1356,31 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                                 : 'sf-bag-slot--completed'
                           } ${isArmed ? 'sf-bag-slot--armed blc-item-btn--armed' : ''} ${
                             isHovered ? 'sf-bag-slot--hovered' : ''
+                          } ${
+                            itemDrag?.dragging &&
+                            itemDrag.payload.kind === 'equip' &&
+                            itemDrag.payload.inventoryItemIndex === idx
+                              ? 'sf-bag-slot--dragging'
+                              : ''
                           }`.trim()}
                           style={
                             isComponent
                               ? ({ '--slot-accent': accentColor } as React.CSSProperties)
                               : undefined
                           }
+                          onPointerDown={(event) => {
+                            beginItemPointerDrag(event, {
+                              kind: 'equip',
+                              inventoryItemIndex: idx,
+                              itemId,
+                            });
+                          }}
                           onFocus={() => setHoveredBagIndex(idx)}
                           onClick={() => {
+                            if (suppressSlotClickRef.current) {
+                              suppressSlotClickRef.current = false;
+                              return;
+                            }
                             armTargetAction({
                               kind: 'equip',
                               inventoryItemIndex: idx,
@@ -1146,12 +1405,13 @@ export function MatchHudOverlay(): React.JSX.Element | null {
           </div>
         )}
 
-        {leftTab === 'items' && activeBagItemId && activeBagEntry ? (
+        {leftTab === 'items' && activeBagItemId && activeBagEntry && !itemDrag?.dragging ? (
           <div
             className="ui-metal-frame sf-craft-sheet"
             data-testid="hud-item-craft-sheet"
             role="region"
             aria-label="实时装备合成速查"
+            onMouseLeave={() => setHoveredCraftPartnerId(null)}
           >
             <div className="sf-craft-sheet__head">
               <div className="sf-craft-sheet__title-wrap">
@@ -1163,9 +1423,15 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                       {ITEM_KIND_LABELS[activeBagEntry.kind] ?? '装备'}
                     </span>
                   </div>
-                  <div className="sf-craft-sheet__desc">
-                    <RichGameText text={activeBagEntry.item.desc} />
-                  </div>
+                  {isCraftComponentKind(activeBagEntry.kind) ? (
+                    <div className="sf-craft-stat-chip">
+                      {activeBagEntry.kind === 'spatula' ? (
+                        <span>纹章 · 母舰旗合成核</span>
+                      ) : (
+                        <RichGameText text={activeBagEntry.item.desc} />
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               </div>
               <div className="sf-craft-sheet__head-actions">
@@ -1191,81 +1457,139 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             </div>
 
             {isCraftComponentKind(activeBagEntry.kind) ? (
-              <>
-                {craftableNow.length > 0 ? (
-                  <div
-                    className="sf-craft-ready-section"
-                    data-testid="hud-craft-ready-section"
-                  >
-                    <div className="sf-craft-section-head">
-                      <span className="sf-craft-section-head__title">背包可立即合成</span>
-                      <span className="sf-craft-section-head__badge">
-                        {craftableNow.length} 件可用
-                      </span>
+              (() => {
+                const previewPartnerId =
+                  hoveredCraftPartnerId ?? craftableNow[0]?.partnerId ?? null;
+                const previewResult = previewPartnerId
+                  ? lookupCraftRecipe(activeBagItemId, previewPartnerId)
+                  : null;
+                return (
+                  <>
+                    {craftableNow.length > 0 ? (
+                      <div
+                        className="sf-craft-ready-section"
+                        data-testid="hud-craft-ready-section"
+                      >
+                        <div className="sf-craft-section-head">
+                          <span className="sf-craft-section-head__title">当前可直合</span>
+                          <span className="sf-craft-section-head__badge">
+                            {craftableNow.length}
+                          </span>
+                        </div>
+                        <div className="sf-craft-ready-strip">
+                          {craftableNow.map(({ partnerId, result }) => (
+                            <button
+                              key={partnerId}
+                              type="button"
+                              className={`sf-craft-ready-card ${
+                                hoveredCraftPartnerId === partnerId
+                                  ? 'sf-craft-ready-card--active'
+                                  : ''
+                              }`.trim()}
+                              onMouseEnter={() => setHoveredCraftPartnerId(partnerId)}
+                              onFocus={() => setHoveredCraftPartnerId(partnerId)}
+                              onClick={() => openCodex('items', result.id)}
+                              title={result.name}
+                            >
+                              <span className="sf-craft-ready-card__icons">
+                                <GameItemIcon itemId={partnerId} size="xs" />
+                                <span className="sf-craft-arrow">→</span>
+                                <GameItemIcon itemId={result.id} size="md" />
+                              </span>
+                              <span className="sf-craft-ready-card__name">{result.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="sf-craft-all-section">
+                      <div className="sf-craft-section-head">
+                        <span className="sf-craft-section-head__title">全部合成</span>
+                        <span className="sf-craft-section-head__sub">3×3 图谱</span>
+                      </div>
+                      <div className="sf-craft-matrix" data-testid="hud-craft-all-grid">
+                        {ALL_CRAFT_COMPONENT_IDS.map((partnerId) => {
+                          const res = lookupCraftRecipe(activeBagItemId, partnerId);
+                          if (!res) return null;
+                          const owned = otherBagIdSet.has(partnerId);
+                          const isActive = previewPartnerId === partnerId;
+                          const partnerEntry = lookupItemById(partnerId);
+                          return (
+                            <button
+                              key={partnerId}
+                              type="button"
+                              className={`sf-craft-tile ${
+                                owned ? 'sf-craft-tile--owned' : ''
+                              } ${isActive ? 'sf-craft-tile--active' : ''}`.trim()}
+                              onMouseEnter={() => setHoveredCraftPartnerId(partnerId)}
+                              onFocus={() => setHoveredCraftPartnerId(partnerId)}
+                              onClick={() => openCodex('items', res.id)}
+                              aria-label={`${res.name}（配对 ${partnerEntry?.item.name ?? partnerId}）`}
+                            >
+                              <GameItemIcon itemId={res.id} size="md" />
+                              <span className="sf-craft-tile__partner" aria-hidden="true">
+                                <GameItemIcon itemId={partnerId} size="xs" />
+                              </span>
+                              {owned ? (
+                                <span className="sf-craft-tile__dot" aria-hidden="true" />
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="sf-craft-ready-list">
-                      {craftableNow.map(({ partnerId, result }) => (
-                        <div key={partnerId} className="sf-craft-ready-row">
-                          <div className="sf-craft-ready-row__top">
+
+                    <div className="sf-craft-preview-bar" data-testid="hud-craft-preview-bar">
+                      {previewResult && previewPartnerId ? (
+                        <>
+                          <div className="sf-craft-preview-bar__formula">
                             <span className="sf-craft-ready-icons">
                               <GameItemIcon itemId={activeBagItemId} size="xs" />
                               <span className="sf-craft-op">+</span>
-                              <GameItemIcon itemId={partnerId} size="xs" />
+                              <GameItemIcon itemId={previewPartnerId} size="xs" />
                               <span className="sf-craft-arrow">→</span>
-                              <GameItemIcon itemId={result.id} size="sm" />
+                              <GameItemIcon itemId={previewResult.id} size="xs" />
                             </span>
-                            <strong className="sf-craft-ready-name">{result.name}</strong>
+                            <strong className="sf-craft-preview-bar__name">
+                              {previewResult.name}
+                            </strong>
                           </div>
-                          <div className="sf-craft-ready-desc">
-                            <RichGameText text={result.desc} />
+                          <div className="sf-craft-preview-bar__effect">
+                            <RichGameText text={previewResult.desc} />
                           </div>
+                        </>
+                      ) : (
+                        <div className="sf-craft-preview-bar__hint">
+                          滑过图标查看效果 · 点击进 9×9 图鉴
                         </div>
-                      ))}
+                      )}
                     </div>
+                  </>
+                );
+              })()
+            ) : (
+              <>
+                {'components' in activeBagEntry.item &&
+                activeBagEntry.item.components.length === 2 ? (
+                  <div className="sf-craft-formula-strip">
+                    <span className="sf-craft-formula-strip__label">配方</span>
+                    <span className="sf-craft-ready-icons">
+                      <GameItemIcon itemId={activeBagEntry.item.components[0]!} size="xs" />
+                      <span className="sf-craft-op">+</span>
+                      <GameItemIcon itemId={activeBagEntry.item.components[1]!} size="xs" />
+                      <span className="sf-craft-arrow">→</span>
+                      <GameItemIcon itemId={activeBagItemId} size="xs" />
+                    </span>
                   </div>
                 ) : null}
-
-                <div className="sf-craft-all-section">
-                  <div className="sf-craft-section-head">
-                    <span className="sf-craft-section-head__title">全部合成路线</span>
-                    <span className="sf-craft-section-head__sub">9 配方</span>
-                  </div>
-                  <div className="sf-craft-all-grid" data-testid="hud-craft-all-grid">
-                    {ALL_CRAFT_COMPONENT_IDS.map((partnerId) => {
-                      const res = lookupCraftRecipe(activeBagItemId, partnerId);
-                      if (!res) return null;
-                      const owned = otherBagIdSet.has(partnerId);
-                      return (
-                        <button
-                          key={partnerId}
-                          type="button"
-                          className={`sf-craft-chip ${owned ? 'sf-craft-chip--owned' : ''}`.trim()}
-                          onClick={() => openCodex('items', res.id)}
-                          title={`${res.name}：${res.desc}`}
-                        >
-                          <GameItemIcon itemId={partnerId} size="xs" />
-                          <span className="sf-craft-arrow">→</span>
-                          <GameItemIcon itemId={res.id} size="xs" />
-                          <span className="sf-craft-chip__name">{res.name}</span>
-                        </button>
-                      );
-                    })}
+                <div className="sf-craft-preview-bar">
+                  <div className="sf-craft-preview-bar__effect">
+                    <RichGameText text={activeBagEntry.item.desc} />
                   </div>
                 </div>
               </>
-            ) : 'components' in activeBagEntry.item &&
-              activeBagEntry.item.components.length === 2 ? (
-              <div className="sf-craft-formula-strip">
-                <span className="sf-craft-formula-strip__label">合成配方</span>
-                <span className="sf-craft-ready-icons">
-                  <GameItemIcon itemId={activeBagEntry.item.components[0]!} size="xs" />
-                  <span className="sf-craft-op">+</span>
-                  <GameItemIcon itemId={activeBagEntry.item.components[1]!} size="xs" />
-                  <span className="sf-craft-arrow">→</span>
-                  <GameItemIcon itemId={activeBagItemId} size="xs" />
-                </span>
-              </div>
-            ) : null}
+            )}
           </div>
         ) : null}
       </aside>
@@ -1958,51 +2282,23 @@ export function MatchHudOverlay(): React.JSX.Element | null {
 
       {matchSnapshot.phase === 'entry' ? (
         <div
-          className="blc-center-float"
+          className="sf-phase-wait-capsule"
           data-testid="entry-briefing-banner"
           data-season-term-id={matchSnapshot.versionLock.seasonTermId}
           data-game-set-version={matchSnapshot.versionLock.gameSetVersion}
           data-course-pack-version={matchSnapshot.versionLock.coursePackVersion}
         >
-          <div className="ui-metal-frame blc-micro-dialog">
-            <h3>准备就绪</h3>
-            <p>即将开始第一节学习</p>
-          </div>
-        </div>
-      ) : null}
-
-      {matchSnapshot.phase === 'resource' && matchSnapshot.resourceSettlement ? (
-        <div className="blc-center-float" data-testid="resource-settlement-banner">
-          <div className="ui-metal-frame sf-resource-dialog">
-            <h3 style={{ margin: '0 0 10px', color: 'var(--accent-gold-bright)' }}>
-              节点 {matchSnapshot.resourceSettlement.nodeIndex + 1} 科研结算
-            </h3>
-            <dl className="blc-resource-facts">
-              <div>
-                <dt>法球金币</dt>
-                <dd>+{matchSnapshot.resourceSettlement.grantedIntegerGold}G</dd>
-              </div>
-              <div>
-                <dt>结余充能</dt>
-                <dd>{matchSnapshot.resourceSettlement.carryOutCents}/100</dd>
-              </div>
-            </dl>
-            <p style={{ margin: '8px 0 0', fontSize: 12.5, color: 'var(--text-secondary)' }}>
-              本节充能 {matchSnapshot.resourceSettlement.rawEarnedCents} · 结转{' '}
-              {matchSnapshot.resourceSettlement.carryInCents}
-            </p>
-          </div>
+          <span className="sf-phase-wait-capsule__dot" aria-hidden="true" />
+          <span>入场备战 · 可自由交易与布阵，即将进入首轮学习</span>
         </div>
       ) : null}
 
       {matchSnapshot.phase === 'rest' ? (
-        <div className="learning-briefing-backdrop" data-testid="deep-mode-rest-overlay">
-          <div className="ui-metal-frame blc-micro-dialog">
-            <h3>休息片刻</h3>
-            <p>
-              <strong>{formatMMSS(liveRemainingSec)}</strong> 后继续
-            </p>
-          </div>
+        <div className="sf-phase-wait-capsule" data-testid="deep-mode-rest-overlay">
+          <span className="sf-phase-wait-capsule__dot" aria-hidden="true" />
+          <span>
+            休息片刻 · 可自由交易与布阵，<strong>{formatMMSS(liveRemainingSec)}</strong> 后继续
+          </span>
         </div>
       ) : null}
 
@@ -2173,6 +2469,175 @@ export function MatchHudOverlay(): React.JSX.Element | null {
           })}
         </div>
       ) : null}
+
+      {itemDrag?.dragging
+        ? (() => {
+            const targetUnit = itemDrag.targetUnitId
+              ? self.units.find((u) => u.instanceId === itemDrag.targetUnitId) ?? null
+              : null;
+            const targetDef = targetUnit ? SEASON1_UNITS_BY_ID.get(targetUnit.unitId) ?? null : null;
+            const equipPreview =
+              targetUnit && itemDrag.payload.kind === 'equip'
+                ? previewItemEquip(targetUnit, itemDrag.payload.itemId)
+                : null;
+            const craftedEntry = equipPreview?.craftedItemId
+              ? lookupItemById(equipPreview.craftedItemId)
+              : null;
+            const matchedExistingId =
+              targetUnit && craftedEntry && itemDrag.payload.kind === 'equip'
+                ? targetUnit.items.find(
+                    (iid) =>
+                      lookupCraftRecipe(iid, itemDrag.payload.itemId)?.id === craftedEntry.item.id,
+                  ) ?? null
+                : null;
+
+            const isToolValid =
+              targetUnit !== null &&
+              targetUnit.frozenUntilRound === null &&
+              (itemDrag.payload.kind === 'remover'
+                ? targetUnit.items.length > 0 && self.magneticCharges >= 1
+                : itemDrag.payload.kind === 'reforger'
+                  ? hasReforgeableUnitItem(targetUnit) && self.reforgerCharges >= 1
+                  : false);
+
+            const isValidDrop =
+              targetUnit !== null &&
+              (itemDrag.payload.kind === 'equip' ? Boolean(equipPreview?.ok) : isToolValid);
+
+            const vw = typeof window !== 'undefined' ? window.innerWidth : 1440;
+            const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+            const bubbleLeft = Math.max(150, Math.min(vw - 150, itemDrag.targetScreenX));
+            const bubbleTop = Math.max(116, Math.min(vh - 150, itemDrag.targetScreenY - 14));
+
+            return (
+              <>
+                <div
+                  className={`sf-item-drag-ghost ${
+                    isValidDrop
+                      ? 'sf-item-drag-ghost--ready'
+                      : targetUnit
+                        ? 'sf-item-drag-ghost--blocked'
+                        : ''
+                  }`.trim()}
+                  style={{ left: itemDrag.clientX, top: itemDrag.clientY }}
+                  aria-hidden="true"
+                >
+                  <GameItemIcon itemId={itemDrag.payload.itemId} size="lg" />
+                </div>
+
+                {targetUnit ? (
+                  <div
+                    className={`sf-drag-equip-preview ${
+                      craftedEntry && equipPreview?.ok
+                        ? 'sf-drag-equip-preview--craft'
+                        : !isValidDrop
+                          ? 'sf-drag-equip-preview--blocked'
+                          : itemDrag.payload.kind === 'remover'
+                            ? 'sf-drag-equip-preview--remover'
+                            : itemDrag.payload.kind === 'reforger'
+                              ? 'sf-drag-equip-preview--reforger'
+                              : 'sf-drag-equip-preview--equip'
+                    }`.trim()}
+                    style={{ left: bubbleLeft, top: bubbleTop }}
+                    data-testid="hud-drag-equip-preview"
+                  >
+                    {itemDrag.payload.kind === 'equip' &&
+                    equipPreview?.ok &&
+                    craftedEntry &&
+                    matchedExistingId ? (
+                      <>
+                        <div className="sf-drag-equip-preview__formula">
+                          <GameItemIcon itemId={matchedExistingId} size="sm" />
+                          <span className="sf-craft-op">+</span>
+                          <GameItemIcon itemId={itemDrag.payload.itemId} size="sm" />
+                          <span className="sf-craft-arrow">→</span>
+                          <span className="sf-drag-equip-preview__result-icon">
+                            <GameItemIcon itemId={craftedEntry.item.id} size="lg" />
+                          </span>
+                        </div>
+                        <div className="sf-drag-equip-preview__title">
+                          <strong>{craftedEntry.item.name}</strong>
+                          <span className="sf-drag-equip-preview__unit-tag">
+                            {targetDef?.name ?? '棋子'}
+                          </span>
+                        </div>
+                        <div className="sf-drag-equip-preview__stats">
+                          <RichGameText text={craftedEntry.item.desc} />
+                        </div>
+                      </>
+                    ) : itemDrag.payload.kind === 'equip' && equipPreview?.ok ? (
+                      <>
+                        <div className="sf-drag-equip-preview__title">
+                          <strong>
+                            {'★'.repeat(targetUnit.star)} {targetDef?.name ?? '棋子'}
+                          </strong>
+                          <span className="sf-drag-equip-preview__hint">松手穿戴</span>
+                        </div>
+                        <div className="sf-drag-equip-preview__slots">
+                          {[0, 1, 2].map((slotIdx) => {
+                            const nextItemId = equipPreview.items?.[slotIdx] ?? null;
+                            const isNewlyAdded =
+                              nextItemId !== null && slotIdx === targetUnit.items.length;
+                            return (
+                              <span
+                                key={slotIdx}
+                                className={`sf-drag-slot ${
+                                  isNewlyAdded
+                                    ? 'sf-drag-slot--new'
+                                    : nextItemId
+                                      ? 'sf-drag-slot--filled'
+                                      : 'sf-drag-slot--empty'
+                                }`.trim()}
+                              >
+                                {nextItemId ? (
+                                  <GameItemIcon itemId={nextItemId} size="sm" />
+                                ) : null}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </>
+                    ) : itemDrag.payload.kind !== 'equip' && isToolValid ? (
+                      <>
+                        <div className="sf-drag-equip-preview__tool-row">
+                          <GameItemIcon itemId={itemDrag.payload.itemId} size="md" />
+                          <div className="sf-drag-equip-preview__tool-meta">
+                            <strong>
+                              {itemDrag.payload.kind === 'remover'
+                                ? '松手卸下全部装备'
+                                : '松手重铸装备'}
+                            </strong>
+                            <span>{targetDef?.name ?? '棋子'}</span>
+                          </div>
+                        </div>
+                        <div className="sf-drag-equip-preview__slots">
+                          {targetUnit.items.map((iid, itemIdx) => (
+                            <span key={`${iid}-${itemIdx}`} className="sf-drag-slot sf-drag-slot--filled">
+                              <GameItemIcon itemId={iid} size="sm" />
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="sf-drag-equip-preview__blocked">
+                        <strong>{targetDef?.name ?? '棋子'}</strong>
+                        <span>
+                          {itemDrag.payload.kind === 'equip'
+                            ? describeEquipBlockReason(equipPreview?.reason)
+                            : targetUnit.frozenUntilRound !== null
+                              ? '棋子休眠冻结中'
+                              : itemDrag.payload.kind === 'remover'
+                                ? '该棋子暂无可卸装备'
+                                : '该棋子无可重铸装备'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </>
+            );
+          })()
+        : null}
     </div>
   );
 }

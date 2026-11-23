@@ -1,20 +1,39 @@
-import { MODE_BUDGETS, StudyArcSlotsSchema, type ArcStageKind, type DurationMode, type MatchStudyBlueprint, type StudyArcSlots } from '@pkg/contracts';
+import { MODE_BUDGETS, StudyArcSlotsSchema, type ArcStageKind, type DurationMode, type MatchStudyBlueprint, type StudyArcSlots, type SubjectId } from '@pkg/contracts';
 
 const stages: Readonly<Record<StudyArcSlots, readonly ArcStageKind[]>> = {
+  2: ['intro', 'mastery'],
   3: ['intro', 'deepen', 'mastery'],
   4: ['intro', 'deepen', 'remediate', 'mastery'],
   5: ['intro', 'deepen', 'diagnose', 'remediate', 'mastery'],
 };
 
-export function studyArcLayout(mode: DurationMode, arcSlots?: readonly StudyArcSlots[]): StudyArcSlots[] {
+const englishArcLayouts: Readonly<Record<DurationMode, readonly StudyArcSlots[]>> = {
+  quick: [2, 2], standard: [2, 2, 2, 2], deep: [2, 2, 2, 2, 2],
+};
+
+export function studyArcLayout(mode: DurationMode, arcSlots?: readonly StudyArcSlots[], subject: SubjectId = 'math', focused = false): StudyArcSlots[] {
   const config = MODE_BUDGETS.modes[mode];
-  const layout = (arcSlots ?? config.study_arc_slots).map(slots => StudyArcSlotsSchema.parse(slots));
+  const defaults = subject !== 'english' ? config.study_arc_slots
+    : mode === 'deep' && focused ? [3, 2, 2, 3] : englishArcLayouts[mode];
+  const layout = (arcSlots ?? defaults).map(slots => StudyArcSlotsSchema.parse(slots));
   if (layout.reduce((sum, slots) => sum + slots, 0) !== config.learning.length) throw new RangeError('Study arc layout must fill the shared mode timeline');
   return layout;
 }
 
 export function plannedArcStages(slotsInArc: StudyArcSlots): ArcStageKind[] {
   return [...stages[slotsInArc]];
+}
+
+export function roomSlotBonusStage(mode: DurationMode, nodeIndex: number): ArcStageKind {
+  const layout = MODE_BUDGETS.modes[mode].study_arc_slots as readonly StudyArcSlots[];
+  let rem = nodeIndex;
+  for (const slotsInArc of layout) {
+    if (rem < slotsInArc) {
+      return stages[slotsInArc][rem] ?? 'deepen';
+    }
+    rem -= slotsInArc;
+  }
+  return 'mastery';
 }
 
 export function locateMatchStudySlot(blueprint: MatchStudyBlueprint, nodeIndex: number) {
@@ -25,19 +44,6 @@ export function locateMatchStudySlot(blueprint: MatchStudyBlueprint, nodeIndex: 
     slotInArc -= arc.slotsInArc;
   }
   throw new RangeError('Study blueprint has no arc for the learning slot');
-}
-
-const arcGoldShares: Readonly<Record<StudyArcSlots, readonly number[]>> = {
-  3: [20, 33, 47], 4: [15, 24, 26, 35], 5: [10, 16, 19, 23, 32],
-};
-
-export function studySlotGoldBudget(blueprint: MatchStudyBlueprint, nodeIndex: number, matchGoldCents: number): number {
-  const { arcIndex, slotInArc, slotsInArc } = locateMatchStudySlot(blueprint, nodeIndex);
-  const arcCents = Math.floor(matchGoldCents * (arcIndex + 1) / blueprint.arcCount)
-    - Math.floor(matchGoldCents * arcIndex / blueprint.arcCount);
-  const shares = arcGoldShares[slotsInArc];
-  const earlier = shares.slice(0, slotInArc).reduce((sum, share) => sum + share, 0);
-  return Math.floor(arcCents * (earlier + shares[slotInArc]!) / 100) - Math.floor(arcCents * earlier / 100);
 }
 
 export function phasePolicyForStudySlot(blueprint: MatchStudyBlueprint, nodeIndex: number, plannedSeconds: number) {

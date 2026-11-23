@@ -1,5 +1,5 @@
 import { MODE_BUDGETS, type ArcStageKind, type DivmodGoldSettlement, type DurationMode, type LessonStepKind, type MatchStudyBlueprint, type QuestionItem } from '@pkg/contracts';
-import { phasePolicyForStudySlot, studySlotGoldBudget } from './study-layout.js';
+import { locateMatchStudySlot, phasePolicyForStudySlot } from './study-layout.js';
 import { gradeQuestionSubmission, type SubmissionInput } from './grading.js';
 import { add, compare, divide, integer, multiply, ONE, rational, safeInteger, serialize, wireInteger, ZERO, type Rational, type RationalScore } from './rational.js';
 
@@ -38,7 +38,7 @@ export function learningNodePolicy(mode: DurationMode, nodeIndex: number, bluepr
   const plannedSeconds = config.learning[nodeIndex]!;
   const defaultLayout = !blueprint || (blueprint.arcs.length === config.study_arc_slots.length
     && blueprint.arcs.every((arc, i) => arc.slotsInArc === config.study_arc_slots[i]));
-  if (!defaultLayout) return { centBudget: studySlotGoldBudget(blueprint, nodeIndex, config.learning_gold_total_max_cents), plannedSeconds,
+  if (blueprint && !defaultLayout) return { centBudget: config.learning_gold_cap_by_block_cents[nodeIndex]!, plannedSeconds,
     ...phasePolicyForStudySlot(blueprint, nodeIndex, plannedSeconds) };
   return {
     centBudget: config.learning_gold_cap_by_block_cents[nodeIndex]!,
@@ -83,7 +83,8 @@ export function settleLearningNodeGold(input: LearningNodeGoldInput | QuestionNo
   const resource = roleScore(resourceUnits);
   const verification = roleScore(verificationUnits);
   const configuredWeight = policy.verificationWeightPercent;
-  const verificationWeightPercent = configuredWeight === 0 || configuredWeight === 100
+  const isMicroArc = input.studyBlueprint && locateMatchStudySlot(input.studyBlueprint, index).slotsInArc === 2;
+  const verificationWeightPercent = !isMicroArc && (configuredWeight === 0 || configuredWeight === 100)
     ? !resourceUnits.length && verificationUnits.length ? 100
       : !verificationUnits.length && resourceUnits.length ? 0 : configuredWeight
     : configuredWeight;

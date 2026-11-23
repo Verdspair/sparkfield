@@ -175,7 +175,7 @@
           "end": 20,
           "duration": 20,
           "kind": "entry",
-          "label": "入场规则/操作说明（不可交易或布阵）"
+          "label": "入场备战"
         },
         {
           "start": 20,
@@ -231,7 +231,7 @@
           "end": 264,
           "duration": 15,
           "kind": "choice",
-          "label": "R2 强化①（仅事件选择）"
+          "label": "R2 强化①"
         },
         {
           "start": 264,
@@ -294,7 +294,7 @@
           "end": 583,
           "duration": 20,
           "kind": "choice",
-          "label": "R4 公平补给铁砧（仅事件选择）"
+          "label": "R4 公平补给铁砧"
         },
         {
           "start": 583,
@@ -336,7 +336,7 @@
           "end": 734,
           "duration": 15,
           "kind": "choice",
-          "label": "R5 强化②（仅事件选择）"
+          "label": "R5 强化②"
         },
         {
           "start": 734,
@@ -633,7 +633,7 @@
           "end": 40,
           "duration": 40,
           "kind": "entry",
-          "label": "入场规则/操作说明（不可交易或布阵）"
+          "label": "入场备战"
         },
         {
           "start": 40,
@@ -689,7 +689,7 @@
           "end": 355,
           "duration": 15,
           "kind": "choice",
-          "label": "R2 强化①（仅事件选择）"
+          "label": "R2 强化①"
         },
         {
           "start": 355,
@@ -731,7 +731,7 @@
           "end": 617,
           "duration": 20,
           "kind": "choice",
-          "label": "R3 补给铁砧①（仅事件选择）"
+          "label": "R3 补给铁砧①"
         },
         {
           "start": 617,
@@ -794,7 +794,7 @@
           "end": 905,
           "duration": 15,
           "kind": "choice",
-          "label": "R4 PVE补给选择（仅事件选择）"
+          "label": "R4 PVE补给选择"
         },
         {
           "start": 905,
@@ -815,7 +815,7 @@
           "end": 1018,
           "duration": 15,
           "kind": "choice",
-          "label": "R5 强化②（仅事件选择）"
+          "label": "R5 强化②"
         },
         {
           "start": 1018,
@@ -857,7 +857,7 @@
           "end": 1240,
           "duration": 20,
           "kind": "choice",
-          "label": "R6 补给铁砧②（仅事件选择）"
+          "label": "R6 补给铁砧②"
         },
         {
           "start": 1240,
@@ -899,7 +899,7 @@
           "end": 1497,
           "duration": 15,
           "kind": "choice",
-          "label": "R7 强化③（仅事件选择）"
+          "label": "R7 强化③"
         },
         {
           "start": 1497,
@@ -1273,7 +1273,7 @@
           "end": 90,
           "duration": 90,
           "kind": "entry",
-          "label": "入场规则/操作说明（不可交易或布阵）"
+          "label": "入场备战"
         },
         {
           "start": 90,
@@ -1329,7 +1329,7 @@
           "end": 502,
           "duration": 20,
           "kind": "choice",
-          "label": "R2 强化①（仅事件选择）"
+          "label": "R2 强化①"
         },
         {
           "start": 502,
@@ -1371,7 +1371,7 @@
           "end": 860,
           "duration": 30,
           "kind": "choice",
-          "label": "R3 补给铁砧①（仅事件选择）"
+          "label": "R3 补给铁砧①"
         },
         {
           "start": 860,
@@ -1434,14 +1434,14 @@
           "end": 1207,
           "duration": 20,
           "kind": "choice",
-          "label": "R4 PVE补给选择①（仅事件选择）"
+          "label": "R4 PVE补给选择①"
         },
         {
           "start": 1207,
           "end": 1267,
           "duration": 60,
           "kind": "rest",
-          "label": "统一休息，不计学习且不开放经营"
+          "label": "中场休息"
         },
         {
           "start": 1267,
@@ -1462,7 +1462,7 @@
           "end": 1451,
           "duration": 20,
           "kind": "choice",
-          "label": "R5 强化②（仅事件选择）"
+          "label": "R5 强化②"
         },
         {
           "start": 1451,
@@ -1504,7 +1504,7 @@
           "end": 1914,
           "duration": 30,
           "kind": "choice",
-          "label": "R6 补给铁砧②（仅事件选择）"
+          "label": "R6 补给铁砧②"
         },
         {
           "start": 1914,
@@ -1588,14 +1588,14 @@
           "end": 2383,
           "duration": 20,
           "kind": "choice",
-          "label": "R8 PVE补给选择②（仅事件选择）"
+          "label": "R8 PVE补给选择②"
         },
         {
           "start": 2383,
           "end": 2443,
           "duration": 60,
           "kind": "rest",
-          "label": "统一休息，不计学习且不开放经营"
+          "label": "中场休息"
         },
         {
           "start": 2443,
@@ -1616,7 +1616,7 @@
           "end": 2627,
           "duration": 20,
           "kind": "choice",
-          "label": "R9 强化③（仅事件选择）"
+          "label": "R9 强化③"
         },
         {
           "start": 2627,
@@ -1658,7 +1658,7 @@
           "end": 3090,
           "duration": 30,
           "kind": "choice",
-          "label": "R10 补给铁砧③（仅事件选择）"
+          "label": "R10 补给铁砧③"
         },
         {
           "start": 3090,

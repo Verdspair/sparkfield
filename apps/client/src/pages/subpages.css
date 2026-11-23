@@ -6,10 +6,10 @@
   flex-direction: column;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 70% 45% at 18% 8%, rgba(79, 209, 255, 0.14), transparent 60%),
-    radial-gradient(ellipse 60% 45% at 84% 12%, rgba(240, 220, 170, 0.13), transparent 56%),
-    radial-gradient(ellipse 80% 55% at 50% 100%, rgba(30, 58, 110, 0.3), transparent 70%),
-    linear-gradient(175deg, #070d1a 0%, #0d162a 48%, #070b14 100%);
+    radial-gradient(ellipse 68% 44% at 18% 8%, rgba(121, 196, 230, 0.08), transparent 60%),
+    radial-gradient(ellipse 60% 44% at 84% 12%, rgba(223, 195, 138, 0.07), transparent 58%),
+    radial-gradient(ellipse 80% 55% at 50% 100%, rgba(22, 38, 70, 0.28), transparent 72%),
+    linear-gradient(175deg, #090e1c 0%, #0d1525 50%, #080d19 100%);
   color: var(--text-primary);
 }
 
@@ -21,11 +21,11 @@
   background-image:
     radial-gradient(1.5px 1.5px at 12% 18%, rgba(255, 255, 255, 0.45), transparent),
     radial-gradient(1px 1px at 28% 72%, rgba(165, 243, 252, 0.35), transparent),
-    radial-gradient(1.5px 1.5px at 44% 26%, rgba(240, 220, 170, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 44% 26%, rgba(223, 195, 138, 0.4), transparent),
     radial-gradient(1px 1px at 66% 62%, rgba(255, 255, 255, 0.32), transparent),
     radial-gradient(1.5px 1.5px at 82% 30%, rgba(165, 243, 252, 0.42), transparent),
-    radial-gradient(1px 1px at 91% 78%, rgba(240, 220, 170, 0.36), transparent);
-  opacity: 0.72;
+    radial-gradient(1px 1px at 91% 78%, rgba(223, 195, 138, 0.36), transparent);
+  opacity: 0.24;
 }
 
 .sf-subpage-header {
@@ -38,8 +38,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  background: linear-gradient(180deg, rgba(16, 25, 46, 0.96) 0%, rgba(9, 14, 28, 0.98) 100%);
-  border-bottom: 1px solid rgba(242, 201, 125, 0.28);
+  background: var(--sf-surface-panel);
+  border-bottom: 1px solid rgba(223, 195, 138, 0.28);
   box-shadow: 0 8px 24px rgba(3, 7, 18, 0.42);
 }
 
@@ -55,7 +55,7 @@
   min-height: 36px;
   padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid rgba(240, 220, 170, 0.28);
+  border: 1px solid rgba(223, 195, 138, 0.28);
   background: rgba(20, 30, 50, 0.82);
   color: var(--text-primary);
   font-size: 13px;
@@ -86,7 +86,7 @@
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  background: linear-gradient(180deg, #fff6d9 0%, #d4ad63 100%);
+  background: linear-gradient(180deg, #f7edd6 0%, #dfc38a 100%);
   -webkit-background-clip: text;
   color: transparent;
   white-space: nowrap;
@@ -104,7 +104,7 @@
   min-height: 34px;
   padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid rgba(240, 220, 170, 0.3);
+  border: 1px solid rgba(223, 195, 138, 0.3);
   background: rgba(20, 28, 46, 0.84);
   color: var(--gold-light);
   font-size: 13px;
@@ -127,14 +127,14 @@
   height: 7px;
   border-radius: 50%;
   background: var(--gold-light);
-  box-shadow: 0 0 8px rgba(240, 220, 170, 0.78);
+  box-shadow: 0 0 5px rgba(223, 195, 138, 0.45);
 }
 
 .sf-icon-gear-btn {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(240, 220, 170, 0.28);
+  border: 1px solid rgba(223, 195, 138, 0.28);
   background: rgba(20, 30, 50, 0.82);
   color: var(--gold-light);
   font-size: 16px;
@@ -165,7 +165,7 @@
 }
 
 .sf-subpage-sidebar {
-  border-right: 1px solid rgba(240, 220, 170, 0.14);
+  border-right: 1px solid rgba(223, 195, 138, 0.14);
   background: rgba(8, 13, 24, 0.72);
   padding: 16px 10px;
   overflow-y: auto;
@@ -190,15 +190,15 @@
   z-index: 3;
   flex-shrink: 0;
   padding: 10px 24px;
-  border-top: 1px solid rgba(240, 220, 170, 0.2);
+  border-top: 1px solid rgba(223, 195, 138, 0.2);
   background: rgba(9, 14, 26, 0.96);
 }
 
 .sf-unit-portrait {
   position: relative;
   overflow: hidden;
-  border-radius: 9px;
-  border: 2px solid rgba(148, 163, 184, 0.48);
+  border-radius: var(--sf-radius-slot);
+  border: 1px solid rgba(147, 163, 184, 0.44);
   background: #0f172a;
   flex-shrink: 0;
 }
@@ -206,7 +206,7 @@
 .sf-unit-portrait--sm {
   width: 40px;
   height: 40px;
-  border-radius: 7px;
+  border-radius: var(--sf-radius-slot);
 }
 
 .sf-unit-portrait--md {
@@ -233,24 +233,24 @@
 }
 
 .sf-cost-border--1 {
-  border-color: rgba(138, 150, 168, 0.65);
+  border-color: rgba(147, 163, 184, 0.56);
 }
 
 .sf-cost-border--2 {
-  border-color: rgba(43, 182, 125, 0.72);
+  border-color: rgba(91, 191, 155, 0.62);
 }
 
 .sf-cost-border--3 {
-  border-color: rgba(58, 140, 232, 0.78);
+  border-color: rgba(106, 182, 222, 0.66);
 }
 
 .sf-cost-border--4 {
-  border-color: rgba(168, 85, 247, 0.8);
+  border-color: rgba(168, 148, 212, 0.68);
 }
 
 .sf-cost-border--5 {
-  border-color: rgba(240, 196, 90, 0.9);
-  box-shadow: 0 0 14px rgba(240, 196, 90, 0.22);
+  border-color: rgba(223, 195, 138, 0.82);
+  box-shadow: 0 0 10px rgba(223, 195, 138, 0.16);
 }
 
 .sf-portrait-stars {
@@ -268,16 +268,16 @@
 .sf-tactician-portrait {
   position: relative;
   overflow: hidden;
-  border-radius: 12px;
-  border: 1.5px solid rgba(240, 220, 170, 0.42);
-  background: radial-gradient(circle at 50% 35%, rgba(79, 209, 255, 0.16), rgba(12, 20, 38, 0.94));
+  border-radius: var(--sf-radius-card);
+  border: 1px solid var(--hairline-accent);
+  background: radial-gradient(circle at 50% 35%, rgba(121, 196, 230, 0.16), rgba(12, 20, 38, 0.94));
   flex-shrink: 0;
 }
 
 .sf-tactician-portrait--sm {
   width: 48px;
   height: 48px;
-  border-radius: 9px;
+  border-radius: var(--sf-radius-slot);
 }
 
 .sf-tactician-portrait--md {
@@ -288,23 +288,23 @@
 .sf-tactician-portrait--lg {
   width: 136px;
   height: 136px;
-  border-radius: 16px;
+  border-radius: var(--sf-radius-modal);
   box-shadow: 0 10px 28px rgba(4, 9, 20, 0.52);
 }
 
 .sf-card {
-  border-radius: 13px;
-  border: 1px solid rgba(242, 201, 125, 0.22);
-  background: linear-gradient(180deg, rgba(18, 28, 50, 0.92) 0%, rgba(11, 18, 34, 0.96) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 244, 208, 0.1), 0 10px 26px rgba(3, 7, 18, 0.34);
+  border-radius: var(--sf-radius-card);
+  border: 1px solid rgba(223, 195, 138, 0.22);
+  background: var(--sf-surface-card);
+  box-shadow: inset 0 1px 0 rgba(239, 224, 190, 0.1), 0 10px 26px rgba(3, 7, 18, 0.34);
 }
 
 .sf-gold-cta {
   min-height: 40px;
   padding: 0 20px;
-  border-radius: 9px;
-  border: 1px solid rgba(255, 236, 179, 0.65);
-  background: linear-gradient(180deg, #ebd08d 0%, #c19645 100%);
+  border-radius: var(--sf-radius-slot);
+  border: 1px solid rgba(239, 224, 190, 0.72);
+  background: linear-gradient(180deg, #efe0be 0%, #dfc38a 52%, #ab8848 100%);
   color: #161108;
   font-size: 14px;
   font-weight: 700;
@@ -314,7 +314,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 6px 18px rgba(200, 170, 110, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 6px 16px rgba(4, 8, 18, 0.36), 0 0 12px rgba(223, 195, 138, 0.16);
   transition: transform 150ms var(--ease-out-quart), filter 150ms ease;
 }
 
@@ -331,8 +331,8 @@
 .sf-secondary-cta {
   min-height: 40px;
   padding: 0 18px;
-  border-radius: 9px;
-  border: 1px solid rgba(92, 200, 214, 0.42);
+  border-radius: var(--sf-radius-slot);
+  border: 1px solid var(--hairline-azure);
   background: rgba(20, 34, 56, 0.88);
   color: var(--text-primary);
   font-size: 14px;
@@ -383,8 +383,8 @@
 }
 
 .sf-rail-btn--active {
-  background: linear-gradient(90deg, rgba(240, 220, 170, 0.16) 0%, rgba(92, 200, 214, 0.08) 100%);
-  border-color: rgba(240, 220, 170, 0.34);
+  background: linear-gradient(90deg, rgba(223, 195, 138, 0.16) 0%, rgba(121, 196, 230, 0.08) 100%);
+  border-color: rgba(223, 195, 138, 0.34);
   color: var(--gold-light);
 }
 
@@ -410,7 +410,7 @@
   min-height: 34px;
   padding: 4px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(240, 220, 170, 0.24);
+  border: 1px solid rgba(223, 195, 138, 0.24);
   background: rgba(11, 18, 32, 0.86);
   color: var(--text-primary);
   font-size: 13px;
@@ -451,8 +451,8 @@
 }
 
 .sf-filter-pill--active {
-  border-color: rgba(240, 220, 170, 0.56);
-  background: rgba(200, 170, 110, 0.18);
+  border-color: rgba(223, 195, 138, 0.56);
+  background: rgba(223, 195, 138, 0.18);
   color: var(--gold-light);
 }
 
@@ -470,7 +470,7 @@
   padding: 10px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(16, 24, 42, 0.86);
+  background: rgba(14, 23, 41, 0.92);
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
@@ -479,12 +479,12 @@
 
 .sf-enc-unit-tile:hover {
   transform: translateY(-2px);
-  border-color: rgba(240, 220, 170, 0.5);
+  border-color: rgba(223, 195, 138, 0.5);
 }
 
 .sf-enc-unit-tile--selected {
   border-color: var(--gold-light);
-  box-shadow: 0 0 0 1px rgba(240, 220, 170, 0.45);
+  box-shadow: 0 0 0 1px rgba(223, 195, 138, 0.45);
 }
 
 .sf-enc-unit-tile__row {
@@ -547,9 +547,9 @@
   align-items: center;
   gap: 14px;
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: var(--sf-radius-card);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(15, 23, 42, 0.84);
+  background: rgba(14, 23, 41, 0.90);
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
@@ -557,7 +557,7 @@
 }
 
 .sf-collection-card:hover {
-  border-color: rgba(240, 220, 170, 0.45);
+  border-color: rgba(223, 195, 138, 0.45);
   transform: translateY(-1px);
 }
 
@@ -571,16 +571,16 @@
   height: 62px;
   border-radius: 8px;
   object-fit: cover;
-  border: 1px solid rgba(240, 220, 170, 0.28);
+  border: 1px solid rgba(223, 195, 138, 0.28);
   flex-shrink: 0;
 }
 
 .sf-showcase-pedestal {
   padding: 26px;
-  border-radius: 16px;
-  border: 1px solid rgba(240, 220, 170, 0.28);
+  border-radius: var(--sf-radius-modal);
+  border: 1px solid rgba(223, 195, 138, 0.28);
   background:
-    radial-gradient(circle at 50% 30%, rgba(92, 200, 214, 0.14), transparent 58%),
+    radial-gradient(circle at 50% 30%, rgba(121, 196, 230, 0.14), transparent 58%),
     linear-gradient(180deg, rgba(16, 26, 46, 0.92) 0%, rgba(10, 16, 30, 0.96) 100%);
   display: flex;
   flex-direction: column;
@@ -593,15 +593,15 @@
   position: relative;
   padding: 20px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(240, 220, 170, 0.14) 0%, rgba(79, 209, 255, 0.06) 54%, transparent 72%);
+  background: radial-gradient(circle, rgba(223, 195, 138, 0.14) 0%, rgba(121, 196, 230, 0.06) 54%, transparent 72%);
 }
 
 .sf-arena-hero-img {
   width: min(460px, 100%);
   aspect-ratio: 16 / 10;
-  border-radius: 12px;
+  border-radius: var(--sf-radius-card);
   object-fit: cover;
-  border: 1.5px solid rgba(240, 220, 170, 0.36);
+  border: 1px solid var(--hairline-accent);
   box-shadow: 0 16px 36px rgba(4, 8, 18, 0.55);
 }
 
@@ -638,7 +638,7 @@
   min-width: 88px;
   padding: 8px 14px;
   border-radius: 10px;
-  border: 1px solid rgba(240, 220, 170, 0.22);
+  border: 1px solid rgba(223, 195, 138, 0.22);
   background: rgba(9, 15, 28, 0.78);
   display: flex;
   flex-direction: column;
@@ -679,9 +679,9 @@
 
 .sf-podium-card {
   padding: 16px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(240, 220, 170, 0.24);
-  background: rgba(15, 24, 42, 0.88);
+  border-radius: var(--sf-radius-card);
+  border: 1px solid rgba(223, 195, 138, 0.24);
+  background: rgba(14, 23, 41, 0.92);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -692,8 +692,8 @@
 .sf-podium-card--1 {
   order: 2;
   min-height: 166px;
-  border-color: rgba(245, 208, 118, 0.65);
-  background: linear-gradient(180deg, rgba(245, 208, 118, 0.16) 0%, rgba(16, 25, 45, 0.94) 100%);
+  border-color: rgba(223, 195, 138, 0.65);
+  background: linear-gradient(180deg, rgba(223, 195, 138, 0.16) 0%, rgba(16, 25, 45, 0.94) 100%);
 }
 
 .sf-podium-card--2 {
@@ -734,10 +734,10 @@
 .sf-mall-card {
   position: relative;
   padding: 14px;
-  border-radius: 13px;
-  border: 1px solid rgba(242, 201, 125, 0.24);
-  background: linear-gradient(180deg, rgba(19, 30, 54, 0.92) 0%, rgba(12, 20, 38, 0.96) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 244, 208, 0.1), 0 8px 20px rgba(3, 7, 18, 0.32);
+  border-radius: var(--sf-radius-card);
+  border: 1px solid rgba(223, 195, 138, 0.24);
+  background: var(--sf-surface-card);
+  box-shadow: inset 0 1px 0 rgba(239, 224, 190, 0.1), 0 8px 20px rgba(3, 7, 18, 0.32);
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
@@ -749,18 +749,18 @@
 
 .sf-mall-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(240, 220, 170, 0.55);
+  border-color: rgba(223, 195, 138, 0.55);
 }
 
 .sf-mall-card--selected {
   border-color: var(--gold-light);
-  box-shadow: 0 0 0 1px rgba(240, 220, 170, 0.42);
+  box-shadow: 0 0 0 1px rgba(223, 195, 138, 0.42);
 }
 
 .sf-mall-art-box {
   height: 108px;
-  border-radius: 9px;
-  background: radial-gradient(circle at 50% 45%, rgba(240, 220, 170, 0.14), rgba(10, 16, 30, 0.92));
+  border-radius: var(--sf-radius-slot);
+  background: radial-gradient(circle at 50% 45%, rgba(223, 195, 138, 0.14), rgba(10, 16, 30, 0.92));
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
@@ -776,11 +776,11 @@
 
 .sf-mall-preview-stage {
   height: 184px;
-  border-radius: 12px;
-  border: 1px solid rgba(240, 220, 170, 0.26);
+  border-radius: var(--sf-radius-card);
+  border: 1px solid rgba(223, 195, 138, 0.26);
   background:
-    radial-gradient(circle at 50% 48%, rgba(240, 220, 170, 0.2), transparent 60%),
-    radial-gradient(circle at 50% 80%, rgba(92, 200, 214, 0.14), transparent 65%),
+    radial-gradient(circle at 50% 48%, rgba(223, 195, 138, 0.2), transparent 60%),
+    radial-gradient(circle at 50% 80%, rgba(121, 196, 230, 0.14), transparent 65%),
     rgba(9, 15, 28, 0.92);
   display: flex;
   align-items: center;
@@ -803,9 +803,9 @@
 
 .sf-profile-tactician-stage {
   padding: 18px;
-  border-radius: 12px;
-  border: 1px solid rgba(240, 220, 170, 0.24);
-  background: radial-gradient(circle at 50% 35%, rgba(92, 200, 214, 0.14), rgba(10, 16, 30, 0.9));
+  border-radius: var(--sf-radius-card);
+  border: 1px solid rgba(223, 195, 138, 0.24);
+  background: radial-gradient(circle at 50% 35%, rgba(121, 196, 230, 0.14), rgba(10, 16, 30, 0.9));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -827,8 +827,8 @@
 
 .sf-star-empty {
   padding: 28px 18px;
-  border-radius: 12px;
-  border: 1px dashed rgba(240, 220, 170, 0.24);
+  border-radius: var(--sf-radius-card);
+  border: 1px dashed rgba(223, 195, 138, 0.24);
   background: rgba(11, 18, 32, 0.56);
   display: flex;
   flex-direction: column;
@@ -891,7 +891,7 @@
 
   .sf-subpage-sidebar {
     border-right: none;
-    border-bottom: 1px solid rgba(240, 220, 170, 0.14);
+    border-bottom: 1px solid rgba(223, 195, 138, 0.14);
     flex-direction: row;
     flex-wrap: nowrap;
     overflow-x: auto;
