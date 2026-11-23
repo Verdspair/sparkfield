@@ -537,24 +537,8 @@ export class WebAudioEngine implements Required<AudioAdapter> {
     this.playSfx(payload.damageType === 'physical' ? 'hit_phys' : 'hit_magic');
   }
 
-  public onCountdownTick(payload: AudioEventPayloads['onCountdownTick']): void {
-    const sec = Math.max(1, Math.min(5, Math.round(payload.secondsLeft)));
-    const id: SfxId = payload.urgent || sec <= 2 ? 'countdown_urgent' : 'countdown_tick';
-    const rateBySec: Readonly<Record<number, number>> = {
-      5: 1.0,
-      4: 1.0,
-      3: 1.0,
-      2: 1.0,
-      1: 1.06,
-    };
-    const gainBySec: Readonly<Record<number, number>> = {
-      5: 0.86,
-      4: 0.90,
-      3: 0.95,
-      2: 1.00,
-      1: 1.08,
-    };
-    this.playSfxWithOverrides(id, gainBySec[sec] ?? 0.88, rateBySec[sec] ?? 1.0);
+  public onCountdownTick(_payload: AudioEventPayloads['onCountdownTick']): void {
+    this.playSfxWithOverrides('countdown_tick', 0.9, 1.0);
   }
 
   public onBgmContext(payload: AudioEventPayloads['onBgmContext']): void {
