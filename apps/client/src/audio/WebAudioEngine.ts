@@ -345,11 +345,33 @@ export class WebAudioEngine implements Required<AudioAdapter> {
         return;
       }
     }
-    if (!this.disposed && ctx.state === 'running' && this.desiredBgmTrack) {
-      const currentSlot = this.slots[this.activeSlotIdx];
-      if (!currentSlot.source || currentSlot.trackId !== this.desiredBgmTrack) {
-        void this.crossfadeToTrack(this.desiredBgmTrack);
+    if (!this.disposed && ctx.state === 'running') {
+      if (this.desiredBgmTrack) {
+        const currentSlot = this.slots[this.activeSlotIdx];
+        if (!currentSlot.source || currentSlot.trackId !== this.desiredBgmTrack) {
+          void this.crossfadeToTrack(this.desiredBgmTrack);
+        }
       }
+      this.preloadHotSfx();
+    }
+  }
+
+  private preloadHotSfx(): void {
+    const hot: readonly SfxId[] = [
+      'countdown_tick',
+      'countdown_urgent',
+      'battle_horn',
+      'ui_click',
+      'shop_buy',
+      'shop_reroll',
+      'shop_sell',
+      'unit_drop',
+      'star_up_2',
+      'star_up_3',
+      'item_combine',
+    ];
+    for (const id of hot) {
+      void this.loadBuffer(SFX_PATHS[id]);
     }
   }
 
@@ -503,11 +525,11 @@ export class WebAudioEngine implements Required<AudioAdapter> {
       1: 1.1,
     };
     const gainBySec: Readonly<Record<number, number>> = {
-      5: 0.76,
-      4: 0.82,
-      3: 0.88,
-      2: 0.96,
-      1: 1.04,
+      5: 1.02,
+      4: 1.08,
+      3: 1.15,
+      2: 1.24,
+      1: 1.34,
     };
     this.playSfxWithOverrides(id, gainBySec[sec] ?? 0.88, rateBySec[sec] ?? 1.0);
   }

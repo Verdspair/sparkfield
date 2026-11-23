@@ -395,7 +395,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   const lastOrbEmotePhaseRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const id = setInterval(() => setNowMs(Date.now()), 250);
+    const id = setInterval(() => setNowMs(Date.now()), 120);
     return () => clearInterval(id);
   }, []);
 
@@ -734,15 +734,15 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   const lastCountdownKeyRef = useRef<string>('');
   useEffect(() => {
     if (!matchSnapshot || inLearningFocus) return;
-    if (
-      matchSnapshot.phase !== 'strategy' &&
-      matchSnapshot.phase !== 'choice' &&
-      matchSnapshot.phase !== 'entry'
-    ) {
-      return;
-    }
+    const countdownEligible =
+      matchSnapshot.phase === 'strategy' ||
+      matchSnapshot.phase === 'choice' ||
+      matchSnapshot.phase === 'entry' ||
+      matchSnapshot.phase === 'rest' ||
+      (matchSnapshot.phase === 'learning' && Boolean(matchSnapshot.learning?.complete));
+    if (!countdownEligible) return;
     const remainingMs = matchSnapshot.deadlineEpochMs - nowMs;
-    if (remainingMs <= 0 || remainingMs > 5150) return;
+    if (remainingMs <= 0 || remainingMs > 5300) return;
     const secondsLeft = Math.ceil(remainingMs / 1000);
     if (secondsLeft < 1 || secondsLeft > 5) return;
     const key = `${matchSnapshot.matchId}:${matchSnapshot.nodeIndex}:${matchSnapshot.phase}:${secondsLeft}`;
