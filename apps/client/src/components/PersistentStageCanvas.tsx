@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import type { ArenaThemeId } from '@pkg/contracts';
+import { getMatchChoiceKind, MODE_BUDGETS, type ArenaThemeId } from '@pkg/contracts';
 import {
   BoardStageEngine,
   DEFAULT_TACTICIAN_ID,
@@ -83,9 +83,22 @@ export function PersistentStageCanvas({
             : 'subpage');
 
   const resolvedTacticianId: TacticianId = tacticianId ?? preferredTacticianId ?? DEFAULT_TACTICIAN_ID;
+  const activeChoiceKind = matchSnapshot
+    ? getMatchChoiceKind(
+        matchSnapshot.phase,
+        MODE_BUDGETS.modes[matchSnapshot.mode]?.timeline[matchSnapshot.phaseIndex]?.label ?? '',
+      )
+    : null;
+  const hasPendingChoiceModal =
+    (activeChoiceKind === 'augment' && Boolean(matchSnapshot?.self.augmentOffer)) ||
+    (activeChoiceKind === 'anvil' && (matchSnapshot?.self.anvils.length ?? 0) > 0);
   const isStrategyPhase =
     !inActiveMatch ||
+    matchSnapshot?.phase === 'entry' ||
+    matchSnapshot?.phase === 'resource' ||
+    matchSnapshot?.phase === 'rest' ||
     matchSnapshot?.phase === 'strategy' ||
+    (matchSnapshot?.phase === 'choice' && !hasPendingChoiceModal) ||
     (matchSnapshot?.phase === 'learning' && Boolean(matchSnapshot.learning?.complete));
   const derivedShopLayout: ShopCameraLayout =
     shopCameraLayout ??
