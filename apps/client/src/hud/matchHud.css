@@ -1229,24 +1229,6 @@
   max-height: 88vh;
 }
 
-.sf-learning-energy-bar {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 5px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(242, 201, 125, 0.42);
-  background: linear-gradient(180deg, rgba(18, 30, 56, 0.92), rgba(10, 17, 34, 0.96));
-  font-size: 12px;
-  color: var(--text-secondary);
-  box-shadow: 0 8px 24px rgba(3, 8, 20, 0.5);
-}
-
-.sf-learning-energy-bar strong {
-  color: var(--accent-gold-bright);
-  font-variant-numeric: tabular-nums;
-}
-
 .sf-learning-card-host {
   width: auto;
   max-width: 94vw;

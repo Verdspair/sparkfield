@@ -1537,15 +1537,6 @@ export function MatchHudOverlay(): React.JSX.Element | null {
       {matchSnapshot.phase === 'learning' && matchSnapshot.learning ? (
         <div className="learning-briefing-backdrop" data-testid="inmatch-learning-overlay">
           <div className="sf-learning-overlay-shell">
-            <div className="sf-learning-energy-bar">
-              <span>
-                当前钱包 <strong>{self.gold}G</strong>
-              </span>
-              <span>
-                科研充能 <strong>{self.learningChargeCents}/100</strong>
-              </span>
-              <span>答对即蓄能 · 结算降落鎏金法球</span>
-            </div>
             <div className="sf-learning-card-host">
               {(() => {
                 const lrn = matchSnapshot.learning;
