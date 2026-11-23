@@ -43,11 +43,132 @@ interface LootOrbActor {
   readonly orbId: string;
   goldAmount: number;
   readonly group: THREE.Group;
-  readonly coreMesh: THREE.Mesh;
+  readonly coinGroup: THREE.Group;
+  readonly shellMesh: THREE.Mesh;
+  readonly beamMesh: THREE.Mesh;
   readonly haloRingA: THREE.Mesh;
-  readonly haloRingB: THREE.Mesh;
   readonly baseHalo: THREE.Mesh;
+  readonly labelSprite: THREE.Sprite;
   collecting: boolean;
+}
+
+function createLootOrbShellMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.NormalBlending,
+    uniforms: {
+      uCoreColor: { value: new THREE.Color(0xfff4c2) },
+      uRimColor: { value: new THREE.Color(0xf2c97d) },
+    },
+    vertexShader: `
+      varying vec3 vNormalView;
+      varying vec3 vViewDir;
+      void main() {
+        vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+        vNormalView = normalize(normalMatrix * normal);
+        vViewDir = normalize(-mvPos.xyz);
+        gl_Position = projectionMatrix * mvPos;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uCoreColor;
+      uniform vec3 uRimColor;
+      varying vec3 vNormalView;
+      varying vec3 vViewDir;
+      void main() {
+        float ndv = clamp(abs(dot(normalize(vNormalView), normalize(vViewDir))), 0.0, 1.0);
+        float fresnel = pow(1.0 - ndv, 2.1);
+        vec3 col = mix(uCoreColor, uRimColor, fresnel);
+        float alpha = 0.14 + fresnel * 0.64;
+        gl_FragColor = vec4(col, alpha);
+      }
+    `,
+  });
+}
+
+function createLootOrbBeamMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    uniforms: {
+      uColor: { value: new THREE.Color(0xf6c96a) },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uColor;
+      varying vec2 vUv;
+      void main() {
+        float verticalFade = smoothstep(0.0, 0.14, vUv.y) * pow(1.0 - vUv.y, 1.85);
+        gl_FragColor = vec4(uColor, verticalFade * 0.34);
+      }
+    `,
+  });
+}
+
+function createGoldTagTexture(goldAmount: number): THREE.Texture | null {
+  if (typeof document === 'undefined') return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = 160;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const x = 10;
+  const y = 10;
+  const w = 140;
+  const h = 44;
+  const r = 22;
+
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+
+  const grad = ctx.createLinearGradient(0, y, 0, y + h);
+  grad.addColorStop(0, 'rgba(18, 28, 52, 0.92)');
+  grad.addColorStop(1, 'rgba(9, 15, 30, 0.96)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = 'rgba(246, 206, 122, 0.92)';
+  ctx.stroke();
+
+  const coinGrad = ctx.createRadialGradient(34, 29, 2, 36, 32, 11);
+  coinGrad.addColorStop(0, '#fff7d6');
+  coinGrad.addColorStop(0.55, '#f2c97d');
+  coinGrad.addColorStop(1, '#b47d2a');
+  ctx.beginPath();
+  ctx.arc(36, 32, 10, 0, Math.PI * 2);
+  ctx.fillStyle = coinGrad;
+  ctx.fill();
+
+  ctx.fillStyle = '#fff3c4';
+  ctx.font = '800 25px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`+${goldAmount}G`, 54, 33);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.needsUpdate = true;
+  return tex;
 }
 
 const RIPPLE_POOL_SIZE = 8;
@@ -67,12 +188,20 @@ export class StageVfxManager {
   private readonly pillarPool: PillarSlot[] = [];
   private readonly lootOrbs = new Map<string, LootOrbActor>();
 
-  private readonly orbCoreGeo = new THREE.OctahedronGeometry(0.26, 1);
-  private readonly orbRingGeo = new THREE.TorusGeometry(0.39, 0.024, 8, 24);
-  private readonly orbBaseGeo = new THREE.RingGeometry(0.28, 0.44, 24);
+  private readonly orbShellGeo = new THREE.SphereGeometry(0.33, 28, 20);
+  private readonly orbCoinGeo = new THREE.CylinderGeometry(0.19, 0.19, 0.048, 32);
+  private readonly orbCoinEmblemGeo = new THREE.OctahedronGeometry(0.085, 0);
+  private readonly orbRingGeo = new THREE.TorusGeometry(0.37, 0.014, 12, 40);
+  private readonly orbBeamGeo = new THREE.CylinderGeometry(0.24, 0.34, 1.45, 24, 1, true);
+  private readonly orbBaseGeo = new THREE.RingGeometry(0.29, 0.43, 36);
   private readonly moteGeo = new THREE.OctahedronGeometry(0.18, 0);
-  private readonly goldOrbBloomMat: THREE.MeshStandardMaterial;
+  private readonly orbShellMat: THREE.ShaderMaterial;
+  private readonly orbBeamMat: THREE.ShaderMaterial;
+  private readonly orbCoinMat: THREE.MeshStandardMaterial;
+  private readonly orbCoinGlowMat: THREE.MeshStandardMaterial;
   private readonly orbBaseMat: THREE.MeshBasicMaterial;
+  private readonly goldTagMaterials = new Map<number, THREE.SpriteMaterial>();
+  private readonly ownedTextures: THREE.Texture[] = [];
 
   private readonly ownedGeometries: THREE.BufferGeometry[] = [];
   private readonly ownedMaterials: THREE.Material[] = [];
@@ -82,18 +211,43 @@ export class StageVfxManager {
     this.materials = materials;
     this.tweenGroup = tweenGroup;
 
+    this.orbCoinGeo.rotateX(Math.PI * 0.5);
+    this.orbCoinEmblemGeo.scale(1, 1, 0.42);
     this.orbRingGeo.rotateX(Math.PI * 0.5);
+    this.orbBeamGeo.translate(0, 0.36, 0);
     this.orbBaseGeo.rotateX(-Math.PI * 0.5);
-    this.ownedGeometries.push(this.orbCoreGeo, this.orbRingGeo, this.orbBaseGeo, this.moteGeo);
+    this.ownedGeometries.push(
+      this.orbShellGeo,
+      this.orbCoinGeo,
+      this.orbCoinEmblemGeo,
+      this.orbRingGeo,
+      this.orbBeamGeo,
+      this.orbBaseGeo,
+      this.moteGeo,
+    );
 
-    this.goldOrbBloomMat = materials.createBloomEmissiveMaterial(0xf5c451, 1.18);
+    this.orbShellMat = createLootOrbShellMaterial();
+    this.orbBeamMat = createLootOrbBeamMaterial();
+    this.orbCoinMat = new THREE.MeshStandardMaterial({
+      color: 0xf7cf74,
+      emissive: 0xd99b26,
+      emissiveIntensity: 0.42,
+      metalness: 0.84,
+      roughness: 0.24,
+    });
+    this.orbCoinGlowMat = materials.createBloomEmissiveMaterial(0xfff0b3, 1.05);
     this.orbBaseMat = new THREE.MeshBasicMaterial({
-      color: 0xfde68a,
+      color: 0xf6cf74,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.55,
       depthWrite: false,
     });
-    this.ownedMaterials.push(this.orbBaseMat);
+    this.ownedMaterials.push(
+      this.orbShellMat,
+      this.orbBeamMat,
+      this.orbCoinMat,
+      this.orbBaseMat,
+    );
 
     const outerGeo = new THREE.RingGeometry(0.84, 0.92, 28);
     outerGeo.rotateX(-Math.PI * 0.5);
@@ -238,41 +392,56 @@ export class StageVfxManager {
     }
 
     for (const orb of orbs) {
+      const amount = Math.max(1, Math.floor(orb.goldAmount));
       const existing = this.lootOrbs.get(orb.orbId);
       const { x, z } = hexToStageXZ(orb.row, orb.col);
       if (existing) {
-        existing.goldAmount = Math.max(1, Math.floor(orb.goldAmount));
+        if (existing.goldAmount !== amount) {
+          existing.goldAmount = amount;
+          existing.labelSprite.material = this.getGoldTagMaterial(amount);
+        }
         if (!existing.collecting) {
-          existing.group.position.set(x, 0.42, z);
+          existing.group.position.set(x, 0.44, z);
         }
         continue;
       }
 
       const group = new THREE.Group();
-      group.position.set(x, 0.42, z);
+      group.position.set(x, 0.44, z);
 
-      const coreMesh = new THREE.Mesh(this.orbCoreGeo, this.goldOrbBloomMat);
+      const coinGroup = new THREE.Group();
+      const coinDisc = new THREE.Mesh(this.orbCoinGeo, this.orbCoinMat);
+      const coinEmblem = new THREE.Mesh(this.orbCoinEmblemGeo, this.orbCoinGlowMat);
+      coinGroup.add(coinDisc, coinEmblem);
+
+      const shellMesh = new THREE.Mesh(this.orbShellGeo, this.orbShellMat);
+      const beamMesh = new THREE.Mesh(this.orbBeamGeo, this.orbBeamMat);
+      beamMesh.position.set(0, -0.36, 0);
       const haloRingA = new THREE.Mesh(this.orbRingGeo, this.materials.brushedGoldMat);
-      const haloRingB = new THREE.Mesh(this.orbRingGeo, this.materials.brushedGoldMat);
-      haloRingB.scale.setScalar(0.78);
-      haloRingB.rotation.set(Math.PI * 0.35, 0.5, 0);
+      haloRingA.rotation.set(0.32, 0, 0.18);
       const baseHalo = new THREE.Mesh(this.orbBaseGeo, this.orbBaseMat);
-      baseHalo.position.set(0, -0.39, 0);
+      baseHalo.position.set(0, -0.41, 0);
 
-      const scaleBoost = 1 + Math.min(3, Math.max(0, orb.goldAmount - 1)) * 0.14;
+      const labelSprite = new THREE.Sprite(this.getGoldTagMaterial(amount));
+      labelSprite.position.set(0, 0.72, 0);
+      labelSprite.scale.set(0.88, 0.35, 1);
+
+      const scaleBoost = 1 + Math.min(3, Math.max(0, amount - 1)) * 0.1;
       group.scale.setScalar(scaleBoost);
-      group.add(coreMesh, haloRingA, haloRingB, baseHalo);
+      group.add(coinGroup, shellMesh, beamMesh, haloRingA, baseHalo, labelSprite);
       this.root.add(group);
 
-      newBloomMeshes.push(coreMesh);
+      newBloomMeshes.push(coinEmblem);
       this.lootOrbs.set(orb.orbId, {
         orbId: orb.orbId,
-        goldAmount: Math.max(1, Math.floor(orb.goldAmount)),
+        goldAmount: amount,
         group,
-        coreMesh,
+        coinGroup,
+        shellMesh,
+        beamMesh,
         haloRingA,
-        haloRingB,
         baseHalo,
+        labelSprite,
         collecting: false,
       });
     }
@@ -469,14 +638,15 @@ export class StageVfxManager {
     }
 
     for (const actor of this.lootOrbs.values()) {
-      actor.coreMesh.rotation.y = this.elapsedSec * 2.1;
-      actor.haloRingA.rotation.z = this.elapsedSec * 1.5;
-      actor.haloRingB.rotation.y = -this.elapsedSec * 1.8;
+      actor.coinGroup.rotation.y = this.elapsedSec * 2.2;
+      actor.haloRingA.rotation.y = this.elapsedSec * 1.1;
+      actor.haloRingA.rotation.z = Math.sin(this.elapsedSec * 1.6) * 0.24;
       if (!actor.collecting) {
-        const hover = Math.sin(this.elapsedSec * 3.2) * 0.065;
-        actor.group.position.y = 0.42 + hover;
-        actor.baseHalo.position.y = -0.39 - hover;
-        actor.baseHalo.scale.setScalar(0.92 + Math.sin(this.elapsedSec * 3.2) * 0.12);
+        const hover = Math.sin(this.elapsedSec * 3.0) * 0.06;
+        actor.group.position.y = 0.44 + hover;
+        actor.baseHalo.position.y = -0.41 - hover;
+        actor.beamMesh.position.y = -0.36 - hover;
+        actor.baseHalo.scale.setScalar(0.94 + Math.sin(this.elapsedSec * 3.0) * 0.1);
       }
     }
 
@@ -530,9 +700,27 @@ export class StageVfxManager {
     }
   }
 
+  private getGoldTagMaterial(goldAmount: number): THREE.SpriteMaterial {
+    const existing = this.goldTagMaterials.get(goldAmount);
+    if (existing) return existing;
+    const texture = createGoldTagTexture(goldAmount);
+    if (texture) this.ownedTextures.push(texture);
+    const mat = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+    });
+    this.goldTagMaterials.set(goldAmount, mat);
+    this.ownedMaterials.push(mat);
+    return mat;
+  }
+
   public dispose(): void {
     for (const g of this.ownedGeometries) g.dispose();
     for (const m of this.ownedMaterials) m.dispose();
+    for (const t of this.ownedTextures) t.dispose();
+    this.goldTagMaterials.clear();
     this.lootOrbs.clear();
   }
 }
