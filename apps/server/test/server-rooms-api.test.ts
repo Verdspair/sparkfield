@@ -600,12 +600,12 @@ describe.each([
       const resource = current.phase === 'resource' && current.nodeIndex === 0
         ? current
         : await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'resource' && s.nodeIndex === 0);
-      expect(resource.resourceSettlement).toMatchObject({ nodeIndex: 0, rawEarnedCents: 180, carryInCents: 0,
-        grantedIntegerGold: 1, carryOutCents: 80, orbSplits: [1] });
-      expect(resource.self.gold).toBe(lesson.self.gold + 1);
-      expect(resource.self.learningChargeCents).toBe(80); expect(resource.self.learningGoldOrbs).toEqual([1]);
+      expect(resource.resourceSettlement).toMatchObject({ nodeIndex: 0, rawEarnedCents: 850, carryInCents: 0,
+        grantedIntegerGold: 8, carryOutCents: 50, orbSplits: [2, 2, 2, 2] });
+      expect(resource.self.gold).toBe(lesson.self.gold + 8);
+      expect(resource.self.learningChargeCents).toBe(50); expect(resource.self.learningGoldOrbs).toEqual([2, 2, 2, 2]);
       expect(resource.self.learningGoldOrbs.every(Number.isInteger)).toBe(true);
-      expect(resource.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual([{ reason: 'learning', amount: 1 }]);
+      expect(resource.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual([{ reason: 'learning', amount: 8 }]);
       const persistedLearning = await studyInbox.wait<{ nodeIndex: number; rewardPointsGranted: number; attemptIds: string[] }>(
         'learning_persisted', (event) => event.nodeIndex === 0);
       expect(persistedLearning.rewardPointsGranted).toBeGreaterThan(0); expect(persistedLearning.attemptIds.length).toBeGreaterThan(0);
@@ -675,10 +675,10 @@ describe.each([
       expect((await studyInbox.snapshot()).self.chosenAugments).toHaveLength(choice.self.chosenAugments.length + 1);
       const roundTwo = await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'strategy' && s.round === 2);
       const roundThree = await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'strategy' && s.round === 3);
-      expect(roundTwo.resourceSettlement).toMatchObject({ nodeIndex: 1, rawEarnedCents: 0, carryInCents: 80, grantedIntegerGold: 0, carryOutCents: 80 });
+      expect(roundTwo.resourceSettlement).toMatchObject({ nodeIndex: 1, rawEarnedCents: 0, carryInCents: 50, grantedIntegerGold: 0, carryOutCents: 50 });
       expect(roundThree.resourceSettlement).toEqual(roundTwo.resourceSettlement);
-      expect(roundThree.self.learningChargeCents).toBe(80);
-      expect(roundThree.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual([{ reason: 'learning', amount: 1 }]);
+      expect(roundThree.self.learningChargeCents).toBe(50);
+      expect(roundThree.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual([{ reason: 'learning', amount: 8 }]);
       expect(roundThree.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual(roundTwo.self.goldLedger.filter((entry) => entry.reason === 'learning'));
     }
     const summary = await studyInbox.wait<{ competitive: { finalBoardSnapshot: unknown; standing: unknown }; learning: { wrongQuestionIds: string[]; nodes: unknown[] } }>('summary', () => true, 0, 55_000);

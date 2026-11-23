@@ -346,4 +346,74 @@ describe('dual-scene starport showcase, 3 tacticians, zero-occlusion camera, 36 
       stage.dispose();
     }
   });
+
+  it('toggles inspect on repeat click, switches inspect without swapping on clicking another unit, moves to empty hex on click, and swaps on drag', () => {
+    const inspect = vi.fn();
+    const move = vi.fn();
+    const stage = new BoardStageEngine(undefined, { callbacks: { onInspectUnit: inspect, onMoveUnit: move } });
+    try {
+      stage['container'] = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 1280, height: 720 }) } as unknown as HTMLElement;
+      stage.setSceneMode('match');
+      stage.setPhase('strategy');
+      const unitA: StageUnitState = {
+        instanceId: 'ally-a',
+        unitId: 'S01',
+        star: 1,
+        allegiance: 'ally',
+        seatIndex: 0,
+        location: { zone: 'board', row: 0, col: 1, coordSpace: 'deploy4x7' },
+        hp: 600,
+        maxHp: 600,
+        mana: 0,
+        maxMana: 60,
+        items: [],
+      };
+      const unitB: StageUnitState = {
+        ...unitA,
+        instanceId: 'ally-b',
+        unitId: 'S02',
+        location: { zone: 'board', row: 0, col: 4, coordSpace: 'deploy4x7' },
+      };
+      stage.syncUnits([unitA, unitB]);
+      stage.stepManual(0.2);
+
+      const ptA = projectedPoint(stage, 0, hexToStageXZ(4, 1));
+      const ptB = projectedPoint(stage, 0, hexToStageXZ(4, 4));
+      const ptEmpty = projectedPoint(stage, 0, hexToStageXZ(5, 2));
+
+      stage['handlePointerDown']({ button: 0, clientX: ptA.clientX, clientY: ptA.clientY } as PointerEvent);
+      stage['handlePointerUp']({ button: 0, clientX: ptA.clientX, clientY: ptA.clientY } as PointerEvent);
+      expect(inspect).toHaveBeenLastCalledWith('ally-a', { x: ptA.clientX, y: ptA.clientY });
+      expect(move).not.toHaveBeenCalled();
+
+      stage['handlePointerDown']({ button: 0, clientX: ptA.clientX, clientY: ptA.clientY } as PointerEvent);
+      stage['handlePointerUp']({ button: 0, clientX: ptA.clientX, clientY: ptA.clientY } as PointerEvent);
+      expect(inspect).toHaveBeenLastCalledWith(null);
+      expect(move).not.toHaveBeenCalled();
+
+      stage['handlePointerDown']({ button: 0, clientX: ptA.clientX, clientY: ptA.clientY } as PointerEvent);
+      stage['handlePointerUp']({ button: 0, clientX: ptA.clientX, clientY: ptA.clientY } as PointerEvent);
+      expect(inspect).toHaveBeenLastCalledWith('ally-a', { x: ptA.clientX, y: ptA.clientY });
+
+      stage['handlePointerDown']({ button: 0, clientX: ptB.clientX, clientY: ptB.clientY } as PointerEvent);
+      stage['handlePointerUp']({ button: 0, clientX: ptB.clientX, clientY: ptB.clientY } as PointerEvent);
+      expect(inspect).toHaveBeenLastCalledWith('ally-b', { x: ptB.clientX, y: ptB.clientY });
+      expect(move).not.toHaveBeenCalled();
+
+      stage['handlePointerDown']({ button: 0, clientX: ptEmpty.clientX, clientY: ptEmpty.clientY } as PointerEvent);
+      stage['handlePointerUp']({ button: 0, clientX: ptEmpty.clientX, clientY: ptEmpty.clientY } as PointerEvent);
+      expect(move).toHaveBeenCalledTimes(1);
+      expect(move).toHaveBeenLastCalledWith('ally-b', { zone: 'board', row: 1, col: 2 }, { row: 5, col: 2 });
+      expect(inspect).toHaveBeenLastCalledWith(null);
+
+      stage['handlePointerDown']({ button: 0, clientX: ptA.clientX, clientY: ptA.clientY } as PointerEvent);
+      stage['handlePointerMove']({ clientX: ptB.clientX, clientY: ptB.clientY } as PointerEvent);
+      stage['handlePointerUp']({ button: 0, clientX: ptB.clientX, clientY: ptB.clientY } as PointerEvent);
+      expect(move).toHaveBeenCalledTimes(2);
+      expect(move).toHaveBeenLastCalledWith('ally-a', { zone: 'board', row: 0, col: 4 }, { row: 4, col: 4 });
+    } finally {
+      stage['container'] = null;
+      stage.dispose();
+    }
+  });
 });

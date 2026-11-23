@@ -132,11 +132,11 @@ describe('integer economy and public schedule',()=>{
     u.location={zone:'bench',slot:0};v.items=[];expect(populationCap(s,'standard')).toBe(5);
   });
   it('integer learning grants record whole orb display and carry without rounding',()=>{
-    const s=createSeat('x','quick');applyLearningGoldGrant(s,3,99);expect(s.gold).toBe(27);expect(s.learningGoldOrbs).toEqual([1,1,1]);expect(s.learningChargeCents).toBe(99);assertGoldConservation(s);
+    const s=createSeat('x','quick');const startGold=s.gold;applyLearningGoldGrant(s,3,99);expect(s.gold).toBe(startGold+3);expect(s.learningGoldOrbs).toEqual([1,1,1]);expect(s.learningChargeCents).toBe(99);assertGoldConservation(s);
     expect(()=>applyLearningGoldGrant(s,0,100)).toThrow();expect(()=>applyLearningGoldGrant(s,0.5,1)).toThrow();
   });
   it('interest excludes newly granted income and final rounds issue no base or XP',()=>{
-    const s=createSeat('x','standard');s.gold=9;s.initialGold=9;settleSeatEconomy(s,'standard',false);expect(s.gold).toBe(21);const snap=cloneState(s);settleSeatEconomy(s,'standard',true);expect(s).toEqual(snap);
+    const s=createSeat('x','standard');s.gold=9;s.initialGold=9;settleSeatEconomy(s,'standard',false);expect(s.gold).toBe(9+MODE_BUDGETS.modes.standard.economy.base_income);const snap=cloneState(s);settleSeatEconomy(s,'standard',true);expect(s).toEqual(snap);
   });
   it('PVE pauses streak, all-seat vouchers expire, and no loss subsidy exists',()=>{
     const g=createGame('standard');const s=g.seats[0]!;

@@ -25,14 +25,14 @@ describe('learning budget settlement', () => {
       unit('resource_check', '1', '1', 1), unit('resource_check', '0', '1', 3), unit('verification'),
     ] });
     expect(result.exactScore).toEqual({ numerator: '19', denominator: '40' });
-    expect(result.rawEarnedCents).toBe(85); 
+    expect(result.rawEarnedCents).toBe(403);
   });
   it('freezes the denominator for skip and timeout; practice/remediation have no economic effect', () => {
     const units = [unit('resource_check'), { ...unit('resource_check'), status: 'timed_out' as const },
       { ...unit('resource_check'), status: 'skipped' as const }, unit('verification', '0'), unit('practice'), unit('remediation')];
     const result = settleLearningNodeGold({ mode: 'quick', blockIndex: 0, gradedUnits: units });
     expect(result.exactScore).toEqual({ numerator: '7', denominator: '30' });
-    expect(result.rawEarnedCents).toBe(42);
+    expect(result.rawEarnedCents).toBe(198);
     expect(settleLearningNodeGold({ mode: 'quick', blockIndex: 0, gradedUnits: [unit('practice'), unit('remediation')] }).rawEarnedCents).toBe(0);
   });
   it('treats missing frozen answers as zero without dropping their weights', () => {
@@ -40,11 +40,11 @@ describe('learning budget settlement', () => {
     const result = settleLearningNodeGold({ mode: 'quick', nodeIndex: 0, questions: qs, submissions: { q1: 'A', q3: 'A' } });
     expect(gradeFrozenLearningUnits(qs, { q1: 'A' })[1]!.isSkipped).toBe(true);
     expect(result.exactScore).toEqual({ numerator: '13', denominator: '20' });
-    expect(result.rawEarnedCents).toBe(117);
+    expect(result.rawEarnedCents).toBe(552);
   });
   it('does not renormalize a missing whole phase into full marks', () => {
-    expect(settleLearningNodeGold({ mode: 'quick', blockIndex: 0, gradedUnits: [unit('resource_check')] }).rawEarnedCents).toBe(126);
-    expect(settleLearningNodeGold({ mode: 'quick', blockIndex: 0, gradedUnits: [unit('verification')] }).rawEarnedCents).toBe(54);
+    expect(settleLearningNodeGold({ mode: 'quick', blockIndex: 0, gradedUnits: [unit('resource_check')] }).rawEarnedCents).toBe(595);
+    expect(settleLearningNodeGold({ mode: 'quick', blockIndex: 0, gradedUnits: [unit('verification')] }).rawEarnedCents).toBe(255);
   });
   it('does exact BigInt sums beyond Number safe integer during intermediate arithmetic', () => {
     const large = Number.MAX_SAFE_INTEGER;
@@ -52,11 +52,11 @@ describe('learning budget settlement', () => {
       unit('resource_check', '1', '3', large), unit('resource_check', '2', '3', large), unit('verification', '1', '3'),
     ] });
     expect(result.exactScore).toEqual({ numerator: '9', denominator: '20' });
-    expect(result.rawEarnedCents).toBe(81);
+    expect(result.rawEarnedCents).toBe(382);
   });
-  it('floors before divmod, splits 3 gold into +2 and +1, and clears terminal carry without reward', () => {
+  it('floors before divmod, splits integer gold into 2G/1G orbs, and clears terminal carry without reward', () => {
     const result = settleLearningNodeGold({ mode: 'quick', blockIndex: 3, gradedUnits: [unit('resource_check'), unit('verification')], carryInCents: 99 });
-    expect(result).toMatchObject({ grantedIntegerGold: 3, orbSplits: [2, 1], carryOutCents: 19 });
+    expect(result).toMatchObject({ grantedIntegerGold: 11, orbSplits: [2, 2, 2, 2, 2, 1], carryOutCents: 99 });
     expect(finalizeLearningGoldCarry(99)).toEqual({ discardedCarryCents: 99, carryOutCents: 0, grantedIntegerGold: 0 });
   });
   it('returns exact decimal strings for huge score fractions without blocking valid settlement', () => {

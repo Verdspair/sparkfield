@@ -775,6 +775,10 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     stageRef.current?.setArenaTheme(arenaTheme);
   }, [arenaTheme]);
 
+  useEffect(() => {
+    stageRef.current?.syncInspectedUnit(inspectedUnitId);
+  }, [inspectedUnitId]);
+
   const registerStageEngine = useCallback((engine: BoardStageEngine | null) => {
     stageRef.current = engine;
     if (!engine) return;

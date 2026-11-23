@@ -75,9 +75,9 @@
       "rest_after_blocks": [],
       "economy": {
         "starting_level": 4,
-        "starting_gold": 24,
+        "starting_gold": 16,
         "starting_one_cost_units": 4,
-        "base_income": 14,
+        "base_income": 7,
         "free_xp": 4,
         "base_level_cap": 8,
         "interest_cap": 5,
@@ -89,7 +89,7 @@
       },
       "pvp_round_count": 6,
       "score_max": 13.0,
-      "learning_gold_total_max_cents": 800,
+      "learning_gold_total_max_cents": 4000,
       "events_detail": [
         {
           "round": 2,
@@ -387,10 +387,10 @@
       ],
       "planned_learning_ratio": 0.4,
       "learning_gold_cap_by_block_cents": [
-        180,
-        180,
-        220,
-        220
+        850,
+        950,
+        1100,
+        1100
       ],
       "late_scoring_pvp_rounds": [
         5,
@@ -455,9 +455,9 @@
       "rest_after_blocks": [],
       "economy": {
         "starting_level": 4,
-        "starting_gold": 20,
+        "starting_gold": 14,
         "starting_one_cost_units": 4,
-        "base_income": 12,
+        "base_income": 6,
         "free_xp": 3,
         "base_level_cap": 9,
         "interest_cap": 5,
@@ -469,7 +469,7 @@
       },
       "pvp_round_count": 7,
       "score_max": 15.0,
-      "learning_gold_total_max_cents": 1200,
+      "learning_gold_total_max_cents": 5200,
       "events_detail": [
         {
           "round": 2,
@@ -902,12 +902,12 @@
       ],
       "planned_learning_ratio": 0.5,
       "learning_gold_cap_by_block_cents": [
-        180,
-        180,
-        200,
-        200,
-        220,
-        220
+        750,
+        800,
+        850,
+        850,
+        950,
+        1000
       ],
       "late_scoring_pvp_rounds": [
         7,
@@ -988,9 +988,9 @@
       ],
       "economy": {
         "starting_level": 3,
-        "starting_gold": 16,
+        "starting_gold": 12,
         "starting_one_cost_units": 3,
-        "base_income": 10,
+        "base_income": 5,
         "free_xp": 3,
         "base_level_cap": 9,
         "interest_cap": 5,
@@ -1002,7 +1002,7 @@
       },
       "pvp_round_count": 10,
       "score_max": 21.5,
-      "learning_gold_total_max_cents": 1600,
+      "learning_gold_total_max_cents": 7100,
       "events_detail": [
         {
           "round": 2,
@@ -1615,14 +1615,14 @@
       ],
       "planned_learning_ratio": 0.5333333333333333,
       "learning_gold_cap_by_block_cents": [
-        180,
-        180,
-        180,
-        180,
-        220,
-        220,
-        220,
-        220
+        750,
+        800,
+        800,
+        850,
+        900,
+        950,
+        1000,
+        1050
       ],
       "late_scoring_pvp_rounds": [
         10,

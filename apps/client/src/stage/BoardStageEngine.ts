@@ -192,6 +192,9 @@ export class BoardStageEngine {
   private callbacks: StageInteractionCallbacks;
 
   private selectedInstanceId: string | null = null;
+  private inspectedInstanceId: string | null = null;
+  private pendingDragUnitId: string | null = null;
+  private pendingDragTimer: ReturnType<typeof setTimeout> | null = null;
   private draggingInstanceId: string | null = null;
   private pointerDownClient: { x: number; y: number } | null = null;
   private lastLobbyPointerX = 0;
@@ -1367,14 +1370,36 @@ export class BoardStageEngine {
       return;
     }
 
+    this.cancelPendingDrag();
     const pickedUnitId =
       pick.kind === 'board_hex' || pick.kind === 'bench_slot' ? pick.unitInstanceId : null;
 
-    if (this.selectedInstanceId && this.canControlUnitsNow()) {
-      if (pickedUnitId === this.selectedInstanceId) {
-        this.startDraggingUnit(this.selectedInstanceId);
-        return;
+    if (pickedUnitId) {
+      const st = this.unitStates.get(pickedUnitId);
+      if (st && st.allegiance === 'ally' && this.canControlUnitsNow()) {
+        this.pendingDragUnitId = pickedUnitId;
+        this.pendingDragTimer = globalThis.setTimeout(() => {
+          this.pendingDragTimer = null;
+          if (this.pendingDragUnitId === pickedUnitId && !this.draggingInstanceId) {
+            this.pendingDragUnitId = null;
+            this.inspectedInstanceId = null;
+            this.callbacks.onInspectUnit?.(null);
+            this.startDraggingUnit(pickedUnitId);
+          }
+        }, 220);
+      } else if (this.inspectedInstanceId === pickedUnitId) {
+        this.clearSelectionAndHelpers();
+        this.inspectedInstanceId = null;
+        this.callbacks.onInspectUnit?.(null);
+      } else {
+        this.clearSelectionAndHelpers();
+        this.inspectedInstanceId = pickedUnitId;
+        this.callbacks.onInspectUnit?.(pickedUnitId, { x: e.clientX, y: e.clientY });
       }
+      return;
+    }
+
+    if (this.selectedInstanceId && this.canControlUnitsNow()) {
       if (pick.kind === 'board_hex' && pick.deployRow !== null) {
         this.emitUnifiedMove(
           this.selectedInstanceId,
@@ -1382,26 +1407,21 @@ export class BoardStageEngine {
           { row: pick.row, col: pick.col },
         );
         this.clearSelectionAndHelpers();
+        this.inspectedInstanceId = null;
+        this.callbacks.onInspectUnit?.(null);
         return;
       }
       if (pick.kind === 'bench_slot') {
         this.emitUnifiedMove(this.selectedInstanceId, { zone: 'bench', slot: pick.slot }, null);
         this.clearSelectionAndHelpers();
+        this.inspectedInstanceId = null;
+        this.callbacks.onInspectUnit?.(null);
         return;
       }
     }
 
-    if (pickedUnitId) {
-      const st = this.unitStates.get(pickedUnitId);
-      this.callbacks.onInspectUnit?.(pickedUnitId, { x: e.clientX, y: e.clientY });
-      if (st && st.allegiance === 'ally' && this.canControlUnitsNow()) {
-        this.selectedInstanceId = pickedUnitId;
-        this.startDraggingUnit(pickedUnitId);
-      }
-      return;
-    }
-
     this.clearSelectionAndHelpers();
+    this.inspectedInstanceId = null;
     this.callbacks.onInspectUnit?.(null);
     this.vfx.spawnGroundClickRipple(pick.worldX, pick.worldZ);
     if (
@@ -1453,6 +1473,20 @@ export class BoardStageEngine {
       this.arena.setHoveredHex(null);
     }
 
+    if (!this.draggingInstanceId && this.pendingDragUnitId && this.pointerDownClient) {
+      const moved = Math.hypot(
+        e.clientX - this.pointerDownClient.x,
+        e.clientY - this.pointerDownClient.y,
+      );
+      if (moved >= 8) {
+        const unitToDrag = this.pendingDragUnitId;
+        this.cancelPendingDrag();
+        this.inspectedInstanceId = null;
+        this.callbacks.onInspectUnit?.(null);
+        this.startDraggingUnit(unitToDrag);
+      }
+    }
+
     if (!this.draggingInstanceId) return;
 
     const dragRig = this.unitRigs.get(this.draggingInstanceId);
@@ -1479,6 +1513,15 @@ export class BoardStageEngine {
         this.arena.setFriendlySwapArc(null, null);
         this.setNudgedFriendly(null);
       }
+    } else if (
+      pick.kind === 'bench_slot' &&
+      pick.unitInstanceId &&
+      pick.unitInstanceId !== this.draggingInstanceId
+    ) {
+      const originXZ = this.resolvePlacementWorldXZ(dragState.location, 0);
+      const targetXZ = this.resolvePlacementWorldXZ({ zone: 'bench', slot: pick.slot }, 0);
+      this.arena.setFriendlySwapArc(originXZ, targetXZ);
+      this.setNudgedFriendly(pick.unitInstanceId);
     } else {
       this.arena.setFriendlySwapArc(null, null);
       this.setNudgedFriendly(null);
@@ -1499,11 +1542,57 @@ export class BoardStageEngine {
       return;
     }
 
+    if (this.pendingDragUnitId && !this.draggingInstanceId) {
+      const clickedId = this.pendingDragUnitId;
+      const moveDist = this.pointerDownClient
+        ? Math.hypot(e.clientX - this.pointerDownClient.x, e.clientY - this.pointerDownClient.y)
+        : 0;
+      this.cancelPendingDrag();
+      if (moveDist >= 8 && this.canControlUnitsNow()) {
+        const dropPick = this.pickAtClientPoint(e.clientX, e.clientY);
+        if (dropPick) {
+          if (dropPick.kind === 'sell_zone') {
+            this.callbacks.onSellUnitRequest?.(clickedId);
+          } else if (dropPick.kind === 'board_hex' && dropPick.deployRow !== null) {
+            this.emitUnifiedMove(
+              clickedId,
+              { zone: 'board', row: dropPick.deployRow, col: dropPick.col },
+              { row: dropPick.row, col: dropPick.col },
+            );
+          } else if (dropPick.kind === 'bench_slot') {
+            this.emitUnifiedMove(clickedId, { zone: 'bench', slot: dropPick.slot }, null);
+          }
+        }
+        this.clearSelectionAndHelpers();
+        this.inspectedInstanceId = null;
+        this.callbacks.onInspectUnit?.(null);
+        return;
+      }
+      if (this.inspectedInstanceId === clickedId) {
+        this.clearSelectionAndHelpers();
+        this.inspectedInstanceId = null;
+        this.callbacks.onInspectUnit?.(null);
+      } else {
+        this.selectedInstanceId = clickedId;
+        this.inspectedInstanceId = clickedId;
+        this.callbacks.onInspectUnit?.(clickedId, { x: e.clientX, y: e.clientY });
+        const st = this.unitStates.get(clickedId);
+        const rig = this.unitRigs.get(clickedId);
+        if (st && rig && st.location.zone === 'board') {
+          const bRow =
+            st.location.coordSpace === 'deploy4x7'
+              ? deployRowToBoardRow(st.location.row)
+              : st.location.row;
+          this.arena.setRangeHighlight({ row: bRow, col: st.location.col }, rig.unitDef.stats.range);
+        } else {
+          this.arena.setRangeHighlight(null, 0);
+        }
+      }
+      return;
+    }
+
     if (!this.draggingInstanceId) return;
     const instanceId = this.draggingInstanceId;
-    const dragDist = this.pointerDownClient
-      ? Math.hypot(e.clientX - this.pointerDownClient.x, e.clientY - this.pointerDownClient.y)
-      : 999;
 
     const pick = this.pickAtClientPoint(e.clientX, e.clientY);
     this.draggingInstanceId = null;
@@ -1518,11 +1607,6 @@ export class BoardStageEngine {
       const authXZ = this.resolvePlacementWorldXZ(st.location, st.seatIndex ?? 0);
       rig.posSpring.setTarget(authXZ.x, 0, authXZ.z);
       rig.applyStarTier(st.star);
-    }
-
-    if (dragDist < 6) {
-      this.selectedInstanceId = instanceId;
-      return;
     }
 
     if (pick && this.canControlUnitsNow()) {
@@ -1540,6 +1624,7 @@ export class BoardStageEngine {
     }
 
     this.clearSelectionAndHelpers();
+    this.inspectedInstanceId = null;
   }
 
   private setNudgedFriendly(friendlyId: string | null): void {
@@ -1561,7 +1646,23 @@ export class BoardStageEngine {
     this.callbacks.onMoveUnit?.(instanceId, to, resolvedBoardHex);
   }
 
+  public syncInspectedUnit(instanceId: string | null): void {
+    this.inspectedInstanceId = instanceId;
+    if (!instanceId) {
+      this.clearSelectionAndHelpers();
+    }
+  }
+
+  private cancelPendingDrag(): void {
+    this.pendingDragUnitId = null;
+    if (this.pendingDragTimer !== null) {
+      globalThis.clearTimeout(this.pendingDragTimer);
+      this.pendingDragTimer = null;
+    }
+  }
+
   private clearSelectionAndHelpers(): void {
+    this.cancelPendingDrag();
     this.selectedInstanceId = null;
     this.arena.setDeployHighlightActive(false);
     this.arena.setRangeHighlight(null, null);
@@ -1781,6 +1882,7 @@ export class BoardStageEngine {
   public dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.cancelPendingDrag();
 
     this.pauseLoop();
     this.tweenGroup.removeAll();
