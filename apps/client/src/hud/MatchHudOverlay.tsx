@@ -37,7 +37,7 @@ import {
   QUEUE_TYPE_LABELS,
   formatQuarterPoints,
 } from '../utils/antiFakeZero.js';
-import { GameUiIcon } from '../components/GameUiIcons.js';
+import { GameUiIcon, TraitGlyphIcon } from '../components/GameUiIcons.js';
 import { LearningRewardBanner } from './LearningRewardBanner.js';
 import {
   MatchChoiceModal,
@@ -264,7 +264,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
       : null;
 
   const [learningReview, setLearningReview] = useState<{
-    phaseIndex: number;
+    nodeIndex: number;
     question: ClientQuestionView;
     feedback: MatchLearningFeedbackItem | null;
   } | null>(null);
@@ -300,11 +300,22 @@ export function MatchHudOverlay(): React.JSX.Element | null {
     setHoveredCraftPartnerId(null);
     setItemDrag(null);
     getStageEngine()?.setItemDropTargetUnit(null);
-    setLearningReview(null);
+    if (
+      !matchSnapshot ||
+      matchSnapshot.phase === 'battle' ||
+      matchSnapshot.phase === 'settlement' ||
+      matchSnapshot.phase === 'exit'
+    ) {
+      setLearningReview(null);
+    } else {
+      setLearningReview((current) =>
+        current && current.nodeIndex !== matchSnapshot.nodeIndex ? null : current,
+      );
+    }
     if (matchSnapshot?.phase === 'battle') {
       setRightTab('score');
     }
-  }, [matchSnapshot?.phase, matchSnapshot?.phaseIndex, getStageEngine]);
+  }, [matchSnapshot?.phase, matchSnapshot?.phaseIndex, matchSnapshot?.nodeIndex, getStageEngine]);
 
   useEffect(() => {
     if (leftTab !== 'items') {
@@ -698,7 +709,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
       (item) => item.questionId === submission.questionId,
     );
     if (!question) return;
-    const review = { phaseIndex: matchSnapshot.phaseIndex, question, feedback: null };
+    const review = { nodeIndex: matchSnapshot.nodeIndex, question, feedback: null };
     setLearningReview(review);
     void sendMatchLearningSubmit(submission.questionId, {
       answer: submission.answer,
@@ -996,10 +1007,12 @@ export function MatchHudOverlay(): React.JSX.Element | null {
         data-testid="hud-left-rail"
         onMouseLeave={() => setHoveredBagIndex(null)}
       >
-        <div className="blc-seg-tabs">
+        <div className="sf-rail-tabs" role="tablist" aria-label="战术侧栏">
           <button
             type="button"
-            className={`blc-seg-tab ${leftTab === 'traits' ? 'blc-seg-tab--active' : ''}`}
+            role="tab"
+            aria-selected={leftTab === 'traits'}
+            className={`sf-rail-tab ${leftTab === 'traits' ? 'sf-rail-tab--active' : ''}`}
             onClick={() => setLeftTab('traits')}
             data-testid="hud-left-traits-tab"
           >
@@ -1007,7 +1020,9 @@ export function MatchHudOverlay(): React.JSX.Element | null {
           </button>
           <button
             type="button"
-            className={`blc-seg-tab ${leftTab === 'items' ? 'blc-seg-tab--active' : ''}`}
+            role="tab"
+            aria-selected={leftTab === 'items'}
+            className={`sf-rail-tab ${leftTab === 'items' ? 'sf-rail-tab--active' : ''}`}
             onClick={() => setLeftTab('items')}
             data-testid="hud-left-items-tab"
           >
@@ -1057,7 +1072,9 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                     <div key={tr.traitName} className="blc-trait-item-wrap">
                       <button
                         type="button"
-                        className="blc-trait-row"
+                        className={`blc-trait-row ${
+                          tr.activeTier > 0 ? `blc-trait-row--active blc-trait-row--${tierStyle}` : ''
+                        }`.trim()}
                         onClick={() =>
                           setExpandedTraitName((prev) =>
                             prev === tr.traitName ? null : tr.traitName,
@@ -1070,7 +1087,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                             sheen ? 'trait-hex-badge--activated' : ''
                           }`.trim()}
                         >
-                          {tr.count}
+                          <TraitGlyphIcon traitName={tr.traitName} size={14} />
                         </span>
                         <div className="blc-trait-row__meta">
                           <strong>{tr.traitName}</strong>
@@ -1087,6 +1104,9 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                             ))}
                           </div>
                         </div>
+                        <span className={`sf-trait-count ${tr.activeTier > 0 ? 'sf-trait-count--active' : ''}`.trim()}>
+                          {tr.count}
+                        </span>
                       </button>
 
                       {isOpen && rawDef ? (
@@ -2320,14 +2340,20 @@ export function MatchHudOverlay(): React.JSX.Element | null {
         />
       ) : null}
 
-      {matchSnapshot.phase === 'learning' && matchSnapshot.learning && !matchSnapshot.learning.complete ? (
+      {matchSnapshot.learning &&
+      ((matchSnapshot.phase === 'learning' && !matchSnapshot.learning.complete) ||
+        (learningReview &&
+          learningReview.nodeIndex === matchSnapshot.nodeIndex &&
+          !['battle', 'settlement', 'exit'].includes(matchSnapshot.phase))) ? (
         <div className="learning-briefing-backdrop" data-testid="inmatch-learning-overlay">
           <div className="sf-learning-overlay-shell">
             <div className="sf-learning-card-host">
               {(() => {
                 const lrn = matchSnapshot.learning;
                 const review =
-                  learningReview?.phaseIndex === matchSnapshot.phaseIndex ? learningReview : null;
+                  learningReview && learningReview.nodeIndex === matchSnapshot.nodeIndex
+                    ? learningReview
+                    : null;
                 const currentStepKind =
                   review?.question.stepRole ?? lrn.currentStep ?? 'verification';
                 const activeStepObj = lrn.steps.find((s) => s.kind === currentStepKind);
@@ -2335,7 +2361,8 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                   (q) => !lrn.submittedQuestionIds.includes(q.questionId),
                 );
                 const currentQuestion =
-                  review?.question ?? (lrn.complete ? null : unsubmittedQuestions[0] ?? null);
+                  review?.question ??
+                  (lrn.complete ? null : unsubmittedQuestions[0] ?? lrn.clientQuestions.at(-1) ?? null);
                 const currentFeedbackRaw =
                   review?.feedback ??
                   (currentQuestion ? lrn.feedback[currentQuestion.questionId] : undefined);
@@ -2345,6 +2372,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                       isSkipped: currentFeedbackRaw.isSkipped,
                       quality: currentFeedbackRaw.quality,
                       explanationMd: currentFeedbackRaw.explanationMd,
+                      correctAnswerDisplay: currentFeedbackRaw.correctAnswerDisplay,
                       stepResults: currentFeedbackRaw.stepResults,
                     }
                   : null;
@@ -2409,11 +2437,16 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                     onAdvanceStep={() => {
                       if (review) {
                         setLearningReview(null);
-                        if (lrn.complete) advanceLearningStep();
-                      } else if (
-                        lrn.complete ||
-                        currentStepKind === 'material' ||
-                        currentStepKind === 'remediation'
+                        if (lrn.complete && matchSnapshot.phase === 'learning') {
+                          advanceLearningStep();
+                        }
+                        return;
+                      }
+                      if (
+                        matchSnapshot.phase === 'learning' &&
+                        (lrn.complete ||
+                          currentStepKind === 'material' ||
+                          currentStepKind === 'remediation')
                       ) {
                         advanceLearningStep();
                       }

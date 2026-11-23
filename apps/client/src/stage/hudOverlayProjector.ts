@@ -169,9 +169,9 @@ export class StageHudOverlayProjector {
     pCanvas.height = 8;
     const pCtx = pCanvas.getContext('2d');
     if (!pCtx) return null;
-    pCtx.fillStyle = '#FFFFFF';
+    pCtx.fillStyle = '#E2E8F0';
     pCtx.fillRect(0, 0, 8, 8);
-    pCtx.strokeStyle = '#CBD5E1';
+    pCtx.strokeStyle = '#FFFFFF';
     pCtx.lineWidth = 2.2;
     pCtx.beginPath();
     pCtx.moveTo(-2, 8);
@@ -262,7 +262,7 @@ export class StageHudOverlayProjector {
 
     slot.active = true;
     slot.worldOrigin.set(wx, wy, wz);
-    slot.amount = Math.max(0, Math.round(event.amount));
+    slot.amount = Math.round(event.amount);
     slot.kind = event.kind;
     slot.isCrit = Boolean(event.isCrit);
     slot.ageSec = 0;
@@ -426,11 +426,11 @@ export class StageHudOverlayProjector {
     }
 
     const badges: { label: string; bg: string; fg: string }[] = [];
-    if (p.statuses.antiHeal) badges.push({ label: '重伤', bg: '#4b343b', fg: '#e0bcc0' });
+    if (p.statuses.antiHeal) badges.push({ label: '重伤', bg: '#991b1b', fg: '#fecaca' });
     if (p.statuses.armorShred || p.statuses.mrShred) {
-      badges.push({ label: '破甲', bg: '#503f32', fg: '#d3c2a0' });
+      badges.push({ label: '破甲', bg: '#92400e', fg: '#fde68a' });
     }
-    if (p.statuses.ccImmune) badges.push({ label: '免控', bg: '#293c52', fg: '#DBEAFE' });
+    if (p.statuses.ccImmune) badges.push({ label: '免控', bg: '#1e40af', fg: '#dbeafe' });
 
     if (badges.length > 0) {
       const totalBadgeW = badges.length * 26 + (badges.length - 1) * 3;
@@ -441,8 +441,8 @@ export class StageHudOverlayProjector {
       ctx.textBaseline = 'middle';
       for (const b of badges) {
         ctx.fillStyle = b.bg;
-        ctx.strokeStyle = '#C8AA6E';
-        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 0.9;
         ctx.fillRect(bx, by, 26, 11);
         ctx.strokeRect(bx, by, 26, 11);
         ctx.fillStyle = b.fg;
@@ -451,9 +451,9 @@ export class StageHudOverlayProjector {
       }
     }
 
-    ctx.fillStyle = 'rgba(11, 14, 21, 0.90)';
+    ctx.fillStyle = 'rgba(10, 14, 24, 0.92)';
     ctx.fillRect(x0 - 1, y0 - 1, barW + 2, hpH + manaH + 3);
-    ctx.strokeStyle = p.star === 3 ? '#F0DCAA' : '#8C7446';
+    ctx.strokeStyle = p.star === 3 ? '#fde047' : '#d4a84f';
     ctx.lineWidth = 1;
     ctx.strokeRect(x0 - 1, y0 - 1, barW + 2, hpH + manaH + 3);
 
@@ -463,15 +463,20 @@ export class StageHudOverlayProjector {
     const shieldW = (p.shield / effectiveTotal) * barW;
 
     if (ghostW > hpW + 0.5) {
-      ctx.fillStyle = '#c7a163';
+      ctx.fillStyle = '#fbbf24';
       ctx.fillRect(x0 + hpW, y0, ghostW - hpW, hpH);
     }
 
-    ctx.fillStyle = p.allegiance === 'ally' ? '#72a38a' : '#b87076';
+    const isAlly = p.allegiance === 'ally';
+    ctx.fillStyle = isAlly ? '#2dd478' : '#f2556b';
     ctx.fillRect(x0, y0, hpW, hpH);
+    if (hpW > 1) {
+      ctx.fillStyle = isAlly ? '#5eead4' : '#fda4af';
+      ctx.fillRect(x0, y0, hpW, 1.5);
+    }
 
     if (shieldW > 0.5) {
-      ctx.fillStyle = this.stripePattern ?? '#FFFFFF';
+      ctx.fillStyle = this.stripePattern ?? '#e2e8f0';
       ctx.fillRect(x0 + hpW, y0, shieldW, hpH);
     }
 
@@ -490,14 +495,19 @@ export class StageHudOverlayProjector {
     }
 
     const manaRatio = Math.min(1, p.mana / p.maxMana);
-    ctx.fillStyle = manaRatio >= 0.85 ? '#d3c2a0' : '#89a3b8';
+    ctx.fillStyle = manaRatio >= 0.85 ? '#fde047' : '#38bdf8';
     ctx.fillRect(x0, y0 + hpH + 1, barW * manaRatio, manaH);
 
-    ctx.font = '800 10px sans-serif';
+    ctx.font = '800 10.5px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = p.star === 3 ? '#d3c2a0' : p.star === 2 ? '#E2E8F0' : '#ba967b';
-    ctx.fillText('★'.repeat(p.star), x0 - 4, y0 + hpH * 0.5);
+    const starText = '★'.repeat(p.star);
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = 'rgba(10, 14, 24, 0.90)';
+    ctx.strokeText(starText, x0 - 4, y0 + hpH * 0.5);
+    ctx.fillStyle = p.star === 3 ? '#fde047' : '#fbbf24';
+    ctx.fillText(starText, x0 - 4, y0 + hpH * 0.5);
   }
 
   private drawDamageFloat(
@@ -523,16 +533,21 @@ export class StageHudOverlayProjector {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    const fill =
-      df.kind === 'physical'
-        ? '#c7a163'
-        : df.kind === 'magic'
-          ? '#89a3b8'
-          : '#FFFFFF';
+    const fill = df.isCrit
+      ? '#facc15'
+      : df.amount < 0
+        ? '#34d399'
+        : df.kind === 'physical'
+          ? '#fb923c'
+          : df.kind === 'magic'
+            ? '#38bdf8'
+            : '#ffffff';
 
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#090C12';
-    const label = df.isCrit ? `${df.amount}!` : `${df.amount}`;
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = df.isCrit ? 3.8 : 3;
+    ctx.strokeStyle = df.isCrit ? '#3b1904' : '#090C12';
+    const absAmount = Math.abs(df.amount);
+    const label = df.amount < 0 ? `+${absAmount}` : df.isCrit ? `${absAmount}!` : `${absAmount}`;
     ctx.strokeText(label, 0, 0);
     ctx.fillStyle = fill;
     ctx.fillText(label, 0, 0);
@@ -563,16 +578,30 @@ export class StageHudOverlayProjector {
     ctx.translate(px, py);
     ctx.scale(popScale, popScale);
 
+    const aura = ctx.createRadialGradient(0, 0, 2, 0, 0, 32);
+    aura.addColorStop(0, 'rgba(254, 240, 138, 0.44)');
+    aura.addColorStop(0.55, 'rgba(245, 158, 11, 0.18)');
+    aura.addColorStop(1, 'rgba(245, 158, 11, 0)');
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(0, 0, 32, 0, Math.PI * 2);
+    ctx.fill();
+
     const label = `+${gf.amount}G`;
     ctx.font = '900 22px -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
+    const textGrad = ctx.createLinearGradient(0, -12, 0, 12);
+    textGrad.addColorStop(0, '#fffdf0');
+    textGrad.addColorStop(0.45, '#fde047');
+    textGrad.addColorStop(1, '#f59e0b');
+
     ctx.lineJoin = 'round';
     ctx.lineWidth = 4.6;
     ctx.strokeStyle = '#261404';
     ctx.strokeText(label, 0, 0);
-    ctx.fillStyle = '#d3c2a0';
+    ctx.fillStyle = textGrad;
     ctx.fillText(label, 0, 0);
 
     ctx.restore();

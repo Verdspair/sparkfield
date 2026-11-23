@@ -441,12 +441,13 @@ export function DescriptionModeToggle({
   return (
     <button
       type="button"
+      role="switch"
       className={`lui-desc-toggle lui-desc-toggle--${size} ${
         isDetailed ? 'lui-desc-toggle--detailed' : ''
       } ${className}`.trim()}
       data-testid="desc-mode-toggle-btn"
       data-desc-mode={mode}
-      aria-pressed={isDetailed}
+      aria-checked={isDetailed}
       aria-label={isDetailed ? '切换为简洁缩略描述' : '切换为详细数值描述'}
       title={isDetailed ? '当前：详细数值（点击全局切换简洁）' : '当前：简洁缩略（点击全局切换详细）'}
       onClick={(e) => {
@@ -454,33 +455,10 @@ export function DescriptionModeToggle({
         toggleMode();
       }}
     >
-      <svg
-        className="lui-desc-toggle__icon"
-        width={size === 'xs' ? 11 : 12}
-        height={size === 'xs' ? 11 : 12}
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-      >
-        {isDetailed ? (
-          <path
-            d="M3.5 6L8 10.5L12.5 6"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        ) : (
-          <path
-            d="M6 3.5L10.5 8L6 12.5"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        )}
-      </svg>
-      <span>{isDetailed ? '简洁' : '详细'}</span>
+      <span className="lui-desc-toggle__label">{size === 'sm' ? '详细说明' : '详细'}</span>
+      <span className="lui-desc-toggle__track" aria-hidden="true">
+        <span className="lui-desc-toggle__thumb" />
+      </span>
     </button>
   );
 }

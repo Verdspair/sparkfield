@@ -68,9 +68,9 @@ const TOP_COLLAPSED_LOOK_Z = 0.85;
 const CAMERA_LAYOUT_TRANSITION_MS = 420;
 const INTRO_DIVE_DURATION_MS = 1100;
 const THEME_PULSE_DURATION_MS = 640;
-const BASE_BLOOM_INTENSITY = 0.36;
-const BASE_EXPOSURE = 0.98;
-const SUBPAGE_EXPOSURE = 0.66;
+const BASE_BLOOM_INTENSITY = 0.42;
+const BASE_EXPOSURE = 1.04;
+const SUBPAGE_EXPOSURE = 0.72;
 const SUBPAGE_FRAME_INTERVAL_MS = 50;
 const MATCH_TACTICIAN_HOME = { x: -5.85, y: 0.08, z: 5.35 } as const;
 const TACTICIAN_RUN_SPEED = 7.4;
@@ -424,7 +424,7 @@ export class BoardStageEngine {
       this.scene.environment = env.envTexture;
       this.scene.environmentIntensity = getArenaThemeLightingPreset(this.arena.getTheme()).envIntensity;
       this.lobbyStage.scene.environment = env.envTexture;
-      this.lobbyStage.scene.environmentIntensity = 0.64;
+      this.lobbyStage.scene.environmentIntensity = 0.78;
 
       const composer = new EffectComposer(renderer, {
         frameBufferType: THREE.HalfFloatType,
@@ -435,11 +435,11 @@ export class BoardStageEngine {
       const renderPass = new RenderPass(activeScene, activeCamera);
       const selectiveBloom = new SelectiveBloomEffect(activeScene, activeCamera, {
         blendFunction: BlendFunction.ADD,
-        luminanceThreshold: 0.94,
-        luminanceSmoothing: 0.26,
+        luminanceThreshold: 0.90,
+        luminanceSmoothing: 0.28,
         mipmapBlur: true,
         intensity: BASE_BLOOM_INTENSITY,
-        radius: 0.48,
+        radius: 0.50,
       });
       selectiveBloom.ignoreBackground = true;
 

@@ -185,6 +185,7 @@ export interface DirectLearningSubmitResponse {
       earnedShare: { numerator: string; denominator: string };
     }[];
     explanationMd: string;
+    correctAnswerDisplay?: string;
   };
   session: DirectLearningSessionView;
 }

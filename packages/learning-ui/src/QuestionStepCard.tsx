@@ -1260,8 +1260,8 @@ export function QuestionStepCard({
                         ? '已跳过'
                         : feedback.isCorrect
                           ? '回答正确'
-                          : '参考解析'}
-                      {feedback.correctAnswerDisplay ? ` · ${feedback.correctAnswerDisplay}` : ''}
+                          : '回答错误'}
+                      {feedback.correctAnswerDisplay ? ` · 正确答案：${feedback.correctAnswerDisplay}` : ''}
                     </span>
                   </div>
                   {resolvedExplanationMd ? (

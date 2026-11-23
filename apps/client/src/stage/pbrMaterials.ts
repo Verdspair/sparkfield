@@ -56,92 +56,92 @@ export interface SoftSssOptions {
 
 export const FACTION_PALETTES: Readonly<Record<string, FactionVisualPalette>> = {
   戴森工团: {
-    primaryHex: 0xe6edf5,
-    secondaryHex: 0xf2b949,
-    accentHex: 0xffd778,
-    primaryRgb: [0.90, 0.93, 0.96],
-    secondaryRgb: [0.95, 0.72, 0.28],
-    accentRgb: [1.0, 0.84, 0.46],
-    backdropTopCss: '#2c1e0e',
-    backdropMidCss: '#4b3116',
-    backdropBotCss: '#141926',
+    primaryHex: 0xf4c04e,
+    secondaryHex: 0xe88b2e,
+    accentHex: 0xffdf72,
+    primaryRgb: [0.96, 0.75, 0.31],
+    secondaryRgb: [0.91, 0.55, 0.18],
+    accentRgb: [1.0, 0.87, 0.45],
+    backdropTopCss: '#3b230b',
+    backdropMidCss: '#6b3f14',
+    backdropBotCss: '#1a1524',
   },
   云端星环: {
-    primaryHex: 0xf4f7fc,
-    secondaryHex: 0x3b82f6,
-    accentHex: 0x7dd3fc,
-    primaryRgb: [0.96, 0.97, 0.99],
-    secondaryRgb: [0.24, 0.52, 0.96],
-    accentRgb: [0.50, 0.83, 0.99],
-    backdropTopCss: '#0f2547',
-    backdropMidCss: '#1e4278',
-    backdropBotCss: '#0c1528',
+    primaryHex: 0xdbeafe,
+    secondaryHex: 0x2f7cf6,
+    accentHex: 0x56d4fc,
+    primaryRgb: [0.86, 0.92, 1.0],
+    secondaryRgb: [0.18, 0.49, 0.96],
+    accentRgb: [0.34, 0.83, 0.99],
+    backdropTopCss: '#0c2a5e',
+    backdropMidCss: '#1c549c',
+    backdropBotCss: '#0b1936',
   },
   钟慢远征: {
-    primaryHex: 0x8ea2ba,
-    secondaryHex: 0x22d3ee,
-    accentHex: 0x67e8f9,
-    primaryRgb: [0.56, 0.64, 0.73],
-    secondaryRgb: [0.14, 0.83, 0.93],
-    accentRgb: [0.42, 0.91, 0.98],
-    backdropTopCss: '#0e283b',
-    backdropMidCss: '#18445c',
-    backdropBotCss: '#0a1622',
+    primaryHex: 0xdfa946,
+    secondaryHex: 0x16c8e0,
+    accentHex: 0xf8cc66,
+    primaryRgb: [0.87, 0.66, 0.27],
+    secondaryRgb: [0.09, 0.78, 0.88],
+    accentRgb: [0.97, 0.80, 0.40],
+    backdropTopCss: '#102f40',
+    backdropMidCss: '#22566b',
+    backdropBotCss: '#0d1c28',
   },
   木卫冰海: {
-    primaryHex: 0xbce6f7,
-    secondaryHex: 0x3f5770,
-    accentHex: 0x34d399,
-    primaryRgb: [0.74, 0.90, 0.97],
-    secondaryRgb: [0.25, 0.34, 0.44],
-    accentRgb: [0.22, 0.84, 0.62],
-    backdropTopCss: '#0c2d3d',
-    backdropMidCss: '#164d63',
-    backdropBotCss: '#091824',
+    primaryHex: 0x5fd0f5,
+    secondaryHex: 0x1d70b0,
+    accentHex: 0x2ee6a8,
+    primaryRgb: [0.37, 0.82, 0.96],
+    secondaryRgb: [0.11, 0.44, 0.69],
+    accentRgb: [0.18, 0.90, 0.66],
+    backdropTopCss: '#07324a',
+    backdropMidCss: '#126080',
+    backdropBotCss: '#091d2e',
   },
   深空阵列: {
-    primaryHex: 0xcbd5e1,
-    secondaryHex: 0xe6b65c,
-    accentHex: 0xa78bfa,
-    primaryRgb: [0.80, 0.84, 0.89],
-    secondaryRgb: [0.90, 0.71, 0.36],
-    accentRgb: [0.66, 0.55, 0.98],
-    backdropTopCss: '#1d1b3f',
-    backdropMidCss: '#322b63',
-    backdropBotCss: '#0d1124',
+    primaryHex: 0x5ba8ec,
+    secondaryHex: 0xe8be66,
+    accentHex: 0x8f7df8,
+    primaryRgb: [0.36, 0.66, 0.93],
+    secondaryRgb: [0.91, 0.75, 0.40],
+    accentRgb: [0.56, 0.49, 0.97],
+    backdropTopCss: '#102658',
+    backdropMidCss: '#22468a',
+    backdropBotCss: '#0c1632',
   },
   反物质院: {
-    primaryHex: 0x2e2a42,
-    secondaryHex: 0xd946ef,
-    accentHex: 0xf0abfc,
-    primaryRgb: [0.24, 0.21, 0.34],
-    secondaryRgb: [0.85, 0.28, 0.94],
-    accentRgb: [0.94, 0.67, 0.99],
-    backdropTopCss: '#28113b',
-    backdropMidCss: '#4a1b66',
-    backdropBotCss: '#110a1c',
+    primaryHex: 0x4c2e7c,
+    secondaryHex: 0xe040fb,
+    accentHex: 0xf47aff,
+    primaryRgb: [0.30, 0.18, 0.49],
+    secondaryRgb: [0.88, 0.25, 0.98],
+    accentRgb: [0.96, 0.48, 1.0],
+    backdropTopCss: '#2f104a',
+    backdropMidCss: '#621c8a',
+    backdropBotCss: '#140b24',
   },
   星门摆渡: {
-    primaryHex: 0xc89a52,
-    secondaryHex: 0x10b981,
-    accentHex: 0xfde68a,
-    primaryRgb: [0.78, 0.60, 0.32],
-    secondaryRgb: [0.08, 0.73, 0.51],
-    accentRgb: [0.99, 0.90, 0.54],
-    backdropTopCss: '#162d2a',
-    backdropMidCss: '#2b4f45',
-    backdropBotCss: '#0d171a',
+    primaryHex: 0x1fc488,
+    secondaryHex: 0xe8be66,
+    accentHex: 0x6ef0be,
+    primaryRgb: [0.12, 0.77, 0.53],
+    secondaryRgb: [0.91, 0.75, 0.40],
+    accentRgb: [0.43, 0.94, 0.75],
+    backdropTopCss: '#0b362e',
+    backdropMidCss: '#186654',
+    backdropBotCss: '#0b1c1c',
   },
   失控蜂群: {
-    primaryHex: 0xc2ccd9,
-    secondaryHex: 0xe11d48,
-    accentHex: 0xfb7185,
-    primaryRgb: [0.76, 0.80, 0.85],
-    secondaryRgb: [0.88, 0.14, 0.30],
-    accentRgb: [0.98, 0.45, 0.53],
-    backdropTopCss: '#2c111e',
-    backdropMidCss: '#4d1a30',
-    backdropBotCss: '#120b14',
+    primaryHex: 0xdc354c,
+    secondaryHex: 0xf43f5e,
+    accentHex: 0xff6e84,
+    primaryRgb: [0.86, 0.21, 0.30],
+    secondaryRgb: [0.96, 0.25, 0.37],
+    accentRgb: [1.0, 0.43, 0.52],
+    backdropTopCss: '#3b0e1e',
+    backdropMidCss: '#701832',
+    backdropBotCss: '#170b14',
   },
 };
 
@@ -394,9 +394,9 @@ export function bakeBrushedChampagneGoldMaps(size = 256): PbrFourMapSet {
         simplexFbmTileable(u * 0.5, v, 14, 2, 607) * 0.55;
       heights[idx] = brushFine * 0.24;
 
-      const rCol = 0.88 * (0.94 + brushFine * 0.08);
-      const gCol = 0.74 * (0.94 + brushFine * 0.08);
-      const bCol = 0.49 * (0.94 + brushFine * 0.08);
+      const rCol = 0.96 * (0.95 + brushFine * 0.06);
+      const gCol = 0.82 * (0.95 + brushFine * 0.06);
+      const bCol = 0.48 * (0.95 + brushFine * 0.06);
 
       albedo[p4] = toByte(rCol);
       albedo[p4 + 1] = toByte(gCol);
@@ -931,20 +931,20 @@ export function buildProceduralStudioEnvMap(
         vec3 d = normalize(vDir);
         float h = d.y * 0.5 + 0.5;
 
-        vec3 ground = vec3(0.11, 0.14, 0.22);
-        vec3 horizon = vec3(0.44, 0.41, 0.42);
-        vec3 zenith = vec3(0.24, 0.32, 0.48);
+        vec3 ground = vec3(0.13, 0.21, 0.34);
+        vec3 horizon = vec3(0.64, 0.58, 0.50);
+        vec3 zenith = vec3(0.18, 0.44, 0.84);
 
         vec3 col = mix(ground, horizon, smoothstep(0.14, 0.50, h));
         col = mix(col, zenith, smoothstep(0.50, 0.96, h));
 
-        float warmKey = pow(max(dot(d, normalize(vec3(0.48, 0.62, 0.62))), 0.0), 3.4);
-        float coolRim = pow(max(dot(d, normalize(vec3(-0.64, 0.46, -0.60))), 0.0), 3.0);
+        float warmKey = pow(max(dot(d, normalize(vec3(0.48, 0.62, 0.62))), 0.0), 3.2);
+        float coolRim = pow(max(dot(d, normalize(vec3(-0.64, 0.46, -0.60))), 0.0), 2.8);
         float softBounce = pow(max(dot(d, normalize(vec3(0.32, -0.38, 0.84))), 0.0), 2.4);
 
-        col += vec3(0.34, 0.28, 0.21) * warmKey;
-        col += vec3(0.14, 0.24, 0.34) * coolRim;
-        col += vec3(0.08, 0.09, 0.12) * softBounce;
+        col += vec3(0.72, 0.58, 0.36) * warmKey;
+        col += vec3(0.26, 0.48, 0.76) * coolRim;
+        col += vec3(0.14, 0.18, 0.24) * softBounce;
 
         gl_FragColor = vec4(col, 1.0);
       }
@@ -1514,6 +1514,26 @@ export function bakeBenchSlotNumberAtlas(): THREE.DataTexture {
   return tex;
 }
 
+function applyUnitVertexColorVibrancy(
+  mat: THREE.MeshStandardMaterial | THREE.MeshPhysicalMaterial,
+  satBoost = 1.08,
+): void {
+  const satLiteral = satBoost.toFixed(3);
+  mat.customProgramCacheKey = () => `sparkfield-unit-vc-lin-${satLiteral}`;
+  mat.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <color_fragment>',
+      `#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA )
+        vec3 _sfLinVc = pow(max(vColor.rgb, vec3(0.0)), vec3(2.0));
+        float _sfLuma = dot(_sfLinVc, vec3(0.2126, 0.7152, 0.0722));
+        vec3 _sfSatVc = clamp(mix(vec3(_sfLuma), _sfLinVc, ${satLiteral}), vec3(0.0), vec3(1.0));
+        diffuseColor.rgb *= _sfSatVc;
+        diffuseColor.a *= vColor.a;
+      #endif`,
+    );
+  };
+}
+
 export class PbrMaterialLibrary {
   public readonly basaltMaps: PbrFourMapSet;
   public readonly champagneGoldMaps: PbrFourMapSet;
@@ -1586,30 +1606,30 @@ export class PbrMaterialLibrary {
     });
 
     this.hexBezelGoldMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0x9fb8d4),
+      color: new THREE.Color(0xe8be66),
       normalMap: this.champagneGoldMaps.normalMap,
       normalScale: new THREE.Vector2(0.28, 0.28),
-      roughness: 0.46,
-      metalness: 0.62,
-      envMapIntensity: 0.42,
+      roughness: 0.38,
+      metalness: 0.68,
+      envMapIntensity: 0.62,
       emissive: new THREE.Color(0x38bdf8),
-      emissiveIntensity: 0.10,
+      emissiveIntensity: 0.14,
       transparent: true,
-      opacity: 0.26,
+      opacity: 0.42,
       depthWrite: false,
     });
 
     this.hexBezelDeployMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0xf0d290),
+      color: new THREE.Color(0xf5cc68),
       map: this.champagneGoldMaps.albedoMap,
       normalMap: this.champagneGoldMaps.normalMap,
-      roughness: 0.40,
-      metalness: 0.68,
-      envMapIntensity: 0.48,
-      emissive: new THREE.Color(0x4fd1ff),
-      emissiveIntensity: 0.24,
+      roughness: 0.36,
+      metalness: 0.70,
+      envMapIntensity: 0.66,
+      emissive: new THREE.Color(0x38bdf8),
+      emissiveIntensity: 0.36,
       transparent: true,
-      opacity: 0.40,
+      opacity: 0.54,
       depthWrite: false,
     });
 
@@ -1621,162 +1641,167 @@ export class PbrMaterialLibrary {
       roughnessMap: this.basaltMaps.roughnessMap,
       emissive: new THREE.Color(0x2d6da3),
       emissiveMap: this.basaltMaps.emissiveMap ?? null,
-      emissiveIntensity: 0.16,
-      roughness: 0.72,
-      metalness: 0.32,
-      envMapIntensity: 0.40,
+      emissiveIntensity: 0.22,
+      roughness: 0.68,
+      metalness: 0.34,
+      envMapIntensity: 0.54,
     });
 
     this.deckTrimTitaniumMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0xd6e1ee),
+      color: new THREE.Color(0xdce8f7),
       map: this.porcelainMaps.albedoMap,
       normalMap: this.porcelainMaps.normalMap,
-      roughness: 0.48,
-      metalness: 0.46,
-      envMapIntensity: 0.42,
+      roughness: 0.44,
+      metalness: 0.48,
+      envMapIntensity: 0.58,
     });
 
     this.brushedGoldMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0xf2d394),
+      color: new THREE.Color(0xe8be66),
       map: this.champagneGoldMaps.albedoMap,
       normalMap: this.champagneGoldMaps.normalMap,
       normalScale: new THREE.Vector2(0.45, 0.45),
-      roughness: 0.36,
-      metalness: 0.70,
-      envMapIntensity: 0.50,
+      roughness: 0.34,
+      metalness: 0.72,
+      envMapIntensity: 0.72,
     });
 
     this.porcelainArmorMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0xf4f6fa),
+      color: new THREE.Color(0xfafcff),
       map: this.porcelainMaps.albedoMap,
       normalMap: this.porcelainMaps.normalMap,
       normalScale: new THREE.Vector2(0.32, 0.32),
-      roughness: 0.58,
-      metalness: 0.12,
-      envMapIntensity: 0.38,
+      roughness: 0.52,
+      metalness: 0.10,
+      envMapIntensity: 0.54,
     });
 
     this.sapphireLatticeMat = new THREE.MeshStandardMaterial({
       map: this.sapphireMaps.albedoMap,
       normalMap: this.sapphireMaps.normalMap,
-      roughness: 0.52,
-      metalness: 0.34,
-      envMapIntensity: 0.42,
+      roughness: 0.46,
+      metalness: 0.36,
+      envMapIntensity: 0.60,
       emissive: new THREE.Color(0x2563eb),
-      emissiveIntensity: 0.28,
+      emissiveIntensity: 0.42,
     });
 
     this.cryoGlassMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0xa6e8fa),
-      roughness: 0.32,
+      color: new THREE.Color(0x7ce6ff),
+      roughness: 0.28,
       metalness: 0.04,
-      envMapIntensity: 0.38,
-      transmission: 0.42,
+      envMapIntensity: 0.54,
+      transmission: 0.44,
       transparent: true,
-      opacity: 0.62,
-      emissive: new THREE.Color(0x38bdf8),
-      emissiveIntensity: 0.22,
+      opacity: 0.68,
+      emissive: new THREE.Color(0x22d3ee),
+      emissiveIntensity: 0.36,
     });
 
     this.obsidianSatinMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0x2c2246),
+      color: new THREE.Color(0x322456),
       normalMap: this.porcelainMaps.normalMap,
-      roughness: 0.64,
-      metalness: 0.24,
-      envMapIntensity: 0.36,
-      emissive: new THREE.Color(0x4c1d95),
-      emissiveIntensity: 0.16,
+      roughness: 0.58,
+      metalness: 0.26,
+      envMapIntensity: 0.50,
+      emissive: new THREE.Color(0x5b21b6),
+      emissiveIntensity: 0.24,
     });
 
     this.starPedestal1Mat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0xc4d3e3),
+      color: new THREE.Color(0xc8dcf0),
       normalMap: this.champagneGoldMaps.normalMap,
-      roughness: 0.46,
-      metalness: 0.56,
-      envMapIntensity: 0.42,
+      roughness: 0.42,
+      metalness: 0.58,
+      envMapIntensity: 0.58,
     });
 
     this.starPedestal2Mat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(0xf2cb6c),
       map: this.champagneGoldMaps.albedoMap,
       normalMap: this.champagneGoldMaps.normalMap,
-      roughness: 0.38,
-      metalness: 0.68,
-      envMapIntensity: 0.48,
-      emissive: new THREE.Color(0xd9a84e),
-      emissiveIntensity: 0.18,
+      roughness: 0.36,
+      metalness: 0.70,
+      envMapIntensity: 0.66,
+      emissive: new THREE.Color(0xe6ac38),
+      emissiveIntensity: 0.26,
     });
 
     this.starPedestal3Mat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(0xffdc78),
       map: this.champagneGoldMaps.albedoMap,
       normalMap: this.champagneGoldMaps.normalMap,
-      roughness: 0.32,
-      metalness: 0.74,
-      envMapIntensity: 0.52,
-      emissive: new THREE.Color(0xf5c451),
-      emissiveIntensity: 0.34,
+      roughness: 0.30,
+      metalness: 0.76,
+      envMapIntensity: 0.74,
+      emissive: new THREE.Color(0xf5b82e),
+      emissiveIntensity: 0.48,
     });
 
     this.allyRingMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0x4fd1ff),
-      roughness: 0.42,
-      metalness: 0.55,
-      envMapIntensity: 0.42,
+      color: new THREE.Color(0x38bdf8),
+      roughness: 0.38,
+      metalness: 0.52,
+      envMapIntensity: 0.58,
       emissive: new THREE.Color(0x0ea5e9),
-      emissiveIntensity: 0.38,
+      emissiveIntensity: 0.58,
     });
 
     this.enemyRingMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0xfb7185),
-      roughness: 0.44,
-      metalness: 0.55,
-      envMapIntensity: 0.42,
-      emissive: new THREE.Color(0xbe123c),
-      emissiveIntensity: 0.36,
+      color: new THREE.Color(0xf43f5e),
+      roughness: 0.40,
+      metalness: 0.52,
+      envMapIntensity: 0.58,
+      emissive: new THREE.Color(0xe11d48),
+      emissiveIntensity: 0.54,
     });
 
     this.unitArmorMat = new THREE.MeshPhysicalMaterial({
       vertexColors: true,
       map: this.unitArmorMaps.albedoMap,
       normalMap: this.unitArmorMaps.normalMap,
-      normalScale: new THREE.Vector2(0.22, 0.22),
+      normalScale: new THREE.Vector2(0.24, 0.24),
       roughnessMap: this.unitArmorMaps.roughnessMap,
-      roughness: 0.62,
+      roughness: 0.52,
       metalness: 0.16,
-      envMapIntensity: 0.38,
+      envMapIntensity: 0.58,
       clearcoat: 0.0,
-      sheen: 0.42,
-      sheenRoughness: 0.72,
-      sheenColor: new THREE.Color(0xedf4ff),
+      sheen: 0.08,
+      sheenRoughness: 0.64,
+      sheenColor: new THREE.Color(0xfff6e5),
       side: THREE.DoubleSide,
     });
+    applyUnitVertexColorVibrancy(this.unitArmorMat, 1.08);
 
     this.unitMatteMat = new THREE.MeshPhysicalMaterial({
       vertexColors: true,
       map: this.unitCarbonMaps.albedoMap,
       normalMap: this.unitCarbonMaps.normalMap,
-      normalScale: new THREE.Vector2(0.30, 0.30),
+      normalScale: new THREE.Vector2(0.32, 0.32),
       roughnessMap: this.unitCarbonMaps.roughnessMap,
-      roughness: 0.84,
-      metalness: 0.12,
-      envMapIntensity: 0.30,
-      sheen: 0.55,
-      sheenRoughness: 0.78,
-      sheenColor: new THREE.Color(0xdbeafe),
+      roughness: 0.78,
+      metalness: 0.10,
+      envMapIntensity: 0.44,
+      sheen: 0.10,
+      sheenRoughness: 0.74,
+      sheenColor: new THREE.Color(0xc8dcf8),
       side: THREE.DoubleSide,
     });
+    applyUnitVertexColorVibrancy(this.unitMatteMat, 1.08);
 
     this.unitTrimMat = new THREE.MeshPhysicalMaterial({
       vertexColors: true,
       map: this.unitTrimMaps.albedoMap,
       normalMap: this.unitTrimMaps.normalMap,
-      normalScale: new THREE.Vector2(0.20, 0.20),
+      normalScale: new THREE.Vector2(0.22, 0.22),
       roughnessMap: this.unitTrimMaps.roughnessMap,
-      roughness: 0.36,
-      metalness: 0.70,
-      envMapIntensity: 0.50,
+      roughness: 0.32,
+      metalness: 0.74,
+      envMapIntensity: 0.74,
       clearcoat: 0.0,
       side: THREE.DoubleSide,
     });
+    applyUnitVertexColorVibrancy(this.unitTrimMat, 1.06);
 
     this.contactShadowMat = new THREE.MeshBasicMaterial({
       map: this.contactShadowTex,
@@ -1790,13 +1815,15 @@ export class PbrMaterialLibrary {
     if (existing) return existing;
 
     const palette = FACTION_PALETTES[faction];
-    const hex = palette?.secondaryHex ?? 0xe6b65c;
+    const hex = palette?.secondaryHex ?? 0xe8be66;
     const mat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(hex),
+      emissive: new THREE.Color(hex),
+      emissiveIntensity: 0.14,
       normalMap: this.porcelainMaps.normalMap,
-      roughness: 0.52,
-      metalness: 0.42,
-      envMapIntensity: 0.40,
+      roughness: 0.44,
+      metalness: 0.44,
+      envMapIntensity: 0.60,
     });
     this.factionMaterials.set(faction, mat);
     return mat;
@@ -1811,30 +1838,31 @@ export class PbrMaterialLibrary {
     const mat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(hex),
       emissive: new THREE.Color(hex),
-      emissiveIntensity: clamped >= 5 ? 0.58 : clamped === 4 ? 0.44 : clamped === 3 ? 0.34 : 0.22,
-      roughness: 0.44,
-      metalness: 0.58,
-      envMapIntensity: 0.44,
+      emissiveIntensity: clamped >= 5 ? 0.72 : clamped === 4 ? 0.56 : clamped === 3 ? 0.44 : 0.30,
+      roughness: 0.38,
+      metalness: 0.60,
+      envMapIntensity: 0.58,
     });
     this.costRingMaterials.set(clamped, mat);
     return mat;
   }
 
-  public createBloomEmissiveMaterial(colorHex: number, intensity = 1.05): THREE.MeshStandardMaterial {
+  public createBloomEmissiveMaterial(colorHex: number, intensity = 1.12): THREE.MeshStandardMaterial {
     const mat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(colorHex),
       emissive: new THREE.Color(colorHex),
       emissiveIntensity: intensity,
-      roughness: 0.36,
+      roughness: 0.34,
       metalness: 0.20,
-      envMapIntensity: 0.35,
+      envMapIntensity: 0.44,
       toneMapped: false,
     });
     this.extraDisposables.push(mat);
     return mat;
   }
 
-  public createUnitEnergyMaterial(colorHex: number, intensity = 0.60): THREE.MeshStandardMaterial {
+  public createUnitEnergyMaterial(colorHex: number, intensity = 0.86): THREE.MeshStandardMaterial {
+    const boostedIntensity = Math.min(1.45, Math.max(0.76, intensity * 1.32));
     const mat = new THREE.MeshStandardMaterial({
       vertexColors: true,
       color: new THREE.Color(colorHex),
@@ -1843,38 +1871,41 @@ export class PbrMaterialLibrary {
       normalScale: new THREE.Vector2(0.20, 0.20),
       emissive: new THREE.Color(colorHex),
       emissiveMap: this.unitEnergyMaps.albedoMap,
-      emissiveIntensity: intensity,
-      roughness: 0.34,
+      emissiveIntensity: boostedIntensity,
+      roughness: 0.32,
       metalness: 0.12,
-      envMapIntensity: 0.32,
+      envMapIntensity: 0.44,
       side: THREE.DoubleSide,
       toneMapped: false,
     });
+    applyUnitVertexColorVibrancy(mat, 1.08);
     this.extraDisposables.push(mat);
     return mat;
   }
 
   public createUnitCrystalMaterial(
     colorHex: number,
-    intensity = 0.36,
-    opacity = 0.62,
+    intensity = 0.48,
+    opacity = 0.68,
   ): THREE.MeshPhysicalMaterial {
+    const boostedIntensity = Math.min(0.95, Math.max(0.42, intensity * 1.32));
     const mat = new THREE.MeshPhysicalMaterial({
       vertexColors: true,
       color: new THREE.Color(0xffffff),
       map: this.unitEnergyMaps.albedoMap,
       emissive: new THREE.Color(colorHex),
       emissiveMap: this.unitEnergyMaps.albedoMap,
-      emissiveIntensity: intensity,
-      roughness: 0.32,
+      emissiveIntensity: boostedIntensity,
+      roughness: 0.28,
       metalness: 0.06,
-      envMapIntensity: 0.38,
+      envMapIntensity: 0.56,
       clearcoat: 0.0,
       transparent: true,
       opacity,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
+    applyUnitVertexColorVibrancy(mat, 1.08);
     this.extraDisposables.push(mat);
     return mat;
   }

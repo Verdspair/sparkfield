@@ -279,25 +279,68 @@
   position: relative;
 }
 
+.blc-match-hud .blc-trait-item-wrap + .blc-trait-item-wrap {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 .blc-match-hud .blc-trait-row {
-  padding: 4px 6px;
-  border-radius: var(--sf-radius-card, 8px);
-  background: var(--sf-surface-card);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  gap: 7px;
-  transition: border-color 140ms ease, background 140ms ease;
+  width: 100%;
+  padding: 6px 6px 6px 8px;
+  border-radius: 5px;
+  background: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  gap: 8px;
+  align-items: center;
+  transition: background-color 140ms ease, border-color 140ms ease;
 }
 
 .blc-match-hud .blc-trait-row:hover {
-  border-color: rgba(216, 194, 148, 0.5);
-  background: var(--sf-surface-card);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.blc-match-hud .blc-trait-row--active {
+  background: rgba(216, 194, 148, 0.08);
+  border-left-color: #d6b87c;
+}
+
+.blc-match-hud .blc-trait-row--bronze {
+  border-left-color: #b78962;
+}
+
+.blc-match-hud .blc-trait-row--silver {
+  border-left-color: #a7b6c9;
+}
+
+.blc-match-hud .blc-trait-row--gold {
+  border-left-color: #dfc082;
+}
+
+.blc-match-hud .blc-trait-row--prismatic {
+  border-left-color: #c7a6e8;
 }
 
 .blc-match-hud .blc-trait-row .trait-hex-badge {
-  width: 28px;
-  height: 31px;
-  font-size: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+}
+
+.sf-trait-count {
+  min-width: 16px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(169, 184, 207, 0.72);
+}
+
+.sf-trait-count--active {
+  color: #ead7ae;
 }
 
 .blc-match-hud .blc-trait-row__meta {

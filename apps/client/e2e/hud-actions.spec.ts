@@ -114,20 +114,20 @@ test('global description mode defaults to compact and syncs choice modal, inspec
   await expect(modal).toBeVisible();
   const toggleBtn = modal.getByTestId('desc-mode-toggle-btn');
   await expect(toggleBtn).toHaveAttribute('data-desc-mode', 'compact');
-  await expect(toggleBtn).toHaveText('详细');
+  await expect(toggleBtn).toHaveAttribute('aria-checked', 'false');
   await expect(modal.getByTestId('augment-slot-0')).toContainText('前两排友军开战获得高额护盾');
   await expect(modal.getByTestId('augment-slot-0')).not.toContainText('16%');
 
   await toggleBtn.click();
   await expect(toggleBtn).toHaveAttribute('data-desc-mode', 'detailed');
-  await expect(toggleBtn).toHaveText('简洁');
+  await expect(toggleBtn).toHaveAttribute('aria-checked', 'true');
   await expect(modal.getByTestId('augment-slot-0')).toContainText('16%');
   await expect(modal.getByTestId('augment-slot-2')).toContainText('260');
 
   await updateHud(page, { phase: 'strategy', phaseIndex: 9 }, { inspectedUnitId: home.units[0]!.instanceId });
   const inspectCard = page.getByTestId('unit-inspect-card');
   await expect(inspectCard.getByTestId('desc-mode-toggle-btn')).toHaveAttribute('data-desc-mode', 'detailed');
-  await expect(inspectCard.getByTestId('desc-mode-toggle-btn')).toHaveText('简洁');
+  await expect(inspectCard.getByTestId('desc-mode-toggle-btn')).toHaveAttribute('aria-checked', 'true');
 
   const settings = await openSettings(page, 'match', true);
   await expect(settings.getByTestId('desc-mode-detailed-btn')).toHaveAttribute('aria-pressed', 'true');

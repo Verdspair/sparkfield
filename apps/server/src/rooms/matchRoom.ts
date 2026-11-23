@@ -5,7 +5,7 @@ import { CommunicationClientSendSchema, ConfigurableCommunicationPolicy, DEFAULT
   type CommunicationGovernancePolicy, type CoursePack, type GameCommand,
   type MatchPhaseKind, type MatchStudyBlueprint, type ModeStandingSummary, type SubjectId, type UserProfile } from '@pkg/contracts';
 import { activateLessonRemediation, buildMatchStudyBlueprint, buildPersonalizedLessonBundle, evaluateLearningBonusDrops, finalizeLearningGoldCarry, roomSlotBonusStage,
-  gradeFrozenLearningUnits, gradeQuestionSubmission, locateMatchStudySlot, settleLearningNodeGold,
+  formatCorrectAnswerDisplay, gradeFrozenLearningUnits, gradeQuestionSubmission, locateMatchStudySlot, settleLearningNodeGold,
   type ArcAttempt, type LearningGoldSettlement, type MatchStudyBlueprintInput, type PersonalizedLessonBundle,
   type RecentLearningPerformance, type SubmissionInput } from '@pkg/learning-core';
 import { applyGameCommand, applyLearningBonusGrant, applyLearningGoldGrant, BATTLE_REGULAR_MS, beginNextRound, computeActiveTraits, computeRoundBattleDurationMs, createGame,
@@ -380,7 +380,7 @@ export class MatchRoom extends Room {
     progress.submissions[question.questionId]=structuredClone(parsed);
     if (!grade.isSkipped) this.studies.get(userId)!.attempts.push({questionId:question.questionId,
       familyId:question.familyId,isCorrect:grade.isCorrect,slotInArc:progress.bundle.arcMeta.slotInArc});
-    const feedback={...grade,explanationMd:question.explanationMd}; progress.feedback[question.questionId]=feedback;
+    const feedback={...grade,explanationMd:question.explanationMd,correctAnswerDisplay:formatCorrectAnswerDisplay(question)}; progress.feedback[question.questionId]=feedback;
     if (!grade.isCorrect) this.wrong.get(userId)!.add(question.questionId);
     if (step.questionIds.every(id=>Object.hasOwn(progress.submissions,id))) {
       if (kind==='resource_check') progress.bundle=activateLessonRemediation(progress.bundle,progress.submissions,true);

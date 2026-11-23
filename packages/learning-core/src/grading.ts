@@ -145,3 +145,42 @@ export function gradeQuestionSubmission(question: QuestionItem, submission?: Sub
   }
   return { questionId: question.questionId, quality: serialize(quality), isCorrect: compare(quality, ONE) === 0, isSkipped: skipped, stepResults };
 }
+
+export function formatCorrectAnswerDisplay(question: QuestionItem): string {
+  switch (question.questionType) {
+    case 'single_choice': {
+      const key = question.answerSpec.trim();
+      const opt = question.options.find((item) => item.key === key);
+      return opt ? `${opt.key}. ${opt.text}` : key;
+    }
+    case 'multi_choice': {
+      const keys = question.answerSpec.split(/[|,;]/u).map((part) => part.trim()).filter(Boolean);
+      return keys
+        .map((key) => {
+          const opt = question.options.find((item) => item.key === key);
+          return opt ? `${opt.key}. ${opt.text}` : key;
+        })
+        .join('；');
+    }
+    case 'short_fill':
+      return question.answerSpec
+        .split('|')
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .join(' / ');
+    case 'numeric': {
+      const [expected, , unit] = question.answerSpec.split(':');
+      return unit ? `${expected?.trim() ?? ''} ${unit.trim()}` : (expected?.trim() ?? question.answerSpec);
+    }
+    case 'multi_step_numeric':
+      return question.stepsRubric
+        .map((step, index) => `第 ${index + 1} 问：${step.expected}`)
+        .join('；');
+    case 'matching':
+      return question.matchingPairs.length
+        ? question.matchingPairs.map((pair) => `${pair.left} -> ${pair.right}`).join('；')
+        : question.answerSpec;
+    default:
+      return question.answerSpec;
+  }
+}

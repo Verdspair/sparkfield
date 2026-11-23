@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { CoursePackSchema, DurationModeSchema, SubjectIdSchema,
   type QuestionFeedbackReveal, type QuestionIssueReport } from '@pkg/contracts';
 import { activateLessonRemediation, buildPersonalizedLessonBundle, evaluateRewardPointsTaskGrant,
-  gradeQuestionSubmission, learningNodePolicy, scheduleFsrsReview, type PersonalizedLessonBundle,
+  formatCorrectAnswerDisplay, gradeQuestionSubmission, learningNodePolicy, scheduleFsrsReview, type PersonalizedLessonBundle,
   type QuestionSubmission, type SubmissionInput, type SubmissionMap } from '@pkg/learning-core';
 import type { AppDatabase } from '../db/client.js';
 import type { Database, JsonValue } from '../db/schema.js';
@@ -227,7 +227,7 @@ export class LearningService {
     const complete = session.stepIndex === 4 && session.bundle.steps[4]!.questionIds.every((id) => Object.hasOwn(session.submissions, id));
     if (complete && !session.result) session.result = await this.persistNode(userId, session.bundle, session.submissions,
       { source: 'direct_learning', questionVersions: session.versions, idempotencyKey: `direct:${session.id}`, tx });
-    return { feedback: { ...grade, explanationMd: q.explanationMd }, session: this.getDirect(userId, sessionId) };
+    return { feedback: { ...grade, explanationMd: q.explanationMd, correctAnswerDisplay: formatCorrectAnswerDisplay(q) }, session: this.getDirect(userId, sessionId) };
   }
   async advanceDirect(userId: string, sessionId: string, tx?: Transaction<Database>) {
     const session = this.direct(userId, sessionId);

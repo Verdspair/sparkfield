@@ -46,6 +46,7 @@ export interface MatchLearningFeedbackItem {
   isSkipped?: boolean;
   quality?: { numerator: string; denominator: string };
   explanationMd?: string;
+  correctAnswerDisplay?: string;
   stepResults?: readonly { stepId: string; isCorrect: boolean }[];
 }
 

@@ -53,67 +53,67 @@ export interface ArenaThemeLightingPreset {
 export function getArenaThemeLightingPreset(theme: ArenaThemeId): ArenaThemeLightingPreset {
   if (theme === 'mercury_dyson_forge') {
     return {
-      keyColor: 0xffc886,
-      keyIntensity: 1.50,
+      keyColor: 0xffbc66,
+      keyIntensity: 1.82,
       keyPos: [8.5, 15.5, 7.5],
-      rimColor: 0xff9238,
-      rimIntensity: 0.90,
+      rimColor: 0xff6e1a,
+      rimIntensity: 1.18,
       rimPos: [1.5, 11.2, -15.5],
-      hemiSkyColor: 0xe6b27c,
-      hemiGroundColor: 0x1d100b,
-      hemiIntensity: 0.52,
-      fillColor: 0x5ca4d4,
-      fillIntensity: 0.56,
+      hemiSkyColor: 0xf4b26e,
+      hemiGroundColor: 0x160a06,
+      hemiIntensity: 0.58,
+      fillColor: 0x4ca8f0,
+      fillIntensity: 0.72,
       fillPos: [-12.0, 8.5, 9.0],
-      envIntensity: 0.52,
-      fogColor: 0x200e08,
-      fogDensity: 0.0066,
-      skyTop: new THREE.Color(0x140806),
-      skyMid: new THREE.Color(0x4c1d0d),
-      skyHorizon: new THREE.Color(0xd86922),
+      envIntensity: 0.68,
+      fogColor: 0x1a0904,
+      fogDensity: 0.0040,
+      skyTop: new THREE.Color(0x100504),
+      skyMid: new THREE.Color(0x5e1f0a),
+      skyHorizon: new THREE.Color(0xf4761c),
     };
   }
   if (theme === 'event_horizon_observatory') {
     return {
-      keyColor: 0xd8d6ff,
-      keyIntensity: 1.42,
+      keyColor: 0xdde6ff,
+      keyIntensity: 1.66,
       keyPos: [9.5, 16.5, 9.5],
-      rimColor: 0xf2be5c,
-      rimIntensity: 0.84,
+      rimColor: 0x3ce8ff,
+      rimIntensity: 1.06,
       rimPos: [0.5, 10.5, -15.5],
-      hemiSkyColor: 0xa4a8f0,
-      hemiGroundColor: 0x120b24,
-      hemiIntensity: 0.54,
-      fillColor: 0x765ee6,
-      fillIntensity: 0.50,
+      hemiSkyColor: 0x9aa6ff,
+      hemiGroundColor: 0x0e0a28,
+      hemiIntensity: 0.62,
+      fillColor: 0x7b5ef5,
+      fillIntensity: 0.62,
       fillPos: [-11.5, 7.5, 8.5],
-      envIntensity: 0.54,
-      fogColor: 0x0e0820,
-      fogDensity: 0.0062,
-      skyTop: new THREE.Color(0x070416),
-      skyMid: new THREE.Color(0x1e1244),
-      skyHorizon: new THREE.Color(0x6b4aa2),
+      envIntensity: 0.70,
+      fogColor: 0x0a0724,
+      fogDensity: 0.0038,
+      skyTop: new THREE.Color(0x05041a),
+      skyMid: new THREE.Color(0x191454),
+      skyHorizon: new THREE.Color(0x523eb8),
     };
   }
   return {
-    keyColor: 0xfff0d6,
-    keyIntensity: 1.46,
-    keyPos: [11.5, 17.5, 8.5],
-    rimColor: 0x6ec5ff,
-    rimIntensity: 0.76,
+    keyColor: 0xffe4b3,
+    keyIntensity: 1.58,
+    keyPos: [12.5, 16.5, 8.5],
+    rimColor: 0x44c4ff,
+    rimIntensity: 0.94,
     rimPos: [-11.5, 9.5, -13.5],
-    hemiSkyColor: 0xcce8ff,
-    hemiGroundColor: 0x2e4a6e,
-    hemiIntensity: 0.64,
-    fillColor: 0x7cb2e6,
-    fillIntensity: 0.38,
+    hemiSkyColor: 0x8cd4ff,
+    hemiGroundColor: 0x1c4a82,
+    hemiIntensity: 0.74,
+    fillColor: 0x5ab4f8,
+    fillIntensity: 0.48,
     fillPos: [-7.5, 5.5, 11.5],
-    envIntensity: 0.50,
-    fogColor: 0x4d84ba,
-    fogDensity: 0.0056,
-    skyTop: new THREE.Color(0x1a4e8c),
-    skyMid: new THREE.Color(0x4d92cc),
-    skyHorizon: new THREE.Color(0xf4cb88),
+    envIntensity: 0.72,
+    fogColor: 0x2474cc,
+    fogDensity: 0.0034,
+    skyTop: new THREE.Color(0x0a4aa8),
+    skyMid: new THREE.Color(0x2288ea),
+    skyHorizon: new THREE.Color(0xffd27a),
   };
 }
 
@@ -243,24 +243,24 @@ function getOrBakeDeckBuffers(theme: ArenaThemeId): RawDeckPbrBuffers {
         const skyInlay =
           rad > 0.228 && rad < 0.36 && Math.abs(Math.sin(ang * 4)) < 0.055 ? 1 : 0;
 
-        let r = (232 + fine * 14 - vein * 30) * outerVignette;
-        let g = (235 + fine * 12 - vein * 18) * (0.79 + 0.25 * innerFocus);
-        let b = (240 + fine * 10 + vein * 10) * (0.84 + 0.20 * innerFocus);
+        let r = (238 + fine * 12 - vein * 34) * outerVignette;
+        let g = (234 + fine * 10 - vein * 20) * (0.79 + 0.25 * innerFocus);
+        let b = (226 + fine * 8 + vein * 16) * (0.82 + 0.20 * innerFocus);
 
         if (skyInlay) {
-          r = (164 + fine * 14) * outerVignette;
-          g = (196 + fine * 14) * (0.82 + 0.22 * innerFocus);
-          b = (224 + fine * 12) * (0.86 + 0.18 * innerFocus);
+          r = (86 + fine * 16) * outerVignette;
+          g = (164 + fine * 16) * (0.84 + 0.20 * innerFocus);
+          b = (232 + fine * 12) * (0.88 + 0.14 * innerFocus);
         }
         if (compassRing || compassTick) {
-          r = 212;
-          g = 182;
-          b = 124;
+          r = 238;
+          g = 194;
+          b = 94;
         }
         if (seam) {
-          r *= 0.82;
-          g *= 0.86;
-          b *= 0.91;
+          r *= 0.78;
+          g *= 0.83;
+          b *= 0.90;
         }
 
         albedo[p4] = clampByte(r);
@@ -294,24 +294,24 @@ function getOrBakeDeckBuffers(theme: ArenaThemeId): RawDeckPbrBuffers {
         const thermalLine =
           (Math.abs(rad - 0.39) < 0.0048 || Math.abs(rad - 0.25) < 0.0038) && !groove ? 1 : 0;
 
-        let r = (40 + coarse * 22 + grain * 9) * (0.72 + 0.34 * innerFocus);
-        let g = (29 + coarse * 15 + grain * 6) * (0.70 + 0.34 * innerFocus);
-        let b = (24 + coarse * 12 + grain * 5) * (0.72 + 0.30 * innerFocus);
+        let r = (30 + coarse * 18 + grain * 8) * (0.72 + 0.34 * innerFocus);
+        let g = (23 + coarse * 13 + grain * 6) * (0.70 + 0.34 * innerFocus);
+        let b = (24 + coarse * 12 + grain * 6) * (0.74 + 0.30 * innerFocus);
 
         if (bronzeRib) {
-          r = (138 + grain * 34) * (0.76 + 0.28 * innerFocus);
-          g = (92 + grain * 24) * (0.75 + 0.28 * innerFocus);
-          b = (50 + grain * 16) * (0.76 + 0.26 * innerFocus);
+          r = (176 + grain * 36) * (0.78 + 0.26 * innerFocus);
+          g = (110 + grain * 24) * (0.76 + 0.26 * innerFocus);
+          b = (44 + grain * 14) * (0.74 + 0.24 * innerFocus);
         }
         if (groove) {
-          r = deepSlag ? 148 : 20;
-          g = deepSlag ? 64 : 13;
+          r = deepSlag ? 210 : 16;
+          g = deepSlag ? 88 : 11;
           b = deepSlag ? 18 : 10;
         }
         if (thermalLine) {
-          r = 216;
-          g = 118;
-          b = 36;
+          r = 250;
+          g = 138;
+          b = 26;
         }
 
         albedo[p4] = clampByte(r);
@@ -359,20 +359,27 @@ function getOrBakeDeckBuffers(theme: ArenaThemeId): RawDeckPbrBuffers {
         const violetBand =
           rad > 0.315 && rad < 0.41 && Math.abs(Math.sin(ang * 6 + strata * 2.0)) < 0.058;
 
-        let r = (25 + strata * 18 + speckle * 8) * (0.72 + 0.34 * innerFocus);
-        let g = (22 + strata * 16 + speckle * 8) * (0.72 + 0.34 * innerFocus);
-        let b = (52 + strata * 32 + speckle * 14) * (0.76 + 0.30 * innerFocus);
+        let r = (18 + strata * 16 + speckle * 8) * (0.72 + 0.34 * innerFocus);
+        let g = (24 + strata * 18 + speckle * 9) * (0.74 + 0.34 * innerFocus);
+        let b = (62 + strata * 38 + speckle * 16) * (0.78 + 0.28 * innerFocus);
 
         if (violetBand) {
-          r += 28 * innerFocus + 12;
-          g += 18 * innerFocus + 8;
-          b += 52 * innerFocus + 18;
+          r += 34 * innerFocus + 12;
+          g += 28 * innerFocus + 12;
+          b += 74 * innerFocus + 26;
         }
         if (glyph) {
-          const boost = majorTick || ringOuterA || ringMid ? 1.12 : 0.96;
-          r = (208 + speckle * 20) * boost;
-          g = (172 + speckle * 18) * boost;
-          b = (104 + speckle * 12) * boost;
+          const isCyanRing = ringOuterB || ringInner || radialSpoke;
+          if (isCyanRing) {
+            r = 88 + speckle * 22;
+            g = 216 + speckle * 24;
+            b = 248;
+          } else {
+            const boost = majorTick || ringOuterA || ringMid ? 1.12 : 0.98;
+            r = (228 + speckle * 20) * boost;
+            g = (190 + speckle * 16) * boost;
+            b = (102 + speckle * 12) * boost;
+          }
         }
 
         albedo[p4] = clampByte(r);
@@ -485,9 +492,9 @@ function createMatteMaterial(params: {
 }): THREE.MeshStandardMaterial {
   const opts: THREE.MeshStandardMaterialParameters = {
     color: params.color,
-    roughness: Math.max(0.55, params.roughness ?? 0.66),
+    roughness: Math.max(0.36, params.roughness ?? 0.62),
     metalness: params.metalness ?? 0.12,
-    envMapIntensity: Math.min(0.45, params.envMapIntensity ?? 0.34),
+    envMapIntensity: Math.min(0.76, params.envMapIntensity ?? 0.46),
     emissiveIntensity: params.emissiveIntensity ?? 0,
     transparent: params.transparent ?? false,
     opacity: params.opacity ?? 1,
@@ -705,47 +712,48 @@ function createArenaSkyDomeShader(preset: ArenaThemeLightingPreset, themeIndex: 
 
         vec3 col;
         if (uThemeIndex < 0.5) {
-          vec3 zenith = vec3(0.09, 0.27, 0.56);
-          vec3 skyMid = vec3(0.28, 0.56, 0.84);
-          vec3 horizonWarm = vec3(0.95, 0.80, 0.58);
-          vec3 lowerSky = vec3(0.24, 0.48, 0.74);
-          vec3 eqCol = mix(skyMid, horizonWarm, northBand * 0.46);
-          col = mix(lowerSky, eqCol, smoothstep(-0.62, -0.04, y));
+          vec3 zenith = vec3(0.04, 0.28, 0.70);
+          vec3 skyMid = vec3(0.14, 0.56, 0.92);
+          vec3 horizonWarm = vec3(1.0, 0.80, 0.46);
+          vec3 lowerSky = vec3(0.09, 0.42, 0.82);
+          vec3 eqCol = mix(skyMid, horizonWarm, northBand * 0.52);
+          col = mix(lowerSky, eqCol, smoothstep(-0.62, -0.02, y));
           col = mix(col, zenith, smoothstep(0.0, 0.52, y));
-          float sunGlow = pow(max(0.0, dot(d, normalize(vec3(0.12, 0.12, -0.98)))), 5.5);
-          col += vec3(1.0, 0.90, 0.72) * sunGlow * 0.42;
+          float sunGlow = pow(max(0.0, dot(d, normalize(vec3(0.18, 0.14, -0.96)))), 5.0);
+          col += vec3(1.0, 0.88, 0.60) * sunGlow * 0.58;
           float cirrus = waveNoise(d.xz * 6.5 + vec2(uTime * 0.035, -uTime * 0.02))
                        * waveNoise(d.xz * 12.0 - vec2(uTime * 0.025, uTime * 0.04));
-          col = mix(col, vec3(0.98, 0.99, 1.0), cirrus * smoothstep(-0.14, 0.35, y) * 0.26);
+          col = mix(col, vec3(1.0, 0.99, 0.96), cirrus * smoothstep(-0.14, 0.35, y) * 0.28);
         } else if (uThemeIndex < 1.5) {
-          vec3 abyss = vec3(0.04, 0.014, 0.012);
-          vec3 horizonGlow = vec3(0.38, 0.12, 0.035) * (0.35 + 0.65 * northBand);
-          vec3 lowerEmber = vec3(0.055, 0.018, 0.012);
+          vec3 abyss = vec3(0.028, 0.010, 0.014);
+          vec3 horizonGlow = vec3(0.54, 0.16, 0.03) * (0.35 + 0.65 * northBand);
+          vec3 lowerEmber = vec3(0.05, 0.016, 0.012);
           col = mix(lowerEmber, horizonGlow, smoothstep(-0.64, -0.06, y));
           col = mix(col, abyss, smoothstep(0.0, 0.45, y));
           float streamA = waveNoise(vec2(d.x * 5.6 + uTime * 0.06, d.z * 6.2 - d.y * 4.5));
           float streamB = waveNoise(vec2(d.z * 9.8 - uTime * 0.04, d.x * 8.2 + d.y * 6.4));
-          col += vec3(0.42, 0.14, 0.035) * streamA * streamB * (0.20 + 0.80 * northBand) * 0.46;
-          float corona = pow(max(0.0, dot(d, normalize(vec3(0.0, -0.14, -0.98)))), 5.5);
-          col += vec3(0.96, 0.46, 0.12) * corona * 0.56;
-          float s = roundStars(d, 54.0, 0.958);
-          col += vec3(1.0, 0.84, 0.62) * s * 0.68;
+          col += vec3(0.68, 0.22, 0.03) * streamA * streamB * (0.20 + 0.80 * northBand) * 0.58;
+          float corona = pow(max(0.0, dot(d, normalize(vec3(0.0, -0.14, -0.98)))), 5.0);
+          col += vec3(1.0, 0.52, 0.10) * corona * 0.78;
+          float s = roundStars(d, 54.0, 0.956);
+          col += vec3(1.0, 0.86, 0.62) * s * 0.82;
         } else {
-          vec3 deepVoid = vec3(0.012, 0.008, 0.042);
-          vec3 lowerVoid = vec3(0.022, 0.013, 0.068);
-          vec3 horizonNeb = vec3(0.11, 0.055, 0.24);
+          vec3 deepVoid = vec3(0.012, 0.014, 0.064);
+          vec3 lowerVoid = vec3(0.018, 0.024, 0.098);
+          vec3 horizonNeb = vec3(0.10, 0.075, 0.34);
           col = mix(lowerVoid, horizonNeb, smoothstep(-0.66, -0.06, y));
           col = mix(col, deepVoid, smoothstep(0.0, 0.48, y));
           float diag = exp(-pow((d.x * 0.55 + d.y * 0.65 - d.z * 0.22) * 2.3, 2.0));
           float cloudA = waveNoise(vec2(d.x * 5.8 - uTime * 0.03, d.z * 5.8 + d.y * 4.4));
           float cloudB = waveNoise(vec2(d.z * 10.2 + uTime * 0.025, d.x * 8.8 - d.y * 6.2));
           float neb = cloudA * cloudB;
-          col += vec3(0.28, 0.14, 0.56) * (0.25 + 0.75 * diag) * neb * 0.58;
-          col += vec3(0.78, 0.54, 0.22) * diag * neb * northBand * 0.26;
-          float s1 = roundStars(d, 58.0, 0.946);
-          float s2 = roundStars(d + vec3(0.17, -0.11, 0.23), 34.0, 0.962);
-          col += vec3(0.88, 0.92, 1.0) * s1 * 1.02;
-          col += vec3(1.0, 0.88, 0.66) * s2 * 0.84;
+          col += vec3(0.28, 0.16, 0.68) * (0.25 + 0.75 * diag) * neb * 0.68;
+          col += vec3(0.12, 0.64, 0.88) * (1.0 - diag * 0.4) * neb * 0.42;
+          col += vec3(0.88, 0.62, 0.24) * diag * neb * northBand * 0.28;
+          float s1 = roundStars(d, 58.0, 0.942);
+          float s2 = roundStars(d + vec3(0.17, -0.11, 0.23), 34.0, 0.958);
+          col += vec3(0.76, 0.95, 1.0) * s1 * 1.18;
+          col += vec3(1.0, 0.88, 0.62) * s2 * 0.96;
         }
 
         gl_FragColor = vec4(col, 1.0);
@@ -784,21 +792,21 @@ function createCloudSeaShader(cloudTex: THREE.DataTexture, layerOffset: number):
         vec2 uv2 = vUv * 4.4 + vec2(-uTime * 0.0055, uTime * 0.0068 - uLayerOffset);
         vec3 s1 = texture2D(uCloudTex, uv1).rgb;
         vec3 s2 = texture2D(uCloudTex, uv2).rgb;
-        float density = smoothstep(0.22, 0.84, s1.r * 0.65 + s2.r * 0.45);
+        float density = smoothstep(0.34, 0.86, s1.r * 0.65 + s2.r * 0.45);
         float billow = clamp(s1.g * 0.6 + s2.g * 0.4, 0.0, 1.0);
 
-        vec3 shadowCol = vec3(0.30, 0.56, 0.82);
-        vec3 midCloud = vec3(0.68, 0.84, 0.96);
-        vec3 cloudWhite = vec3(0.99, 0.98, 0.96);
-        vec3 sunriseTint = vec3(1.0, 0.87, 0.68);
+        vec3 shadowCol = vec3(0.16, 0.48, 0.86);
+        vec3 midCloud = vec3(0.56, 0.82, 0.98);
+        vec3 cloudWhite = vec3(1.0, 0.98, 0.94);
+        vec3 sunriseTint = vec3(1.0, 0.84, 0.50);
 
-        float northWarm = smoothstep(-5.0, -25.0, vWorldPos.z);
+        float northWarm = smoothstep(-4.0, -24.0, vWorldPos.z);
         vec3 col = mix(shadowCol, midCloud, smoothstep(0.18, 0.56, billow));
         col = mix(col, cloudWhite, smoothstep(0.52, 0.88, billow));
-        col = mix(col, sunriseTint, northWarm * 0.36 * billow);
+        col = mix(col, sunriseTint, northWarm * 0.44 * billow);
 
-        float radialEdge = 1.0 - smoothstep(21.0, 35.0, length(vWorldPos.xz));
-        float alpha = density * radialEdge * (0.80 - uLayerOffset * 0.18);
+        float radialEdge = 1.0 - smoothstep(20.0, 35.0, length(vWorldPos.xz));
+        float alpha = density * radialEdge * (0.68 - uLayerOffset * 0.16);
         gl_FragColor = vec4(col, alpha);
       }
     `,
@@ -906,13 +914,13 @@ function createAccretionDiskShader(): THREE.ShaderMaterial {
         float outerEdge = 1.0 - smoothstep(0.42, 1.0, normR);
         float doppler = 0.74 + 0.38 * cos(ang + 0.45);
 
-        vec3 photonWhite = vec3(1.0, 0.94, 0.78);
-        vec3 hotGold = vec3(0.98, 0.76, 0.36);
-        vec3 midViolet = vec3(0.60, 0.34, 0.92);
-        vec3 outerIndigo = vec3(0.20, 0.14, 0.48);
+        vec3 photonWhite = vec3(0.96, 0.98, 1.0);
+        vec3 hotCyan = vec3(0.24, 0.86, 1.0);
+        vec3 midViolet = vec3(0.54, 0.32, 0.98);
+        vec3 outerIndigo = vec3(0.16, 0.18, 0.58);
 
-        vec3 col = mix(hotGold, midViolet, smoothstep(0.08, 0.52, normR));
-        col = mix(col, outerIndigo, smoothstep(0.48, 0.95, normR));
+        vec3 col = mix(hotCyan, midViolet, smoothstep(0.10, 0.54, normR));
+        col = mix(col, outerIndigo, smoothstep(0.50, 0.95, normR));
         col = mix(col, photonWhite, photonRim * 0.78);
         col *= (0.70 + 0.46 * bands) * doppler;
 
@@ -1165,7 +1173,7 @@ function createGravitationalVortexShader(): THREE.ShaderMaterial {
         float dust = swirlA * 0.58 + swirlB * 0.42;
         float lensHalo = exp(-pow((r - 0.34) / 0.06, 2.0));
         float outerMask = smoothstep(0.24, 0.42, r) * smoothstep(0.98, 0.48, r);
-        vec3 col = mix(vec3(0.48, 0.28, 0.90), vec3(0.96, 0.78, 0.42), lensHalo * 0.75 + dust * 0.22);
+        vec3 col = mix(vec3(0.36, 0.24, 0.92), vec3(0.26, 0.88, 1.0), lensHalo * 0.78 + dust * 0.24);
         float alpha = (outerMask * dust * 0.38 + lensHalo * 0.44) * smoothstep(1.0, 0.75, r);
         if (alpha < 0.006) discard;
         gl_FragColor = vec4(col, clamp(alpha, 0.0, 0.68));
@@ -1512,9 +1520,9 @@ export class ArenaStageAssembly {
   private readonly hexPlateInstanced: THREE.InstancedMesh;
   private readonly themeHexTileMats: Record<ArenaThemeId, THREE.MeshStandardMaterial>;
   private readonly themeBenchRingColors: Record<ArenaThemeId, number> = {
-    orbital_elevator_port: 0xd4b67c,
-    mercury_dyson_forge: 0xc98a42,
-    event_horizon_observatory: 0xb998e8,
+    orbital_elevator_port: 0xe8be66,
+    mercury_dyson_forge: 0xf2a33a,
+    event_horizon_observatory: 0x52dcff,
   };
   private readonly hexHoverSprings: SpringDamper[] = [];
   private hoveredHexIndex = -1;
@@ -1611,40 +1619,40 @@ export class ArenaStageAssembly {
 
     this.themeHexTileMats = {
       orbital_elevator_port: createMatteMaterial({
-        color: 0xdbe9f6,
+        color: 0x5c90c4,
         map: materials.hexEngravedMaps.albedoMap,
         normalMap: materials.hexEngravedMaps.normalMap,
         roughnessMap: materials.hexEngravedMaps.roughnessMap,
-        normalScale: 0.78,
-        roughness: 0.64,
-        metalness: 0.12,
-        envMapIntensity: 0.34,
+        normalScale: 0.82,
+        roughness: 0.58,
+        metalness: 0.16,
+        envMapIntensity: 0.52,
         transparent: true,
-        opacity: 0.56,
+        opacity: 0.72,
       }),
       mercury_dyson_forge: createMatteMaterial({
-        color: 0x543a2c,
+        color: 0x3f2c22,
         map: materials.hexEngravedMaps.albedoMap,
         normalMap: materials.hexEngravedMaps.normalMap,
         roughnessMap: materials.hexEngravedMaps.roughnessMap,
-        normalScale: 0.88,
-        roughness: 0.68,
-        metalness: 0.30,
-        envMapIntensity: 0.38,
+        normalScale: 0.90,
+        roughness: 0.64,
+        metalness: 0.34,
+        envMapIntensity: 0.52,
         transparent: true,
-        opacity: 0.60,
+        opacity: 0.70,
       }),
       event_horizon_observatory: createMatteMaterial({
-        color: 0x3b3168,
+        color: 0x2c2b6e,
         map: materials.hexEngravedMaps.albedoMap,
         normalMap: materials.hexEngravedMaps.normalMap,
         roughnessMap: materials.hexEngravedMaps.roughnessMap,
-        normalScale: 0.84,
-        roughness: 0.68,
-        metalness: 0.20,
-        envMapIntensity: 0.36,
+        normalScale: 0.86,
+        roughness: 0.62,
+        metalness: 0.24,
+        envMapIntensity: 0.54,
         transparent: true,
-        opacity: 0.60,
+        opacity: 0.70,
       }),
     };
     this.ownedMaterials.push(
@@ -2070,54 +2078,54 @@ export class ArenaStageAssembly {
     const bloom = this.themeBloomTargets.orbital_elevator_port;
 
     const marbleDeckMat = createMatteMaterial({
-      color: 0xf4f7fa,
+      color: 0xf8f6f0,
       map: maps.albedo,
       normalMap: maps.normal,
       roughnessMap: maps.roughness,
-      normalScale: 0.72,
-      roughness: 0.64,
-      metalness: 0.06,
-      envMapIntensity: 0.32,
+      normalScale: 0.78,
+      roughness: 0.58,
+      metalness: 0.08,
+      envMapIntensity: 0.50,
     });
     const porcelainMat = createMatteMaterial({
-      color: 0xeef2f6,
-      roughness: 0.58,
+      color: 0xf7f8fc,
+      roughness: 0.54,
       metalness: 0.08,
-      envMapIntensity: 0.34,
+      envMapIntensity: 0.48,
     });
     const seaBlueMat = createMatteMaterial({
-      color: 0x6ea2cc,
-      roughness: 0.64,
-      metalness: 0.14,
-      envMapIntensity: 0.32,
+      color: 0x2b84d6,
+      roughness: 0.54,
+      metalness: 0.18,
+      envMapIntensity: 0.52,
     });
     const champagneMat = createMatteMaterial({
-      color: 0xd4b57a,
-      roughness: 0.56,
-      metalness: 0.46,
-      envMapIntensity: 0.38,
+      color: 0xe8be66,
+      roughness: 0.38,
+      metalness: 0.66,
+      envMapIntensity: 0.68,
     });
     const canopyTintMat = createMatteMaterial({
-      color: 0x3f6e96,
-      roughness: 0.56,
-      metalness: 0.25,
-      envMapIntensity: 0.38,
+      color: 0x1e74c6,
+      roughness: 0.46,
+      metalness: 0.28,
+      envMapIntensity: 0.58,
     });
     const skyLightMat = createMatteMaterial({
-      color: 0xb5e6fa,
-      roughness: 0.58,
-      metalness: 0.05,
-      envMapIntensity: 0.25,
-      emissive: 0x6ec9f2,
-      emissiveIntensity: 0.68,
+      color: 0x66e2ff,
+      roughness: 0.44,
+      metalness: 0.06,
+      envMapIntensity: 0.40,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 1.05,
     });
     const warmEngineMat = createMatteMaterial({
-      color: 0xf7d89c,
-      roughness: 0.58,
-      metalness: 0.08,
-      envMapIntensity: 0.25,
-      emissive: 0xe8b55d,
-      emissiveIntensity: 0.76,
+      color: 0xffd578,
+      roughness: 0.46,
+      metalness: 0.10,
+      envMapIntensity: 0.40,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 1.05,
     });
     this.ownedMaterials.push(
       marbleDeckMat,
@@ -2679,20 +2687,20 @@ export class ArenaStageAssembly {
 
     const cloudPuffGeo = new THREE.SphereGeometry(1.0, 10, 7);
     const cloudPuffMat = createMatteMaterial({
-      color: 0xf7fbff,
-      roughness: 0.94,
+      color: 0xfffaf0,
+      roughness: 0.92,
       metalness: 0.0,
-      envMapIntensity: 0.14,
+      envMapIntensity: 0.18,
       transparent: true,
-      opacity: 0.82,
+      opacity: 0.78,
     });
     const cloudUnderMat = createMatteMaterial({
-      color: 0xc2def4,
-      roughness: 0.95,
+      color: 0x7ab8eb,
+      roughness: 0.94,
       metalness: 0.0,
-      envMapIntensity: 0.12,
+      envMapIntensity: 0.16,
       transparent: true,
-      opacity: 0.68,
+      opacity: 0.64,
     });
     this.ownedGeometries.push(cloudPuffGeo);
     this.ownedMaterials.push(cloudPuffMat, cloudUnderMat);
@@ -2765,46 +2773,46 @@ export class ArenaStageAssembly {
     const bloom = this.themeBloomTargets.mercury_dyson_forge;
 
     const forgeDeckMat = createMatteMaterial({
-      color: 0xdcc6b2,
+      color: 0xe6d2be,
       map: maps.albedo,
       normalMap: maps.normal,
       roughnessMap: maps.roughness,
-      normalScale: 0.88,
-      roughness: 0.66,
-      metalness: 0.24,
-      envMapIntensity: 0.38,
+      normalScale: 0.92,
+      roughness: 0.62,
+      metalness: 0.28,
+      envMapIntensity: 0.54,
     });
     const obsidianMat = createMatteMaterial({
-      color: 0x261d19,
-      roughness: 0.74,
-      metalness: 0.22,
-      envMapIntensity: 0.30,
+      color: 0x1d1a22,
+      roughness: 0.68,
+      metalness: 0.28,
+      envMapIntensity: 0.42,
     });
     const darkIronMat = createMatteMaterial({
-      color: 0x3b2e28,
-      roughness: 0.66,
-      metalness: 0.38,
-      envMapIntensity: 0.34,
+      color: 0x2f2b36,
+      roughness: 0.58,
+      metalness: 0.46,
+      envMapIntensity: 0.52,
     });
     const antiqueBronzeMat = createMatteMaterial({
-      color: 0xa26f3c,
-      roughness: 0.56,
-      metalness: 0.52,
-      envMapIntensity: 0.40,
+      color: 0xc87a32,
+      roughness: 0.44,
+      metalness: 0.62,
+      envMapIntensity: 0.62,
     });
     const gildedMirrorMat = createMatteMaterial({
-      color: 0xdca656,
-      roughness: 0.44,
-      metalness: 0.68,
-      envMapIntensity: 0.50,
+      color: 0xf2bf54,
+      roughness: 0.36,
+      metalness: 0.74,
+      envMapIntensity: 0.72,
     });
     const amberChannelMat = createMatteMaterial({
-      color: 0xcf6a19,
-      roughness: 0.60,
-      metalness: 0.10,
-      envMapIntensity: 0.20,
-      emissive: 0xd16815,
-      emissiveIntensity: 0.68,
+      color: 0xff8224,
+      roughness: 0.48,
+      metalness: 0.12,
+      envMapIntensity: 0.32,
+      emissive: 0xff6600,
+      emissiveIntensity: 1.18,
     });
     this.ownedMaterials.push(
       forgeDeckMat,
@@ -3265,48 +3273,48 @@ export class ArenaStageAssembly {
     const bloom = this.themeBloomTargets.event_horizon_observatory;
 
     const astrolabeDeckMat = createMatteMaterial({
-      color: 0xd4cef5,
+      color: 0xd8d6ff,
       map: maps.albedo,
       normalMap: maps.normal,
       roughnessMap: maps.roughness,
-      normalScale: 0.80,
-      roughness: 0.68,
-      metalness: 0.16,
-      envMapIntensity: 0.36,
+      normalScale: 0.84,
+      roughness: 0.62,
+      metalness: 0.20,
+      envMapIntensity: 0.54,
     });
     const obsidianRockMat = createMatteMaterial({
-      color: 0x1d1833,
-      roughness: 0.76,
-      metalness: 0.16,
-      envMapIntensity: 0.30,
+      color: 0x171538,
+      roughness: 0.70,
+      metalness: 0.20,
+      envMapIntensity: 0.42,
     });
     const amethystStoneMat = createMatteMaterial({
-      color: 0x3b2d68,
-      roughness: 0.66,
-      metalness: 0.22,
-      envMapIntensity: 0.34,
+      color: 0x3a2e82,
+      roughness: 0.58,
+      metalness: 0.26,
+      envMapIntensity: 0.52,
     });
     const astralGoldMat = createMatteMaterial({
-      color: 0xc9a35b,
-      roughness: 0.56,
-      metalness: 0.50,
-      envMapIntensity: 0.38,
+      color: 0xe8be66,
+      roughness: 0.38,
+      metalness: 0.64,
+      envMapIntensity: 0.68,
     });
     const violetArcMat = createMatteMaterial({
-      color: 0xae90f7,
-      roughness: 0.58,
-      metalness: 0.12,
-      envMapIntensity: 0.25,
-      emissive: 0x916ce8,
-      emissiveIntensity: 0.76,
+      color: 0xb084ff,
+      roughness: 0.46,
+      metalness: 0.14,
+      envMapIntensity: 0.38,
+      emissive: 0x8b5cf6,
+      emissiveIntensity: 1.12,
     });
     const goldArcMat = createMatteMaterial({
-      color: 0xebd08c,
-      roughness: 0.56,
+      color: 0x60e8ff,
+      roughness: 0.44,
       metalness: 0.18,
-      envMapIntensity: 0.28,
-      emissive: 0xdba94c,
-      emissiveIntensity: 0.72,
+      envMapIntensity: 0.40,
+      emissive: 0x22d3ee,
+      emissiveIntensity: 1.08,
     });
     this.ownedMaterials.push(
       astrolabeDeckMat,
@@ -3834,20 +3842,20 @@ export class ArenaStageAssembly {
     this.skyDomeMat.uniforms['uHorizonColor']!.value.copy(preset.skyHorizon);
 
     if (theme === 'mercury_dyson_forge') {
-      this.conduitShaderMat.uniforms['uBaseColor']!.value.setHex(0xc9661a);
-      this.conduitShaderMat.uniforms['uPulseColor']!.value.setHex(0xf2b95a);
-      this.deployFlowMat.uniforms['uBaseColor']!.value.setHex(0xf6a642);
-      this.deployFlowMat.uniforms['uAccentColor']!.value.setHex(0xffdf96);
+      this.conduitShaderMat.uniforms['uBaseColor']!.value.setHex(0xf07218);
+      this.conduitShaderMat.uniforms['uPulseColor']!.value.setHex(0xffcf5c);
+      this.deployFlowMat.uniforms['uBaseColor']!.value.setHex(0xff9b2e);
+      this.deployFlowMat.uniforms['uAccentColor']!.value.setHex(0xffe07d);
     } else if (theme === 'event_horizon_observatory') {
-      this.conduitShaderMat.uniforms['uBaseColor']!.value.setHex(0x9675e8);
-      this.conduitShaderMat.uniforms['uPulseColor']!.value.setHex(0xe8c474);
-      this.deployFlowMat.uniforms['uBaseColor']!.value.setHex(0xb896ff);
-      this.deployFlowMat.uniforms['uAccentColor']!.value.setHex(0xf2d084);
+      this.conduitShaderMat.uniforms['uBaseColor']!.value.setHex(0x38d8ff);
+      this.conduitShaderMat.uniforms['uPulseColor']!.value.setHex(0xc084fc);
+      this.deployFlowMat.uniforms['uBaseColor']!.value.setHex(0x46e0ff);
+      this.deployFlowMat.uniforms['uAccentColor']!.value.setHex(0xf5cf72);
     } else {
-      this.conduitShaderMat.uniforms['uBaseColor']!.value.setHex(0x63b7e0);
-      this.conduitShaderMat.uniforms['uPulseColor']!.value.setHex(0xe6be72);
-      this.deployFlowMat.uniforms['uBaseColor']!.value.setHex(0x52c8f5);
-      this.deployFlowMat.uniforms['uAccentColor']!.value.setHex(0xf4cf82);
+      this.conduitShaderMat.uniforms['uBaseColor']!.value.setHex(0x38bdf8);
+      this.conduitShaderMat.uniforms['uPulseColor']!.value.setHex(0xf4c85a);
+      this.deployFlowMat.uniforms['uBaseColor']!.value.setHex(0x38c8ff);
+      this.deployFlowMat.uniforms['uAccentColor']!.value.setHex(0xffd268);
     }
 
     this.bloomTargets.length = 0;

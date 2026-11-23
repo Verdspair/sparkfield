@@ -191,16 +191,14 @@ function createBackdropShader(topCss: string, midCss: string, botCss: string, ac
       uniform vec3 uAccent;
       varying vec2 vUv;
       void main() {
-        vec3 col = mix(uBot * 0.80, uMid * 0.92, smoothstep(0.0, 0.56, vUv.y));
-        col = mix(col, uTop * 0.86, smoothstep(0.56, 1.0, vUv.y));
-        vec3 starBlue = vec3(0.082, 0.125, 0.212);
-        col = mix(starBlue, col, 0.74);
+        vec3 col = mix(uBot * 0.88, uMid * 1.02, smoothstep(0.0, 0.54, vUv.y));
+        col = mix(col, uTop * 0.96, smoothstep(0.54, 1.0, vUv.y));
         vec2 p = (vUv - vec2(0.5, 0.48)) * vec2(1.0, 1.04);
         float dist = length(p);
-        float glow = exp(-dist * dist * 4.6);
-        col += uAccent * glow * 0.16;
-        float vig = smoothstep(0.96, 0.24, dist);
-        col *= mix(0.76, 1.04, vig);
+        float glow = exp(-dist * dist * 4.2);
+        col += uAccent * glow * 0.30;
+        float vig = smoothstep(0.98, 0.22, dist);
+        col *= mix(0.76, 1.08, vig);
         gl_FragColor = vec4(col, 1.0);
       }
     `,
@@ -284,7 +282,7 @@ function buildPortraitStudioScene(
   const envTex = getOrCreateStudioEnvMap(renderer);
   if (envTex) {
     scene.environment = envTex;
-    scene.environmentIntensity = 0.46;
+    scene.environmentIntensity = 0.66;
   }
 
   const bgGeo = new THREE.PlaneGeometry(2, 2);
@@ -293,16 +291,16 @@ function buildPortraitStudioScene(
   bgMesh.frustumCulled = false;
   scene.add(bgMesh);
 
-  const keyLight = new THREE.DirectionalLight(0xfff5e8, 1.36);
+  const keyLight = new THREE.DirectionalLight(0xfff0d8, 1.54);
   keyLight.position.set(3.2, 5.0, 4.6);
-  const coolRimColor = new THREE.Color(0x88c9f2).lerp(new THREE.Color(accentHex), 0.34);
-  const rimLight = new THREE.DirectionalLight(coolRimColor, 1.12);
+  const coolRimColor = new THREE.Color(0x58c8ff).lerp(new THREE.Color(accentHex), 0.48);
+  const rimLight = new THREE.DirectionalLight(coolRimColor, 1.30);
   rimLight.position.set(-4.6, 3.8, -4.0);
-  const warmFill = new THREE.DirectionalLight(0xf2ca88, 0.38);
+  const warmFill = new THREE.DirectionalLight(0xffcf78, 0.48);
   warmFill.position.set(4.0, 0.8, 1.4);
-  const sideFill = new THREE.DirectionalLight(0x93bce8, 0.30);
+  const sideFill = new THREE.DirectionalLight(0x74c2ff, 0.38);
   sideFill.position.set(-3.6, 1.8, 3.6);
-  const hemi = new THREE.HemisphereLight(0xe4f0fc, 0x222c42, 0.54);
+  const hemi = new THREE.HemisphereLight(0xdaf0ff, 0x1e3052, 0.62);
   scene.add(keyLight, rimLight, warmFill, sideFill, hemi);
 
   return {
@@ -359,7 +357,7 @@ function bakeSingleUnitWithWebgl(
   camera.lookAt(boxCenter.x, targetY, boxCenter.z);
   camera.updateMatrixWorld();
 
-  const dataUrl = renderPortraitSceneWithRenderer(renderer, studio.scene, camera, size, 0.94);
+  const dataUrl = renderPortraitSceneWithRenderer(renderer, studio.scene, camera, size, 1.06);
   preview.dispose();
   studio.dispose();
   return dataUrl;
@@ -391,7 +389,7 @@ function bakeSingleTacticianWithWebgl(
   camera.lookAt(0, targetY, 0);
   camera.updateMatrixWorld();
 
-  const dataUrl = renderPortraitSceneWithRenderer(renderer, studio.scene, camera, size, 0.94);
+  const dataUrl = renderPortraitSceneWithRenderer(renderer, studio.scene, camera, size, 1.06);
   rig.dispose();
   studio.dispose();
   return dataUrl;
@@ -426,13 +424,12 @@ function bakeArenaPreview(
   sharedArena?: ArenaStageAssembly,
 ): string | null {
   const scene = new THREE.Scene();
+  const preset = getArenaThemeLightingPreset(themeId);
   const envTex = getOrCreateStudioEnvMap(renderer);
   if (envTex) {
     scene.environment = envTex;
-    scene.environmentIntensity = 0.48;
+    scene.environmentIntensity = preset.envIntensity;
   }
-
-  const preset = getArenaThemeLightingPreset(themeId);
   scene.background = new THREE.Color(preset.fogColor);
   scene.fog = new THREE.FogExp2(preset.fogColor, preset.fogDensity * 0.55);
 
@@ -461,7 +458,7 @@ function bakeArenaPreview(
   arena.update(1.45);
   scene.add(arena.root);
 
-  const dataUrl = renderPortraitSceneWithRenderer(renderer, scene, camera, size, 0.98);
+  const dataUrl = renderPortraitSceneWithRenderer(renderer, scene, camera, size, 1.08);
   arena.setScoutPadsVisible(true);
   scene.remove(arena.root);
   if (!sharedArena) {

@@ -42,26 +42,26 @@ interface LobbyThemePalette {
 
 const LOBBY_THEME_PALETTES: Readonly<Record<ArenaThemeId, LobbyThemePalette>> = {
   orbital_elevator_port: {
-    bgHex: 0x071128,
-    fogHex: 0x102348,
-    zenithHex: 0x050e24,
-    midSkyHex: 0x102b5c,
-    horizonHex: 0xf5c47c,
-    lowerSeaHex: 0x091632,
-    nebulaAHex: 0x3b84db,
-    nebulaBHex: 0x7c64d6,
-    cloudLitHex: 0xffe9c6,
-    cloudMidHex: 0x456fa6,
-    cloudShadowHex: 0x102142,
-    runePrimaryHex: 0x7dd3fc,
-    runeAccentHex: 0xf4cf82,
-    dustHex: 0xfef3c7,
-    godRayHex: 0xffe4b5,
-    keyLightHex: 0xffebd0,
-    rimLightHex: 0x74d4ff,
-    bounceLightHex: 0x2c568c,
-    hemiSkyHex: 0x9bc4ee,
-    hemiGroundHex: 0x182642,
+    bgHex: 0x081634,
+    fogHex: 0x132f62,
+    zenithHex: 0x061538,
+    midSkyHex: 0x154488,
+    horizonHex: 0xffcc70,
+    lowerSeaHex: 0x0a1e44,
+    nebulaAHex: 0x2e90f0,
+    nebulaBHex: 0x7c68ea,
+    cloudLitHex: 0xfff0cc,
+    cloudMidHex: 0x4a82c4,
+    cloudShadowHex: 0x122a56,
+    runePrimaryHex: 0x54d8ff,
+    runeAccentHex: 0xf6c95e,
+    dustHex: 0xfff2b8,
+    godRayHex: 0xffe0a3,
+    keyLightHex: 0xffe8c2,
+    rimLightHex: 0x54d2ff,
+    bounceLightHex: 0x2f68ad,
+    hemiSkyHex: 0x9cd2ff,
+    hemiGroundHex: 0x1b3056,
   },
   mercury_dyson_forge: {
     bgHex: 0x190d11,
@@ -842,13 +842,13 @@ export class LobbyStageAssembly {
 
     this.camera = new THREE.PerspectiveCamera(33, 16 / 9, 0.2, 220);
 
-    this.keyLight = new THREE.DirectionalLight(palette.keyLightHex, 1.46);
+    this.keyLight = new THREE.DirectionalLight(palette.keyLightHex, 1.62);
     this.keyLight.position.set(5.4, 8.4, 6.2);
-    this.rimLight = new THREE.DirectionalLight(palette.rimLightHex, 1.18);
+    this.rimLight = new THREE.DirectionalLight(palette.rimLightHex, 1.30);
     this.rimLight.position.set(-6.2, 5.5, -6.2);
-    this.bounceLight = new THREE.DirectionalLight(palette.bounceLightHex, 0.52);
+    this.bounceLight = new THREE.DirectionalLight(palette.bounceLightHex, 0.60);
     this.bounceLight.position.set(5.6, 1.8, -5.2);
-    this.hemiLight = new THREE.HemisphereLight(palette.hemiSkyHex, palette.hemiGroundHex, 0.66);
+    this.hemiLight = new THREE.HemisphereLight(palette.hemiSkyHex, palette.hemiGroundHex, 0.74);
     this.scene.add(this.keyLight, this.rimLight, this.bounceLight, this.hemiLight);
 
     this.skyMat = createNebulaSkyShader(palette);
@@ -862,36 +862,36 @@ export class LobbyStageAssembly {
     this.ownedTextures.push(cloudTex, glowTex);
 
     const terracePorcelainMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0x283e5e),
+      color: new THREE.Color(0x23406b),
       map: materials.porcelainMaps.albedoMap,
       normalMap: materials.porcelainMaps.normalMap,
       normalScale: new THREE.Vector2(0.24, 0.24),
-      roughness: 0.62,
-      metalness: 0.14,
-      envMapIntensity: 0.34,
-      sheen: 0.36,
-      sheenRoughness: 0.74,
-      sheenColor: new THREE.Color(0xdbeafe),
+      roughness: 0.56,
+      metalness: 0.16,
+      envMapIntensity: 0.52,
+      sheen: 0.10,
+      sheenRoughness: 0.70,
+      sheenColor: new THREE.Color(0x93c5fd),
     });
     const terraceJadeMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0x344d70),
+      color: new THREE.Color(0x2e507e),
       map: materials.porcelainMaps.albedoMap,
       normalMap: materials.porcelainMaps.normalMap,
       normalScale: new THREE.Vector2(0.20, 0.20),
-      roughness: 0.66,
-      metalness: 0.12,
-      envMapIntensity: 0.32,
-      sheen: 0.32,
-      sheenRoughness: 0.76,
+      roughness: 0.60,
+      metalness: 0.14,
+      envMapIntensity: 0.48,
+      sheen: 0.10,
+      sheenRoughness: 0.72,
     });
     const terraceTrimGoldMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0xeed095),
+      color: new THREE.Color(0xe8be66),
       map: materials.champagneGoldMaps.albedoMap,
       normalMap: materials.champagneGoldMaps.normalMap,
       normalScale: new THREE.Vector2(0.30, 0.30),
-      roughness: 0.38,
-      metalness: 0.68,
-      envMapIntensity: 0.44,
+      roughness: 0.34,
+      metalness: 0.72,
+      envMapIntensity: 0.68,
     });
     const terraceTailMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(0x1e2e4a),

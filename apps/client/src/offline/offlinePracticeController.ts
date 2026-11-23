@@ -45,6 +45,7 @@ import {
   evaluateLearningBonusDrops,
   roomSlotBonusStage,
   finalizeLearningGoldCarry,
+  formatCorrectAnswerDisplay,
   gradeFrozenLearningUnits,
   gradeQuestionSubmission,
   locateMatchStudySlot,
@@ -379,6 +380,7 @@ export class OfflineDirectLearningSession {
       feedback: {
         ...grade,
         explanationMd: q.explanationMd,
+        correctAnswerDisplay: formatCorrectAnswerDisplay(q),
       },
       session: this.toView(),
     };
@@ -566,6 +568,7 @@ export class OfflinePracticeMatchController {
     const fb: MatchLearningFeedbackItem = {
       ...grade,
       explanationMd: q.explanationMd,
+      correctAnswerDisplay: formatCorrectAnswerDisplay(q),
     };
     this.lessonProgress.feedback[questionId] = fb;
     if (!grade.isCorrect) this.wrongIds.add(questionId);
@@ -975,6 +978,7 @@ export class OnboardingMicroController {
     this.sampleFeedback = {
       ...grade,
       explanationMd: this.sampleItem.explanationMd,
+      correctAnswerDisplay: formatCorrectAnswerDisplay(this.sampleItem),
     };
     const playerSeat = this.scenario.game.seats.find(
       (s) => s.id === this.scenario.playerSeatId,

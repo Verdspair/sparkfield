@@ -197,3 +197,128 @@ export function GameUiIcon({
       );
   }
 }
+
+export function TraitGlyphIcon({
+  traitName,
+  size = 14,
+}: {
+  readonly traitName: string;
+  readonly size?: number;
+}): React.JSX.Element {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: '0 0 18 18',
+    fill: 'none',
+    'aria-hidden': true as const,
+    className: 'sf-ui-svg-icon',
+  };
+
+  switch (traitName) {
+    case '戴森工团':
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="9" r="3" stroke="currentColor" strokeWidth="1.45" />
+          <path d="M9 2v2.4M9 13.6V16M2 9h2.4M13.6 9H16M4.1 4.1l1.7 1.7M12.2 12.2l1.7 1.7M13.9 4.1l-1.7 1.7M5.8 12.2l-1.7 1.7" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+        </svg>
+      );
+    case '云端星环':
+      return (
+        <svg {...common}>
+          <ellipse cx="9" cy="9" rx="6.8" ry="3.2" transform="rotate(-24 9 9)" stroke="currentColor" strokeWidth="1.4" />
+          <circle cx="9" cy="9" r="2" fill="currentColor" />
+        </svg>
+      );
+    case '钟慢远征':
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="9" r="6.2" stroke="currentColor" strokeWidth="1.4" />
+          <path d="M9 5.5V9l2.6 1.8" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case '木卫冰海':
+      return (
+        <svg {...common}>
+          <path d="M9 2.2v13.6M3.1 5.6l11.8 6.8M14.9 5.6L3.1 12.4" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+          <circle cx="9" cy="9" r="2.2" fill="currentColor" fillOpacity="0.3" stroke="currentColor" strokeWidth="1.2" />
+        </svg>
+      );
+    case '深空阵列':
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="9" r="1.8" fill="currentColor" />
+          <circle cx="9" cy="9" r="5" stroke="currentColor" strokeWidth="1.3" strokeDasharray="3 2.5" />
+          <path d="M9 2v2M9 14v2M2 9h2M14 9h2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        </svg>
+      );
+    case '反物质院':
+      return (
+        <svg {...common}>
+          <polygon points="9,2.2 15.2,9 9,15.8 2.8,9" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+          <circle cx="9" cy="9" r="2.1" fill="currentColor" />
+        </svg>
+      );
+    case '星门摆渡':
+      return (
+        <svg {...common}>
+          <path d="M3 13.5L9 3l6 10.5H3Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+          <path d="M9 7.2v6.3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        </svg>
+      );
+    case '失控蜂群':
+      return (
+        <svg {...common}>
+          <polygon points="9,2.4 13.6,5.1 13.6,10.5 9,13.2 4.4,10.5 4.4,5.1" stroke="currentColor" strokeWidth="1.35" />
+          <circle cx="9" cy="7.8" r="1.4" fill="currentColor" />
+          <path d="M6.2 14.8h5.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      );
+    case '重装':
+      return (
+        <svg {...common}>
+          <path d="M9 2.2L14.5 4.6v4.3c0 3.3-2.3 5.8-5.5 6.9-3.2-1.1-5.5-3.6-5.5-6.9V4.6L9 2.2Z" stroke="currentColor" strokeWidth="1.45" strokeLinejoin="round" />
+        </svg>
+      );
+    case '维生':
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="12" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.35" />
+          <path d="M9 5.5v7M5.5 9h7" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" />
+        </svg>
+      );
+    case '跃迁':
+      return (
+        <svg {...common}>
+          <path d="M3.5 12.5L9.5 6.5M9.5 6.5H5.5M9.5 6.5v4M10.5 14.5l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case '光子':
+      return (
+        <svg {...common}>
+          <path d="M9 2l1.8 5.2L16 9l-5.2 1.8L9 16l-1.8-5.2L2 9l5.2-1.8L9 2Z" stroke="currentColor" strokeWidth="1.35" strokeLinejoin="round" />
+        </svg>
+      );
+    case '矩阵':
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="4.8" height="4.8" rx="1" stroke="currentColor" strokeWidth="1.35" />
+          <rect x="10.2" y="3" width="4.8" height="4.8" rx="1" stroke="currentColor" strokeWidth="1.35" />
+          <rect x="3" y="10.2" width="4.8" height="4.8" rx="1" stroke="currentColor" strokeWidth="1.35" />
+          <rect x="10.2" y="10.2" width="4.8" height="4.8" rx="1" stroke="currentColor" strokeWidth="1.35" />
+        </svg>
+      );
+    case '磁轨':
+      return (
+        <svg {...common}>
+          <path d="M3 13L13.5 2.5M5 15L15.5 4.5M10.5 2.5h5v5" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...common}>
+          <polygon points="9,2.2 14.8,5.6 14.8,12.4 9,15.8 3.2,12.4 3.2,5.6" stroke="currentColor" strokeWidth="1.35" />
+          <circle cx="9" cy="9" r="2.2" fill="currentColor" />
+        </svg>
+      );
+  }
+}

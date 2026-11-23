@@ -1905,44 +1905,76 @@ export const LEARNING_UI_CSS = `
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  border-radius: var(--sf-radius-slot, 6px);
-  border: 1px solid rgba(216, 194, 148, 0.44);
-  background: rgba(15, 26, 48, 0.86);
-  color: #dec592;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #a9b8cf;
   font-family: inherit;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+  transition: color 160ms ease;
 }
 .lui-desc-toggle:hover {
-  background: rgba(30, 48, 82, 0.96);
-  border-color: rgba(216, 194, 148, 0.78);
-  color: #f2e1bc;
+  color: #e6ecf5;
 }
 .lui-desc-toggle--xs {
   height: 22px;
-  padding: 0 7px;
   font-size: 11px;
+  gap: 6px;
 }
 .lui-desc-toggle--sm {
-  height: 27px;
-  padding: 0 10px;
+  height: 26px;
   font-size: 12px;
+  gap: 8px;
 }
 .lui-desc-toggle--detailed {
-  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
-  border-color: rgba(216, 194, 148, 0.82);
-  color: #f2e1bc;
-  box-shadow: none;
+  color: #ead7ae;
 }
-.lui-desc-toggle__icon {
+.lui-desc-toggle__track {
+  position: relative;
   display: inline-flex;
-  flex-shrink: 0;
+  align-items: center;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(148, 179, 224, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 2px rgba(4, 8, 18, 0.45);
+  transition: background-color 180ms cubic-bezier(0.22, 1, 0.36, 1), border-color 180ms ease;
+}
+.lui-desc-toggle--xs .lui-desc-toggle__track {
+  width: 28px;
+  height: 16px;
+}
+.lui-desc-toggle__thumb {
+  width: 14px;
+  height: 14px;
+  margin-left: 1px;
+  border-radius: 50%;
+  background: #edf2f8;
+  box-shadow: 0 1px 3px rgba(3, 7, 16, 0.45);
+  transform: translateX(0);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), background-color 160ms ease;
+}
+.lui-desc-toggle--xs .lui-desc-toggle__thumb {
+  width: 12px;
+  height: 12px;
+}
+.lui-desc-toggle--detailed .lui-desc-toggle__track {
+  background: #cfa968;
+  border-color: rgba(246, 224, 174, 0.6);
+}
+.lui-desc-toggle--detailed .lui-desc-toggle__thumb {
+  background: #fffdf7;
+  transform: translateX(14px);
+}
+.lui-desc-toggle--xs.lui-desc-toggle--detailed .lui-desc-toggle__thumb {
+  transform: translateX(12px);
 }
 .lui-unit-skill-head {
   display: flex;
