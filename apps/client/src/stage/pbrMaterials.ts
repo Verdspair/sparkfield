@@ -1514,13 +1514,24 @@ export function bakeBenchSlotNumberAtlas(): THREE.DataTexture {
   return tex;
 }
 
+interface UnitOutlineUniform {
+  value: number;
+}
+
 function applyUnitVertexColorVibrancy(
   mat: THREE.MeshStandardMaterial | THREE.MeshPhysicalMaterial,
   satBoost = 0.82,
+  outlineUniform?: UnitOutlineUniform,
 ): void {
   const satLiteral = satBoost.toFixed(3);
-  mat.customProgramCacheKey = () => `sparkfield-unit-vc-lin-${satLiteral}`;
+  const withInk = Boolean(outlineUniform);
+  mat.customProgramCacheKey = () => `sparkfield-unit-vc-lin-${satLiteral}-${withInk ? 'ink1' : 'ink0'}`;
   mat.onBeforeCompile = (shader) => {
+    if (outlineUniform) {
+      shader.uniforms.uUnitOutline = outlineUniform;
+      shader.fragmentShader = `uniform float uUnitOutline;
+${shader.fragmentShader}`;
+    }
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <color_fragment>',
       `#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA )
@@ -1531,6 +1542,20 @@ function applyUnitVertexColorVibrancy(
         diffuseColor.a *= vColor.a;
       #endif`,
     );
+    if (outlineUniform) {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <dithering_fragment>',
+        `if (uUnitOutline > 0.001) {
+          vec3 _sfV = normalize(vViewPosition);
+          float _sfNdotV = clamp(abs(dot(normalize(normal), _sfV)), 0.0, 1.0);
+          float _sfEdgeMax = mix(0.24, 0.50, uUnitOutline);
+          float _sfEdge = 1.0 - smoothstep(_sfEdgeMax * 0.42, _sfEdgeMax, _sfNdotV);
+          vec3 _sfInk = vec3(0.014, 0.022, 0.044);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, _sfInk, _sfEdge * mix(0.58, 0.94, uUnitOutline));
+        }
+        #include <dithering_fragment>`,
+      );
+    }
   };
 }
 
@@ -1562,6 +1587,7 @@ export class PbrMaterialLibrary {
   public readonly unitArmorMat: THREE.MeshPhysicalMaterial;
   public readonly unitMatteMat: THREE.MeshPhysicalMaterial;
   public readonly unitTrimMat: THREE.MeshPhysicalMaterial;
+  private readonly unitOutlineUniform: UnitOutlineUniform = { value: 0.34 };
 
   public readonly starPedestal1Mat: THREE.MeshStandardMaterial;
   public readonly starPedestal2Mat: THREE.MeshStandardMaterial;
@@ -1771,7 +1797,7 @@ export class PbrMaterialLibrary {
       sheenColor: new THREE.Color(0xfff6e5),
       side: THREE.DoubleSide,
     });
-    applyUnitVertexColorVibrancy(this.unitArmorMat, 0.82);
+    applyUnitVertexColorVibrancy(this.unitArmorMat, 0.82, this.unitOutlineUniform);
 
     this.unitMatteMat = new THREE.MeshPhysicalMaterial({
       vertexColors: true,
@@ -1787,7 +1813,7 @@ export class PbrMaterialLibrary {
       sheenColor: new THREE.Color(0xc8dcf8),
       side: THREE.DoubleSide,
     });
-    applyUnitVertexColorVibrancy(this.unitMatteMat, 0.82);
+    applyUnitVertexColorVibrancy(this.unitMatteMat, 0.82, this.unitOutlineUniform);
 
     this.unitTrimMat = new THREE.MeshPhysicalMaterial({
       vertexColors: true,
@@ -1801,7 +1827,7 @@ export class PbrMaterialLibrary {
       clearcoat: 0.0,
       side: THREE.DoubleSide,
     });
-    applyUnitVertexColorVibrancy(this.unitTrimMat, 0.82);
+    applyUnitVertexColorVibrancy(this.unitTrimMat, 0.82, this.unitOutlineUniform);
 
     this.contactShadowMat = new THREE.MeshBasicMaterial({
       map: this.contactShadowTex,
@@ -1859,6 +1885,14 @@ export class PbrMaterialLibrary {
     });
     this.extraDisposables.push(mat);
     return mat;
+  }
+
+  public setUnitOutlineStrength(strength: number): void {
+    this.unitOutlineUniform.value = Math.max(0, Math.min(1, Number.isFinite(strength) ? strength : 0));
+  }
+
+  public getUnitOutlineStrength(): number {
+    return this.unitOutlineUniform.value;
   }
 
   public createUnitEnergyMaterial(colorHex: number, intensity = 0.86): THREE.MeshStandardMaterial {

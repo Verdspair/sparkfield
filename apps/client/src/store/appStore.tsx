@@ -29,6 +29,11 @@ import { previewItemEquip } from '@pkg/game-core';
 import { getSharedWebAudioEngine, type WebAudioEngine } from '../audio/WebAudioEngine.js';
 import type { BoardStageEngine } from '../stage/index.js';
 import {
+  readStoredGraphicsSettings,
+  writeStoredGraphicsSettings,
+  type GraphicsSettings,
+} from '../stage/graphicsSettings.js';
+import {
   LiveBattleChoreographer,
   SnapshotStageSynchronizer,
   toStageSeatIndex,
@@ -224,6 +229,8 @@ export interface AppStoreValue {
 
   audioBus: AudioEventBus;
   audioEngine: WebAudioEngine;
+  graphicsSettings: GraphicsSettings;
+  updateGraphicsSettings: (patch: Partial<GraphicsSettings>) => void;
   arenaTheme: ArenaThemeId;
   setArenaThemeLive: (theme: ArenaThemeId, persist?: boolean) => Promise<void>;
   registerStageEngine: (engine: BoardStageEngine | null) => void;
@@ -288,6 +295,9 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
   const [draggingUnitId, setDraggingUnitId] = useState<string | null>(null);
   const [overSellDropzone, setOverSellDropzone] = useState<boolean>(false);
   const [customStageOverride, setCustomStageOverride] = useState<boolean>(false);
+  const [graphicsSettings, setGraphicsSettings] = useState<GraphicsSettings>(() => readStoredGraphicsSettings());
+  const graphicsSettingsRef = useRef<GraphicsSettings>(graphicsSettings);
+  graphicsSettingsRef.current = graphicsSettings;
 
   const audioEngine = useMemo(() => getSharedWebAudioEngine(), []);
   const audioBus = useMemo(() => {
@@ -904,10 +914,21 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     stageRef.current?.syncInspectedUnit(inspectedUnitId);
   }, [inspectedUnitId]);
 
+  const updateGraphicsSettings = useCallback((patch: Partial<GraphicsSettings>) => {
+    setGraphicsSettings((prev) => {
+      const next: GraphicsSettings = { ...prev, ...patch };
+      graphicsSettingsRef.current = next;
+      writeStoredGraphicsSettings(next);
+      stageRef.current?.applyGraphicsSettings(next);
+      return next;
+    });
+  }, []);
+
   const registerStageEngine = useCallback((engine: BoardStageEngine | null) => {
     stageRef.current = engine;
     if (!engine) return;
     engine.setArenaTheme(arenaThemeRef.current);
+    engine.applyGraphicsSettings(graphicsSettingsRef.current);
     engine.setCallbacks({
       onMoveUnit: (instanceId, to) => {
         if (!matchSnapshotRef.current) return;
@@ -1631,6 +1652,8 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
 
     audioBus,
     audioEngine,
+    graphicsSettings,
+    updateGraphicsSettings,
     arenaTheme,
     setArenaThemeLive,
     registerStageEngine,

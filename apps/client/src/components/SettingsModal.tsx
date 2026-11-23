@@ -12,6 +12,7 @@ import {
   getSharedWebAudioEngine,
   type AudioSettings,
 } from '../audio/WebAudioEngine.js';
+import { DEFAULT_GRAPHICS_SETTINGS } from '../stage/graphicsSettings.js';
 import {
   useAppStore,
   type SettingsTab,
@@ -296,6 +297,8 @@ export function SettingsModal(): React.JSX.Element | null {
 
   const audioEngine = store.audioEngine ?? getSharedWebAudioEngine();
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(() => audioEngine.getSettings());
+  const graphicsSettings = store.graphicsSettings ?? DEFAULT_GRAPHICS_SETTINGS;
+  const updateGraphicsSettings = store.updateGraphicsSettings ?? (() => {});
 
   const [tab, setTab] = useState<SettingsTab>(settingsInitialTab);
   const [packs, setPacks] = useState<readonly CoursePackManifest[]>(() =>
@@ -715,6 +718,132 @@ export function SettingsModal(): React.JSX.Element | null {
                     >
                       全屏横屏
                     </button>
+                  </div>
+                </div>
+
+                <div className="sf-settings-card" data-testid="graphics-settings-card">
+                  <div className="sf-settings-card__head">
+                    <h3>图像</h3>
+                    <span className="blc-chip">
+                      {graphicsSettings.outlineLevel === 'off'
+                        ? '无描边'
+                        : graphicsSettings.outlineLevel === 'subtle'
+                          ? '细腻描边'
+                          : graphicsSettings.outlineLevel === 'standard'
+                            ? '标准描边'
+                            : '清晰描边'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                      <span className="blc-muted" style={{ fontSize: 13 }}>棋子描边</span>
+                      <div className="sf-settings-inline-actions">
+                        {(
+                          [
+                            { id: 'off', label: '关闭' },
+                            { id: 'subtle', label: '细腻' },
+                            { id: 'standard', label: '标准' },
+                            { id: 'strong', label: '清晰' },
+                          ] as const
+                        ).map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            className={`blc-btn blc-btn--sm ${graphicsSettings.outlineLevel === opt.id ? 'blc-btn--primary' : 'blc-btn--ghost'}`}
+                            data-testid={`graphics-outline-${opt.id}-btn`}
+                            onClick={() => {
+                              audioBus.emit('onUiFeedback', { kind: 'toggle' });
+                              updateGraphicsSettings({ outlineLevel: opt.id });
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                      <span className="blc-muted" style={{ fontSize: 13 }}>渲染画质</span>
+                      <div className="sf-settings-inline-actions">
+                        {(
+                          [
+                            { id: 'performance', label: '流畅' },
+                            { id: 'balanced', label: '均衡' },
+                            { id: 'cinema', label: '电影' },
+                          ] as const
+                        ).map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            className={`blc-btn blc-btn--sm ${graphicsSettings.qualityPreset === opt.id ? 'blc-btn--primary' : 'blc-btn--ghost'}`}
+                            data-testid={`graphics-quality-${opt.id}-btn`}
+                            onClick={() => {
+                              audioBus.emit('onUiFeedback', { kind: 'toggle' });
+                              updateGraphicsSettings({ qualityPreset: opt.id });
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <span className="blc-muted" style={{ fontSize: 13 }}>舞台泛光</span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={graphicsSettings.bloomEnabled}
+                        aria-label="舞台泛光"
+                        data-testid="graphics-bloom-toggle"
+                        onClick={() => {
+                          audioBus.emit('onUiFeedback', { kind: 'toggle' });
+                          updateGraphicsSettings({ bloomEnabled: !graphicsSettings.bloomEnabled });
+                        }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '4px 10px',
+                          borderRadius: 6,
+                          border: '1px solid rgba(222, 197, 146, 0.28)',
+                          background: 'rgba(13, 22, 42, 0.62)',
+                          color: 'var(--text-primary, #eef3fb)',
+                          fontSize: 12,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <span>{graphicsSettings.bloomEnabled ? '开启' : '关闭'}</span>
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            width: 28,
+                            height: 15,
+                            borderRadius: 999,
+                            padding: 2,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: graphicsSettings.bloomEnabled ? 'flex-end' : 'flex-start',
+                            background: graphicsSettings.bloomEnabled
+                              ? 'rgba(222, 197, 146, 0.34)'
+                              : 'rgba(148, 163, 184, 0.22)',
+                            border: '1px solid rgba(222, 197, 146, 0.42)',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 9,
+                              height: 9,
+                              borderRadius: '50%',
+                              background: graphicsSettings.bloomEnabled
+                                ? 'var(--accent-gold-bright, #f2e1bc)'
+                                : '#94a3b8',
+                            }}
+                          />
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 

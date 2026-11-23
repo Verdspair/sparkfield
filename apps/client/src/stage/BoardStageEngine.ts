@@ -18,6 +18,12 @@ import {
   type UnitStar,
 } from '@pkg/contracts';
 import { PbrMaterialLibrary, buildProceduralStudioEnvMap } from './pbrMaterials.js';
+import {
+  OUTLINE_LEVEL_STRENGTH,
+  QUALITY_MAX_PIXEL_RATIO,
+  readStoredGraphicsSettings,
+  type GraphicsSettings,
+} from './graphicsSettings.js';
 import { ArenaStageAssembly, getArenaThemeLightingPreset } from './arenaBuilder.js';
 import { LobbyStageAssembly } from './lobbyStageBuilder.js';
 import {
@@ -156,6 +162,7 @@ export class BoardStageEngine {
   private readonly scratchProj = new THREE.Vector3();
 
   private qualityTier: StageQualityTier;
+  private graphicsSettings: GraphicsSettings = readStoredGraphicsSettings();
   private showBuiltInHudOverlay: boolean;
   private interactiveDeployEnabled: boolean;
   private currentPhase: MatchPhaseKind;
@@ -319,6 +326,7 @@ export class BoardStageEngine {
     this.itemDropRingMesh.visible = false;
 
     this.materials = new PbrMaterialLibrary();
+    this.materials.setUnitOutlineStrength(OUTLINE_LEVEL_STRENGTH[this.graphicsSettings.outlineLevel]);
     this.arena = new ArenaStageAssembly(this.materials, initialTheme);
     this.lobbyStage = new LobbyStageAssembly(this.materials, this.currentTacticianId);
     this.lobbyStage.setMode(this.sceneMode, true);
@@ -352,7 +360,21 @@ export class BoardStageEngine {
 
   private computeEffectiveDpr(): number {
     const raw = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-    return this.qualityTier === 'balanced' ? Math.min(raw, 1.25) : Math.min(raw, 2.0);
+    const presetCap = QUALITY_MAX_PIXEL_RATIO[this.graphicsSettings.qualityPreset];
+    const hwCap = this.qualityTier === 'balanced' ? 1.5 : 2.0;
+    return Math.min(raw, presetCap, hwCap);
+  }
+
+  public applyGraphicsSettings(next: GraphicsSettings): void {
+    this.graphicsSettings = next;
+    this.materials.setUnitOutlineStrength(OUTLINE_LEVEL_STRENGTH[next.outlineLevel]);
+    if (this.selectiveBloom) {
+      this.selectiveBloom.intensity = next.bloomEnabled ? BASE_BLOOM_INTENSITY : 0;
+    }
+    if (this.renderer) {
+      this.renderer.setPixelRatio(this.computeEffectiveDpr());
+      this.handleResize();
+    }
   }
 
   private getActiveScene(): THREE.Scene {
@@ -439,7 +461,7 @@ export class BoardStageEngine {
         luminanceThreshold: 0.90,
         luminanceSmoothing: 0.28,
         mipmapBlur: true,
-        intensity: BASE_BLOOM_INTENSITY,
+        intensity: this.graphicsSettings.bloomEnabled ? BASE_BLOOM_INTENSITY : 0,
         radius: 0.50,
       });
       selectiveBloom.ignoreBackground = true;
@@ -659,7 +681,7 @@ export class BoardStageEngine {
     this.introPitchOffsetRad = startPitchOffset;
     this.introLookZOffset = startLookZOffset;
     if (this.renderer) this.renderer.toneMappingExposure = 0.9;
-    if (this.selectiveBloom) this.selectiveBloom.intensity = BASE_BLOOM_INTENSITY * 0.78;
+    if (this.selectiveBloom) this.selectiveBloom.intensity = this.graphicsSettings.bloomEnabled ? BASE_BLOOM_INTENSITY * 0.78 : 0;
     this.arena.triggerConduitSweep();
     this.syncCameraFromLookTarget();
 
