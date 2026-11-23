@@ -279,6 +279,7 @@ export function SettingsModal(): React.JSX.Element | null {
     getStageEngine,
     profile,
     authMode,
+    audioBus,
     patchUserProfile,
     updateSelfRoomPrefs,
     lobbyState,
@@ -430,6 +431,9 @@ export function SettingsModal(): React.JSX.Element | null {
 
   const handleToggleDisplayMode = async (fullscreen: boolean) => {
     if (savingDisplay) return;
+    if (isFullscreen !== fullscreen) {
+      audioBus.emit('onUiFeedback', { kind: 'toggle' });
+    }
     setSavingDisplay(true);
     try {
       await patchUserProfile({
@@ -445,6 +449,7 @@ export function SettingsModal(): React.JSX.Element | null {
 
   const handleSelectTactician = async (id: TacticianId) => {
     if (savingTacticianId || id === preferredTacticianId) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setSavingTacticianId(id);
     try {
       await setPreferredTacticianId(id);
@@ -459,6 +464,7 @@ export function SettingsModal(): React.JSX.Element | null {
 
   const handleSaveLearningStart = async () => {
     if (savingLearning) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setSavingLearning(true);
     setLearningSaveError(null);
     const selections = {
@@ -485,6 +491,7 @@ export function SettingsModal(): React.JSX.Element | null {
     e.preventDefault();
     const trimmed = nicknameDraft.trim();
     if (!trimmed || savingNickname) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setSavingNickname(true);
     try {
       await patchUserProfile({ nickname: trimmed });
@@ -548,7 +555,12 @@ export function SettingsModal(): React.JSX.Element | null {
                   key={item.id}
                   type="button"
                   className={`sf-settings-nav__item ${active ? 'sf-settings-nav__item--active' : ''}`.trim()}
-                  onClick={() => setTab(item.id)}
+                  onClick={() => {
+                    if (tab !== item.id) {
+                      audioBus.emit('onUiFeedback', { kind: 'click' });
+                      setTab(item.id);
+                    }
+                  }}
                   data-testid={`settings-tab-${item.id}`}
                 >
                   <span
@@ -615,7 +627,12 @@ export function SettingsModal(): React.JSX.Element | null {
                       type="button"
                       aria-pressed={descMode === 'compact'}
                       className={`sf-settings-radio-card ${descMode === 'compact' ? 'sf-settings-radio-card--active' : ''}`.trim()}
-                      onClick={() => setDescMode('compact')}
+                      onClick={() => {
+                        if (descMode !== 'compact') {
+                          audioBus.emit('onUiFeedback', { kind: 'toggle' });
+                          setDescMode('compact');
+                        }
+                      }}
                       data-testid="desc-mode-compact-btn"
                     >
                       <div className="sf-settings-radio-card__top">
@@ -631,7 +648,12 @@ export function SettingsModal(): React.JSX.Element | null {
                       type="button"
                       aria-pressed={descMode === 'detailed'}
                       className={`sf-settings-radio-card ${descMode === 'detailed' ? 'sf-settings-radio-card--active' : ''}`.trim()}
-                      onClick={() => setDescMode('detailed')}
+                      onClick={() => {
+                        if (descMode !== 'detailed') {
+                          audioBus.emit('onUiFeedback', { kind: 'toggle' });
+                          setDescMode('detailed');
+                        }
+                      }}
                       data-testid="desc-mode-detailed-btn"
                     >
                       <div className="sf-settings-radio-card__top">
@@ -882,7 +904,12 @@ export function SettingsModal(): React.JSX.Element | null {
                           key={opt.id}
                           type="button"
                           className={`sf-settings-arena-card ${active ? 'sf-settings-arena-card--active' : ''}`.trim()}
-                          onClick={() => void setArenaThemeLive(opt.id)}
+                          onClick={() => {
+                            if (arenaTheme !== opt.id) {
+                              audioBus.emit('onUiFeedback', { kind: 'click' });
+                            }
+                            void setArenaThemeLive(opt.id);
+                          }}
                           data-testid={`settings-arena-${opt.id}`}
                         >
                           <div

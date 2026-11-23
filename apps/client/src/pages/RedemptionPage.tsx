@@ -88,6 +88,7 @@ export function RedemptionPage(): React.JSX.Element {
     authMode,
     rewardPointsBalance,
     redemptionOriginTab,
+    audioBus,
     closeRedemption,
     pendingVerifyOrders,
     recordPendingVerifyOrder,
@@ -172,10 +173,12 @@ export function RedemptionPage(): React.JSX.Element {
         return;
       }
 
+      audioBus.emit('onShopAction', { action: 'buy_xp' });
       pushToast(`已兑换 ${result.order.giftTitle}`, 'success');
       setInspectGift(null);
       await Promise.all([loadSummary(), refreshMeAndLobby()]);
     } catch (err) {
+      audioBus.emit('onUiFeedback', { kind: 'error' });
       pushToast(err instanceof Error ? err.message : '兑换未通过', 'error');
     } finally {
       setRedeeming(false);
@@ -184,6 +187,7 @@ export function RedemptionPage(): React.JSX.Element {
 
   const handleCancelOrder = async (orderId: string) => {
     if (cancellingOrderId || orderId.startsWith('pending:')) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setCancellingOrderId(orderId);
     try {
       await httpClient.cancelRedemptionOrder(orderId);
@@ -210,7 +214,11 @@ export function RedemptionPage(): React.JSX.Element {
         className={`blc-btn blc-btn--sm ${
           drawerMode === 'ledger' ? 'blc-btn--primary' : 'blc-btn--metal'
         }`}
-        onClick={() => setDrawerMode((m) => (m === 'ledger' ? 'none' : 'ledger'))}
+        onClick={() => {
+          const next = drawerMode === 'ledger' ? 'none' : 'ledger';
+          audioBus.emit('onUiFeedback', { kind: next === 'none' ? 'close' : 'open' });
+          setDrawerMode(next);
+        }}
         data-testid="open-points-ledger-btn"
       >
         明细 ({summary ? summary.ledger.length : '—'})
@@ -221,7 +229,11 @@ export function RedemptionPage(): React.JSX.Element {
         className={`blc-btn blc-btn--sm ${
           drawerMode === 'orders' ? 'blc-btn--primary' : 'blc-btn--metal'
         }`}
-        onClick={() => setDrawerMode((m) => (m === 'orders' ? 'none' : 'orders'))}
+        onClick={() => {
+          const next = drawerMode === 'orders' ? 'none' : 'orders';
+          audioBus.emit('onUiFeedback', { kind: next === 'none' ? 'close' : 'open' });
+          setDrawerMode(next);
+        }}
         data-testid="open-redemption-orders-btn"
       >
         订单 ({summary || pendingVerifyOrders.length ? mergedOrders.length : '—'})
@@ -280,6 +292,7 @@ export function RedemptionPage(): React.JSX.Element {
                   type="button"
                   className={`sf-mall-card ${isSelected ? 'sf-mall-card--selected' : ''}`.trim()}
                   onClick={() => {
+                    audioBus.emit('onUiFeedback', { kind: 'open' });
                     setSelectedGiftId(gift.giftId);
                     setInspectGift(gift);
                   }}
@@ -362,7 +375,10 @@ export function RedemptionPage(): React.JSX.Element {
                       (typeof effectiveBalance === 'number' &&
                         effectiveBalance < featuredGift.pointsCost)
                     }
-                    onClick={() => setInspectGift(featuredGift)}
+                    onClick={() => {
+                      audioBus.emit('onUiFeedback', { kind: 'open' });
+                      setInspectGift(featuredGift);
+                    }}
                   >
                     {featuredGift.stockRemaining < 1
                       ? '已兑完'
@@ -388,14 +404,20 @@ export function RedemptionPage(): React.JSX.Element {
                     <button
                       type="button"
                       className="blc-btn blc-btn--ghost blc-btn--xs"
-                      onClick={() => void loadSummary()}
+                      onClick={() => {
+                        audioBus.emit('onUiFeedback', { kind: 'click' });
+                        void loadSummary();
+                      }}
                     >
                       刷新
                     </button>
                     <button
                       type="button"
                       className="blc-btn blc-btn--ghost blc-btn--xs"
-                      onClick={() => setDrawerMode('none')}
+                      onClick={() => {
+                        audioBus.emit('onUiFeedback', { kind: 'close' });
+                        setDrawerMode('none');
+                      }}
                     >
                       ✕
                     </button>
@@ -492,7 +514,10 @@ export function RedemptionPage(): React.JSX.Element {
               <button
                 type="button"
                 className="blc-btn blc-btn--ghost blc-btn--xs"
-                onClick={() => setInspectGift(null)}
+                onClick={() => {
+                  audioBus.emit('onUiFeedback', { kind: 'close' });
+                  setInspectGift(null);
+                }}
               >
                 ✕
               </button>
@@ -514,7 +539,10 @@ export function RedemptionPage(): React.JSX.Element {
                 type="button"
                 className="blc-btn blc-btn--ghost blc-btn--sm"
                 disabled={redeeming}
-                onClick={() => setInspectGift(null)}
+                onClick={() => {
+                  audioBus.emit('onUiFeedback', { kind: 'close' });
+                  setInspectGift(null);
+                }}
               >
                 取消
               </button>

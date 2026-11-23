@@ -391,6 +391,11 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   const [goldRolling, setGoldRolling] = useState<boolean>(false);
 
   const prevTraitTiersRef = useRef<Map<string, number>>(new Map());
+  const audioTraitBaselineRef = useRef<{
+    matchId: string;
+    seatId: string;
+    tiers: Map<string, number>;
+  } | null>(null);
   const [newlyActivatedTraits, setNewlyActivatedTraits] = useState<Set<string>>(new Set());
   const lastOrbEmotePhaseRef = useRef<number | null>(null);
 
@@ -489,21 +494,59 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   );
 
   useEffect(() => {
+    if (!matchSnapshot) {
+      audioTraitBaselineRef.current = null;
+      prevTraitTiersRef.current.clear();
+      return undefined;
+    }
+
+    const viewedSeatId =
+      !scoutedSeatId || scoutedSeatId === matchSnapshot.seatId
+        ? matchSnapshot.seatId
+        : scoutedSeatId;
+    const isOwnBoard = viewedSeatId === matchSnapshot.seatId;
+
+    const nextTiers = new Map<string, number>();
     const activated = new Set<string>();
     for (const tr of activeTraits) {
+      nextTiers.set(tr.traitName, tr.activeTier);
       const prev = prevTraitTiersRef.current.get(tr.traitName) ?? 0;
       if (tr.activeTier > prev && tr.activeTier > 0) {
         activated.add(tr.traitName);
       }
-      prevTraitTiersRef.current.set(tr.traitName, tr.activeTier);
     }
+    prevTraitTiersRef.current = nextTiers;
+
+    const prevAudio = audioTraitBaselineRef.current;
+    if (
+      !prevAudio ||
+      prevAudio.matchId !== matchSnapshot.matchId ||
+      prevAudio.seatId !== viewedSeatId
+    ) {
+      audioTraitBaselineRef.current = {
+        matchId: matchSnapshot.matchId,
+        seatId: viewedSeatId,
+        tiers: new Map(nextTiers),
+      };
+    } else {
+      const audioTraitUp =
+        isOwnBoard &&
+        activeTraits.some(
+          (tr) => tr.activeTier > (prevAudio.tiers.get(tr.traitName) ?? 0) && tr.activeTier > 0,
+        );
+      prevAudio.tiers = new Map(nextTiers);
+      if (audioTraitUp) {
+        audioBus.emit('onUiFeedback', { kind: 'trait_up' });
+      }
+    }
+
     if (activated.size > 0) {
       setNewlyActivatedTraits(activated);
       const t = setTimeout(() => setNewlyActivatedTraits(new Set()), 750);
       return () => clearTimeout(t);
     }
     return undefined;
-  }, [activeTraits]);
+  }, [activeTraits, audioBus, matchSnapshot, scoutedSeatId]);
 
   const plannedTraits = useMemo(() => {
     if (!matchSnapshot) return [];

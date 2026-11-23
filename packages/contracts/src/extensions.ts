@@ -93,7 +93,17 @@ export interface AudioExtendedEventPayloads {
   onItemAction: { action: 'equip' | 'combine' | 'remover' | 'reforge' };
   onLootOrb: { action: 'drop' | 'collect'; gold?: number };
   onUiFeedback: {
-    kind: 'click' | 'hover' | 'open' | 'close' | 'toggle' | 'error' | 'augment_pick' | 'match_accept';
+    kind:
+      | 'click'
+      | 'hover'
+      | 'open'
+      | 'close'
+      | 'toggle'
+      | 'error'
+      | 'augment_pick'
+      | 'match_accept'
+      | 'trait_up'
+      | 'victory_fanfare';
   };
   onLearningFeedback: { correct: boolean };
   onCombatHit: { damageType: 'physical' | 'magic' | 'true' };

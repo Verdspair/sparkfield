@@ -184,6 +184,7 @@ export function LobbyPage(): React.JSX.Element {
     standings,
     dataLoading,
     lobbyState,
+    audioBus,
     enterModePrepRoom,
     joinRoomByCode,
     setActiveTab,
@@ -214,11 +215,14 @@ export function LobbyPage(): React.JSX.Element {
   useEffect(() => {
     if (!modeOverlayOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setModeOverlayOpen(false);
+      if (e.key === 'Escape') {
+        audioBus.emit('onUiFeedback', { kind: 'close' });
+        setModeOverlayOpen(false);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [modeOverlayOpen]);
+  }, [audioBus, modeOverlayOpen]);
 
   const isOffline = authMode === 'offline_practice';
   const pointsDisplay = formatPointsBalanceDisplay(rewardPointsBalance, {
@@ -242,6 +246,7 @@ export function LobbyPage(): React.JSX.Element {
 
   const handleEnterPrepRoom = async (mode: DurationMode) => {
     if (enteringMode) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setEnteringMode(mode);
     setSelectedMode(mode);
     try {
@@ -259,6 +264,7 @@ export function LobbyPage(): React.JSX.Element {
       void handleEnterPrepRoom(mode);
       return;
     }
+    audioBus.emit('onUiFeedback', { kind: 'toggle' });
     setSelectedMode(mode);
   };
 
@@ -266,6 +272,7 @@ export function LobbyPage(): React.JSX.Element {
     e.preventDefault();
     const trimmed = roomCodeInput.trim().toUpperCase();
     if (trimmed.length < 4) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setJoiningCode(true);
     try {
       await joinRoomByCode(trimmed);
@@ -422,7 +429,10 @@ export function LobbyPage(): React.JSX.Element {
           <button
             type="button"
             className="sf-join-code-chip"
-            onClick={() => setCodeModalOpen(true)}
+            onClick={() => {
+              audioBus.emit('onUiFeedback', { kind: 'open' });
+              setCodeModalOpen(true);
+            }}
             data-testid="open-join-code-btn"
           >
             <span aria-hidden="true">#</span>
@@ -434,7 +444,10 @@ export function LobbyPage(): React.JSX.Element {
           <button
             type="button"
             className="sf-mode-capsule"
-            onClick={() => setModeOverlayOpen(true)}
+            onClick={() => {
+              audioBus.emit('onUiFeedback', { kind: 'open' });
+              setModeOverlayOpen(true);
+            }}
             data-testid="lobby-mode-capsule"
           >
             <span className="sf-mode-capsule__icon">
@@ -458,7 +471,10 @@ export function LobbyPage(): React.JSX.Element {
             <button
               type="button"
               className="sf-start-action-btn sf-start-action-btn--resume"
-              onClick={() => setViewingPrepRoom(true)}
+              onClick={() => {
+                audioBus.emit('onUiFeedback', { kind: 'click' });
+                setViewingPrepRoom(true);
+              }}
               data-testid="lobby-resume-prep-btn"
             >
               <span className="sf-start-action__label">回到房间</span>
@@ -491,7 +507,10 @@ export function LobbyPage(): React.JSX.Element {
         aria-label="选择对局模式"
         data-testid="lobby-mode-overlay"
         onClick={(e) => {
-          if (e.target === e.currentTarget) setModeOverlayOpen(false);
+          if (e.target === e.currentTarget) {
+            audioBus.emit('onUiFeedback', { kind: 'close' });
+            setModeOverlayOpen(false);
+          }
         }}
       >
         <div className="sf-mode-drawer">
@@ -500,7 +519,10 @@ export function LobbyPage(): React.JSX.Element {
             <button
               type="button"
               className="sf-ghost-pill-btn"
-              onClick={() => setModeOverlayOpen(false)}
+              onClick={() => {
+                audioBus.emit('onUiFeedback', { kind: 'close' });
+                setModeOverlayOpen(false);
+              }}
               data-testid="close-mode-overlay-btn"
             >
               ✕ 关闭
@@ -576,7 +598,12 @@ export function LobbyPage(): React.JSX.Element {
                     key={opt.id}
                     type="button"
                     className={`sf-seg-btn ${selectedSubject === opt.id ? 'sf-seg-btn--active' : ''}`.trim()}
-                    onClick={() => setSelectedSubject(opt.id)}
+                    onClick={() => {
+                      if (selectedSubject !== opt.id) {
+                        audioBus.emit('onUiFeedback', { kind: 'toggle' });
+                        setSelectedSubject(opt.id);
+                      }
+                    }}
                     data-testid={`lobby-subject-${opt.id}`}
                   >
                     {opt.label}
@@ -610,7 +637,10 @@ export function LobbyPage(): React.JSX.Element {
           aria-label="房间码加入"
           data-testid="join-room-code-modal"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setCodeModalOpen(false);
+            if (e.target === e.currentTarget) {
+              audioBus.emit('onUiFeedback', { kind: 'close' });
+              setCodeModalOpen(false);
+            }
           }}
         >
           <div className="sf-join-dialog">
@@ -622,7 +652,10 @@ export function LobbyPage(): React.JSX.Element {
                 type="button"
                 className="sf-ghost-pill-btn"
                 style={{ minHeight: 30, padding: '0 10px' }}
-                onClick={() => setCodeModalOpen(false)}
+                onClick={() => {
+                  audioBus.emit('onUiFeedback', { kind: 'close' });
+                  setCodeModalOpen(false);
+                }}
               >
                 ✕
               </button>

@@ -3,6 +3,7 @@ import { lookupItemById, SEASON1_AUGMENTS } from '@pkg/contracts';
 import { GameItemIcon, RichGameText } from '@pkg/learning-ui';
 import type { MatchRoomSnapshot } from '../api/matchSocket.js';
 import { GameUiIcon } from '../components/GameUiIcons.js';
+import { useAppStore } from '../store/appStore.js';
 import './learningReward.css';
 
 interface LearningCardData {
@@ -92,14 +93,17 @@ export function LearningRewardBanner({
 }: {
   readonly snapshot: MatchRoomSnapshot | null;
 }): React.JSX.Element | null {
+  const { audioBus } = useAppStore();
   const [queue, setQueue] = useState<readonly RewardShowcaseCard[]>([]);
   const shownLearningKeysRef = useRef<Set<string>>(new Set());
+  const playedBannerKeysRef = useRef<Set<string>>(new Set());
   const prevTrackRef = useRef<BaselineSnapshotTrack | null>(null);
   const seqRef = useRef<number>(0);
 
   useEffect(() => {
     if (!snapshot) {
       shownLearningKeysRef.current.clear();
+      playedBannerKeysRef.current.clear();
       prevTrackRef.current = null;
       setQueue([]);
       return;
@@ -277,11 +281,15 @@ export function LearningRewardBanner({
   useEffect(() => {
     if (!active) return;
     const activeKey = active.key;
+    if (!playedBannerKeysRef.current.has(activeKey)) {
+      playedBannerKeysRef.current.add(activeKey);
+      audioBus.emit('onLootOrb', { action: 'drop' });
+    }
     const timer = window.setTimeout(() => {
       setQueue((cur) => cur.filter((item) => item.key !== activeKey));
     }, 3800);
     return () => window.clearTimeout(timer);
-  }, [active]);
+  }, [active, audioBus]);
 
   if (!active) return null;
 

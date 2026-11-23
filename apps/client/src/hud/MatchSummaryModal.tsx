@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   SEASON1_AUGMENTS,
   SEASON1_UNITS_BY_ID,
@@ -21,6 +21,7 @@ export function MatchSummaryModal(): React.JSX.Element | null {
     matchSummary,
     isOfflineSandboxMatch,
     preferredTacticianId,
+    audioBus,
     returnFromSummaryToPrep,
     exitMatchToLobby,
     pushToast,
@@ -28,8 +29,27 @@ export function MatchSummaryModal(): React.JSX.Element | null {
 
   const [reviewDrawerOpen, setReviewDrawerOpen] = useState<boolean>(false);
   const [exiting, setExiting] = useState<boolean>(false);
+  const announcedSummaryKeyRef = useRef<string | null>(null);
 
   const summary = matchSummary ?? matchSnapshot?.summary ?? null;
+  const summaryKey =
+    summary && matchSnapshot
+      ? `${matchSnapshot.matchId}:${summary.competitive.seatId}:${summary.competitive.place}`
+      : null;
+
+  useEffect(() => {
+    if (!summaryKey || !summary) {
+      announcedSummaryKeyRef.current = null;
+      return;
+    }
+    if (announcedSummaryKeyRef.current === summaryKey) return;
+    announcedSummaryKeyRef.current = summaryKey;
+    if (summary.competitive.place <= 4) {
+      audioBus.emit('onUiFeedback', { kind: 'victory_fanfare' });
+    } else {
+      audioBus.emit('onRoundResult', { outcome: 'loss', quarterPointsEarned: 0 });
+    }
+  }, [audioBus, summary, summaryKey]);
 
   const wrongQuestionDetails = useMemo(() => {
     if (!summary) return [];
@@ -65,6 +85,7 @@ export function MatchSummaryModal(): React.JSX.Element | null {
 
   const handleReturnPrep = async () => {
     if (exiting) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setExiting(true);
     try {
       await returnFromSummaryToPrep();
@@ -77,6 +98,7 @@ export function MatchSummaryModal(): React.JSX.Element | null {
 
   const handleReturnLobby = async () => {
     if (exiting) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setExiting(true);
     try {
       await exitMatchToLobby();
@@ -311,7 +333,10 @@ export function MatchSummaryModal(): React.JSX.Element | null {
               <button
                 type="button"
                 className="blc-btn blc-btn--ghost blc-btn--xs"
-                onClick={() => setReviewDrawerOpen(false)}
+                onClick={() => {
+                  audioBus.emit('onUiFeedback', { kind: 'close' });
+                  setReviewDrawerOpen(false);
+                }}
               >
                 收起
               </button>
@@ -341,7 +366,10 @@ export function MatchSummaryModal(): React.JSX.Element | null {
             <button
               type="button"
               className="blc-btn blc-btn--metal"
-              onClick={() => setReviewDrawerOpen((v) => !v)}
+              onClick={() => {
+                audioBus.emit('onUiFeedback', { kind: reviewDrawerOpen ? 'close' : 'open' });
+                setReviewDrawerOpen((v) => !v);
+              }}
               data-testid="summary-learning-review-btn"
             >
               {reviewDrawerOpen ? '收起复盘' : '学习复盘'}

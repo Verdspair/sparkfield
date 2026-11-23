@@ -162,6 +162,7 @@ export function LearningHomePage(): React.JSX.Element {
 
   const handleStartStandalone = async (subjectOverride?: SubjectId) => {
     if (directInFlightRef.current) return;
+    audioBus.emit('onUiFeedback', { kind: 'open' });
     const epoch = ++directEpochRef.current;
     directInFlightRef.current = true;
     const subj = subjectOverride ?? focusSubject;
@@ -201,6 +202,7 @@ export function LearningHomePage(): React.JSX.Element {
   };
 
   const handleBringIntoGame = async (subjectOverride?: SubjectId, startNodeId?: string) => {
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     const subj = subjectOverride ?? focusSubject;
     try {
       if (startNodeId) {
@@ -253,6 +255,7 @@ export function LearningHomePage(): React.JSX.Element {
   };
 
   const handleSelectStartNode = async (subj: SubjectId, nodeId: string, nodeTitle: string) => {
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     try {
       const next = {
         ...(profile?.learningStartSelections ?? {}),
@@ -271,6 +274,7 @@ export function LearningHomePage(): React.JSX.Element {
 
   const handleSyncOffline = async () => {
     if (syncingOffline) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setSyncingOffline(true);
     try {
       const res = await syncPendingOfflineAttemptsToServer(profile?.userId ?? '');
@@ -289,6 +293,7 @@ export function LearningHomePage(): React.JSX.Element {
   };
 
   const handleCloseDirect = () => {
+    audioBus.emit('onUiFeedback', { kind: 'close' });
     directEpochRef.current += 1;
     directInFlightRef.current = false;
     offlineSessionRef.current = null;
@@ -335,6 +340,9 @@ export function LearningHomePage(): React.JSX.Element {
           isCorrect: s.isCorrect,
         })),
       });
+      if (!res.feedback.isSkipped) {
+        audioBus.emit('onLearningFeedback', { correct: res.feedback.isCorrect });
+      }
       setDirectSession(res.session);
     } catch (err) {
       if (epoch === directEpochRef.current) {
@@ -350,6 +358,7 @@ export function LearningHomePage(): React.JSX.Element {
 
   const handleDirectNext = async () => {
     if (!directSession || directInFlightRef.current) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     const questions = directSession.currentStep.kind === 'remediation'
       ? []
       : directSession.currentStep.questions;
@@ -608,7 +617,12 @@ export function LearningHomePage(): React.JSX.Element {
                     key={s}
                     type="button"
                     className={`blc-seg-tab ${focusSubject === s ? 'blc-seg-tab--active' : ''}`}
-                    onClick={() => setFocusSubject(s)}
+                    onClick={() => {
+                      if (focusSubject !== s) {
+                        audioBus.emit('onUiFeedback', { kind: 'toggle' });
+                        setFocusSubject(s);
+                      }
+                    }}
                     data-testid={`learning-focus-${s}`}
                   >
                     {SHORT_SUBJECT[s]}

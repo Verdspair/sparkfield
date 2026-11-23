@@ -28,5 +28,35 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: false,
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules') && (id.includes('three') || id.includes('simplex-noise'))) {
+            return 'vendor-three';
+          }
+          if (id.includes('node_modules') && (id.includes('react') || id.includes('scheduler'))) {
+            return 'vendor-react';
+          }
+          if (
+            id.includes('node_modules') &&
+            (id.includes('dexie') || id.includes('colyseus') || id.includes('zod'))
+          ) {
+            return 'vendor-runtime';
+          }
+          if (id.includes('/src/stage/unitPack') || id.includes('/src/stage/unitBuilderCore')) {
+            return 'stage-units';
+          }
+          if (
+            id.includes('/src/stage/arenaBuilder') ||
+            id.includes('/src/stage/lobbyStageBuilder') ||
+            id.includes('/src/stage/tacticianMeshFactory')
+          ) {
+            return 'stage-arenas';
+          }
+          return undefined;
+        },
+      },
+    },
   },
 });

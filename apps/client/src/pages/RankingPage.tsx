@@ -19,6 +19,7 @@ export function RankingPage(): React.JSX.Element {
     profile,
     currentSeasonTerm,
     preferredTacticianId,
+    audioBus,
     pushToast,
   } = useAppStore();
   const isOffline = authMode === 'offline_practice';
@@ -67,6 +68,7 @@ export function RankingPage(): React.JSX.Element {
           className={`blc-seg-tab ${queryMode === m ? 'blc-seg-tab--active' : ''}`}
           onClick={() => {
             if (m !== queryMode) {
+              audioBus.emit('onUiFeedback', { kind: 'toggle' });
               setBoard(null);
               setLoading(!isOffline);
               setQueryMode(m);

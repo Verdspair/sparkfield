@@ -38,6 +38,7 @@ export function PrepRoomPage(): React.JSX.Element | null {
     profile,
     preferredTacticianId,
     lobbyState,
+    audioBus,
     setActiveTab,
     setViewingPrepRoom,
     openSettings,
@@ -141,12 +142,14 @@ export function PrepRoomPage(): React.JSX.Element | null {
 
   const handleRerollPack = () => {
     if (!isIdle || busy) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     const nextSeed = blueprintSeed + 1;
     setBlueprintSeed(nextSeed);
     writePrepBlueprintSeed(room.roomCode, nextSeed);
   };
 
   const handleCopyCode = async () => {
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     try {
       await navigator.clipboard.writeText(room.roomCode);
       pushToast(`已复制房间码 ${room.roomCode}`, 'success');
@@ -156,7 +159,8 @@ export function PrepRoomPage(): React.JSX.Element | null {
   };
 
   const handleChangeQueueType = async (qt: QueueType) => {
-    if (!isHost || !isIdle || busy) return;
+    if (!isHost || !isIdle || busy || qt === room.queueType) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setBusy(true);
     try {
       await updateRoomSettings({ queueType: qt });
@@ -168,7 +172,8 @@ export function PrepRoomPage(): React.JSX.Element | null {
   };
 
   const handleChangeDurationMode = async (dm: DurationMode) => {
-    if (!isHost || !isIdle || busy) return;
+    if (!isHost || !isIdle || busy || dm === room.durationMode) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setBusy(true);
     try {
       await updateRoomSettings({ durationMode: dm });
@@ -180,9 +185,10 @@ export function PrepRoomPage(): React.JSX.Element | null {
   };
 
   const handleChangeSubject = async (subj: SubjectId) => {
-    if (!isIdle || busy) return;
+    if (!isIdle || busy || subj === activeSubject) return;
     if (room.queueType === 'ranked') {
       if (!isHost) return;
+      audioBus.emit('onUiFeedback', { kind: 'click' });
       setBusy(true);
       try {
         await updateRoomSettings({ sharedSubject: subj });
@@ -193,6 +199,7 @@ export function PrepRoomPage(): React.JSX.Element | null {
       }
       return;
     }
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setBusy(true);
     try {
       await updateSelfRoomPrefs({ subject: subj });
@@ -205,6 +212,11 @@ export function PrepRoomPage(): React.JSX.Element | null {
 
   const handlePrimaryAction = async () => {
     if (busy) return;
+    if (isHost) {
+      audioBus.emit('onUiFeedback', { kind: room.status === 'queuing' ? 'close' : 'click' });
+    } else if (selfMember) {
+      audioBus.emit('onUiFeedback', { kind: 'toggle' });
+    }
     setBusy(true);
     try {
       if (isHost) {
@@ -242,7 +254,10 @@ export function PrepRoomPage(): React.JSX.Element | null {
           <button
             type="button"
             className="sf-ghost-pill-btn"
-            onClick={() => setViewingPrepRoom(false)}
+            onClick={() => {
+              audioBus.emit('onUiFeedback', { kind: 'click' });
+              setViewingPrepRoom(false);
+            }}
             data-testid="prep-back-to-lobby-view-btn"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -263,7 +278,10 @@ export function PrepRoomPage(): React.JSX.Element | null {
           <button
             type="button"
             className="sf-ghost-pill-btn"
-            onClick={() => void leavePrepRoom()}
+            onClick={() => {
+              audioBus.emit('onUiFeedback', { kind: 'close' });
+              void leavePrepRoom();
+            }}
             data-testid="prep-leave-room-btn"
           >
             离开房间

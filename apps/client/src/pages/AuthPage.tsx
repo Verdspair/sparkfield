@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TacticianPortrait } from '../components/UnitPortrait.js';
 import { useAppStore } from '../store/appStore.js';
 
@@ -18,6 +18,7 @@ export function AuthPage(): React.JSX.Element {
     authMode,
     profile,
     preferredTacticianId,
+    audioBus,
     login,
     registerAndLogin,
     logout,
@@ -40,6 +41,14 @@ export function AuthPage(): React.JSX.Element {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [loggingOut, setLoggingOut] = useState<boolean>(false);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const isModalOpen = !isPreLoginGate && (stage === 'login' || stage === 'register');
+  const prevModalOpenRef = useRef<boolean>(isModalOpen);
+
+  useEffect(() => {
+    if (prevModalOpenRef.current === isModalOpen) return;
+    prevModalOpenRef.current = isModalOpen;
+    audioBus.emit('onUiFeedback', { kind: isModalOpen ? 'open' : 'close' });
+  }, [audioBus, isModalOpen]);
 
   useEffect(() => {
     if (isPreLoginGate) {
@@ -70,6 +79,9 @@ export function AuthPage(): React.JSX.Element {
   }, [isPreLoginGate, stage]);
 
   const switchFormMode = (next: 'login' | 'register') => {
+    if (stage !== next) {
+      audioBus.emit('onUiFeedback', { kind: 'click' });
+    }
     setStage(next);
     setErrorText(null);
     setShowForgotHelp(false);
@@ -77,6 +89,7 @@ export function AuthPage(): React.JSX.Element {
 
   const handleLogoutClick = async () => {
     if (loggingOut) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setLoggingOut(true);
     try {
       await logout();
@@ -89,6 +102,7 @@ export function AuthPage(): React.JSX.Element {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setErrorText(null);
     setSubmitting(true);
     try {
@@ -113,7 +127,6 @@ export function AuthPage(): React.JSX.Element {
     }
   };
 
-  const isModalOpen = !isPreLoginGate && (stage === 'login' || stage === 'register');
   const displayName = profile?.nickname ?? profile?.username ?? '指挥官';
 
   return (
@@ -159,7 +172,10 @@ export function AuthPage(): React.JSX.Element {
           <button
             type="button"
             className="sf-start-game-btn"
-            onClick={enterGameFromStartScreen}
+            onClick={() => {
+              audioBus.emit('onUiFeedback', { kind: 'click' });
+              enterGameFromStartScreen();
+            }}
             data-testid="splash-enter-btn"
           >
             <span className="sf-start-game-btn__ornament" aria-hidden="true" />
@@ -253,7 +269,10 @@ export function AuthPage(): React.JSX.Element {
                 <button
                   type="button"
                   className="blc-btn blc-btn--ghost blc-btn--xs"
-                  onClick={dismissSupersededBanner}
+                  onClick={() => {
+                    audioBus.emit('onUiFeedback', { kind: 'click' });
+                    dismissSupersededBanner();
+                  }}
                 >
                   关闭
                 </button>
@@ -330,6 +349,7 @@ export function AuthPage(): React.JSX.Element {
                       type="button"
                       className="sf-auth-collapse-email"
                       onClick={() => {
+                        audioBus.emit('onUiFeedback', { kind: 'toggle' });
                         setShowOptionalEmail(false);
                         setEmail('');
                       }}
@@ -341,7 +361,10 @@ export function AuthPage(): React.JSX.Element {
                   <button
                     type="button"
                     className="sf-auth-add-email-btn"
-                    onClick={() => setShowOptionalEmail(true)}
+                    onClick={() => {
+                      audioBus.emit('onUiFeedback', { kind: 'toggle' });
+                      setShowOptionalEmail(true);
+                    }}
                     data-testid="toggle-optional-email-btn"
                   >
                     + 选填邮箱
@@ -376,7 +399,10 @@ export function AuthPage(): React.JSX.Element {
                 <button
                   type="button"
                   className="blc-link-btn sf-auth-forgot-btn"
-                  onClick={() => setShowForgotHelp((prev) => !prev)}
+                  onClick={() => {
+                    audioBus.emit('onUiFeedback', { kind: 'toggle' });
+                    setShowForgotHelp((prev) => !prev);
+                  }}
                   data-testid="forgot-password-help-btn"
                 >
                   忘记密码

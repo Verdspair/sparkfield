@@ -32,6 +32,7 @@ export function ProfilePage(): React.JSX.Element {
     standings,
     dataLoading,
     preferredTacticianId,
+    audioBus,
     openRedemption,
     openSettings,
     setActiveTab,
@@ -79,6 +80,7 @@ export function ProfilePage(): React.JSX.Element {
   const handleSaveNickname = async () => {
     const trimmed = nicknameDraft.trim();
     if (!trimmed || savingNickname) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setSavingNickname(true);
     try {
       await patchUserProfile({ nickname: trimmed });
@@ -93,6 +95,7 @@ export function ProfilePage(): React.JSX.Element {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setChangingPwd(true);
     try {
       const res = await httpClient.changePassword({ currentPassword, newPassword });
@@ -169,7 +172,10 @@ export function ProfilePage(): React.JSX.Element {
                   <button
                     type="button"
                     className="blc-btn blc-btn--ghost blc-btn--xs"
-                    onClick={() => setEditingNickname(false)}
+                    onClick={() => {
+                      audioBus.emit('onUiFeedback', { kind: 'close' });
+                      setEditingNickname(false);
+                    }}
                   >
                     取消
                   </button>
@@ -182,7 +188,10 @@ export function ProfilePage(): React.JSX.Element {
                   <button
                     type="button"
                     className="blc-btn blc-btn--ghost blc-btn--xs"
-                    onClick={() => setEditingNickname(true)}
+                    onClick={() => {
+                      audioBus.emit('onUiFeedback', { kind: 'click' });
+                      setEditingNickname(true);
+                    }}
                   >
                     改名
                   </button>
@@ -288,7 +297,10 @@ export function ProfilePage(): React.JSX.Element {
             <button
               type="button"
               className={`blc-btn ${isStaff ? 'blc-btn--primary' : 'blc-btn--metal'} blc-btn--xs`}
-              onClick={() => setAdminWorkbenchOpen(true)}
+              onClick={() => {
+                audioBus.emit('onUiFeedback', { kind: 'open' });
+                setAdminWorkbenchOpen(true);
+              }}
               data-testid="open-admin-workbench-btn"
             >
               题库工作台
@@ -298,7 +310,10 @@ export function ProfilePage(): React.JSX.Element {
               <button
                 type="button"
                 className="blc-btn blc-btn--ghost blc-btn--xs"
-                onClick={() => setPwdModalOpen(true)}
+                onClick={() => {
+                  audioBus.emit('onUiFeedback', { kind: 'open' });
+                  setPwdModalOpen(true);
+                }}
                 data-testid="open-change-password-btn"
               >
                 修改密码
@@ -309,7 +324,10 @@ export function ProfilePage(): React.JSX.Element {
               type="button"
               className="blc-btn blc-btn--ghost blc-btn--xs"
               style={{ marginLeft: 'auto' }}
-              onClick={() => void logout()}
+              onClick={() => {
+                audioBus.emit('onUiFeedback', { kind: 'click' });
+                void logout();
+              }}
               data-testid="explicit-logout-btn"
             >
               {isOffline ? '退出试玩' : '退出登录'}
@@ -350,11 +368,14 @@ export function ProfilePage(): React.JSX.Element {
                     <button
                       type="button"
                       className="blc-history-card__summary"
-                      onClick={() =>
+                      onClick={() => {
+                        audioBus.emit('onUiFeedback', {
+                          kind: expandedMatchId === item.matchId ? 'close' : 'open',
+                        });
                         setExpandedMatchId((prev) =>
                           prev === item.matchId ? null : item.matchId,
-                        )
-                      }
+                        );
+                      }}
                       data-testid={`history-row-${item.matchId}`}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -454,7 +475,10 @@ export function ProfilePage(): React.JSX.Element {
               <button
                 type="button"
                 className="blc-btn blc-btn--ghost blc-btn--xs"
-                onClick={() => setPwdModalOpen(false)}
+                onClick={() => {
+                  audioBus.emit('onUiFeedback', { kind: 'close' });
+                  setPwdModalOpen(false);
+                }}
               >
                 ✕
               </button>
@@ -496,7 +520,12 @@ export function ProfilePage(): React.JSX.Element {
 
       {adminWorkbenchOpen ? (
         <Suspense fallback={null}>
-          <AdminPackDrawer onClose={() => setAdminWorkbenchOpen(false)} />
+          <AdminPackDrawer
+            onClose={() => {
+              audioBus.emit('onUiFeedback', { kind: 'close' });
+              setAdminWorkbenchOpen(false);
+            }}
+          />
         </Suspense>
       ) : null}
     </SubpageShell>

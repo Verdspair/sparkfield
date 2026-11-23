@@ -217,7 +217,20 @@ export function EncyclopediaPage(): React.JSX.Element {
     setSelectedAugment(null);
   };
 
+  const handleCloseDrawer = () => {
+    audioBus.emit('onUiFeedback', { kind: 'close' });
+    closeAllDrawers();
+  };
+
+  const selectCategory = (cat: EncyclopediaTab) => {
+    if (activeCategory !== cat) {
+      audioBus.emit('onUiFeedback', { kind: 'toggle' });
+      setActiveCategory(cat);
+    }
+  };
+
   const openUnit = (unit: UnitDef | string) => {
+    audioBus.emit('onUiFeedback', { kind: 'open' });
     closeAllDrawers();
     setActiveCategory('units');
     setSelectedUnitId(typeof unit === 'string' ? unit : unit.id);
@@ -233,6 +246,7 @@ export function EncyclopediaPage(): React.JSX.Element {
 
   const handleEquipTactician = async () => {
     if (equippingTactician || preferredTacticianId === previewTactician.id) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setEquippingTactician(true);
     try {
       await setPreferredTacticianId(previewTactician.id);
@@ -246,6 +260,7 @@ export function EncyclopediaPage(): React.JSX.Element {
 
   const handleEquipArena = async () => {
     if (equippingArena || arenaTheme === previewArena.id) return;
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setEquippingArena(true);
     try {
       await setArenaThemeLive(previewArena.id);
@@ -261,7 +276,7 @@ export function EncyclopediaPage(): React.JSX.Element {
       <button
         type="button"
         className={`sf-rail-btn ${activeCategory === 'tacticians' ? 'sf-rail-btn--active' : ''}`.trim()}
-        onClick={() => setActiveCategory('tacticians')}
+        onClick={() => selectCategory('tacticians')}
         data-testid="enc-tab-tacticians"
       >
         <span>小小领航员</span>
@@ -270,7 +285,7 @@ export function EncyclopediaPage(): React.JSX.Element {
       <button
         type="button"
         className={`sf-rail-btn ${activeCategory === 'arenas' ? 'sf-rail-btn--active' : ''}`.trim()}
-        onClick={() => setActiveCategory('arenas')}
+        onClick={() => selectCategory('arenas')}
         data-testid="enc-tab-arenas"
       >
         <span>竞技场舞台</span>
@@ -283,7 +298,7 @@ export function EncyclopediaPage(): React.JSX.Element {
       <button
         type="button"
         className={`sf-rail-btn ${activeCategory === 'units' ? 'sf-rail-btn--active' : ''}`.trim()}
-        onClick={() => setActiveCategory('units')}
+        onClick={() => selectCategory('units')}
         data-testid="enc-tab-units"
       >
         <span>棋子 ({SEASON1_UNITS.length})</span>
@@ -291,7 +306,7 @@ export function EncyclopediaPage(): React.JSX.Element {
       <button
         type="button"
         className={`sf-rail-btn ${activeCategory === 'traits' ? 'sf-rail-btn--active' : ''}`.trim()}
-        onClick={() => setActiveCategory('traits')}
+        onClick={() => selectCategory('traits')}
         data-testid="enc-tab-traits"
       >
         <span>羁绊 ({allTraits.length})</span>
@@ -299,7 +314,7 @@ export function EncyclopediaPage(): React.JSX.Element {
       <button
         type="button"
         className={`sf-rail-btn ${activeCategory === 'items' ? 'sf-rail-btn--active' : ''}`.trim()}
-        onClick={() => setActiveCategory('items')}
+        onClick={() => selectCategory('items')}
         data-testid="enc-tab-items"
       >
         <span>装备 ({totalItemCount})</span>
@@ -307,7 +322,7 @@ export function EncyclopediaPage(): React.JSX.Element {
       <button
         type="button"
         className={`sf-rail-btn ${activeCategory === 'augments' ? 'sf-rail-btn--active' : ''}`.trim()}
-        onClick={() => setActiveCategory('augments')}
+        onClick={() => selectCategory('augments')}
         data-testid="enc-tab-augments"
       >
         <span>符文 ({SEASON1_AUGMENTS.length})</span>
@@ -315,7 +330,7 @@ export function EncyclopediaPage(): React.JSX.Element {
       <button
         type="button"
         className={`sf-rail-btn ${activeCategory === 'lore' ? 'sf-rail-btn--active' : ''}`.trim()}
-        onClick={() => setActiveCategory('lore')}
+        onClick={() => selectCategory('lore')}
         data-testid="enc-tab-lore"
       >
         <span>编年史</span>
@@ -371,7 +386,12 @@ export function EncyclopediaPage(): React.JSX.Element {
                   key={tac.id}
                   type="button"
                   className={`sf-collection-card ${selected ? 'sf-collection-card--selected' : ''}`.trim()}
-                  onClick={() => setPreviewTacticianId(tac.id)}
+                  onClick={() => {
+                    if (previewTacticianId !== tac.id) {
+                      audioBus.emit('onUiFeedback', { kind: 'click' });
+                      setPreviewTacticianId(tac.id);
+                    }
+                  }}
                   data-testid={`tactician-card-${tac.id}`}
                 >
                   <TacticianPortrait tacticianId={tac.id} size="md" alt={tac.name} />
@@ -455,7 +475,12 @@ export function EncyclopediaPage(): React.JSX.Element {
                   key={opt.id}
                   type="button"
                   className={`sf-collection-card ${selected ? 'sf-collection-card--selected' : ''}`.trim()}
-                  onClick={() => setPreviewArenaId(opt.id)}
+                  onClick={() => {
+                    if (previewArenaId !== opt.id) {
+                      audioBus.emit('onUiFeedback', { kind: 'click' });
+                      setPreviewArenaId(opt.id);
+                    }
+                  }}
                   data-testid={`arena-card-${opt.id}`}
                 >
                   <img
@@ -536,7 +561,12 @@ export function EncyclopediaPage(): React.JSX.Element {
                     key={c}
                     type="button"
                     className={`sf-filter-pill ${costFilter === c ? 'sf-filter-pill--active' : ''}`.trim()}
-                    onClick={() => setCostFilter(c)}
+                    onClick={() => {
+                      if (costFilter !== c) {
+                        audioBus.emit('onUiFeedback', { kind: 'toggle' });
+                        setCostFilter(c);
+                      }
+                    }}
                     data-testid={`enc-cost-filter-${c}`}
                   >
                     {c === 0 ? `全部 (${SEASON1_UNITS.length})` : `${c} 费`}
@@ -583,6 +613,7 @@ export function EncyclopediaPage(): React.JSX.Element {
                       className="ui-frosted-panel blc-enc-entry-card"
                       style={{ border: '1px solid rgba(240, 220, 170, 0.22)' }}
                       onClick={() => {
+                        audioBus.emit('onUiFeedback', { kind: 'open' });
                         closeAllDrawers();
                         setSelectedTrait(tr);
                       }}
@@ -623,6 +654,7 @@ export function EncyclopediaPage(): React.JSX.Element {
                       className="ui-frosted-panel blc-enc-entry-card"
                       style={{ border: '1px solid rgba(240, 220, 170, 0.22)' }}
                       onClick={() => {
+                        audioBus.emit('onUiFeedback', { kind: 'open' });
                         closeAllDrawers();
                         setSelectedAugment(aug);
                       }}
@@ -660,7 +692,10 @@ export function EncyclopediaPage(): React.JSX.Element {
                   loreData={SEASON1_LORE}
                   searchQuery={searchQuery}
                   selectedUnitId={selectedUnitId}
-                  onSelectUnitId={(uid) => setSelectedUnitId(uid)}
+                  onSelectUnitId={(uid) => {
+                    audioBus.emit('onUiFeedback', { kind: uid ? 'open' : 'close' });
+                    setSelectedUnitId(uid);
+                  }}
                 />
               ) : null}
             </div>
@@ -674,7 +709,7 @@ export function EncyclopediaPage(): React.JSX.Element {
                   loreData={SEASON1_LORE}
                   initialTab="overview"
                   audioBus={audioBus}
-                  onClose={closeAllDrawers}
+                  onClose={handleCloseDrawer}
                 />
               ) : null}
 
@@ -693,7 +728,7 @@ export function EncyclopediaPage(): React.JSX.Element {
                       <button
                         type="button"
                         className="blc-btn blc-btn--ghost blc-btn--xs"
-                        onClick={closeAllDrawers}
+                        onClick={handleCloseDrawer}
                       >
                         ✕
                       </button>
@@ -750,7 +785,7 @@ export function EncyclopediaPage(): React.JSX.Element {
                       <button
                         type="button"
                         className="blc-btn blc-btn--ghost blc-btn--xs"
-                        onClick={closeAllDrawers}
+                        onClick={handleCloseDrawer}
                       >
                         ✕
                       </button>

@@ -32,15 +32,17 @@ describe('WebAudioEngine & adaptive audio contracts', () => {
     vi.unstubAllGlobals();
   });
 
-  it('defines exact paths for all 5 BGM tracks and 35 SFX clips', () => {
+  it('defines exact paths for all 5 BGM tracks and 37 SFX clips', () => {
     expect(Object.keys(BGM_TRACK_PATHS)).toHaveLength(5);
-    expect(Object.keys(SFX_PATHS)).toHaveLength(35);
+    expect(Object.keys(SFX_PATHS)).toHaveLength(37);
     expect(SFX_PATHS.countdown_tick).toBe('/audio/sfx/sfx_countdown_tick.mp3');
     expect(SFX_PATHS.countdown_urgent).toBe('/audio/sfx/sfx_countdown_urgent.mp3');
     expect(BGM_TRACK_PATHS.lobby).toBe('/audio/bgm/bgm_lobby.mp3');
     expect(BGM_TRACK_PATHS.overtime).toBe('/audio/bgm/bgm_overtime.mp3');
     expect(SFX_PATHS.star_up_3).toBe('/audio/sfx/sfx_star_up_3.mp3');
     expect(SFX_PATHS.answer_correct).toBe('/audio/sfx/sfx_answer_correct.mp3');
+    expect(SFX_PATHS.trait_up).toBe('/audio/sfx/sfx_trait_up.mp3');
+    expect(SFX_PATHS.victory_fanfare).toBe('/audio/sfx/sfx_victory_fanfare.mp3');
   });
 
   it('resolves 5-state adaptive BGM tracks accurately for lobby, quick, standard, deep, and overtime', () => {
@@ -108,6 +110,8 @@ describe('WebAudioEngine & adaptive audio contracts', () => {
     bus.emit('onShopAction', { action: 'reroll' });
     bus.emit('onCombatHit', { damageType: 'physical' });
     bus.emit('onLearningFeedback', { correct: true });
+    bus.emit('onUiFeedback', { kind: 'trait_up' });
+    bus.emit('onUiFeedback', { kind: 'victory_fanfare' });
     engine.playPreviewSfx();
 
     unsub();

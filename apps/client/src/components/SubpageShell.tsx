@@ -35,7 +35,6 @@ export function SubpageShell({
     dataLoading,
     setActiveTab,
     setViewingPrepRoom,
-    closeRedemption,
     openRedemption,
     openSettings,
   } = useAppStore();
@@ -45,7 +44,6 @@ export function SubpageShell({
       onBack();
       return;
     }
-    closeRedemption();
     setViewingPrepRoom(false);
     setActiveTab('lobby');
   };

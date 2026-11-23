@@ -37,7 +37,9 @@ export type SfxId =
   | 'answer_correct'
   | 'answer_wrong'
   | 'countdown_tick'
-  | 'countdown_urgent';
+  | 'countdown_urgent'
+  | 'trait_up'
+  | 'victory_fanfare';
 
 export interface AudioSettings {
   readonly masterVolume: number;
@@ -99,6 +101,8 @@ export const SFX_PATHS: Readonly<Record<SfxId, string>> = {
   answer_wrong: '/audio/sfx/sfx_answer_wrong.mp3',
   countdown_tick: '/audio/sfx/sfx_countdown_tick.mp3',
   countdown_urgent: '/audio/sfx/sfx_countdown_urgent.mp3',
+  trait_up: '/audio/sfx/sfx_trait_up.mp3',
+  victory_fanfare: '/audio/sfx/sfx_victory_fanfare.mp3',
 };
 
 const BGM_CROSSFADE_SEC = 1.4;
@@ -107,6 +111,7 @@ const FOCUS_LOWPASS_HZ = 1100;
 const NORMAL_LOWPASS_HZ = 20000;
 const FOCUS_BGM_DUCK_GAIN = 0.42;
 const MAX_CONCURRENT_SFX = 12;
+const MAX_CACHED_BGM_BUFFERS = 2;
 
 const SFX_COOLDOWN_MS: Partial<Readonly<Record<SfxId, number>>> = {
   hit_phys: 85,
@@ -268,6 +273,7 @@ export class WebAudioEngine implements Required<AudioAdapter> {
   private disposed = false;
 
   private readonly bufferCache = new Map<string, AudioBuffer>();
+  private readonly bgmCacheOrder: string[] = [];
   private readonly inFlightLoads = new Map<string, Promise<AudioBuffer | null>>();
   private readonly lastPlayedAt = new Map<string, number>();
   private readonly activeSfxSources = new Set<AudioBufferSourceNode>();
@@ -369,6 +375,7 @@ export class WebAudioEngine implements Required<AudioAdapter> {
       'star_up_2',
       'star_up_3',
       'item_combine',
+      'trait_up',
     ];
     for (const id of hot) {
       void this.loadBuffer(SFX_PATHS[id]);
@@ -502,6 +509,12 @@ export class WebAudioEngine implements Required<AudioAdapter> {
         break;
       case 'match_accept':
         this.playSfx('match_accept');
+        break;
+      case 'trait_up':
+        this.playSfx('trait_up');
+        break;
+      case 'victory_fanfare':
+        this.playSfx('victory_fanfare');
         break;
     }
   }
@@ -676,6 +689,17 @@ export class WebAudioEngine implements Required<AudioAdapter> {
         if (this.disposed || !this.ctx) return null;
         const decoded = await this.ctx.decodeAudioData(arrayBuffer);
         this.bufferCache.set(url, decoded);
+      if (url.includes('/audio/bgm/')) {
+        const idx = this.bgmCacheOrder.indexOf(url);
+        if (idx >= 0) this.bgmCacheOrder.splice(idx, 1);
+        this.bgmCacheOrder.push(url);
+        while (this.bgmCacheOrder.length > MAX_CACHED_BGM_BUFFERS) {
+          const staleUrl = this.bgmCacheOrder.shift();
+          if (staleUrl && staleUrl !== url) {
+            this.bufferCache.delete(staleUrl);
+          }
+        }
+      }
         return decoded;
       } catch {
         return null;

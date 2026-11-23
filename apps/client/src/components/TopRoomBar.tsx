@@ -13,6 +13,7 @@ export function TopRoomBar(): React.JSX.Element | null {
     viewingPrepRoom,
     redemptionOpen,
     lobbyState,
+    audioBus,
     setActiveTab,
     setViewingPrepRoom,
     closeRedemption,
@@ -46,7 +47,9 @@ export function TopRoomBar(): React.JSX.Element | null {
         : `${room.members.length}/8`;
 
   const handleReturnToRoom = () => {
-    closeRedemption();
+    if (redemptionOpen) {
+      closeRedemption();
+    }
     setActiveTab('lobby');
     setViewingPrepRoom(true);
   };
@@ -97,7 +100,10 @@ export function TopRoomBar(): React.JSX.Element | null {
         <button
           type="button"
           className="blc-btn blc-btn--ghost blc-btn--xs"
-          onClick={() => void leavePrepRoom()}
+          onClick={() => {
+            audioBus.emit('onUiFeedback', { kind: 'click' });
+            void leavePrepRoom();
+          }}
           data-testid="top-bar-leave-room-btn"
         >
           退出

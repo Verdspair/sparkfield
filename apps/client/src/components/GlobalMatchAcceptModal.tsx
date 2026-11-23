@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { SubjectId } from '@pkg/contracts';
 import {
   MatchStudyBlueprintCard,
@@ -14,12 +14,13 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 const MAX_ACCEPT_SECONDS = 15;
 
 export function GlobalMatchAcceptModal(): React.JSX.Element | null {
-  const { authMode, inActiveMatch, profile, lobbyState, respondMatchAccept, pushToast } =
+  const { authMode, inActiveMatch, profile, lobbyState, audioBus, respondMatchAccept, pushToast } =
     useAppStore();
   const prompt = lobbyState.acceptPrompt;
 
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const announcedTicketIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!prompt) return;
@@ -27,6 +28,18 @@ export function GlobalMatchAcceptModal(): React.JSX.Element | null {
     const id = setInterval(() => setNowMs(Date.now()), 200);
     return () => clearInterval(id);
   }, [prompt]);
+
+  const isModalVisible = authMode === 'authenticated' && !inActiveMatch && Boolean(prompt);
+
+  useEffect(() => {
+    if (!isModalVisible || !prompt) {
+      if (!prompt) announcedTicketIdRef.current = null;
+      return;
+    }
+    if (announcedTicketIdRef.current === prompt.ticketId) return;
+    announcedTicketIdRef.current = prompt.ticketId;
+    audioBus.emit('onUiFeedback', { kind: 'match_accept' });
+  }, [audioBus, isModalVisible, prompt]);
 
   const activeSubject: SubjectId = useMemo(() => {
     if (!prompt) return 'english';
@@ -66,6 +79,9 @@ export function GlobalMatchAcceptModal(): React.JSX.Element | null {
 
   const handleDecision = async (accept: boolean) => {
     if (decided || submitting) return;
+    if (accept) {
+      audioBus.emit('onUiFeedback', { kind: 'click' });
+    }
     setSubmitting(true);
     try {
       await respondMatchAccept(prompt.ticketId, accept);
