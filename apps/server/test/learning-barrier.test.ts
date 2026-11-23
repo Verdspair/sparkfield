@@ -166,7 +166,8 @@ describe('authoritative room learning barrier', () => {
     else for (const bot of bots) expect(learningEntries(bot)).toEqual([]);
 
     await vi.advanceTimersByTimeAsync(1);
-    expect(room.phase).toBe('resource');
+    expect(room['snapshot'](pending)).toMatchObject({ phase: 'resource', learning: { complete: false },
+      resourceSettlement: { nodeIndex: 0 } });
     expect(room['settlements'].get(pending)).toEqual([expect.objectContaining({
       nodeIndex: 0, rawEarnedCents: 0, grantedIntegerGold: 0, carryInCents: 42, carryOutCents: 42,
     })]);

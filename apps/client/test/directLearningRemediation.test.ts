@@ -138,7 +138,7 @@ describe('offline learning', () => {
       expect(learning.learning).toMatchObject({ complete: false, readyHumansCount: 0, totalHumansCount: 8 });
       await local.skipCurrentPhaseWait();
       expect(local.getSnapshot()).toMatchObject({ phase: 'resource',
-        learning: { complete: true, readyHumansCount: 8, totalHumansCount: 8 },
+        learning: { complete: false, readyHumansCount: 7, totalHumansCount: 8 },
         resourceSettlement: { nodeIndex: learning.nodeIndex } });
       expect(Date.now()).toBeLessThan(learning.deadlineEpochMs);
       await advancePastCurrentPhase(local);
