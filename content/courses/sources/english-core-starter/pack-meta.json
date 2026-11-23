@@ -1,28 +1,49 @@
 {
   "packId": "english-core-starter",
-  "coursePackVersion": "1.2.1",
+  "coursePackVersion": "2.0.0",
   "subject": "english",
   "title": "核心英语：情景交际、语法填空与语篇理解",
   "syllabusTag": "CC0-1.0",
   "knowledgeGraph": [
     {
       "nodeId": "ENG_N1_VOCAB_DIALOGUE",
-      "title": "情景交际与日常沟通",
+      "title": "情景交际与日常高频词块",
       "prerequisites": []
     },
     {
       "nodeId": "ENG_N2_GRAMMAR_CLAUSE",
-      "title": "语法填空与完形语境",
+      "title": "时态语态与核心从句",
       "prerequisites": [
         "ENG_N1_VOCAB_DIALOGUE"
       ]
     },
     {
       "nodeId": "ENG_N3_CLOZE_READING",
-      "title": "信息获取、词义推断与语篇理解",
+      "title": "完形语境与信息推理",
       "prerequisites": [
         "ENG_N1_VOCAB_DIALOGUE",
         "ENG_N2_GRAMMAR_CLAUSE"
+      ]
+    },
+    {
+      "nodeId": "ENG_N4_ACADEMIC_VOCAB",
+      "title": "校园科技与高频词组搭配",
+      "prerequisites": [
+        "ENG_N1_VOCAB_DIALOGUE"
+      ]
+    },
+    {
+      "nodeId": "ENG_N5_NONFINITE_SYNTAX",
+      "title": "非谓语动词与长难句分析",
+      "prerequisites": [
+        "ENG_N2_GRAMMAR_CLAUSE"
+      ]
+    },
+    {
+      "nodeId": "ENG_N6_PASSAGE_INFER",
+      "title": "短篇阅读主旨与词义推断",
+      "prerequisites": [
+        "ENG_N3_CLOZE_READING"
       ]
     }
   ]

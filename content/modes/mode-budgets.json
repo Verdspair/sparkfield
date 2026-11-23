@@ -37,10 +37,13 @@
     "quick": {
       "label": "超快",
       "total": 900,
+      "study_arc_slots": [
+        4
+      ],
       "learning": [
         60,
-        150,
         90,
+        150,
         60
       ],
       "groups": [
@@ -89,7 +92,7 @@
       },
       "pvp_round_count": 6,
       "score_max": 13.0,
-      "learning_gold_total_max_cents": 4000,
+      "learning_gold_total_max_cents": 3600,
       "events_detail": [
         {
           "round": 2,
@@ -112,26 +115,26 @@
       ],
       "learning_detail": [
         {
-          "goal": "激活与识别",
+          "goal": "弧线导入",
           "seconds_by_phase": [
-            10,
-            15,
-            15,
-            10,
-            10
+            25,
+            0,
+            35,
+            0,
+            0
           ],
           "battle_rounds_after": [
             1
           ]
         },
         {
-          "goal": "重点例题",
+          "goal": "重点深化",
           "seconds_by_phase": [
             35,
-            35,
-            35,
-            25,
-            20
+            0,
+            55,
+            0,
+            0
           ],
           "battle_rounds_after": [
             2,
@@ -139,26 +142,26 @@
           ]
         },
         {
-          "goal": "情境应用",
+          "goal": "独立应用与纠错",
           "seconds_by_phase": [
-            10,
-            20,
-            25,
-            15,
-            20
+            35,
+            0,
+            45,
+            30,
+            40
           ],
           "battle_rounds_after": [
             4
           ]
         },
         {
-          "goal": "无新授的回顾",
+          "goal": "无材料独立验证",
           "seconds_by_phase": [
             0,
-            5,
-            25,
-            15,
-            15
+            0,
+            0,
+            0,
+            60
           ],
           "battle_rounds_after": [
             5,
@@ -211,71 +214,71 @@
         },
         {
           "start": 156,
-          "end": 306,
-          "duration": 150,
+          "end": 246,
+          "duration": 90,
           "kind": "learning",
           "label": "学习节点2"
         },
         {
-          "start": 306,
-          "end": 309,
+          "start": 246,
+          "end": 249,
           "duration": 3,
           "kind": "resource",
           "label": "节点2成绩/资源展示"
         },
         {
-          "start": 309,
-          "end": 324,
+          "start": 249,
+          "end": 264,
           "duration": 15,
           "kind": "choice",
           "label": "R2 强化①（仅事件选择）"
         },
         {
-          "start": 324,
-          "end": 374,
+          "start": 264,
+          "end": 314,
           "duration": 50,
           "kind": "strategy",
           "label": "R2 策略"
         },
         {
-          "start": 374,
-          "end": 394,
+          "start": 314,
+          "end": 334,
           "duration": 20,
           "kind": "battle",
           "label": "R2 PVP"
         },
         {
-          "start": 394,
-          "end": 397,
+          "start": 334,
+          "end": 337,
           "duration": 3,
           "kind": "settlement",
           "label": "R2 同步结算"
         },
         {
-          "start": 397,
-          "end": 447,
+          "start": 337,
+          "end": 387,
           "duration": 50,
           "kind": "strategy",
           "label": "R3 策略"
         },
         {
-          "start": 447,
-          "end": 467,
+          "start": 387,
+          "end": 407,
           "duration": 20,
           "kind": "battle",
           "label": "R3 PVP"
         },
         {
-          "start": 467,
-          "end": 470,
+          "start": 407,
+          "end": 410,
           "duration": 3,
           "kind": "settlement",
           "label": "R3 同步结算"
         },
         {
-          "start": 470,
+          "start": 410,
           "end": 560,
-          "duration": 90,
+          "duration": 150,
           "kind": "learning",
           "label": "学习节点3"
         },
@@ -387,10 +390,10 @@
       ],
       "planned_learning_ratio": 0.4,
       "learning_gold_cap_by_block_cents": [
-        850,
-        950,
-        1100,
-        1100
+        600,
+        800,
+        900,
+        1300
       ],
       "late_scoring_pvp_rounds": [
         5,
@@ -398,22 +401,28 @@
       ],
       "score_max_atoms": 52,
       "verification_weight_percent_by_block": [
+        0,
+        0,
         30,
-        30,
-        40,
-        40
+        100
       ]
     },
     "standard": {
       "label": "标准",
       "total": 1800,
+      "study_arc_slots": [
+        4,
+        4
+      ],
       "learning": [
-        120,
-        120,
-        300,
-        120,
-        120,
-        120
+        95,
+        110,
+        150,
+        92,
+        95,
+        110,
+        150,
+        92
       ],
       "groups": [
         [
@@ -426,14 +435,18 @@
           3
         ],
         [
-          4,
+          4
+        ],
+        [
           5
         ],
         [
           6
         ],
         [
-          7,
+          7
+        ],
+        [
           8
         ]
       ],
@@ -446,7 +459,7 @@
       "entry": 40,
       "exit": 30,
       "rest": 0,
-      "learning_total": 900,
+      "learning_total": 894,
       "computed": 1800,
       "budget_gap": 0,
       "pve_rounds": [
@@ -469,7 +482,7 @@
       },
       "pvp_round_count": 7,
       "score_max": 15.0,
-      "learning_gold_total_max_cents": 5200,
+      "learning_gold_total_max_cents": 5000,
       "events_detail": [
         {
           "round": 2,
@@ -510,82 +523,106 @@
       ],
       "learning_detail": [
         {
-          "goal": "激活先备知识",
+          "goal": "弧线导入",
           "seconds_by_phase": [
-            25,
-            30,
-            30,
-            20,
-            15
+            40,
+            0,
+            55,
+            0,
+            0
           ],
           "battle_rounds_after": [
             1
           ]
         },
         {
-          "goal": "边界与易混辨认",
+          "goal": "重点深化",
           "seconds_by_phase": [
-            15,
-            25,
-            35,
-            20,
-            25
+            50,
+            0,
+            60,
+            0,
+            0
           ],
           "battle_rounds_after": [
             2
           ]
         },
         {
-          "goal": "重点例题→补全→独立应用",
+          "goal": "独立应用与纠错",
           "seconds_by_phase": [
-            60,
-            75,
-            60,
+            35,
+            0,
             45,
-            60
+            30,
+            40
           ],
           "battle_rounds_after": [
             3
           ]
         },
         {
-          "goal": "间隔回忆与辨错",
+          "goal": "无材料独立验证",
           "seconds_by_phase": [
-            10,
-            25,
-            35,
-            25,
-            25
+            0,
+            0,
+            0,
+            0,
+            92
           ],
           "battle_rounds_after": [
-            4,
+            4
+          ]
+        },
+        {
+          "goal": "弧线导入",
+          "seconds_by_phase": [
+            40,
+            0,
+            55,
+            0,
+            0
+          ],
+          "battle_rounds_after": [
             5
           ]
         },
         {
-          "goal": "新情境应用",
+          "goal": "重点深化",
           "seconds_by_phase": [
-            10,
-            25,
-            35,
-            20,
-            30
+            50,
+            0,
+            60,
+            0,
+            0
           ],
           "battle_rounds_after": [
             6
           ]
         },
         {
-          "goal": "综合检索与总结",
+          "goal": "独立应用与纠错",
           "seconds_by_phase": [
+            35,
             0,
-            15,
             45,
-            25,
-            35
+            30,
+            40
           ],
           "battle_rounds_after": [
-            7,
+            7
+          ]
+        },
+        {
+          "goal": "无材料独立验证",
+          "seconds_by_phase": [
+            0,
+            0,
+            0,
+            0,
+            92
+          ],
+          "battle_rounds_after": [
             8
           ]
         }
@@ -600,276 +637,304 @@
         },
         {
           "start": 40,
-          "end": 160,
-          "duration": 120,
+          "end": 135,
+          "duration": 95,
           "kind": "learning",
           "label": "学习节点1"
         },
         {
-          "start": 160,
-          "end": 163,
+          "start": 135,
+          "end": 138,
           "duration": 3,
           "kind": "resource",
           "label": "节点1成绩/资源展示"
         },
         {
-          "start": 163,
-          "end": 213,
+          "start": 138,
+          "end": 188,
           "duration": 50,
           "kind": "strategy",
           "label": "R1 策略"
         },
         {
-          "start": 213,
-          "end": 248,
+          "start": 188,
+          "end": 223,
           "duration": 35,
           "kind": "battle",
           "label": "R1 PVP"
         },
         {
-          "start": 248,
-          "end": 252,
+          "start": 223,
+          "end": 227,
           "duration": 4,
           "kind": "settlement",
           "label": "R1 同步结算"
         },
         {
-          "start": 252,
-          "end": 372,
-          "duration": 120,
+          "start": 227,
+          "end": 337,
+          "duration": 110,
           "kind": "learning",
           "label": "学习节点2"
         },
         {
-          "start": 372,
-          "end": 375,
+          "start": 337,
+          "end": 340,
           "duration": 3,
           "kind": "resource",
           "label": "节点2成绩/资源展示"
         },
         {
-          "start": 375,
-          "end": 390,
+          "start": 340,
+          "end": 355,
           "duration": 15,
           "kind": "choice",
           "label": "R2 强化①（仅事件选择）"
         },
         {
-          "start": 390,
-          "end": 440,
+          "start": 355,
+          "end": 405,
           "duration": 50,
           "kind": "strategy",
           "label": "R2 策略"
         },
         {
-          "start": 440,
-          "end": 475,
+          "start": 405,
+          "end": 440,
           "duration": 35,
           "kind": "battle",
           "label": "R2 PVP"
         },
         {
-          "start": 475,
-          "end": 479,
+          "start": 440,
+          "end": 444,
           "duration": 4,
           "kind": "settlement",
           "label": "R2 同步结算"
         },
         {
-          "start": 479,
-          "end": 779,
-          "duration": 300,
+          "start": 444,
+          "end": 594,
+          "duration": 150,
           "kind": "learning",
           "label": "学习节点3"
         },
         {
-          "start": 779,
-          "end": 782,
+          "start": 594,
+          "end": 597,
           "duration": 3,
           "kind": "resource",
           "label": "节点3成绩/资源展示"
         },
         {
-          "start": 782,
-          "end": 802,
+          "start": 597,
+          "end": 617,
           "duration": 20,
           "kind": "choice",
           "label": "R3 补给铁砧①（仅事件选择）"
         },
         {
-          "start": 802,
-          "end": 852,
+          "start": 617,
+          "end": 667,
           "duration": 50,
           "kind": "strategy",
           "label": "R3 策略"
         },
         {
-          "start": 852,
-          "end": 887,
+          "start": 667,
+          "end": 702,
           "duration": 35,
           "kind": "battle",
           "label": "R3 PVP"
         },
         {
-          "start": 887,
-          "end": 891,
+          "start": 702,
+          "end": 706,
           "duration": 4,
           "kind": "settlement",
           "label": "R3 同步结算"
         },
         {
-          "start": 891,
-          "end": 1011,
-          "duration": 120,
+          "start": 706,
+          "end": 798,
+          "duration": 92,
           "kind": "learning",
           "label": "学习节点4"
         },
         {
-          "start": 1011,
-          "end": 1014,
+          "start": 798,
+          "end": 801,
           "duration": 3,
           "kind": "resource",
           "label": "节点4成绩/资源展示"
         },
         {
-          "start": 1014,
-          "end": 1064,
+          "start": 801,
+          "end": 851,
           "duration": 50,
           "kind": "strategy",
           "label": "R4 策略"
         },
         {
-          "start": 1064,
-          "end": 1099,
+          "start": 851,
+          "end": 886,
           "duration": 35,
           "kind": "battle",
           "label": "R4 PVE"
         },
         {
-          "start": 1099,
-          "end": 1103,
+          "start": 886,
+          "end": 890,
           "duration": 4,
           "kind": "settlement",
           "label": "R4 同步结算"
         },
         {
-          "start": 1103,
-          "end": 1118,
+          "start": 890,
+          "end": 905,
           "duration": 15,
           "kind": "choice",
           "label": "R4 PVE补给选择（仅事件选择）"
         },
         {
-          "start": 1118,
-          "end": 1133,
-          "duration": 15,
-          "kind": "choice",
-          "label": "R5 强化②（仅事件选择）"
-        },
-        {
-          "start": 1133,
-          "end": 1183,
-          "duration": 50,
-          "kind": "strategy",
-          "label": "R5 策略"
-        },
-        {
-          "start": 1183,
-          "end": 1218,
-          "duration": 35,
-          "kind": "battle",
-          "label": "R5 PVP"
-        },
-        {
-          "start": 1218,
-          "end": 1222,
-          "duration": 4,
-          "kind": "settlement",
-          "label": "R5 同步结算"
-        },
-        {
-          "start": 1222,
-          "end": 1342,
-          "duration": 120,
+          "start": 905,
+          "end": 1000,
+          "duration": 95,
           "kind": "learning",
           "label": "学习节点5"
         },
         {
-          "start": 1342,
-          "end": 1345,
+          "start": 1000,
+          "end": 1003,
           "duration": 3,
           "kind": "resource",
           "label": "节点5成绩/资源展示"
         },
         {
-          "start": 1345,
-          "end": 1365,
-          "duration": 20,
+          "start": 1003,
+          "end": 1018,
+          "duration": 15,
           "kind": "choice",
-          "label": "R6 补给铁砧②（仅事件选择）"
+          "label": "R5 强化②（仅事件选择）"
         },
         {
-          "start": 1365,
-          "end": 1415,
+          "start": 1018,
+          "end": 1068,
           "duration": 50,
           "kind": "strategy",
-          "label": "R6 策略"
+          "label": "R5 策略"
         },
         {
-          "start": 1415,
-          "end": 1450,
+          "start": 1068,
+          "end": 1103,
           "duration": 35,
           "kind": "battle",
-          "label": "R6 PVP"
+          "label": "R5 PVP"
         },
         {
-          "start": 1450,
-          "end": 1454,
+          "start": 1103,
+          "end": 1107,
           "duration": 4,
           "kind": "settlement",
-          "label": "R6 同步结算"
+          "label": "R5 同步结算"
         },
         {
-          "start": 1454,
-          "end": 1574,
-          "duration": 120,
+          "start": 1107,
+          "end": 1217,
+          "duration": 110,
           "kind": "learning",
           "label": "学习节点6"
         },
         {
-          "start": 1574,
-          "end": 1577,
+          "start": 1217,
+          "end": 1220,
           "duration": 3,
           "kind": "resource",
           "label": "节点6成绩/资源展示"
         },
         {
-          "start": 1577,
-          "end": 1592,
+          "start": 1220,
+          "end": 1240,
+          "duration": 20,
+          "kind": "choice",
+          "label": "R6 补给铁砧②（仅事件选择）"
+        },
+        {
+          "start": 1240,
+          "end": 1290,
+          "duration": 50,
+          "kind": "strategy",
+          "label": "R6 策略"
+        },
+        {
+          "start": 1290,
+          "end": 1325,
+          "duration": 35,
+          "kind": "battle",
+          "label": "R6 PVP"
+        },
+        {
+          "start": 1325,
+          "end": 1329,
+          "duration": 4,
+          "kind": "settlement",
+          "label": "R6 同步结算"
+        },
+        {
+          "start": 1329,
+          "end": 1479,
+          "duration": 150,
+          "kind": "learning",
+          "label": "学习节点7"
+        },
+        {
+          "start": 1479,
+          "end": 1482,
+          "duration": 3,
+          "kind": "resource",
+          "label": "节点7成绩/资源展示"
+        },
+        {
+          "start": 1482,
+          "end": 1497,
           "duration": 15,
           "kind": "choice",
           "label": "R7 强化③（仅事件选择）"
         },
         {
-          "start": 1592,
-          "end": 1642,
+          "start": 1497,
+          "end": 1547,
           "duration": 50,
           "kind": "strategy",
           "label": "R7 策略"
         },
         {
-          "start": 1642,
-          "end": 1677,
+          "start": 1547,
+          "end": 1582,
           "duration": 35,
           "kind": "battle",
           "label": "R7 PVP"
         },
         {
-          "start": 1677,
-          "end": 1681,
+          "start": 1582,
+          "end": 1586,
           "duration": 4,
           "kind": "settlement",
           "label": "R7 同步结算"
+        },
+        {
+          "start": 1586,
+          "end": 1678,
+          "duration": 92,
+          "kind": "learning",
+          "label": "学习节点8"
+        },
+        {
+          "start": 1678,
+          "end": 1681,
+          "duration": 3,
+          "kind": "resource",
+          "label": "节点8成绩/资源展示"
         },
         {
           "start": 1681,
@@ -900,14 +965,16 @@
           "label": "终局积分/学习摘要"
         }
       ],
-      "planned_learning_ratio": 0.5,
+      "planned_learning_ratio": 0.49666666666666665,
       "learning_gold_cap_by_block_cents": [
-        750,
-        800,
+        400,
+        600,
+        650,
         850,
-        850,
-        950,
-        1000
+        400,
+        600,
+        650,
+        850
       ],
       "late_scoring_pvp_rounds": [
         7,
@@ -915,54 +982,67 @@
       ],
       "score_max_atoms": 60,
       "verification_weight_percent_by_block": [
+        0,
+        0,
         30,
+        100,
+        0,
+        0,
         30,
-        30,
-        40,
-        40,
-        40
+        100
       ]
     },
     "deep": {
       "label": "深度",
       "total": 3600,
+      "study_arc_slots": [
+        4,
+        3,
+        3
+      ],
       "learning": [
-        180,
-        240,
-        300,
-        210,
-        300,
-        240,
-        270,
-        180
+        130,
+        155,
+        225,
+        125,
+        160,
+        330,
+        148,
+        160,
+        330,
+        149
       ],
       "groups": [
         [
           1
         ],
         [
-          2,
+          2
+        ],
+        [
           3
         ],
         [
           4
         ],
         [
-          5,
-          6
+          5
         ],
         [
+          6,
           7
         ],
         [
-          8,
+          8
+        ],
+        [
           9
         ],
         [
-          10
+          10,
+          11
         ],
         [
-          11,
           12
         ]
       ],
@@ -975,7 +1055,7 @@
       "entry": 90,
       "exit": 60,
       "rest": 120,
-      "learning_total": 1920,
+      "learning_total": 1912,
       "computed": 3600,
       "budget_gap": 0,
       "pve_rounds": [
@@ -983,8 +1063,8 @@
         8
       ],
       "rest_after_blocks": [
-        3,
-        6
+        4,
+        7
       ],
       "economy": {
         "starting_level": 3,
@@ -1002,7 +1082,7 @@
       },
       "pvp_round_count": 10,
       "score_max": 21.5,
-      "learning_gold_total_max_cents": 7100,
+      "learning_gold_total_max_cents": 6900,
       "events_detail": [
         {
           "round": 2,
@@ -1055,110 +1135,134 @@
       ],
       "learning_detail": [
         {
-          "goal": "框架与先备知识",
+          "goal": "弧线导入",
           "seconds_by_phase": [
-            35,
-            45,
-            45,
-            30,
-            25
+            55,
+            0,
+            75,
+            0,
+            0
           ],
           "battle_rounds_after": [
             1
           ]
         },
         {
-          "goal": "条件对比",
+          "goal": "重点深化",
           "seconds_by_phase": [
-            40,
-            60,
-            60,
-            40,
-            40
+            70,
+            0,
+            85,
+            0,
+            0
           ],
           "battle_rounds_after": [
-            2,
+            2
+          ]
+        },
+        {
+          "goal": "独立应用与纠错",
+          "seconds_by_phase": [
+            45,
+            0,
+            70,
+            45,
+            65
+          ],
+          "battle_rounds_after": [
             3
           ]
         },
         {
-          "goal": "重点案例一",
+          "goal": "无材料独立验证",
           "seconds_by_phase": [
-            60,
-            80,
-            70,
-            45,
-            45
+            0,
+            0,
+            0,
+            0,
+            125
           ],
           "battle_rounds_after": [
             4
           ]
         },
         {
-          "goal": "延迟回忆与辨错",
+          "goal": "弧线导入",
           "seconds_by_phase": [
-            15,
-            35,
-            65,
-            45,
-            50
+            68,
+            0,
+            92,
+            0,
+            0
           ],
           "battle_rounds_after": [
-            5,
-            6
+            5
           ]
         },
         {
-          "goal": "重点案例二",
+          "goal": "重点深化、独立应用与纠错",
           "seconds_by_phase": [
-            45,
-            75,
-            80,
-            45,
-            55
+            70,
+            0,
+            105,
+            65,
+            90
           ],
           "battle_rounds_after": [
+            6,
             7
           ]
         },
         {
-          "goal": "交错检索与旧错",
+          "goal": "无材料独立验证",
           "seconds_by_phase": [
-            10,
-            45,
-            75,
-            50,
-            60
+            0,
+            0,
+            0,
+            0,
+            148
           ],
           "battle_rounds_after": [
-            8,
+            8
+          ]
+        },
+        {
+          "goal": "弧线导入",
+          "seconds_by_phase": [
+            68,
+            0,
+            92,
+            0,
+            0
+          ],
+          "battle_rounds_after": [
             9
           ]
         },
         {
-          "goal": "综合迁移与依据",
+          "goal": "重点深化、独立应用与纠错",
           "seconds_by_phase": [
-            15,
-            50,
-            85,
-            55,
-            65
+            70,
+            0,
+            105,
+            65,
+            90
           ],
           "battle_rounds_after": [
-            10
+            10,
+            11
           ]
         },
         {
-          "goal": "总结检索与复习计划",
+          "goal": "无材料独立验证",
           "seconds_by_phase": [
             0,
-            15,
-            65,
-            45,
-            55
+            0,
+            0,
+            0,
+            149
           ],
           "battle_rounds_after": [
-            11,
             12
           ]
         }
@@ -1173,416 +1277,444 @@
         },
         {
           "start": 90,
-          "end": 270,
-          "duration": 180,
+          "end": 220,
+          "duration": 130,
           "kind": "learning",
           "label": "学习节点1"
         },
         {
-          "start": 270,
-          "end": 274,
+          "start": 220,
+          "end": 224,
           "duration": 4,
           "kind": "resource",
           "label": "节点1成绩/资源展示"
         },
         {
-          "start": 274,
-          "end": 324,
+          "start": 224,
+          "end": 274,
           "duration": 50,
           "kind": "strategy",
           "label": "R1 策略"
         },
         {
-          "start": 324,
-          "end": 369,
+          "start": 274,
+          "end": 319,
           "duration": 45,
           "kind": "battle",
           "label": "R1 PVP"
         },
         {
-          "start": 369,
-          "end": 373,
+          "start": 319,
+          "end": 323,
           "duration": 4,
           "kind": "settlement",
           "label": "R1 同步结算"
         },
         {
-          "start": 373,
-          "end": 613,
-          "duration": 240,
+          "start": 323,
+          "end": 478,
+          "duration": 155,
           "kind": "learning",
           "label": "学习节点2"
         },
         {
-          "start": 613,
-          "end": 617,
+          "start": 478,
+          "end": 482,
           "duration": 4,
           "kind": "resource",
           "label": "节点2成绩/资源展示"
         },
         {
-          "start": 617,
-          "end": 637,
+          "start": 482,
+          "end": 502,
           "duration": 20,
           "kind": "choice",
           "label": "R2 强化①（仅事件选择）"
         },
         {
-          "start": 637,
-          "end": 687,
+          "start": 502,
+          "end": 552,
           "duration": 50,
           "kind": "strategy",
           "label": "R2 策略"
         },
         {
-          "start": 687,
-          "end": 732,
+          "start": 552,
+          "end": 597,
           "duration": 45,
           "kind": "battle",
           "label": "R2 PVP"
         },
         {
-          "start": 732,
-          "end": 736,
+          "start": 597,
+          "end": 601,
           "duration": 4,
           "kind": "settlement",
           "label": "R2 同步结算"
         },
         {
-          "start": 736,
-          "end": 766,
-          "duration": 30,
-          "kind": "choice",
-          "label": "R3 补给铁砧①（仅事件选择）"
-        },
-        {
-          "start": 766,
-          "end": 816,
-          "duration": 50,
-          "kind": "strategy",
-          "label": "R3 策略"
-        },
-        {
-          "start": 816,
-          "end": 861,
-          "duration": 45,
-          "kind": "battle",
-          "label": "R3 PVP"
-        },
-        {
-          "start": 861,
-          "end": 865,
-          "duration": 4,
-          "kind": "settlement",
-          "label": "R3 同步结算"
-        },
-        {
-          "start": 865,
-          "end": 1165,
-          "duration": 300,
+          "start": 601,
+          "end": 826,
+          "duration": 225,
           "kind": "learning",
           "label": "学习节点3"
         },
         {
-          "start": 1165,
-          "end": 1169,
+          "start": 826,
+          "end": 830,
           "duration": 4,
           "kind": "resource",
           "label": "节点3成绩/资源展示"
         },
         {
-          "start": 1169,
-          "end": 1219,
+          "start": 830,
+          "end": 860,
+          "duration": 30,
+          "kind": "choice",
+          "label": "R3 补给铁砧①（仅事件选择）"
+        },
+        {
+          "start": 860,
+          "end": 910,
           "duration": 50,
           "kind": "strategy",
-          "label": "R4 策略"
+          "label": "R3 策略"
         },
         {
-          "start": 1219,
-          "end": 1264,
+          "start": 910,
+          "end": 955,
           "duration": 45,
           "kind": "battle",
-          "label": "R4 PVE"
+          "label": "R3 PVP"
         },
         {
-          "start": 1264,
-          "end": 1268,
+          "start": 955,
+          "end": 959,
           "duration": 4,
           "kind": "settlement",
-          "label": "R4 同步结算"
+          "label": "R3 同步结算"
         },
         {
-          "start": 1268,
-          "end": 1288,
-          "duration": 20,
-          "kind": "choice",
-          "label": "R4 PVE补给选择①（仅事件选择）"
-        },
-        {
-          "start": 1288,
-          "end": 1348,
-          "duration": 60,
-          "kind": "rest",
-          "label": "统一休息，不计学习且不开放经营"
-        },
-        {
-          "start": 1348,
-          "end": 1558,
-          "duration": 210,
+          "start": 959,
+          "end": 1084,
+          "duration": 125,
           "kind": "learning",
           "label": "学习节点4"
         },
         {
-          "start": 1558,
-          "end": 1562,
+          "start": 1084,
+          "end": 1088,
           "duration": 4,
           "kind": "resource",
           "label": "节点4成绩/资源展示"
         },
         {
-          "start": 1562,
-          "end": 1582,
+          "start": 1088,
+          "end": 1138,
+          "duration": 50,
+          "kind": "strategy",
+          "label": "R4 策略"
+        },
+        {
+          "start": 1138,
+          "end": 1183,
+          "duration": 45,
+          "kind": "battle",
+          "label": "R4 PVE"
+        },
+        {
+          "start": 1183,
+          "end": 1187,
+          "duration": 4,
+          "kind": "settlement",
+          "label": "R4 同步结算"
+        },
+        {
+          "start": 1187,
+          "end": 1207,
           "duration": 20,
           "kind": "choice",
-          "label": "R5 强化②（仅事件选择）"
+          "label": "R4 PVE补给选择①（仅事件选择）"
         },
         {
-          "start": 1582,
-          "end": 1632,
-          "duration": 50,
-          "kind": "strategy",
-          "label": "R5 策略"
-        },
-        {
-          "start": 1632,
-          "end": 1677,
-          "duration": 45,
-          "kind": "battle",
-          "label": "R5 PVP"
-        },
-        {
-          "start": 1677,
-          "end": 1681,
-          "duration": 4,
-          "kind": "settlement",
-          "label": "R5 同步结算"
-        },
-        {
-          "start": 1681,
-          "end": 1711,
-          "duration": 30,
-          "kind": "choice",
-          "label": "R6 补给铁砧②（仅事件选择）"
-        },
-        {
-          "start": 1711,
-          "end": 1761,
-          "duration": 50,
-          "kind": "strategy",
-          "label": "R6 策略"
-        },
-        {
-          "start": 1761,
-          "end": 1806,
-          "duration": 45,
-          "kind": "battle",
-          "label": "R6 PVP"
-        },
-        {
-          "start": 1806,
-          "end": 1810,
-          "duration": 4,
-          "kind": "settlement",
-          "label": "R6 同步结算"
-        },
-        {
-          "start": 1810,
-          "end": 2110,
-          "duration": 300,
-          "kind": "learning",
-          "label": "学习节点5"
-        },
-        {
-          "start": 2110,
-          "end": 2114,
-          "duration": 4,
-          "kind": "resource",
-          "label": "节点5成绩/资源展示"
-        },
-        {
-          "start": 2114,
-          "end": 2164,
-          "duration": 50,
-          "kind": "strategy",
-          "label": "R7 策略"
-        },
-        {
-          "start": 2164,
-          "end": 2209,
-          "duration": 45,
-          "kind": "battle",
-          "label": "R7 PVP"
-        },
-        {
-          "start": 2209,
-          "end": 2213,
-          "duration": 4,
-          "kind": "settlement",
-          "label": "R7 同步结算"
-        },
-        {
-          "start": 2213,
-          "end": 2453,
-          "duration": 240,
-          "kind": "learning",
-          "label": "学习节点6"
-        },
-        {
-          "start": 2453,
-          "end": 2457,
-          "duration": 4,
-          "kind": "resource",
-          "label": "节点6成绩/资源展示"
-        },
-        {
-          "start": 2457,
-          "end": 2507,
-          "duration": 50,
-          "kind": "strategy",
-          "label": "R8 策略"
-        },
-        {
-          "start": 2507,
-          "end": 2552,
-          "duration": 45,
-          "kind": "battle",
-          "label": "R8 PVE"
-        },
-        {
-          "start": 2552,
-          "end": 2556,
-          "duration": 4,
-          "kind": "settlement",
-          "label": "R8 同步结算"
-        },
-        {
-          "start": 2556,
-          "end": 2576,
-          "duration": 20,
-          "kind": "choice",
-          "label": "R8 PVE补给选择②（仅事件选择）"
-        },
-        {
-          "start": 2576,
-          "end": 2596,
-          "duration": 20,
-          "kind": "choice",
-          "label": "R9 强化③（仅事件选择）"
-        },
-        {
-          "start": 2596,
-          "end": 2646,
-          "duration": 50,
-          "kind": "strategy",
-          "label": "R9 策略"
-        },
-        {
-          "start": 2646,
-          "end": 2691,
-          "duration": 45,
-          "kind": "battle",
-          "label": "R9 PVP"
-        },
-        {
-          "start": 2691,
-          "end": 2695,
-          "duration": 4,
-          "kind": "settlement",
-          "label": "R9 同步结算"
-        },
-        {
-          "start": 2695,
-          "end": 2755,
+          "start": 1207,
+          "end": 1267,
           "duration": 60,
           "kind": "rest",
           "label": "统一休息，不计学习且不开放经营"
         },
         {
-          "start": 2755,
-          "end": 3025,
-          "duration": 270,
+          "start": 1267,
+          "end": 1427,
+          "duration": 160,
+          "kind": "learning",
+          "label": "学习节点5"
+        },
+        {
+          "start": 1427,
+          "end": 1431,
+          "duration": 4,
+          "kind": "resource",
+          "label": "节点5成绩/资源展示"
+        },
+        {
+          "start": 1431,
+          "end": 1451,
+          "duration": 20,
+          "kind": "choice",
+          "label": "R5 强化②（仅事件选择）"
+        },
+        {
+          "start": 1451,
+          "end": 1501,
+          "duration": 50,
+          "kind": "strategy",
+          "label": "R5 策略"
+        },
+        {
+          "start": 1501,
+          "end": 1546,
+          "duration": 45,
+          "kind": "battle",
+          "label": "R5 PVP"
+        },
+        {
+          "start": 1546,
+          "end": 1550,
+          "duration": 4,
+          "kind": "settlement",
+          "label": "R5 同步结算"
+        },
+        {
+          "start": 1550,
+          "end": 1880,
+          "duration": 330,
+          "kind": "learning",
+          "label": "学习节点6"
+        },
+        {
+          "start": 1880,
+          "end": 1884,
+          "duration": 4,
+          "kind": "resource",
+          "label": "节点6成绩/资源展示"
+        },
+        {
+          "start": 1884,
+          "end": 1914,
+          "duration": 30,
+          "kind": "choice",
+          "label": "R6 补给铁砧②（仅事件选择）"
+        },
+        {
+          "start": 1914,
+          "end": 1964,
+          "duration": 50,
+          "kind": "strategy",
+          "label": "R6 策略"
+        },
+        {
+          "start": 1964,
+          "end": 2009,
+          "duration": 45,
+          "kind": "battle",
+          "label": "R6 PVP"
+        },
+        {
+          "start": 2009,
+          "end": 2013,
+          "duration": 4,
+          "kind": "settlement",
+          "label": "R6 同步结算"
+        },
+        {
+          "start": 2013,
+          "end": 2063,
+          "duration": 50,
+          "kind": "strategy",
+          "label": "R7 策略"
+        },
+        {
+          "start": 2063,
+          "end": 2108,
+          "duration": 45,
+          "kind": "battle",
+          "label": "R7 PVP"
+        },
+        {
+          "start": 2108,
+          "end": 2112,
+          "duration": 4,
+          "kind": "settlement",
+          "label": "R7 同步结算"
+        },
+        {
+          "start": 2112,
+          "end": 2260,
+          "duration": 148,
           "kind": "learning",
           "label": "学习节点7"
         },
         {
-          "start": 3025,
-          "end": 3029,
+          "start": 2260,
+          "end": 2264,
           "duration": 4,
           "kind": "resource",
           "label": "节点7成绩/资源展示"
         },
         {
-          "start": 3029,
-          "end": 3059,
-          "duration": 30,
-          "kind": "choice",
-          "label": "R10 补给铁砧③（仅事件选择）"
-        },
-        {
-          "start": 3059,
-          "end": 3109,
+          "start": 2264,
+          "end": 2314,
           "duration": 50,
           "kind": "strategy",
-          "label": "R10 策略"
+          "label": "R8 策略"
         },
         {
-          "start": 3109,
-          "end": 3154,
+          "start": 2314,
+          "end": 2359,
           "duration": 45,
           "kind": "battle",
-          "label": "R10 PVP"
+          "label": "R8 PVE"
         },
         {
-          "start": 3154,
-          "end": 3158,
+          "start": 2359,
+          "end": 2363,
           "duration": 4,
           "kind": "settlement",
-          "label": "R10 同步结算"
+          "label": "R8 同步结算"
         },
         {
-          "start": 3158,
-          "end": 3338,
-          "duration": 180,
+          "start": 2363,
+          "end": 2383,
+          "duration": 20,
+          "kind": "choice",
+          "label": "R8 PVE补给选择②（仅事件选择）"
+        },
+        {
+          "start": 2383,
+          "end": 2443,
+          "duration": 60,
+          "kind": "rest",
+          "label": "统一休息，不计学习且不开放经营"
+        },
+        {
+          "start": 2443,
+          "end": 2603,
+          "duration": 160,
           "kind": "learning",
           "label": "学习节点8"
         },
         {
-          "start": 3338,
-          "end": 3342,
+          "start": 2603,
+          "end": 2607,
           "duration": 4,
           "kind": "resource",
           "label": "节点8成绩/资源展示"
         },
         {
-          "start": 3342,
-          "end": 3392,
+          "start": 2607,
+          "end": 2627,
+          "duration": 20,
+          "kind": "choice",
+          "label": "R9 强化③（仅事件选择）"
+        },
+        {
+          "start": 2627,
+          "end": 2677,
+          "duration": 50,
+          "kind": "strategy",
+          "label": "R9 策略"
+        },
+        {
+          "start": 2677,
+          "end": 2722,
+          "duration": 45,
+          "kind": "battle",
+          "label": "R9 PVP"
+        },
+        {
+          "start": 2722,
+          "end": 2726,
+          "duration": 4,
+          "kind": "settlement",
+          "label": "R9 同步结算"
+        },
+        {
+          "start": 2726,
+          "end": 3056,
+          "duration": 330,
+          "kind": "learning",
+          "label": "学习节点9"
+        },
+        {
+          "start": 3056,
+          "end": 3060,
+          "duration": 4,
+          "kind": "resource",
+          "label": "节点9成绩/资源展示"
+        },
+        {
+          "start": 3060,
+          "end": 3090,
+          "duration": 30,
+          "kind": "choice",
+          "label": "R10 补给铁砧③（仅事件选择）"
+        },
+        {
+          "start": 3090,
+          "end": 3140,
+          "duration": 50,
+          "kind": "strategy",
+          "label": "R10 策略"
+        },
+        {
+          "start": 3140,
+          "end": 3185,
+          "duration": 45,
+          "kind": "battle",
+          "label": "R10 PVP"
+        },
+        {
+          "start": 3185,
+          "end": 3189,
+          "duration": 4,
+          "kind": "settlement",
+          "label": "R10 同步结算"
+        },
+        {
+          "start": 3189,
+          "end": 3239,
           "duration": 50,
           "kind": "strategy",
           "label": "R11 策略"
         },
         {
-          "start": 3392,
-          "end": 3437,
+          "start": 3239,
+          "end": 3284,
           "duration": 45,
           "kind": "battle",
           "label": "R11 PVP"
         },
         {
-          "start": 3437,
-          "end": 3441,
+          "start": 3284,
+          "end": 3288,
           "duration": 4,
           "kind": "settlement",
           "label": "R11 同步结算"
+        },
+        {
+          "start": 3288,
+          "end": 3437,
+          "duration": 149,
+          "kind": "learning",
+          "label": "学习节点10"
+        },
+        {
+          "start": 3437,
+          "end": 3441,
+          "duration": 4,
+          "kind": "resource",
+          "label": "节点10成绩/资源展示"
         },
         {
           "start": 3441,
@@ -1613,16 +1745,18 @@
           "label": "终局积分/学习摘要"
         }
       ],
-      "planned_learning_ratio": 0.5333333333333333,
+      "planned_learning_ratio": 0.5311111111111111,
       "learning_gold_cap_by_block_cents": [
+        350,
+        550,
+        600,
+        800,
+        450,
         750,
-        800,
-        800,
-        850,
-        900,
-        950,
-        1000,
-        1050
+        1100,
+        450,
+        750,
+        1100
       ],
       "late_scoring_pvp_rounds": [
         10,
@@ -1631,14 +1765,16 @@
       ],
       "score_max_atoms": 86,
       "verification_weight_percent_by_block": [
+        0,
+        0,
         30,
+        100,
+        0,
         30,
+        100,
+        0,
         30,
-        40,
-        40,
-        40,
-        40,
-        40
+        100
       ]
     }
   },

@@ -12,6 +12,12 @@ import { TacticianPortrait } from '../components/UnitPortrait.js';
 import { STARTER_COURSE_PACKS } from '../content/starterPacks.js';
 import { TACTICIAN_CATALOG } from '../stage/index.js';
 import { GameUiIcon } from '../components/GameUiIcons.js';
+import {
+  MatchStudyBlueprintCard,
+  buildClientStudyBlueprint,
+  readPrepBlueprintSeed,
+  writePrepBlueprintSeed,
+} from '../components/MatchStudyBlueprintCard.js';
 import { useAppStore } from '../store/appStore.js';
 import {
   DURATION_MODE_SHORT_LABELS,
@@ -50,6 +56,14 @@ export function PrepRoomPage(): React.JSX.Element | null {
   );
   const [clockNow, setClockNow] = useState<Date>(() => new Date());
   const [busy, setBusy] = useState<boolean>(false);
+  const [blueprintSeed, setBlueprintSeed] = useState<number>(() =>
+    room ? readPrepBlueprintSeed(room.roomCode) : 0,
+  );
+
+  useEffect(() => {
+    if (!room?.roomCode) return;
+    setBlueprintSeed(readPrepBlueprintSeed(room.roomCode));
+  }, [room?.roomCode]);
 
   useEffect(() => {
     const id = setInterval(() => setClockNow(new Date()), 10_000);
@@ -86,6 +100,22 @@ export function PrepRoomPage(): React.JSX.Element | null {
     [preferredTacticianId],
   );
 
+  const selectedStartNodeId =
+    selfPrefs?.learningStartSelections?.[activeSubject] ??
+    profile?.learningStartSelections?.[activeSubject] ??
+    subjectManifest.knowledgeGraph[0]!.nodeId;
+
+  const blueprint = useMemo(
+    () =>
+      buildClientStudyBlueprint({
+        mode: room?.durationMode ?? 'standard',
+        subject: activeSubject,
+        startNodeId: selectedStartNodeId,
+        seed: blueprintSeed,
+      }),
+    [activeSubject, blueprintSeed, room?.durationMode, selectedStartNodeId],
+  );
+
   if (!room) return null;
 
   const isOffline = authMode === 'offline_practice';
@@ -99,23 +129,22 @@ export function PrepRoomPage(): React.JSX.Element | null {
   const modeSpec = MODE_BUDGETS.modes[room.durationMode];
   const plannedMinutes = Math.round(room.plannedTotalSeconds / 60);
 
-  const selectedStartNodeId =
-    selfPrefs?.learningStartSelections?.[activeSubject] ??
-    profile?.learningStartSelections?.[activeSubject] ??
-    subjectManifest.knowledgeGraph[0]!.nodeId;
-
   const selectedNodeIndex = Math.max(
     0,
     subjectManifest.knowledgeGraph.findIndex((n) => n.nodeId === selectedStartNodeId),
   );
   const selectedNode =
     subjectManifest.knowledgeGraph[selectedNodeIndex] ?? subjectManifest.knowledgeGraph[0]!;
-  const resolvedNodeTitle =
-    selectedNode.nodeId === 'ENG_N1_VOCAB_DIALOGUE'
-      ? '情景交际与日常沟通'
-      : selectedNode.title;
+  const resolvedNodeTitle = selectedNode.title;
 
   const emptySeatCount = Math.max(0, TOTAL_SEATS - room.members.length);
+
+  const handleRerollPack = () => {
+    if (!isIdle || busy) return;
+    const nextSeed = blueprintSeed + 1;
+    setBlueprintSeed(nextSeed);
+    writePrepBlueprintSeed(room.roomCode, nextSeed);
+  };
 
   const handleCopyCode = async () => {
     try {
@@ -227,8 +256,8 @@ export function PrepRoomPage(): React.JSX.Element | null {
               {DURATION_MODE_SHORT_LABELS[room.durationMode]} · {plannedMinutes} 分钟
             </strong>
             <span>
-              {QUEUE_TYPE_LABELS[room.queueType]} · {modeSpec.learning.length} 节学习 ·{' '}
-              {modeSpec.rounds} 场战斗
+              {QUEUE_TYPE_LABELS[room.queueType]} · {blueprint.arcCount} 个学习大轮次（约{' '}
+              {plannedMinutes} 分钟） · {modeSpec.rounds} 场战斗
             </span>
           </div>
 
@@ -301,11 +330,12 @@ export function PrepRoomPage(): React.JSX.Element | null {
           </div>
         </div>
 
-        <section
-          className="sf-prep-roster-panel ui-corner-ornaments"
-          aria-label="8 席星环席位"
-          data-testid="prep-left-roster"
-        >
+        <div className="sf-prep-right-stack">
+          <section
+            className="sf-prep-roster-panel ui-corner-ornaments"
+            aria-label="8 席星环席位"
+            data-testid="prep-left-roster"
+          >
           <div className="sf-prep-roster-head">
             <div className="sf-prep-roster-title">
               <span>星港备战席</span>
@@ -412,7 +442,20 @@ export function PrepRoomPage(): React.JSX.Element | null {
               );
             })}
           </div>
-        </section>
+          </section>
+
+          <MatchStudyBlueprintCard
+            blueprint={blueprint}
+            locked={!isIdle || Boolean(lobbyState.acceptPrompt)}
+            emphasizing={
+              room.status === 'queuing' ||
+              room.status === 'accept_check' ||
+              Boolean(lobbyState.acceptPrompt)
+            }
+            onRerollPack={handleRerollPack}
+            onOpenChapterSelect={() => openSettings('learning')}
+          />
+        </div>
       </div>
 
       <footer
@@ -509,7 +552,7 @@ export function PrepRoomPage(): React.JSX.Element | null {
           <div className="sf-prep-eta" data-testid="estimated-end-time-box">
             <strong>预计 {estimatedEndHHMM} 结束</strong>
             <span>
-              {modeSpec.learning.length} 节学习 · {modeSpec.rounds} 场战斗
+              {blueprint.arcCount} 个学习大轮次（约 {plannedMinutes} 分钟） · {modeSpec.rounds} 场战斗
             </span>
           </div>
 

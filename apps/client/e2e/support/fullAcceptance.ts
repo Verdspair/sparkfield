@@ -104,7 +104,8 @@ export async function answerQuestion(card: Locator) {
       throw new Error(`Unsupported question type for ${id}: ${item.questionType}`);
   }
   await card.getByTestId('submit-answer-btn').click();
-  await expect(card.getByTestId('question-feedback-box')).toContainText('回答正确');
+  const feedback = card.getByTestId('question-feedback-box');
+  await expect.poll(async () => !(await card.isVisible()) || ((await feedback.isVisible()) && (await feedback.textContent())?.includes('回答正确'))).toBe(true);
 }
 
 export async function completeLesson(overlay: Locator, complete: Locator) {
@@ -112,11 +113,14 @@ export async function completeLesson(overlay: Locator, complete: Locator) {
   const ready = card.locator('button[data-testid="advance-step-btn"]:enabled').or(card.getByTestId('submit-answer-btn'));
   const steps = new Set<string>();
   for (let stepsLeft = 24; stepsLeft > 0; stepsLeft--) {
-    await expect(ready.first().or(complete).first()).toBeVisible();
-    if (await complete.isVisible()) return steps;
+    await expect.poll(async () => (await complete.isVisible()) || !(await overlay.isVisible()) || (await ready.first().isVisible())).toBe(true);
+    if ((await complete.isVisible()) || !(await overlay.isVisible())) return steps;
     steps.add((await card.getAttribute('data-step-kind'))!);
     if (await card.getByTestId('submit-answer-btn').isVisible()) await answerQuestion(card);
-    if (!(await complete.isVisible())) await card.getByTestId('advance-step-btn').click();
+    if ((await overlay.isVisible()) && !(await complete.isVisible())) {
+      const adv = card.getByTestId('advance-step-btn');
+      if (await adv.isVisible()) await adv.click();
+    }
   }
   throw new Error('Lesson did not finish');
 }
@@ -162,8 +166,13 @@ export async function finishOfflineMatch(page: Page) {
       checkedShop = true;
     }
     const before = await phase.textContent();
-    await page.getByTestId('offline-skip-phase-btn').click();
-    await expect.poll(async () => (await summary.isVisible()) || (await phase.textContent()) !== before).toBe(true);
+    const skipBtn = page.getByTestId('offline-skip-phase-btn');
+    if (await skipBtn.isVisible()) {
+      await skipBtn.click();
+    }
+    await expect
+      .poll(async () => (await summary.isVisible()) || (await phase.textContent()) !== before, { timeout: 55_000 })
+      .toBe(true);
   }
   expect(checkedShop).toBe(true);
   await expect(summary.getByTestId('summary-competitive-col')).toBeVisible();

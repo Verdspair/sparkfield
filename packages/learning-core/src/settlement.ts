@@ -1,4 +1,5 @@
-import { MODE_BUDGETS, type DivmodGoldSettlement, type DurationMode, type LessonStepKind, type QuestionItem } from '@pkg/contracts';
+import { MODE_BUDGETS, type DivmodGoldSettlement, type DurationMode, type LessonStepKind, type MatchStudyBlueprint, type QuestionItem } from '@pkg/contracts';
+import { phasePolicyForStudySlot, studySlotGoldBudget } from './study-layout.js';
 import { gradeQuestionSubmission, type SubmissionInput } from './grading.js';
 import { add, compare, divide, integer, multiply, ONE, rational, safeInteger, serialize, wireInteger, ZERO, type Rational, type RationalScore } from './rational.js';
 
@@ -16,6 +17,7 @@ export interface LearningNodeGoldInput {
   blockIndex: number;
   gradedUnits: readonly GradedLearningUnit[];
   carryInCents?: number;
+  studyBlueprint?: MatchStudyBlueprint;
 }
 export interface QuestionNodeGoldInput {
   mode: DurationMode;
@@ -23,19 +25,26 @@ export interface QuestionNodeGoldInput {
   questions: readonly QuestionItem[];
   submissions: SubmissionMap;
   carryInCents?: number;
+  studyBlueprint?: MatchStudyBlueprint;
 }
 export interface LearningGoldSettlement extends DivmodGoldSettlement {
   exactScore: RationalScore;
   verificationWeightPercent: number;
 }
-export function learningNodePolicy(mode: DurationMode, nodeIndex: number) {
+export function learningNodePolicy(mode: DurationMode, nodeIndex: number, blueprint?: MatchStudyBlueprint) {
   const config = MODE_BUDGETS.modes[mode];
   if (!config || !Number.isInteger(nodeIndex) || nodeIndex < 0 || nodeIndex >= config.learning.length) throw new RangeError('Unknown learning node');
+  if (blueprint && blueprint.mode !== mode) throw new Error('Study blueprint and settlement mode must match');
+  const plannedSeconds = config.learning[nodeIndex]!;
+  const defaultLayout = !blueprint || (blueprint.arcs.length === config.study_arc_slots.length
+    && blueprint.arcs.every((arc, i) => arc.slotsInArc === config.study_arc_slots[i]));
+  if (!defaultLayout) return { centBudget: studySlotGoldBudget(blueprint, nodeIndex, config.learning_gold_total_max_cents), plannedSeconds,
+    ...phasePolicyForStudySlot(blueprint, nodeIndex, plannedSeconds) };
   return {
     centBudget: config.learning_gold_cap_by_block_cents[nodeIndex]!,
     verificationWeightPercent: config.verification_weight_percent_by_block[nodeIndex]!,
     phaseSeconds: config.learning_detail[nodeIndex]!.seconds_by_phase,
-    plannedSeconds: config.learning[nodeIndex]!,
+    plannedSeconds,
   };
 }
 export function gradeFrozenLearningUnits(questions: readonly QuestionItem[], submissions: SubmissionMap): GradedLearningUnit[] {
@@ -59,7 +68,7 @@ function roleScore(units: readonly GradedLearningUnit[]): Rational {
 }
 export function settleLearningNodeGold(input: LearningNodeGoldInput | QuestionNodeGoldInput): LearningGoldSettlement {
   const index = 'blockIndex' in input ? input.blockIndex : input.nodeIndex;
-  const policy = learningNodePolicy(input.mode, index);
+  const policy = learningNodePolicy(input.mode, index, input.studyBlueprint);
   const units = 'gradedUnits' in input ? input.gradedUnits : gradeFrozenLearningUnits(input.questions, input.submissions);
   const carry = integer(input.carryInCents ?? 0, 'carryInCents', 0, 99);
   const seen = new Set<string>();
@@ -69,9 +78,16 @@ export function settleLearningNodeGold(input: LearningNodeGoldInput | QuestionNo
       seen.add(unit.questionId);
     }
   }
-  const resource = roleScore(units.filter((q) => q.stepRole === 'resource_check'));
-  const verification = roleScore(units.filter((q) => q.stepRole === 'verification'));
-  const v = BigInt(policy.verificationWeightPercent);
+  const resourceUnits = units.filter((q) => q.stepRole === 'resource_check');
+  const verificationUnits = units.filter((q) => q.stepRole === 'verification');
+  const resource = roleScore(resourceUnits);
+  const verification = roleScore(verificationUnits);
+  const configuredWeight = policy.verificationWeightPercent;
+  const verificationWeightPercent = configuredWeight === 0 || configuredWeight === 100
+    ? !resourceUnits.length && verificationUnits.length ? 100
+      : !verificationUnits.length && resourceUnits.length ? 0 : configuredWeight
+    : configuredWeight;
+  const v = BigInt(verificationWeightPercent);
   const score = add(multiply(resource, rational(100n - v, 100n)), multiply(verification, rational(v, 100n)));
   const earned = BigInt(policy.centBudget) * score.n / score.d;
   const total = earned + carry;
@@ -83,7 +99,7 @@ export function settleLearningNodeGold(input: LearningNodeGoldInput | QuestionNo
   return {
     nodeIndex: index, centBudget: policy.centBudget,
     scoreNumerator: wireInteger(score.n), scoreDenominator: wireInteger(score.d),
-    exactScore: serialize(score), verificationWeightPercent: policy.verificationWeightPercent,
+    exactScore: serialize(score), verificationWeightPercent,
     rawEarnedCents: safeInteger(earned), carryInCents: safeInteger(carry),
     grantedIntegerGold: safeInteger(gold), orbSplits, carryOutCents: safeInteger(carryOut),
   };

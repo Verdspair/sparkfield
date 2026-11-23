@@ -196,7 +196,7 @@ describe('90-second onboarding uses the real engine', () => {
     expect(value).toBe(scenario.game.itemComponentsGranted);
   });
 
-  it('runs deterministic real quick combat with a 20s hard limit and an isolated snapshot', () => {
+  it('runs deterministic real quick combat with a 45s hard limit and an isolated snapshot', () => {
     const { game, playerSeatId, enemySeatId, hints } = createOnboardingMicroScenario();
     replay(game, playerSeatId, [
       { type: 'BUY_CARD', shopIndex: hints.buyShopIndex },
@@ -208,12 +208,12 @@ describe('90-second onboarding uses the real engine', () => {
     const enemy = game.seats.find((seat) => seat.id === enemySeatId)!;
     const snapshot = structuredClone(game);
     const combat = createCombat(player, enemy, game.mode, 90);
-    expect(combat.hardDeadlineMs).toBe(20_000);
-    expect(combat.overtimeAtMs).toBe(15_000);
+    expect(combat.hardDeadlineMs).toBe(45_000);
+    expect(combat.overtimeAtMs).toBe(30_000);
     const result = runCombat(player, enemy, game.mode, 90);
     expect(result).toEqual(runCombat(player, enemy, game.mode, 90));
     expect(result.elapsedMs).toBeGreaterThan(0);
-    expect(result.elapsedMs).toBeLessThanOrEqual(20_000);
+    expect(result.elapsedMs).toBeLessThanOrEqual(45_000);
     expect(result.telemetry.length).toBeGreaterThan(0);
     expect(result.telemetry.some((entry) => entry.physicalDealt + entry.magicDealt > 0)).toBe(true);
     expect(game).toEqual(snapshot);

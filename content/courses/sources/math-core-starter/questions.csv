@@ -1,39 +1,163 @@
 question_id,family_id,subject,knowledge_node,step_role,question_type,assessment_kind,allow_material_review,material_md,stem_md,option_a,option_b,option_c,option_d,answer_spec,partial_rubric,hint_md,explanation_md,difficulty,weight,est_seconds,source_license
-MATH_Q01,FAM_MATH_Q01,math,MATH_N1_SET_FUNC,practice,single_choice,application,true,"- $A\cap B$：同时属于两集合；$A\cup B$：至少属于其中一个。
-- $\complement_U A$：属于 $U$ 但不属于 $A$。","已知 $A=\{-1,0,1,2\}$，$B=\{x\mid x^2-x-2<0\}$，则 $A\cap B=$","$\{0,1\}$","$\{-1,0,1\}$","$\{0,1,2\}$","$\{-1,2\}$",A,,先解二次不等式，注意端点。,"$x^2-x-2=(x+1)(x-2)<0$，故 $B=(-1,2)$，交集为 $\{0,1\}$。",2,10,50,CC0-1.0
-MATH_Q02,FAM_MATH_Q02,math,MATH_N1_SET_FUNC,practice,single_choice,application,true,"- $p\Rightarrow q$：$p$ 是 $q$ 的充分条件。
-- $q\Rightarrow p$：$p$ 是 $q$ 的必要条件。",“$x=3$”是“$x^2-9=0$”的,必要不充分条件,充分不必要条件,充要条件,既不充分也不必要条件,B,,分别检查两个方向能否推出。,$x=3$ 能推出 $x^2-9=0$，但后者还允许 $x=-3$，故为充分不必要条件。,2,10,40,CC0-1.0
-MATH_Q03,FAM_MATH_Q03,math,MATH_N1_SET_FUNC,practice,single_choice,application,true,"- 偶次根式：被开方数不小于 $0$。
-- 分式：分母不等于 $0$；各限制取交集。",函数 $f(x)=\sqrt{4-x}+\frac{1}{x-1}$ 的定义域为,"$(-\infty,4]$","$[1,4]$","$(-\infty,1)\cup(1,4]$","$(-\infty,1)\cup(1,4)$",C,,根式与分式各给出一个限制。,"需同时满足 $x\le4$ 与 $x\ne1$，故定义域为 $(-\infty,1)\cup(1,4]$。",2,10,45,CC0-1.0
-MATH_Q05,FAM_MATH_Q05,math,MATH_N1_SET_FUNC,resource_check,single_choice,application,true,"- $|u|<a\ (a>0)\iff -a<u<a$。
-- 二次式先求零点，再按开口方向确定正负区间。",不等式 $|2x-1|<3$ 的解集为,"$(-2,1)$","$[-1,2]$","$(-\infty,-1)\cup(2,+\infty)$","$(-1,2)$",D,,,$-3<2x-1<3\Rightarrow-2<2x<4\Rightarrow-1<x<2$。,2,10,45,CC0-1.0
-MATH_Q06,FAM_MATH_Q06,math,MATH_N1_SET_FUNC,resource_check,numeric,application,true,"- $\log_a a^k=k\ (a>0,\ a\ne1)$。
-- $a^{m/n}=\sqrt[n]{a^m}\ (a>0)$；$b^0=1\ (b\ne0)$。",计算 $\log_3 27+8^{\frac{2}{3}}-(\pi-3)^0$。,,,,,6:0,,,原式 $=3+4-1=6$；$\pi-3\ne0$。,2,10,45,CC0-1.0
-MATH_Q07,FAM_MATH_Q07,math,MATH_N1_SET_FUNC,verification,numeric,application,false,"- 奇函数：定义域关于原点对称，$f(-x)=-f(x)$。
-- 先求正自变量的函数值，再取相反数。",已知 $f(x)$ 是定义在 $\mathbb{R}$ 上的奇函数，且 $x>0$ 时 $f(x)=x^2+2x$，求 $f(-2)$。,,,,,-8:0,,,$f(2)=4+4=8$，由奇函数性质得 $f(-2)=-8$。,2,10,45,CC0-1.0
-MATH_Q09,FAM_MATH_Q09,math,MATH_N2_TRIG_SEQ,practice,single_choice,application,true,"- $\sin^2\alpha+\cos^2\alpha=1$；$\tan\alpha=\frac{\sin\alpha}{\cos\alpha}$。
-- 第二象限：正弦为正，余弦、正切为负。","已知 $\sin\alpha=\frac45$，$\alpha\in(\frac\pi2,\pi)$，则 $(\cos\alpha,\tan\alpha)$ 为","$(-\frac35,-\frac43)$","$(\frac35,\frac43)$","$(-\frac35,\frac43)$","$(\frac35,-\frac43)$",A,,先确定象限中的符号。,第二象限余弦为负，$\cos\alpha=-\sqrt{1-\frac{16}{25}}=-\frac35$，$\tan\alpha=-\frac43$。,2,10,55,CC0-1.0
-MATH_Q10,FAM_MATH_Q10,math,MATH_N2_TRIG_SEQ,practice,numeric,application,true,"- $\sin(\alpha+\beta)=\sin\alpha\cos\beta+\cos\alpha\sin\beta$。
-- $\cos(\alpha-\beta)=\cos\alpha\cos\beta+\sin\alpha\sin\beta$。",计算 $\sin75^\circ\cos15^\circ+\cos75^\circ\sin15^\circ$。,,,,,1:0,,把两项合成一个正弦。,原式 $=\sin(75^\circ+15^\circ)=\sin90^\circ=1$。,2,10,40,CC0-1.0
-MATH_Q11,FAM_MATH_Q11,math,MATH_N2_TRIG_SEQ,practice,single_choice,retrieval,false,"- $y=A\sin(\omega x+\varphi)$ 的最小正周期为 $T=\frac{2\pi}{|\omega|}$。
-- 振幅为 $|A|$，不改变周期。",函数 $y=2\sin(2x+\frac\pi6)$ 的最小正周期为,$\frac\pi2$,$2\pi$,$\pi$,$4\pi$,C,,周期取决于自变量的系数。,$\omega=2$，故 $T=\frac{2\pi}{2}=\pi$。,2,10,35,CC0-1.0
-MATH_Q12,FAM_MATH_Q12,math,MATH_N2_TRIG_SEQ,resource_check,single_choice,application,true,"- 等差数列：$a_n=a_1+(n-1)d$。
-- $S_n=\frac{n(a_1+a_n)}{2}$；$a_k+a_{n+1-k}=a_1+a_n$。",等差数列 $\{a_n\}$ 中，$a_2+a_8=10$，则前 $9$ 项和 $S_9=$,40,45,50,90,B,,,$a_1+a_9=a_2+a_8=10$，故 $S_9=\frac{9\times10}{2}=45$。,2,10,45,CC0-1.0
-MATH_Q13,FAM_MATH_Q13,math,MATH_N2_TRIG_SEQ,resource_check,numeric,application,true,"- 等比数列：$a_n=a_1q^{n-1}$，$a_1\ne0$，$q\ne0$。
-- $q\ne1$ 时，$S_n=\frac{a_1(1-q^n)}{1-q}$；$q=1$ 时，$S_n=na_1$。",等比数列 $\{a_n\}$ 中，$a_2=6$，$a_5=48$，求前 $5$ 项和 $S_5$。,,,,,93:0,,,$q^3=\frac{48}{6}=8$，故 $q=2$，$a_1=3$；$S_5=3(2^5-1)=93$。,3,10,65,CC0-1.0
-MATH_Q14,FAM_MATH_Q14,math,MATH_N2_TRIG_SEQ,resource_check,single_choice,retrieval,false,"- $\sin(\pi-\alpha)=\sin\alpha$；$\cos(\pi+\alpha)=-\cos\alpha$。
-- $\tan(\pi+\alpha)=\tan\alpha$；$\sin^2\alpha+\cos^2\alpha=1$。",下列恒等式中，正确的是（各式均在有意义时讨论）。,$\sin(\pi-\alpha)=-\sin\alpha$,$\cos(\pi+\alpha)=\cos\alpha$,$\sin^2\alpha+\cos^2\alpha=1$,$\tan(\pi+\alpha)=-\tan\alpha$,C,,,C 为同角三角函数的基本恒等式；A 应为 $\sin\alpha$，B 应为 $-\cos\alpha$，D 应为 $\tan\alpha$。,2,10,50,CC0-1.0
-MATH_Q15,FAM_MATH_Q15,math,MATH_N2_TRIG_SEQ,verification,short_fill,retrieval,false,"- 等差数列：$a_n=a_1+(n-1)d$。
-- $S_n=\frac{n(a_1+a_n)}{2}$；$a_k+a_{n+1-k}=a_1+a_n$。",等差数列的通项为 $a_n=3n-2$，其公差 $d=$ ______。,,,,,3,,,$d=a_{n+1}-a_n=3$。,2,10,30,CC0-1.0
-MATH_Q17,FAM_MATH_Q17,math,MATH_N3_VEC_GEOM_PROB,practice,numeric,application,true,"- 向量加减与数乘按对应坐标计算。
-- $(x_1,y_1)\cdot(x_2,y_2)=x_1x_2+y_1y_2$。","已知 $\vec a=(1,-2)$，$\vec b=(3,1)$，$\vec c=2\vec a-\vec b$，求 $\vec c\cdot\vec b$。",,,,,-8:0,,先求向量的坐标，再算内积。,"$\vec c=(2,-4)-(3,1)=(-1,-5)$，故 $\vec c\cdot\vec b=-3-5=-8$。",2,10,55,CC0-1.0
-MATH_Q18,FAM_MATH_Q18,math,MATH_N3_VEC_GEOM_PROB,practice,single_choice,application,true,"- 平行：$x_1y_2-x_2y_1=0$。
-- 垂直：$x_1x_2+y_1y_2=0$；两向量均非零。","与向量 $(1,2)$ 垂直的向量是","$(2,4)$","$(-2,1)$","$(2,1)$","$(1,0)$",B,,两非零向量垂直时，内积等于零。,"$(1,2)\cdot(-2,1)=-2+2=0$。其余三项与 $(1,2)$ 的内积依次为 $10,4,1$，都不为零。",2,10,55,CC0-1.0
-MATH_Q19,FAM_MATH_Q19,math,MATH_N3_VEC_GEOM_PROB,practice,single_choice,application,true,"- 斜率 $k=\tan\theta$，倾斜角 $\theta\in[0,\pi)$。
-- 斜率存在时，两直线平行须斜率相等且不重合；垂直满足 $k_1k_2=-1$。",直线 $l:y=\sqrt3x+1$ 的倾斜角为 $\theta$，直线 $m:x+\sqrt3y-2=0$。则,$\theta=\frac\pi6$，$l\parallel m$,$\theta=\frac\pi3$，$l\parallel m$,$\theta=\frac\pi6$，$l\perp m$,$\theta=\frac\pi3$，$l\perp m$,D,,求出两条直线的斜率。,$\tan\theta=\sqrt3$，故 $\theta=\frac\pi3$；$m$ 的斜率为 $-\frac1{\sqrt3}$，与 $l$ 的斜率之积为 $-1$。,3,10,60,CC0-1.0
-MATH_Q20,FAM_MATH_Q20,math,MATH_N3_VEC_GEOM_PROB,resource_check,numeric,application,true,"- 点 $(x_0,y_0)$ 到直线 $Ax+By+C=0$ 的距离：$d=\frac{|Ax_0+By_0+C|}{\sqrt{A^2+B^2}}$。
-- 分子取绝对值，分母为法向量的模。","求点 $P(1,-1)$ 到直线 $3x-4y+3=0$ 的距离。",,,,,2:0,,,$d=\frac{|3\times1-4\times(-1)+3|}{\sqrt{3^2+(-4)^2}}=\frac{10}{5}=2$。,2,10,50,CC0-1.0
-MATH_Q21,FAM_MATH_Q21,math,MATH_N3_VEC_GEOM_PROB,resource_check,single_choice,application,true,"- 古典概型：$P(A)=\frac{m}{n}$，基本事件须等可能。
-- 不放回抽取：每取出一个，总数随之减少。",袋中有 3 个红球和 2 个蓝球，大小、质地相同。随机不放回地取出 2 个球，两球均为红球的概率为,$\frac35$,$\frac9{25}$,$\frac3{10}$,$\frac15$,C,,,$P=\frac35\times\frac24=\frac3{10}$。,2,10,50,CC0-1.0
-MATH_Q24,FAM_MATH_Q24,math,MATH_N3_VEC_GEOM_PROB,verification,single_choice,application,false,"- 斜率 $k=\tan\theta$，倾斜角 $\theta\in[0,\pi)$。
-- 斜率存在时，两直线平行须斜率相等且不重合；垂直满足 $k_1k_2=-1$。",若直线 $l_1:2x-y+1=0$ 与 $l_2:(m+1)x-2y+3=0$ 平行，则 $m=$,1,3,-3,-5,B,,,斜率相等得 $2=\frac{m+1}{2}$，解得 $m=3$；此时两直线不重合。,2,10,50,CC0-1.0
+MATH_V2_Q01,FAM_MATH_N1_1,math,MATH_N1_SET_FUNC,practice,single_choice,application,true,"### 精讲卡：集合与函数
+- $|A\cup B|=|A|+|B|-|A\cap B|$；函数复合从内向外代入。
+- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。","集合 $A=\{1,2,3\}$，$B=\{2,3,4\}$，$A\cap B$ 有几个元素？",2,3,4,5,A,,,"交集为 $\{2,3\}$，共有 2 个元素。",1,10,90,CC0-1.0
+MATH_V2_Q02,FAM_MATH_N1_2,math,MATH_N1_SET_FUNC,practice,numeric,application,true,"### 精讲卡：集合与函数
+- $|A\cup B|=|A|+|B|-|A\cap B|$；函数复合从内向外代入。
+- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",$f(x)=2x+1$，求 $f(2)$。,,,,,5:0,,,代入得 $f(2)=2\times2+1=5$。,1,10,90,CC0-1.0
+MATH_V2_Q03,FAM_MATH_N1_3,math,MATH_N1_SET_FUNC,practice,short_fill,application,true,"### 精讲卡：集合与函数
+- $|A\cup B|=|A|+|B|-|A\cap B|$；函数复合从内向外代入。
+- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",方程 $2x-6=0$ 的解为多少？,,,,,3,,,移项得 $2x=6$，故 $x=3$。,1,10,90,CC0-1.0
+MATH_V2_Q05,FAM_MATH_N1_1,math,MATH_N1_SET_FUNC,resource_check,single_choice,application,true,"### 精讲卡：集合与函数
+- $|A\cup B|=|A|+|B|-|A\cap B|$；函数复合从内向外代入。
+- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。","集合 $A=\{1,2,3,4\}$，$B=\{3,4,5\}$，$A\cup B$ 有几个元素？",6,7,8,5,D,,,"并集为 $\{1,2,3,4,5\}$，共有 5 个元素。",2,10,90,CC0-1.0
+MATH_V2_Q06,FAM_MATH_N1_2,math,MATH_N1_SET_FUNC,resource_check,numeric,application,true,"### 精讲卡：集合与函数
+- $|A\cup B|=|A|+|B|-|A\cap B|$；函数复合从内向外代入。
+- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",$f(x)=x^2-1$，求 $f(-3)$。,,,,,8:0,,,代入得 $(-3)^2-1=8$。,2,10,90,CC0-1.0
+MATH_V2_Q07,FAM_MATH_N1_3,math,MATH_N1_SET_FUNC,resource_check,short_fill,application,true,"### 精讲卡：集合与函数
+- $|A\cup B|=|A|+|B|-|A\cap B|$；函数复合从内向外代入。
+- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",若 $f(x)=3x-2$ 且 $f(x)=10$，求 $x$。,,,,,4,,,由 $3x-2=10$ 得 $x=4$。,2,10,90,CC0-1.0
+MATH_V2_Q09,FAM_MATH_N1_1,math,MATH_N1_SET_FUNC,verification,single_choice,application,false,"### 精讲卡：集合与函数
+- $|A\cup B|=|A|+|B|-|A\cap B|$；函数复合从内向外代入。
+- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。","有限集合 $A,B$ 满足 $|A|=7,|B|=6,|A\cup B|=10$，求 $|A\cap B|$。",5,6,3,4,C,,,由容斥公式，$|A\cap B|=7+6-10=3$。,3,10,90,CC0-1.0
+MATH_V2_Q10,FAM_MATH_N1_2,math,MATH_N1_SET_FUNC,verification,numeric,application,false,"### 精讲卡：集合与函数
+- $|A\cup B|=|A|+|B|-|A\cap B|$；函数复合从内向外代入。
+- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",$f(x)=2x+1$，若 $f(f(a))=15$，求 $a$。,,,,,3:0,,,$f(f(a))=4a+3=15$，解得 $a=3$。,3,10,90,CC0-1.0
+MATH_V2_Q11,FAM_MATH_N1_3,math,MATH_N1_SET_FUNC,verification,short_fill,application,false,"### 精讲卡：集合与函数
+- $|A\cup B|=|A|+|B|-|A\cap B|$；函数复合从内向外代入。
+- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",方程 $|x^2-4x|=5$ 有多少个不同的实数根？,,,,,2,,,"当 $x^2-4x=5$ 时，解为 $-1,5$；当 $x^2-4x=-5$ 时，判别式为 $-4$，没有实根，故共 $2$ 根。",4,10,90,CC0-1.0
+MATH_V2_Q13,FAM_MATH_N2_1,math,MATH_N2_TRIG_SEQ,practice,single_choice,application,true,"### 精讲卡：三角函数
+- $\sin^2x+\cos^2x=1$，$1+\tan^2x=1/\cos^2x$。
+- $y=\sin(\omega x+\varphi)$ 的最小正周期为 $2\pi/|\omega|$。易错：诱导公式还要判断象限符号。",$\sin 30^\circ$ 的两倍是多少？,2,3,4,1,D,,,$\sin30^\circ=1/2$，两倍为 $1$。,1,10,90,CC0-1.0
+MATH_V2_Q14,FAM_MATH_N2_2,math,MATH_N2_TRIG_SEQ,practice,numeric,application,true,"### 精讲卡：三角函数
+- $\sin^2x+\cos^2x=1$，$1+\tan^2x=1/\cos^2x$。
+- $y=\sin(\omega x+\varphi)$ 的最小正周期为 $2\pi/|\omega|$。易错：诱导公式还要判断象限符号。",计算 $\sin^2 x+\cos^2 x$。,,,,,1:0,,,由同角平方关系，结果为 $1$。,1,10,90,CC0-1.0
+MATH_V2_Q15,FAM_MATH_N2_3,math,MATH_N2_TRIG_SEQ,practice,short_fill,application,true,"### 精讲卡：三角函数
+- $\sin^2x+\cos^2x=1$，$1+\tan^2x=1/\cos^2x$。
+- $y=\sin(\omega x+\varphi)$ 的最小正周期为 $2\pi/|\omega|$。易错：诱导公式还要判断象限符号。",$y=\sin x$ 的最小正周期是多少个 $\pi$？,,,,,2,,,正弦函数的最小正周期为 $2\pi$。,1,10,90,CC0-1.0
+MATH_V2_Q17,FAM_MATH_N2_1,math,MATH_N2_TRIG_SEQ,resource_check,single_choice,application,true,"### 精讲卡：三角函数
+- $\sin^2x+\cos^2x=1$，$1+\tan^2x=1/\cos^2x$。
+- $y=\sin(\omega x+\varphi)$ 的最小正周期为 $2\pi/|\omega|$。易错：诱导公式还要判断象限符号。",$\cos 60^\circ$ 的四倍是多少？,4,5,2,3,C,,,$\cos60^\circ=1/2$，四倍为 $2$。,2,10,90,CC0-1.0
+MATH_V2_Q18,FAM_MATH_N2_2,math,MATH_N2_TRIG_SEQ,resource_check,numeric,application,true,"### 精讲卡：三角函数
+- $\sin^2x+\cos^2x=1$，$1+\tan^2x=1/\cos^2x$。
+- $y=\sin(\omega x+\varphi)$ 的最小正周期为 $2\pi/|\omega|$。易错：诱导公式还要判断象限符号。",若 $\sin x=3/5$，求 $25\cos^2x$。,,,,,16:0,,,$\cos^2x=1-9/25=16/25$，故结果为 $16$。,2,10,90,CC0-1.0
+MATH_V2_Q19,FAM_MATH_N2_3,math,MATH_N2_TRIG_SEQ,resource_check,short_fill,application,true,"### 精讲卡：三角函数
+- $\sin^2x+\cos^2x=1$，$1+\tan^2x=1/\cos^2x$。
+- $y=\sin(\omega x+\varphi)$ 的最小正周期为 $2\pi/|\omega|$。易错：诱导公式还要判断象限符号。",$y=\sin 2x$ 的最小正周期是多少个 $\pi$？,,,,,1,,,周期 $T=2\pi/2=\pi$。,2,10,90,CC0-1.0
+MATH_V2_Q21,FAM_MATH_N2_1,math,MATH_N2_TRIG_SEQ,verification,single_choice,application,false,"### 精讲卡：三角函数
+- $\sin^2x+\cos^2x=1$，$1+\tan^2x=1/\cos^2x$。
+- $y=\sin(\omega x+\varphi)$ 的最小正周期为 $2\pi/|\omega|$。易错：诱导公式还要判断象限符号。",$\sin150^\circ+\cos60^\circ$ 等于多少？,4,1,2,3,B,,,$\sin150^\circ=\sin30^\circ=1/2$，两项相加为 $1$。,3,10,90,CC0-1.0
+MATH_V2_Q22,FAM_MATH_N2_2,math,MATH_N2_TRIG_SEQ,verification,numeric,application,false,"### 精讲卡：三角函数
+- $\sin^2x+\cos^2x=1$，$1+\tan^2x=1/\cos^2x$。
+- $y=\sin(\omega x+\varphi)$ 的最小正周期为 $2\pi/|\omega|$。易错：诱导公式还要判断象限符号。",若 $\tan x=2$，求 $1/\cos^2x$。,,,,,5:0,,,由 $1+\tan^2x=1/\cos^2x$，结果为 $5$。,3,10,90,CC0-1.0
+MATH_V2_Q23,FAM_MATH_N2_3,math,MATH_N2_TRIG_SEQ,verification,short_fill,application,false,"### 精讲卡：三角函数
+- $\sin^2x+\cos^2x=1$，$1+\tan^2x=1/\cos^2x$。
+- $y=\sin(\omega x+\varphi)$ 的最小正周期为 $2\pi/|\omega|$。易错：诱导公式还要判断象限符号。","在 $[0,4\pi]$ 内，方程 $\sin x=1/2$ 有多少个不同的解？",,,,,4,,,每个长度为 $2\pi$ 的周期有两个解，区间两端都不是解，共 $4$ 个。,4,10,90,CC0-1.0
+MATH_V2_Q25,FAM_MATH_N3_1,math,MATH_N3_VEC_GEOM_PROB,practice,single_choice,application,true,"### 精讲卡：数列
+- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。
+- 等比数列 $a_n=a_1q^{n-1}$；$n\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",等差数列首项为 $2$，公差为 $3$，第二项是多少？,7,8,5,6,C,,,$a_2=2+3=5$。,1,10,90,CC0-1.0
+MATH_V2_Q26,FAM_MATH_N3_2,math,MATH_N3_VEC_GEOM_PROB,practice,numeric,application,true,"### 精讲卡：数列
+- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。
+- 等比数列 $a_n=a_1q^{n-1}$；$n\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",等比数列首项为 $2$，公比为 $3$，第三项是多少？,,,,,18:0,,,$a_3=2\times3^2=18$。,1,10,90,CC0-1.0
+MATH_V2_Q27,FAM_MATH_N3_3,math,MATH_N3_VEC_GEOM_PROB,practice,short_fill,application,true,"### 精讲卡：数列
+- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。
+- 等比数列 $a_n=a_1q^{n-1}$；$n\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",数列 $a_n=2n+1$ 的公差是多少？,,,,,2,,,$a_{n+1}-a_n=2$。,1,10,90,CC0-1.0
+MATH_V2_Q29,FAM_MATH_N3_1,math,MATH_N3_VEC_GEOM_PROB,resource_check,single_choice,application,true,"### 精讲卡：数列
+- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。
+- 等比数列 $a_n=a_1q^{n-1}$；$n\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",等差数列首项为 $2$，公差为 $3$，第五项是多少？,17,14,15,16,B,,,$a_5=2+4\times3=14$。,2,10,90,CC0-1.0
+MATH_V2_Q30,FAM_MATH_N3_2,math,MATH_N3_VEC_GEOM_PROB,resource_check,numeric,application,true,"### 精讲卡：数列
+- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。
+- 等比数列 $a_n=a_1q^{n-1}$；$n\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。","等比数列 $a_1=3,q=2$，前四项和是多少？",,,,,45:0,,,"前四项为 $3,6,12,24$，和为 $45$。",2,10,90,CC0-1.0
+MATH_V2_Q31,FAM_MATH_N3_3,math,MATH_N3_VEC_GEOM_PROB,resource_check,short_fill,application,true,"### 精讲卡：数列
+- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。
+- 等比数列 $a_n=a_1q^{n-1}$；$n\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。","等差数列 $a_1=4,a_5=16$，公差是多少？",,,,,3,,,$4d=16-4=12$，故 $d=3$。,2,10,90,CC0-1.0
+MATH_V2_Q33,FAM_MATH_N3_1,math,MATH_N3_VEC_GEOM_PROB,verification,single_choice,application,false,"### 精讲卡：数列
+- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。
+- 等比数列 $a_n=a_1q^{n-1}$；$n\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。","等差数列 $a_3=7,a_7=19$，公差是多少？",3,4,5,6,A,,,$a_7-a_3=4d=12$，故 $d=3$。,3,10,90,CC0-1.0
+MATH_V2_Q34,FAM_MATH_N3_2,math,MATH_N3_VEC_GEOM_PROB,verification,numeric,application,false,"### 精讲卡：数列
+- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。
+- 等比数列 $a_n=a_1q^{n-1}$；$n\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。","等比数列 $a_2=6,a_4=24$，且 $q>0$，求 $a_1$。",,,,,3:0,,,$q^2=24/6=4$，正公比为 $2$，故首项为 $3$。,3,10,90,CC0-1.0
+MATH_V2_Q35,FAM_MATH_N3_3,math,MATH_N3_VEC_GEOM_PROB,verification,short_fill,application,false,"### 精讲卡：数列
+- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。
+- 等比数列 $a_n=a_1q^{n-1}$；$n\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",数列前 $n$ 项和 $S_n=3n^2+2n$，求第 $10$ 项 $a_{10}$。,,,,,59,,,$a_{10}=S_{10}-S_9=320-261=59$。,4,10,90,CC0-1.0
+MATH_V2_Q37,FAM_MATH_N4_1,math,MATH_N4_VECTOR_LINE,practice,single_choice,application,true,"### 精讲卡：向量与直线
+- $\vec a\cdot\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。
+- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。","向量 $\vec a=(1,2),\vec b=(3,1)$，$\vec a+\vec b$ 的横坐标是多少？",7,4,5,6,B,,,横坐标相加，$1+3=4$。,1,10,90,CC0-1.0
+MATH_V2_Q38,FAM_MATH_N4_2,math,MATH_N4_VECTOR_LINE,practice,numeric,application,true,"### 精讲卡：向量与直线
+- $\vec a\cdot\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。
+- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。","向量 $(1,2)$ 与 $(3,4)$ 的数量积是多少？",,,,,11:0,,,数量积为 $1\times3+2\times4=11$。,1,10,90,CC0-1.0
+MATH_V2_Q39,FAM_MATH_N4_3,math,MATH_N4_VECTOR_LINE,practice,short_fill,application,true,"### 精讲卡：向量与直线
+- $\vec a\cdot\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。
+- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",直线 $y=2x+3$ 的斜率是多少？,,,,,2,,,斜截式中 $x$ 的系数是斜率，故为 $2$。,1,10,90,CC0-1.0
+MATH_V2_Q41,FAM_MATH_N4_1,math,MATH_N4_VECTOR_LINE,resource_check,single_choice,application,true,"### 精讲卡：向量与直线
+- $\vec a\cdot\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。
+- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。","向量 $\vec a=(2,3),\vec b=(1,-1)$，$2\vec a-\vec b$ 的纵坐标是多少？",7,8,9,10,A,,,纵坐标为 $2\times3-(-1)=7$。,2,10,90,CC0-1.0
+MATH_V2_Q42,FAM_MATH_N4_2,math,MATH_N4_VECTOR_LINE,resource_check,numeric,application,true,"### 精讲卡：向量与直线
+- $\vec a\cdot\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。
+- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。","向量 $(2,1)$ 与 $(k,4)$ 垂直，求 $k$。",,,,,-2:0,,,数量积为零：$2k+4=0$，故 $k=-2$。,2,10,90,CC0-1.0
+MATH_V2_Q43,FAM_MATH_N4_3,math,MATH_N4_VECTOR_LINE,resource_check,short_fill,application,true,"### 精讲卡：向量与直线
+- $\vec a\cdot\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。
+- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。","过 $(0,1)$ 和 $(2,5)$ 的直线斜率是多少？",,,,,2,,,斜率为 $(5-1)/(2-0)=2$。,2,10,90,CC0-1.0
+MATH_V2_Q45,FAM_MATH_N4_1,math,MATH_N4_VECTOR_LINE,verification,single_choice,application,false,"### 精讲卡：向量与直线
+- $\vec a\cdot\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。
+- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。","若 $(2,k)$ 与 $(1,3)$ 平行，求 $k$。",7,8,9,6,D,,,平行时行列式为零，$2\times3-k=0$，所以 $k=6$。,3,10,90,CC0-1.0
+MATH_V2_Q46,FAM_MATH_N4_2,math,MATH_N4_VECTOR_LINE,verification,numeric,application,false,"### 精讲卡：向量与直线
+- $\vec a\cdot\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。
+- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。","$|\vec a|=2,|\vec b|=3$，夹角为 $60^\circ$，求 $|\vec a+\vec b|^2$。",,,,,19:0,,,展开得 $4+9+2\times2\times3\times1/2=19$。,3,10,90,CC0-1.0
+MATH_V2_Q47,FAM_MATH_N4_3,math,MATH_N4_VECTOR_LINE,verification,short_fill,application,false,"### 精讲卡：向量与直线
+- $\vec a\cdot\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。
+- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。","过点 $(2,1)$ 且与直线 $3x-4y+7=0$ 垂直的直线与 $x$ 轴交点的横坐标是多少？",,,,,2.75,,,已知直线斜率为 $3/4$，垂线斜率为 $-4/3$；令 $y=0$ 得 $x=2+3/4=2.75$。,4,10,90,CC0-1.0
+MATH_V2_Q49,FAM_MATH_N5_1,math,MATH_N5_CIRCLE_CONIC,practice,single_choice,application,true,"### 精讲卡：圆与解析几何
+- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。
+- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",圆 $x^2+y^2=9$ 的半径是多少？,3,4,5,6,A,,,标准式 $x^2+y^2=r^2$，故 $r=3$。,1,10,90,CC0-1.0
+MATH_V2_Q50,FAM_MATH_N5_2,math,MATH_N5_CIRCLE_CONIC,practice,numeric,application,true,"### 精讲卡：圆与解析几何
+- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。
+- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。","点 $(0,0)$ 到点 $(3,4)$ 的距离是多少？",,,,,5:0,,,距离为 $\sqrt{3^2+4^2}=5$。,1,10,90,CC0-1.0
+MATH_V2_Q51,FAM_MATH_N5_3,math,MATH_N5_CIRCLE_CONIC,practice,short_fill,application,true,"### 精讲卡：圆与解析几何
+- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。
+- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",圆 $(x-2)^2+y^2=1$ 的圆心横坐标是多少？,,,,,2,,,"与标准式比较得圆心为 $(2,0)$。",1,10,90,CC0-1.0
+MATH_V2_Q53,FAM_MATH_N5_1,math,MATH_N5_CIRCLE_CONIC,resource_check,single_choice,application,true,"### 精讲卡：圆与解析几何
+- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。
+- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",圆 $(x-1)^2+(y+2)^2=16$ 的半径是多少？,5,6,7,4,D,,,半径是 $\sqrt{16}=4$。,2,10,90,CC0-1.0
+MATH_V2_Q54,FAM_MATH_N5_2,math,MATH_N5_CIRCLE_CONIC,resource_check,numeric,application,true,"### 精讲卡：圆与解析几何
+- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。
+- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。","圆心为 $(1,2)$、半径为 $3$，点 $(4,2)$ 到圆心的距离是多少？",,,,,3:0,,,距离为 $\sqrt{(4-1)^2+(2-2)^2}=3$。,2,10,90,CC0-1.0
+MATH_V2_Q55,FAM_MATH_N5_3,math,MATH_N5_CIRCLE_CONIC,resource_check,short_fill,application,true,"### 精讲卡：圆与解析几何
+- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。
+- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",圆 $x^2+y^2+6x-2y=0$ 的圆心横坐标是多少？,,,,,-3,,,配方为 $(x+3)^2+(y-1)^2=10$，横坐标为 $-3$。,2,10,90,CC0-1.0
+MATH_V2_Q57,FAM_MATH_N5_1,math,MATH_N5_CIRCLE_CONIC,verification,single_choice,application,false,"### 精讲卡：圆与解析几何
+- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。
+- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",圆 $x^2+y^2-4x+6y-12=0$ 的半径是多少？,7,8,5,6,C,,,配方得 $(x-2)^2+(y+3)^2=25$，半径为 $5$。,3,10,90,CC0-1.0
+MATH_V2_Q58,FAM_MATH_N5_2,math,MATH_N5_CIRCLE_CONIC,verification,numeric,application,false,"### 精讲卡：圆与解析几何
+- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。
+- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",圆 $x^2+y^2=25$ 被直线 $y=3$ 截得的弦长是多少？,,,,,8:0,,,圆心到直线距离为 $3$，半弦长 $\sqrt{25-9}=4$，故弦长 $8$。,3,10,90,CC0-1.0
+MATH_V2_Q59,FAM_MATH_N5_3,math,MATH_N5_CIRCLE_CONIC,verification,short_fill,application,false,"### 精讲卡：圆与解析几何
+- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。
+- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",直线 $y=2x+5$ 与圆 $x^2+y^2=25$ 两个交点的横坐标之和是多少？,,,,,-4,,,代入圆得 $5x^2+20x=0$，两根之和为 $-20/5=-4$。,4,10,90,CC0-1.0
+MATH_V2_Q61,FAM_MATH_N6_1,math,MATH_N6_PROB_STAT,practice,single_choice,application,true,"### 精讲卡：概率与统计
+- 等可能情形下 $P=\frac{\text{有利结果数}}{\text{全部结果数}}$。
+- 平均数 $\bar x=\sum x_i/n$，方差 $s^2=\sum(x_i-\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",掷一枚公平六面骰，出现偶数的概率乘以 $6$ 等于多少？,4,5,6,3,D,,,"偶数有 $2,4,6$ 三种，概率 $3/6$，乘以 $6$ 得 $3$。",1,10,90,CC0-1.0
+MATH_V2_Q62,FAM_MATH_N6_2,math,MATH_N6_PROB_STAT,practice,numeric,application,true,"### 精讲卡：概率与统计
+- 等可能情形下 $P=\frac{\text{有利结果数}}{\text{全部结果数}}$。
+- 平均数 $\bar x=\sum x_i/n$，方差 $s^2=\sum(x_i-\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。","数据 $1,2,3$ 的平均数是多少？",,,,,2:0,,,和为 $6$，除以 $3$ 得 $2$。,1,10,90,CC0-1.0
+MATH_V2_Q63,FAM_MATH_N6_3,math,MATH_N6_PROB_STAT,practice,short_fill,application,true,"### 精讲卡：概率与统计
+- 等可能情形下 $P=\frac{\text{有利结果数}}{\text{全部结果数}}$。
+- 平均数 $\bar x=\sum x_i/n$，方差 $s^2=\sum(x_i-\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。","数据 $2,2,3,4$ 的众数是多少？",,,,,2,,,数字 $2$ 出现两次，其余数各出现一次。,1,10,90,CC0-1.0
+MATH_V2_Q65,FAM_MATH_N6_1,math,MATH_N6_PROB_STAT,resource_check,single_choice,application,true,"### 精讲卡：概率与统计
+- 等可能情形下 $P=\frac{\text{有利结果数}}{\text{全部结果数}}$。
+- 平均数 $\bar x=\sum x_i/n$，方差 $s^2=\sum(x_i-\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",掷一枚公平六面骰，点数大于 $4$ 的概率乘以 $6$ 等于多少？,4,5,2,3,C,,,"满足条件的点数为 $5,6$，概率为 $2/6$。",2,10,90,CC0-1.0
+MATH_V2_Q66,FAM_MATH_N6_2,math,MATH_N6_PROB_STAT,resource_check,numeric,application,true,"### 精讲卡：概率与统计
+- 等可能情形下 $P=\frac{\text{有利结果数}}{\text{全部结果数}}$。
+- 平均数 $\bar x=\sum x_i/n$，方差 $s^2=\sum(x_i-\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。","数据 $2,4,6,8$ 的中位数是多少？",,,,,5:0,,,"中间两个数为 $4,6$，中位数为 $(4+6)/2=5$。",2,10,90,CC0-1.0
+MATH_V2_Q67,FAM_MATH_N6_3,math,MATH_N6_PROB_STAT,resource_check,short_fill,application,true,"### 精讲卡：概率与统计
+- 等可能情形下 $P=\frac{\text{有利结果数}}{\text{全部结果数}}$。
+- 平均数 $\bar x=\sum x_i/n$，方差 $s^2=\sum(x_i-\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。","数据 $1,2,2,3,5$ 的中位数是多少？",,,,,2,,,数据已按大小排列，中间第三个数为 $2$。,2,10,90,CC0-1.0
+MATH_V2_Q69,FAM_MATH_N6_1,math,MATH_N6_PROB_STAT,verification,single_choice,application,false,"### 精讲卡：概率与统计
+- 等可能情形下 $P=\frac{\text{有利结果数}}{\text{全部结果数}}$。
+- 平均数 $\bar x=\sum x_i/n$，方差 $s^2=\sum(x_i-\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",两次独立掷公平硬币，恰有一次正面的概率乘以 $4$ 等于多少？,5,2,3,4,B,,,四个等可能结果中正反、反正满足条件，概率为 $2/4$。,3,10,90,CC0-1.0
+MATH_V2_Q70,FAM_MATH_N6_2,math,MATH_N6_PROB_STAT,verification,numeric,application,false,"### 精讲卡：概率与统计
+- 等可能情形下 $P=\frac{\text{有利结果数}}{\text{全部结果数}}$。
+- 平均数 $\bar x=\sum x_i/n$，方差 $s^2=\sum(x_i-\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",四个数的平均数为 $5$，加入一个数后五个数的平均数为 $6$，加入的数是多少？,,,,,10:0,,,原总和为 $20$，新总和为 $30$，差为 $10$。,3,10,90,CC0-1.0
+MATH_V2_Q71,FAM_MATH_N6_3,math,MATH_N6_PROB_STAT,verification,short_fill,application,false,"### 精讲卡：概率与统计
+- 等可能情形下 $P=\frac{\text{有利结果数}}{\text{全部结果数}}$。
+- 平均数 $\bar x=\sum x_i/n$，方差 $s^2=\sum(x_i-\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。","数据 $1,3,5,7$ 的每个数都先乘 $2$ 再加 $1$，所得数据的方差是多少？",,,,,20,,,原数据均值为 $4$，方差为 $(9+1+1+9)/4=5$；乘 $2$ 使方差变为原来的 $4$ 倍，加 $1$ 不改变方差，故为 $20$。,4,10,90,CC0-1.0

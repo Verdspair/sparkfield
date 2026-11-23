@@ -4,6 +4,7 @@ import {
   type UnitCombatTelemetry,
 } from '@pkg/contracts';
 import {
+  BATTLE_TICK_MS,
   createCombat,
   createSeat,
   stepCombat,
@@ -132,68 +133,52 @@ export class LiveBattleChoreographer {
     stageSeatIndex: number;
     onTelemetry?: (telemetry: UnitCombatTelemetry[]) => void;
   }): void {
-    this.stop();
     const { stage, snapshot, battlePayload, viewedSeatId, stageSeatIndex, onTelemetry } = params;
+    if (snapshot.phase !== 'battle') return;
+    this.stop();
     stage.setPhase('battle');
     this.stageSeatIndex = stageSeatIndex;
     this.onTelemetryUpdate = onTelemetry;
 
-    const battle: RoundBattle | undefined = battlePayload?.battles.find(
+    const payload = battlePayload?.round === snapshot.round ? battlePayload : null;
+    const battle: RoundBattle | undefined = payload?.battles.find(
       (b) => b.leftSeatId === viewedSeatId || b.rightSeatId === viewedSeatId,
     );
+    const leftSeatId = battle?.leftSeatId ?? viewedSeatId;
+    const leftSeat = buildSeatFromPublicView(snapshot, leftSeatId);
+    const rightSeat = battle && !battle.pve
+      ? buildSeatFromPublicView(snapshot, battle.rightSeatId)
+      : buildPveSeat(snapshot.mode, snapshot.round, leftSeatId);
+    this.flipPerspective = battle?.rightSeatId === viewedSeatId;
+    this.authoritativeTelemetry = battle?.result.telemetry ?? [];
 
-    let leftSeat: SeatState;
-    let rightSeat: SeatState;
-    if (battle) {
-      leftSeat = buildSeatFromPublicView(snapshot, battle.leftSeatId);
-      rightSeat = battle.pve
-        ? buildPveSeat(snapshot.mode, snapshot.round, battle.leftSeatId)
-        : buildSeatFromPublicView(snapshot, battle.rightSeatId);
-      this.flipPerspective = battle.rightSeatId === viewedSeatId;
-      this.authoritativeTelemetry = battle.result.telemetry;
-    } else {
-      leftSeat = buildSeatFromPublicView(snapshot, viewedSeatId);
-      rightSeat = buildPveSeat(snapshot.mode, snapshot.round, viewedSeatId);
-      this.flipPerspective = false;
-      this.authoritativeTelemetry = [];
-    }
-
-    let seed = (snapshot.round * 2654435761) >>> 0;
-    for (let i = 0; i < snapshot.matchId.length; i += 1) {
-      seed = Math.imul(seed ^ snapshot.matchId.charCodeAt(i), 16777619) >>> 0;
-    }
-
-    this.combat = createCombat(leftSeat, rightSeat, snapshot.mode, seed || 1);
-    this.trackers.clear();
-    for (const u of this.combat.units) {
+    const startedAt = payload?.startedAtEpochMs ?? Date.now();
+    const timeScale = payload?.timeScale && payload.timeScale > 0 ? payload.timeScale : 1;
+    const elapsedNow = () => Math.max(0, Math.floor((Date.now() - startedAt) / timeScale / BATTLE_TICK_MS) * BATTLE_TICK_MS);
+    const combat = createCombat(leftSeat, rightSeat, snapshot.mode, battle?.result.seed);
+    this.combat = combat;
+    stepCombat(combat, elapsedNow());
+    for (const u of combat.units) {
       this.trackers.set(u.id, { hp: u.hp, attacks: u.attacks, castUntil: u.castUntil });
     }
-
     this.pushCombatFrame(stage, snapshot);
+    this.publishTelemetry();
 
+    if (combat.result) return;
     this.timer = setInterval(() => {
-      if (!this.combat) return;
-      if (!this.combat.result) {
-        const prevPositions = new Map<string, { row: number; col: number }>();
-        for (const u of this.combat.units) {
-          prevPositions.set(u.id, { row: u.row, col: u.col });
-        }
-        stepCombat(this.combat, 50);
-        this.emitStepEffects(stage, prevPositions);
-        this.pushCombatFrame(stage, snapshot);
-      } else {
-        const allyWon =
-          (this.combat.result.winnerSide === 0 && !this.flipPerspective) ||
-          (this.combat.result.winnerSide === 1 && this.flipPerspective);
-        if (allyWon) {
+      const deltaMs = elapsedNow() - combat.elapsedMs;
+      if (deltaMs <= 0) return;
+      stepCombat(combat, deltaMs);
+      this.emitStepEffects(stage);
+      this.pushCombatFrame(stage, snapshot);
+      this.publishTelemetry();
+      if (combat.result) {
+        if (combat.result.winnerSide === (this.flipPerspective ? 1 : 0)) {
           stage.triggerTacticianEmote('cheer');
-        }
-        if (this.authoritativeTelemetry.length > 0) {
-          this.onTelemetryUpdate?.(this.authoritativeTelemetry);
         }
         this.stopTimerOnly();
       }
-    }, 50);
+    }, Math.max(1, BATTLE_TICK_MS * timeScale));
   }
 
   private mapBoardHex(row: number, col: number): { row: number; col: number } {
@@ -208,12 +193,8 @@ export class LiveBattleChoreographer {
     return u.instanceId || u.id;
   }
 
-  private emitStepEffects(
-    stage: BoardStageEngine,
-    _prevPositions: Map<string, { row: number; col: number }>,
-  ): void {
+  private emitStepEffects(stage: BoardStageEngine): void {
     if (!this.combat) return;
-    const nowMs = this.combat.elapsedMs;
 
     for (const u of this.combat.units) {
       const prev = this.trackers.get(u.id);
@@ -244,17 +225,18 @@ export class LiveBattleChoreographer {
       prev.attacks = u.attacks;
       prev.castUntil = u.castUntil;
     }
+  }
 
-    const liveTelemetry: UnitCombatTelemetry[] = this.combat.units
+  private publishTelemetry(): void {
+    if (!this.combat || !this.onTelemetryUpdate) return;
+    const liveTelemetry = this.combat.units
       .filter((u) => this.isAllyUnit(u))
       .map((u) => ({ ...u.telemetry }));
-    this.onTelemetryUpdate?.(
+    this.onTelemetryUpdate(
       this.combat.result && this.authoritativeTelemetry.length > 0
         ? this.authoritativeTelemetry
         : liveTelemetry,
     );
-
-    void nowMs;
   }
 
   private pushCombatFrame(stage: BoardStageEngine, snapshot: MatchRoomSnapshot): void {
@@ -280,7 +262,7 @@ export class LiveBattleChoreographer {
           const destMapped = this.mapBoardHex(u.move.to.row, u.move.to.col);
           const fromXZ = hexToStageXZ(mapped.row, mapped.col);
           const toXZ = hexToStageXZ(destMapped.row, destMapped.col);
-          const ratio = Math.max(0, Math.min(1, 1 - (u.move.arriveAt - nowMs) / 260));
+          const ratio = Math.max(0, Math.min(1, (nowMs - u.move.startAt) / (u.move.arriveAt - u.move.startAt)));
           worldOverride = {
             x: seatOrigin.x + fromXZ.x + (toXZ.x - fromXZ.x) * ratio,
             z: seatOrigin.z + fromXZ.z + (toXZ.z - fromXZ.z) * ratio,

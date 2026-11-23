@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type {
+  ArcStageKind,
   AudioEventBus,
   ClientQuestionView,
   ClientStepPrompt,
+  LearningArcMeta,
   LessonStepKind,
   QuestionFeedbackReveal,
   QuestionItem,
@@ -77,6 +79,7 @@ export interface RemediationItemSummary {
 }
 
 export interface QuestionStepCardProps {
+  readonly arcMeta?: LearningArcMeta | null;
   readonly stepKind?: LessonStepKind;
   readonly stepsProgress?: readonly LessonStepProgressItem[];
   readonly question?: ClientQuestionView | QuestionItem | null;
@@ -126,6 +129,45 @@ const VERBOSE_STEP_LABELS = new Set([
   '新变式验证',
   '新变式掌握验证',
 ]);
+
+function resolveArcStageRibbonLabel(
+  kind: ArcStageKind,
+  adaptiveBranch: LearningArcMeta['adaptiveBranch'],
+): string {
+  switch (kind) {
+    case 'intro':
+      return '熟悉';
+    case 'deepen':
+      return '深入';
+    case 'diagnose':
+      return '诊断';
+    case 'remediate':
+      return adaptiveBranch === 'remediation_inserted' ? '动态订正' : '巩固';
+    case 'stretch':
+      return '进阶';
+    case 'mastery':
+      return '终测';
+  }
+}
+
+function ArcBranchGlyphSvg({ kind }: { readonly kind: 'remediate' | 'stretch' }): React.JSX.Element {
+  if (kind === 'remediate') {
+    return (
+      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.4" stroke="currentColor" strokeWidth="1.35" />
+        <path d="M7 4.2V7.4M7 9.6V10.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path
+        d="M7 1.5L8.65 5.1L12.5 5.65L9.75 8.3L10.4 12.1L7 10.3L3.6 12.1L4.25 8.3L1.5 5.65L5.35 5.1Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
 
 const CLOCK_RING_RADIUS = 7.5;
 const CLOCK_RING_CIRCUMFERENCE = 2 * Math.PI * CLOCK_RING_RADIUS;
@@ -226,6 +268,7 @@ function ThemeToggleIcon({ theme }: { readonly theme: LearningReadingTheme }): R
 }
 
 export function QuestionStepCard({
+  arcMeta = null,
   stepKind,
   stepsProgress,
   question: suppliedQuestion = null,
@@ -549,6 +592,77 @@ export function QuestionStepCard({
       <CornerOrnamentSvg pos="tr" />
       <CornerOrnamentSvg pos="bl" />
       <CornerOrnamentSvg pos="br" />
+
+      {arcMeta ? (
+        <div
+          className="lui-arc-ribbon"
+          data-testid="learning-arc-ribbon"
+          data-adaptive-branch={arcMeta.adaptiveBranch}
+        >
+          <div className="lui-arc-ribbon__left">
+            <span className="lui-arc-counter">
+              大轮次 {arcMeta.arcIndex + 1}/{arcMeta.arcCount}
+            </span>
+            <span className="lui-arc-topic" title={arcMeta.topicTitle}>
+              {arcMeta.topicTitle}
+            </span>
+            {arcMeta.strategy === 'modular_pack' && arcMeta.blueprintTags.length > 0 ? (
+              <span className="lui-arc-tags">
+                {arcMeta.blueprintTags.map((tag) => (
+                  <span key={tag} className="lui-arc-tag">
+                    {tag}
+                  </span>
+                ))}
+              </span>
+            ) : null}
+          </div>
+
+          <div className="lui-arc-ribbon__right">
+            {arcMeta.adaptiveBranch === 'remediation_inserted' ? (
+              <span
+                className="lui-arc-branch lui-arc-branch--remediate"
+                data-testid="learning-arc-branch-badge"
+              >
+                <ArcBranchGlyphSvg kind="remediate" />
+                <span>动态插入 · 错题靶向订正</span>
+              </span>
+            ) : arcMeta.adaptiveBranch === 'stretch_promoted' ? (
+              <span
+                className="lui-arc-branch lui-arc-branch--stretch"
+                data-testid="learning-arc-branch-badge"
+              >
+                <ArcBranchGlyphSvg kind="stretch" />
+                <span>高正确率 · 进阶挑战</span>
+              </span>
+            ) : null}
+
+            <ol className="lui-arc-outline" aria-label="大轮次进度弧线">
+              {arcMeta.stageOutline.map((stage, idx) => (
+                <li key={`${stage.slot}-${stage.kind}`} className="lui-arc-outline-item">
+                  {idx > 0 ? (
+                    <span
+                      className={`lui-arc-connector ${
+                        arcMeta.stageOutline[idx - 1]?.status === 'done'
+                          ? 'lui-arc-connector--done'
+                          : ''
+                      }`.trim()}
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                  <span
+                    className={`lui-arc-node lui-arc-node--${stage.status}`}
+                    title={stage.label}
+                    aria-current={stage.status === 'active' ? 'step' : undefined}
+                  >
+                    <span className="lui-arc-node-dot" aria-hidden="true" />
+                    <span>{resolveArcStageRibbonLabel(stage.kind, arcMeta.adaptiveBranch)}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      ) : null}
 
       <header className="lui-header">
         <ol className="lui-step-rail" aria-label="学习进度">

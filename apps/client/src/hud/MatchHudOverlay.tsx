@@ -404,7 +404,25 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   const self = matchSnapshot.self;
   const modeSpec = MODE_BUDGETS.modes[matchSnapshot.mode];
   const timelineEvent = modeSpec.timeline[matchSnapshot.phaseIndex];
-  const totalPhaseSec = timelineEvent?.duration ?? 50;
+  const activeBattle = matchSnapshot.phase === 'battle' ? (matchSnapshot.battle ?? null) : null;
+  const totalPhaseSec =
+    activeBattle?.startedAtEpochMs &&
+    matchSnapshot.deadlineEpochMs > activeBattle.startedAtEpochMs
+      ? Math.max(1, (matchSnapshot.deadlineEpochMs - activeBattle.startedAtEpochMs) / 1000)
+      : (timelineEvent?.duration ?? 50);
+  const elapsedBattleScaledMs =
+    activeBattle?.startedAtEpochMs !== undefined
+      ? Math.max(0, (nowMs - activeBattle.startedAtEpochMs) / (activeBattle.timeScale ?? 1))
+      : null;
+  const isBattleOvertime =
+    elapsedBattleScaledMs !== null &&
+    Boolean(activeBattle?.overtimeAtMs) &&
+    elapsedBattleScaledMs >= activeBattle!.overtimeAtMs! &&
+    (!activeBattle?.longestBattleMs || elapsedBattleScaledMs < activeBattle.longestBattleMs);
+  const isBattleAllFinished =
+    elapsedBattleScaledMs !== null &&
+    Boolean(activeBattle?.longestBattleMs) &&
+    elapsedBattleScaledMs >= activeBattle!.longestBattleMs!;
   const liveRemainingSec = Math.max(0, (matchSnapshot.deadlineEpochMs - nowMs) / 1000);
   const progressPct =
     totalPhaseSec > 0
@@ -674,6 +692,42 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             <strong className="blc-phase-label">
               {timelineEvent?.label ?? PHASE_LABELS[matchSnapshot.phase]}
             </strong>
+            {isBattleOvertime ? (
+              <span
+                data-testid="battle-overtime-badge"
+                style={{
+                  padding: '1px 7px',
+                  borderRadius: '999px',
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  background: 'linear-gradient(135deg, rgba(225, 29, 72, 0.34), rgba(245, 158, 11, 0.28))',
+                  border: '1px solid rgba(251, 191, 36, 0.85)',
+                  color: '#fef08a',
+                  boxShadow: '0 0 10px rgba(244, 63, 94, 0.35)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                极速加时
+              </span>
+            ) : isBattleAllFinished ? (
+              <span
+                data-testid="battle-finished-badge"
+                style={{
+                  padding: '1px 7px',
+                  borderRadius: '999px',
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.26), rgba(242, 201, 125, 0.2))',
+                  border: '1px solid rgba(52, 211, 153, 0.72)',
+                  color: '#d1fae5',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                全员完赛
+              </span>
+            ) : null}
             <span className="blc-phase-clock" data-testid="hud-phase-countdown">
               {formatMMSS(liveRemainingSec)}
             </span>
@@ -687,7 +741,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
         </div>
 
         <div className="blc-hud-topbar__right">
-          {isOfflineSandboxMatch ? (
+          {isOfflineSandboxMatch && matchSnapshot.phase !== 'battle' ? (
             <button
               type="button"
               className="blc-btn blc-btn--ghost blc-btn--xs"
@@ -2018,13 +2072,18 @@ export function MatchHudOverlay(): React.JSX.Element | null {
 
                 return (
                   <QuestionStepCard
+                    arcMeta={lrn.arcMeta ?? null}
                     stepKind={currentStepKind}
                     stepsProgress={progressItems}
                     question={currentQuestion}
                     lessonMaterialMd={materialMd}
-                    lessonTitle={`学习节点 ${lrn.nodeIndex + 1} · ${
-                      modeSpec.learning_detail[lrn.nodeIndex]?.goal ?? '核心概念与迁移'
-                    }`}
+                    lessonTitle={
+                      lrn.arcMeta
+                        ? `大轮次 ${lrn.arcMeta.arcIndex + 1} · ${lrn.arcMeta.stageLabel}`
+                        : `学习节点 ${lrn.nodeIndex + 1} · ${
+                            modeSpec.learning_detail[lrn.nodeIndex]?.goal ?? '核心概念与迁移'
+                          }`
+                    }
                     remediationItems={remediationItems}
                     feedback={fbView}
                     sharedRemainingSeconds={Math.ceil(liveRemainingSec)}

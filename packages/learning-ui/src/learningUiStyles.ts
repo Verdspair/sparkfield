@@ -208,8 +208,8 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-paper-shell--overlay {
-  width: min(800px, 92vw);
-  max-height: min(560px, 76vh);
+  width: min(840px, 92vw);
+  max-height: min(590px, 78vh);
   height: auto;
   margin: auto;
 }
@@ -1723,6 +1723,159 @@ export const LEARNING_UI_CSS = `
 }
 .lui-paper-shell--parchment .lui-stat-token--gold {
   color: #92400e;
+}
+.lui-arc-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 8px 20px;
+  background: linear-gradient(90deg, rgba(16, 29, 56, 0.96) 0%, rgba(24, 41, 74, 0.94) 50%, rgba(16, 29, 56, 0.96) 100%);
+  border-bottom: 1px solid rgba(242, 201, 125, 0.24);
+}
+.lui-arc-ribbon__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 260px;
+  flex-wrap: wrap;
+}
+.lui-arc-counter {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(242, 201, 125, 0.24), rgba(168, 121, 50, 0.16));
+  border: 1px solid rgba(242, 201, 125, 0.54);
+  color: #fff0c4;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.lui-arc-topic {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+  max-width: 310px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lui-arc-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.lui-arc-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(79, 209, 255, 0.12);
+  border: 1px solid rgba(79, 209, 255, 0.3);
+  color: #a5f3fc;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.lui-arc-ribbon__right {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.lui-arc-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.lui-arc-branch--remediate {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.24), rgba(180, 83, 9, 0.26));
+  border: 1px solid rgba(251, 191, 36, 0.72);
+  color: #fef3c7;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.24);
+}
+.lui-arc-branch--stretch {
+  background: linear-gradient(135deg, rgba(255, 240, 196, 0.28), rgba(242, 201, 125, 0.22));
+  border: 1px solid rgba(255, 232, 168, 0.86);
+  color: #fff6d9;
+  box-shadow: 0 0 14px rgba(242, 201, 125, 0.32);
+}
+.lui-arc-outline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+.lui-arc-outline-item {
+  display: inline-flex;
+  align-items: center;
+}
+.lui-arc-connector {
+  width: 14px;
+  height: 1.5px;
+  margin: 0 4px;
+  border-radius: 999px;
+  background: rgba(141, 162, 192, 0.28);
+}
+.lui-arc-connector--done {
+  background: linear-gradient(90deg, #34d399, #f2c97d);
+}
+.lui-arc-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.lui-arc-node-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.lui-arc-node--done {
+  color: #a7f3d0;
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(52, 211, 153, 0.38);
+}
+.lui-arc-node--done .lui-arc-node-dot {
+  background: #34d399;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.7);
+}
+.lui-arc-node--active {
+  color: #fff6d9;
+  font-weight: 800;
+  background: rgba(242, 201, 125, 0.18);
+  border-color: rgba(242, 201, 125, 0.65);
+  box-shadow: 0 0 10px rgba(242, 201, 125, 0.22);
+}
+.lui-arc-node--active .lui-arc-node-dot {
+  background: #f2c97d;
+  box-shadow: 0 0 8px rgba(255, 240, 196, 0.9);
+}
+.lui-arc-node--upcoming {
+  color: #8da2c0;
+  background: rgba(15, 26, 48, 0.6);
+  border-color: rgba(141, 162, 192, 0.2);
+}
+.lui-arc-node--upcoming .lui-arc-node-dot {
+  background: rgba(141, 162, 192, 0.5);
 }
 `;
 

@@ -4,20 +4,20 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { sql } from 'kysely';
 import { createAppServer } from '../src/index.js';
 import { createDatabase, type AppDatabase } from '../src/db/client.js';
-import type { ClientQuestionView, LessonStepKind } from '@pkg/contracts';
+import type { ClientQuestionView, LearningArcMeta, LessonStepKind } from '@pkg/contracts';
 import type { RoundBattle, SeatState } from '@pkg/game-core';
 
 interface ActionAck { requestId?: string; ok: boolean; reason?: string }
 interface MatchRoomSnapshot {
-  matchId: string; seatId: string; phase: string; round: number; self: SeatState;
+  matchId: string; seatId: string; phase: string; round: number; nodeIndex: number; self: SeatState;
   battle?: { round: number; battles: RoundBattle[] } | null;
-  learning: { currentStep: LessonStepKind | null; complete?: boolean; clientQuestions: ClientQuestionView[];
+  learning: { currentStep: LessonStepKind | null; complete?: boolean; clientQuestions: ClientQuestionView[]; arcMeta: LearningArcMeta;
     submittedQuestionIds: string[]; steps: { kind: LessonStepKind; corrections: unknown[] }[] } | null;
 }
 interface ConnectedMatchSocket {
   sessionId: string;
   sendCommand(command: { type: string; unitIds?: string[]; shopIndex?: number }): Promise<ActionAck>;
-  sendLearningSubmit(questionId: string, submission: { answer: null; status: 'skipped'; questionId: string }): Promise<ActionAck>;
+  sendLearningSubmit(questionId: string, submission: { answer: string | null; status: 'submitted' | 'skipped' | 'timed_out'; questionId: string }): Promise<ActionAck>;
   sendLearningAdvance(): Promise<ActionAck>;
   leave(consented?: boolean): Promise<void>;
 }
@@ -232,7 +232,14 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     const { token, room, profile } = await startMatch();
     const snapshots = stream<MatchRoomSnapshot>();
     const socket = await connectAuthoritativeMatch(room.roomId, token, { onSnapshot: snapshots.push }); sockets.add(socket);
-    let snapshot = await snapshots.wait((value) => value.phase === 'learning');
+    const intro = await snapshots.wait((value) => value.phase === 'learning' && value.nodeIndex === 0);
+    const study = room['studies'].get(profile.userId)!;
+    if (intro.learning!.currentStep === 'material') await socket.sendLearningAdvance();
+    const first = snapshots.values.at(-1)!.learning!.clientQuestions[0]!;
+    await socket.sendLearningSubmit(first.questionId, { answer: '__wrong__', status: 'submitted', questionId: first.questionId });
+    expect(study.attempts).toEqual([{ questionId: first.questionId, familyId: first.familyId, isCorrect: false, slotInArc: 0 }]);
+    let snapshot = await snapshots.wait((value) => value.phase === 'learning' && value.nodeIndex === 2, 0, 22_000);
+    expect(snapshot.learning!.arcMeta).toMatchObject({ stageKind: 'remediate', adaptiveBranch: 'remediation_inserted' });
     const resourceIds: string[] = [];
     while (snapshot.learning?.currentStep !== 'remediation') {
       const learning = snapshot.learning!;
@@ -240,7 +247,8 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
       else {
         for (const question of learning.clientQuestions.filter((value) => !learning.submittedQuestionIds.includes(value.questionId))) {
           if (learning.currentStep === 'resource_check') resourceIds.push(question.questionId);
-          await socket.sendLearningSubmit(question.questionId, { answer: null, status: 'skipped', questionId: question.questionId });
+          await socket.sendLearningSubmit(question.questionId, { answer: null,
+            status: resourceIds.length === 1 ? 'timed_out' : 'skipped', questionId: question.questionId });
         }
       }
       snapshot = snapshots.values.at(-1)!;
@@ -253,8 +261,10 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     await socket.sendLearningAdvance();
     expect(snapshots.values.at(-1)!.learning!.currentStep).toBe('verification');
     for (const id of resourceIds) expect(submissions[id]).toEqual(frozen[id]);
+    expect(study.attempts.map((attempt) => attempt.questionId)).toEqual([first.questionId]);
+    expect(resourceIds.every((id) => study.usedQuestionIds.has(id))).toBe(true);
     expect(room['learningTotals'].get(profile.userId)!.rewardPointsGranted).toBe(0);
-  });
+  }, 28_000);
 
   it('includes the current battle in snapshots for a player who joins after its broadcast', async () => {
     const { token, room } = await startMatch();

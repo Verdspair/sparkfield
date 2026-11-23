@@ -1,13 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { SubjectId } from '@pkg/contracts';
+import {
+  MatchStudyBlueprintCard,
+  buildClientStudyBlueprint,
+  readPrepBlueprintSeed,
+} from './MatchStudyBlueprintCard.js';
 import { useAppStore } from '../store/appStore.js';
 import { DURATION_MODE_SHORT_LABELS, QUEUE_TYPE_LABELS } from '../utils/antiFakeZero.js';
+import '../pages/lobbyPrep.css';
 
-const RING_RADIUS = 48;
+const RING_RADIUS = 44;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 const MAX_ACCEPT_SECONDS = 15;
 
 export function GlobalMatchAcceptModal(): React.JSX.Element | null {
-  const { authMode, inActiveMatch, lobbyState, respondMatchAccept, pushToast } = useAppStore();
+  const { authMode, inActiveMatch, profile, lobbyState, respondMatchAccept, pushToast } =
+    useAppStore();
   const prompt = lobbyState.acceptPrompt;
 
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
@@ -20,7 +28,33 @@ export function GlobalMatchAcceptModal(): React.JSX.Element | null {
     return () => clearInterval(id);
   }, [prompt]);
 
-  if (authMode !== 'authenticated' || inActiveMatch || !prompt) {
+  const activeSubject: SubjectId = useMemo(() => {
+    if (!prompt) return 'english';
+    if (prompt.queueType === 'ranked') {
+      return lobbyState.prepRoom?.sharedSubject ?? 'english';
+    }
+    return lobbyState.selfPrefs?.subject ?? lobbyState.prepRoom?.sharedSubject ?? 'english';
+  }, [lobbyState.prepRoom?.sharedSubject, lobbyState.selfPrefs?.subject, prompt]);
+
+  const blueprint = useMemo(() => {
+    if (!prompt) return null;
+    const startNodeId =
+      lobbyState.selfPrefs?.learningStartSelections?.[activeSubject] ??
+      profile?.learningStartSelections?.[activeSubject];
+    return buildClientStudyBlueprint({
+      mode: prompt.durationMode,
+      subject: activeSubject,
+      startNodeId,
+      seed: readPrepBlueprintSeed(prompt.roomCode),
+    });
+  }, [
+    activeSubject,
+    lobbyState.selfPrefs?.learningStartSelections,
+    profile?.learningStartSelections,
+    prompt,
+  ]);
+
+  if (authMode !== 'authenticated' || inActiveMatch || !prompt || !blueprint) {
     return null;
   }
 
@@ -50,11 +84,12 @@ export function GlobalMatchAcceptModal(): React.JSX.Element | null {
       aria-label="对局确认"
       data-testid="global-match-accept-modal"
     >
-      <div className="ui-metal-frame ui-corner-ornaments blc-accept-card">
+      <div className="ui-metal-frame ui-corner-ornaments blc-accept-card sf-accept-card-wide">
         <span className="blc-accept-card__eyebrow">MATCH FOUND · S1 光锥之外</span>
         <h2 className="blc-accept-card__title">对局就绪</h2>
         <p className="blc-accept-card__meta">
-          {DURATION_MODE_SHORT_LABELS[prompt.durationMode]} · {QUEUE_TYPE_LABELS[prompt.queueType]}
+          {DURATION_MODE_SHORT_LABELS[prompt.durationMode]} · {QUEUE_TYPE_LABELS[prompt.queueType]} ·{' '}
+          {activeSubject === 'english' ? '英语' : '数学'}
         </p>
 
         <div className="blc-accept-card__ring">
@@ -96,6 +131,8 @@ export function GlobalMatchAcceptModal(): React.JSX.Element | null {
           </div>
           <div className="blc-accept-card__sub">确认倒计时</div>
         </div>
+
+        <MatchStudyBlueprintCard blueprint={blueprint} locked emphasizing compact />
 
         <div className="blc-accept-card__progress" data-testid="accept-count-summary">
           已确认 <strong>{prompt.acceptedCount}</strong> /{' '}

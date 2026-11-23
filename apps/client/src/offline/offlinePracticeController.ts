@@ -3,25 +3,31 @@ import {
   MODE_BUDGETS,
   getMatchChoiceKind,
   type ClientQuestionView,
+  type CoursePack,
   type DurationMode,
   type FsrsCardRecord,
   type GameCommand,
   type LessonStepKind,
   type MatchPhaseKind,
+  type MatchStudyBlueprint,
   type QuestionItem,
   type SubjectId,
 } from '@pkg/contracts';
 import {
   applyGameCommand,
   applyLearningGoldGrant,
+  BATTLE_REGULAR_MS,
   beginNextRound,
   computeActiveTraits,
+  computeRoundBattleDurationMs,
   createGame,
   createOnboardingMicroScenario,
   decideBotPrepCommands,
   finalPlacements,
   finalizePrepDeadline,
   grantGold,
+  longestBattleElapsedMs,
+  ONBOARDING_SEED,
   resolveRoundBattles,
   runCombat,
   settleRound,
@@ -33,13 +39,16 @@ import {
 } from '@pkg/game-core';
 import {
   activateLessonRemediation,
+  buildMatchStudyBlueprint,
   buildPersonalizedLessonBundle,
   finalizeLearningGoldCarry,
   gradeFrozenLearningUnits,
   gradeQuestionSubmission,
+  locateMatchStudySlot,
   scheduleFsrsReview,
   settleLearningNodeGold,
   toClientQuestionView,
+  type ArcAttempt,
   type LearningGoldSettlement,
   type PersonalizedLessonBundle,
   type QuestionAnswer,
@@ -397,7 +406,9 @@ export class OfflinePracticeMatchController {
   public readonly mode: DurationMode;
   public readonly subject: SubjectId;
   private readonly nickname: string;
-  private readonly learningStart: Partial<Record<SubjectId, string>>;
+  private readonly pack: CoursePack;
+  private readonly learningStart: string;
+  private readonly studySeed: number;
   private readonly listeners: OfflineMatchListeners;
   private readonly game: GameState;
   private readonly playerSeatId: string;
@@ -408,11 +419,22 @@ export class OfflinePracticeMatchController {
   private deadlineEpochMs = 0;
   private completed = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
-  private pendingBattle: ResolvedRound | null = null;
+  private pendingBattle: {
+    payload: BattleBroadcastPayload;
+    outcomes: ResolvedRound['outcomes'];
+  } | null = null;
   private settlements: LearningGoldSettlement[] = [];
   private wrongIds = new Set<string>();
   private summary: MatchSummaryPayload | null = null;
   private disposed = false;
+  private startPromise: Promise<void> | null = null;
+  private studyContext: {
+    blueprint: MatchStudyBlueprint;
+    cards: readonly FsrsCardRecord[];
+    now: Date;
+  } | null = null;
+  private readonly usedQuestionIds = new Set<string>();
+  private learningArc: { index: number; attempts: ArcAttempt[] } = { index: -1, attempts: [] };
 
   private lessonProgress: {
     bundle: PersonalizedLessonBundle;
@@ -436,11 +458,12 @@ export class OfflinePracticeMatchController {
     this.mode = options.mode;
     this.subject = options.subject;
     this.nickname = options.nickname ?? '离线指挥官';
-    this.learningStart = options.learningStartSelections ?? {};
+    this.pack = this.subject === 'math' ? MATH_STARTER_PACK : ENGLISH_STARTER_PACK;
+    this.learningStart = options.learningStartSelections?.[this.subject] ?? this.pack.manifest.knowledgeGraph[0]!.nodeId;
     this.listeners = options.listeners;
 
-    const seed = options.seed ?? ((Date.now() ^ 0x9e3779b9) >>> 0);
-    this.game = createGame(options.mode, seed);
+    this.studySeed = options.seed ?? ((Date.now() ^ 0x9e3779b9) >>> 0);
+    this.game = createGame(options.mode, this.studySeed);
     this.playerSeatId = this.game.seats[0]!.id;
     for (let i = 0; i < this.game.seats.length; i += 1) {
       const seat = this.game.seats[i]!;
@@ -449,7 +472,24 @@ export class OfflinePracticeMatchController {
     }
   }
 
-  public async start(): Promise<void> {
+  public start(): Promise<void> {
+    return this.startPromise ??= this.prepareMatch();
+  }
+
+  private async prepareMatch(): Promise<void> {
+    const cards = await readLocalFsrsCards();
+    if (this.disposed) return;
+    const now = new Date();
+    const blueprint = buildMatchStudyBlueprint({
+      packs: [this.pack],
+      mode: this.mode,
+      subject: this.subject,
+      now,
+      cards,
+      progress: [{ subject: this.subject, knowledgeNode: this.learningStart }],
+      seed: this.studySeed,
+    });
+    this.studyContext = { blueprint, cards, now };
     await this.transition();
   }
 
@@ -523,6 +563,14 @@ export class OfflinePracticeMatchController {
     };
     this.lessonProgress.feedback[questionId] = fb;
     if (!grade.isCorrect) this.wrongIds.add(questionId);
+    if (!grade.isSkipped) {
+      this.learningArc.attempts.push({
+        questionId,
+        familyId: q.familyId,
+        isCorrect: grade.isCorrect,
+        slotInArc: this.lessonProgress.bundle.arcMeta.slotInArc,
+      });
+    }
 
     if (step.questionIds.every((id) => Object.hasOwn(this.lessonProgress!.submissions, id))) {
       if (kind === 'resource_check') {
@@ -567,7 +615,7 @@ export class OfflinePracticeMatchController {
   }
 
   public async skipCurrentPhaseWait(): Promise<void> {
-    if (this.disposed || this.completed) return;
+    if (this.disposed || this.completed || this.phase === 'battle') return;
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -576,7 +624,8 @@ export class OfflinePracticeMatchController {
   }
 
   private async transition(): Promise<void> {
-    if (this.disposed) return;
+    const study = this.studyContext;
+    if (this.disposed || !study) return;
     const timeline = MODE_BUDGETS.modes[this.mode].timeline;
     this.phaseIndex += 1;
     if (this.phaseIndex >= timeline.length) {
@@ -584,6 +633,9 @@ export class OfflinePracticeMatchController {
     }
     const event = timeline[this.phaseIndex]!;
     this.phase = event.kind as MatchPhaseKind;
+    const plannedSeconds = this.phase === 'entry' ? Math.min(8, event.duration) : event.duration;
+    let phaseDurationMs = Math.max(1000, plannedSeconds * 1000);
+    let phaseStartedAtMs: number | undefined;
 
     if (
       this.game.phase !== 'finished' &&
@@ -598,20 +650,23 @@ export class OfflinePracticeMatchController {
 
     if (this.phase === 'learning') {
       this.nodeIndex += 1;
-      const cards = await readLocalFsrsCards();
-      const pack = this.subject === 'math' ? MATH_STARTER_PACK : ENGLISH_STARTER_PACK;
-      const startNode =
-        this.learningStart[this.subject] ?? pack.manifest.knowledgeGraph[0]!.nodeId;
+      const { arcIndex } = locateMatchStudySlot(study.blueprint, this.nodeIndex);
+      if (this.learningArc.index !== arcIndex) {
+        this.learningArc = { index: arcIndex, attempts: [] };
+      }
       const bundle = buildPersonalizedLessonBundle({
-        packs: [pack],
+        packs: [this.pack],
         mode: this.mode,
         nodeIndex: this.nodeIndex,
         queueType: 'solo',
         selectedSubjects: [this.subject],
-        now: new Date(),
-        cards,
-        progress: [{ subject: this.subject, knowledgeNode: startNode }],
+        now: study.now,
+        cards: study.cards,
+        studyBlueprint: study.blueprint,
+        usedQuestionIds: [...this.usedQuestionIds],
+        priorArcAttempts: [...this.learningArc.attempts],
       });
+      for (const { questionId } of bundle.questions) this.usedQuestionIds.add(questionId);
       this.lessonProgress = {
         bundle,
         submissions: {},
@@ -627,6 +682,7 @@ export class OfflinePracticeMatchController {
         const settlement = settleLearningNodeGold({
           mode: this.mode,
           blockIndex: this.nodeIndex,
+          studyBlueprint: this.lessonProgress.bundle.blueprint,
           gradedUnits: gradeFrozenLearningUnits(
             this.lessonProgress.bundle.questions,
             this.lessonProgress.submissions,
@@ -660,11 +716,14 @@ export class OfflinePracticeMatchController {
       this.runBots();
     } else if (this.phase === 'battle') {
       finalizePrepDeadline(this.game);
-      this.pendingBattle = resolveRoundBattles(this.game);
-      this.listeners.onBattle?.({
-        round: this.game.round,
-        battles: this.pendingBattle.battles,
-      });
+      const { round, battles, outcomes } = resolveRoundBattles(this.game);
+      phaseDurationMs = computeRoundBattleDurationMs(battles);
+      const longestBattleMs = longestBattleElapsedMs(battles);
+      phaseStartedAtMs = Date.now();
+      this.pendingBattle = {
+        outcomes,
+        payload: { round, battles, overtimeAtMs: BATTLE_REGULAR_MS, longestBattleMs, startedAtEpochMs: phaseStartedAtMs },
+      };
     } else if (this.phase === 'settlement') {
       if (this.pendingBattle) {
         settleRound(this.game, this.pendingBattle.outcomes);
@@ -674,14 +733,14 @@ export class OfflinePracticeMatchController {
       this.finishMatch();
     }
 
-    const durationSec = this.phase === 'entry' ? Math.min(8, event.duration) : event.duration;
-    this.deadlineEpochMs = Date.now() + Math.max(1000, durationSec * 1000);
+    this.deadlineEpochMs = (phaseStartedAtMs ?? Date.now()) + phaseDurationMs;
+    if (this.phase === 'battle' && this.pendingBattle) this.listeners.onBattle?.(this.pendingBattle.payload);
     this.emitSnapshot();
 
     if (!this.completed) {
       this.timer = setTimeout(() => {
         void this.transition();
-      }, Math.max(250, this.deadlineEpochMs - Date.now()));
+      }, Math.max(1, this.deadlineEpochMs - Date.now()));
     }
   }
 
@@ -739,9 +798,6 @@ export class OfflinePracticeMatchController {
   public getSnapshot(): MatchRoomSnapshot {
     const lp = this.lessonProgress;
     const current = lp && !lp.complete ? STEPS[lp.step]! : null;
-    const packVersion =
-      (this.subject === 'math' ? MATH_STARTER_PACK : ENGLISH_STARTER_PACK).manifest
-        .coursePackVersion;
 
     return {
       roomId: 'offline-local-room',
@@ -757,7 +813,7 @@ export class OfflinePracticeMatchController {
       versionLock: {
         seasonTermId: 'offline-local-practice',
         gameSetVersion: 'season1-v1',
-        coursePackVersion: packVersion,
+        coursePackVersion: this.pack.manifest.coursePackVersion,
       },
       seatId: this.playerSeatId,
       self: structuredClone(this.game.seats.find((s) => s.id === this.playerSeatId)!),
@@ -770,9 +826,12 @@ export class OfflinePracticeMatchController {
         isBot: seat.isBot,
         chosenAugments: [...seat.chosenAugments],
       })),
+      battle: this.pendingBattle?.payload ?? null,
       learning: lp
         ? {
             nodeIndex: this.nodeIndex,
+            arcMeta: lp.bundle.arcMeta,
+            blueprint: lp.bundle.blueprint,
             currentStep: current,
             complete: lp.complete,
             correctCount: lp.bundle.questions.filter((q) => Boolean(lp.feedback[q.questionId]?.isCorrect)).length,
@@ -869,7 +928,8 @@ export class OnboardingMicroController {
     }
     this.stageIdx = index;
     const st = this.scenario.stages[index]!;
-    this.stageDeadlineMs = Date.now() + st.durationSeconds * 1000;
+    const plannedMs = st.durationSeconds * 1000;
+    this.stageDeadlineMs = Date.now() + plannedMs;
 
     if (st.id === 'battle') {
       finalizePrepDeadline(this.scenario.game);
@@ -879,25 +939,22 @@ export class OnboardingMicroController {
       const enemySeat = this.scenario.game.seats.find(
         (s) => s.id === this.scenario.enemySeatId,
       )!;
-      const result = runCombat(playerSeat, enemySeat, 'quick', 900120);
+      const result = runCombat(playerSeat, enemySeat, 'quick', ONBOARDING_SEED);
       this.battleOutcome = result.outcome;
+      const battles = [{ leftSeatId: playerSeat.id, rightSeatId: enemySeat.id, result, pve: false }];
+      const durationMs = computeRoundBattleDurationMs(battles);
+      const startedAtEpochMs = Date.now();
+      this.stageDeadlineMs = startedAtEpochMs + durationMs;
+      this.scenarioDeadlineMs += durationMs - plannedMs;
       this.handlers.onBattle({
-        round: 1,
-        battles: [
-          {
-            leftSeatId: playerSeat.id,
-            rightSeatId: enemySeat.id,
-            result,
-            pve: false,
-          },
-        ],
+        round: 1, battles, overtimeAtMs: BATTLE_REGULAR_MS, longestBattleMs: result.elapsedMs, startedAtEpochMs,
       });
     }
 
     this.emit();
     this.timer = setTimeout(() => {
       this.enterStage(this.stageIdx + 1);
-    }, st.durationSeconds * 1000);
+    }, Math.max(1, this.stageDeadlineMs - Date.now()));
   }
 
   public submitSampleQuestion(submission: SubmissionInput): void {
@@ -918,6 +975,7 @@ export class OnboardingMicroController {
   }
 
   public advanceStageNow(): void {
+    if (this.scenario.stages[this.stageIdx]?.id === 'battle') return;
     this.enterStage(this.stageIdx + 1);
   }
 

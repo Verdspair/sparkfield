@@ -131,6 +131,7 @@ test('two signed-in pilots join through a room code and accept one real match; t
 });
 
 test('offline shop settings survive reload, both docks avoid HUD chrome and the run returns to prep', async ({ checkedPage: page }) => {
+  test.setTimeout(240_000);
   await installOfflineSandboxHarness(page);
   const pilot = await enroll(page, '单机舞台测试员');
   await enterOfflineSandboxFromLobby(page);

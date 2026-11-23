@@ -3,6 +3,8 @@ import {
   AudioEventBus,
   ConfigurableCommunicationPolicy,
   DEFAULT_TACTICIAN_ID,
+  LearningArcMetaSchema,
+  MatchStudyBlueprintSchema,
   MODE_BUDGETS,
   PrepRoomMemberSchema,
   QuestionIssueReportSchema,
@@ -71,6 +73,33 @@ describe('@pkg/contracts & canonical content invariants', () => {
       const sum = odds.reduce((a, b) => a + b, 0);
       expect(sum, `Shop odds at ${lvl} must sum to 100`).toBe(100);
     }
+  });
+
+  it('validates adaptive arc dimensions and the active stage without requiring uniform arc lengths', () => {
+    const blueprint = {
+      mode: 'deep', subject: 'math', arcCount: 3, slotsPerArc: 4, difficultyTier: 'foundational', seed: 37,
+      arcs: [4, 3, 3].map((slotsInArc, arcIndex) => ({
+        arcIndex, subject: 'math', slotsInArc, topicNodeIds: [`n${arcIndex}`], primaryNodeId: `n${arcIndex}`,
+        title: '核心专题', strategy: 'structured_topic', tags: ['核心'], loadScore: 36,
+        slotStages: slotsInArc === 4 ? ['intro', 'deepen', 'remediate', 'mastery'] : ['intro', 'deepen', 'mastery'],
+      })),
+    };
+    expect(MatchStudyBlueprintSchema.parse(blueprint)).toEqual(blueprint);
+    expect(MatchStudyBlueprintSchema.safeParse({ ...blueprint, slotsPerArc: 3 }).success).toBe(false);
+    expect(MatchStudyBlueprintSchema.safeParse({ ...blueprint, difficultyTier: 'uniform' }).success).toBe(false);
+    expect(MatchStudyBlueprintSchema.safeParse({ ...blueprint, mode: 'quick' }).success).toBe(false);
+    const meta = {
+      arcIndex: 1, arcCount: 3, slotInArc: 1, slotsPerArc: 3, stageKind: 'remediate', stageLabel: '错题订正',
+      topicTitle: '核心专题', strategy: 'structured_topic', blueprintTags: ['核心'], adaptiveBranch: 'remediation_inserted',
+      stageOutline: [
+        { slot: 0, kind: 'intro', label: '导入', status: 'done' },
+        { slot: 1, kind: 'remediate', label: '错题订正', status: 'active' },
+        { slot: 2, kind: 'mastery', label: '终测', status: 'upcoming' },
+      ],
+    };
+    expect(LearningArcMetaSchema.parse(meta)).toEqual(meta);
+    expect(LearningArcMetaSchema.safeParse({ ...meta, slotInArc: 3 }).success).toBe(false);
+    expect(LearningArcMetaSchema.safeParse({ ...meta, stageKind: 'stretch' }).success).toBe(false);
   });
 
   it('verifies 8 components -> 36 completed items + 8 faction emblems + mothership flag', () => {

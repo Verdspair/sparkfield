@@ -18,6 +18,7 @@ interface ModeCardMeta {
   readonly mode: DurationMode;
   readonly title: string;
   readonly minutes: number;
+  readonly arcSummary: string;
   readonly recommended?: boolean;
 }
 
@@ -26,17 +27,20 @@ const MODE_CARDS: readonly ModeCardMeta[] = [
     mode: 'quick',
     title: '超快',
     minutes: 15,
+    arcSummary: '1 个大轮次',
   },
   {
     mode: 'standard',
     title: '标准',
     minutes: 30,
+    arcSummary: '2 个大轮次',
     recommended: true,
   },
   {
     mode: 'deep',
     title: '深度',
     minutes: 60,
+    arcSummary: '3 个弹性大轮次',
   },
 ];
 
@@ -557,7 +561,7 @@ export function LobbyPage(): React.JSX.Element {
                   </div>
 
                   <div className="sf-emblem-meta">
-                    {spec.learning.length} 节学习 · {spec.rounds} 场战斗
+                    约 {card.minutes} 分钟 · {card.arcSummary} · {spec.rounds} 场战斗
                   </div>
 
                   <div className="sf-emblem-footer">

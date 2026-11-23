@@ -6,8 +6,10 @@ import type {
   DurationMode,
   FinalBoardSnapshot,
   GameCommand,
+  LearningArcMeta,
   LessonStepKind,
   MatchPhaseKind,
+  MatchStudyBlueprint,
   ModeStandingSummary,
   QueueType,
   TacticianId,
@@ -49,6 +51,8 @@ export interface MatchLearningFeedbackItem {
 
 export interface MatchLearningView {
   nodeIndex: number;
+  arcMeta?: LearningArcMeta;
+  blueprint?: MatchStudyBlueprint;
   currentStep: LessonStepKind | null;
   complete: boolean;
   readyToProceed?: boolean;
@@ -117,6 +121,10 @@ export interface MatchRoomSnapshot {
 export interface BattleBroadcastPayload {
   round: number;
   battles: RoundBattle[];
+  overtimeAtMs?: number;
+  longestBattleMs?: number;
+  startedAtEpochMs?: number;
+  timeScale?: number;
 }
 
 export interface LearningPersistedPayload {

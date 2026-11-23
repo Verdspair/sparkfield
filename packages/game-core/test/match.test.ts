@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MODE_BUDGETS, type DurationMode } from '@pkg/contracts';
 import { createGame, applyGameCommand, beginNextRound } from '../src/game.js';
 import { decideBotPrepCommands } from '../src/bot.js';
+import { BATTLE_OVERTIME_MS, BATTLE_REGULAR_MS } from '../src/combat.js';
 import { playRound } from '../src/match.js';
 import { finalizePrepDeadline } from '../src/board-ops.js';
 import { assertGameIntegrity } from '../src/integrity.js';
@@ -19,7 +20,7 @@ describe('whole room authoritative matches',()=>{
       assertGameIntegrity(game); finalizePrepDeadline(game); const prep=game.seats.map(s=>cloneState(s.units));
       const played=playRound(game);battleCount+=played.battles.length;
       expect(played.outcomes).toHaveLength(8);
-      for(const b of played.battles) {expect(b.result.elapsedMs).toBeLessThanOrEqual(MODE_BUDGETS.modes[mode].combat*1000);for(const t of b.result.telemetry)expect(t.damageTaken).toBeGreaterThanOrEqual(0);}
+      for(const b of played.battles) {expect(b.result.elapsedMs).toBeLessThanOrEqual(BATTLE_REGULAR_MS+BATTLE_OVERTIME_MS);expect(b.result.enteredOvertime).toBe(b.result.elapsedMs>=BATTLE_REGULAR_MS);for(const t of b.result.telemetry)expect(t.damageTaken).toBeGreaterThanOrEqual(0);}
       expect(game.seats.map(s=>s.units)).toEqual(prep);
       assertGameIntegrity(game);if((game.phase as GameState['phase'])!=='finished')beginNextRound(game);
     }

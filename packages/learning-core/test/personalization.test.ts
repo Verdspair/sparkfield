@@ -6,11 +6,11 @@ const options = (overrides: Partial<PersonalizedLessonInput> = {}): Personalized
   packs: [pack()], mode: 'quick', nodeIndex: 0, queueType: 'solo', selectedSubjects: ['math'], now: NOW, ...overrides,
 });
 describe('personalized frozen five-step lessons', () => {
-  it('builds the five ordered steps from mode phase budgets and freezes answer-bearing server instances', () => {
+  it('builds the five ordered steps from proportional direct-practice budgets and freezes answer-bearing server instances', () => {
     const p = pack(); const bundle = buildPersonalizedLessonBundle(options({ packs: [p] }));
     expect(bundle.steps.map((s) => s.kind)).toEqual(['material', 'practice', 'resource_check', 'remediation', 'verification']);
     expect(bundle.steps.map((s) => s.plannedSeconds)).toEqual([10, 15, 15, 10, 10]);
-    expect(bundle.plannedSeconds).toBe(60); expect(bundle.verificationWeightPercent).toBe(30);
+    expect(bundle.plannedSeconds).toBe(60); expect(bundle.verificationWeightPercent).toBe(0);
     expect(bundle.frozenDenominators).toEqual({ resourceCheckWeight: '10', verificationWeight: '10' });
     expect(bundle.steps[3]!.active).toBe(false);
     expect(bundle.steps[3]!.corrections).toEqual([]);

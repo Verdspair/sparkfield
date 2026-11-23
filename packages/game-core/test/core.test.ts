@@ -151,12 +151,86 @@ describe('integer economy and public schedule',()=>{
     expect(victoryPointsFor('quick',5,'win')).toBe(10);expect(victoryPointsFor('standard',8,'draw')).toBe(5);expect(victoryPointsFor('deep',8,'win')).toBe(0);
     expect(finalPlacements([{id:'a',victoryPoints:12},{id:'b',victoryPoints:8},{id:'c',victoryPoints:8},{id:'d',victoryPoints:0}]).map(x=>x.place)).toEqual([1,2,2,4]);
   });
-  it.each(['quick','standard','deep'] as DurationMode[])('%s reaches exact base income, XP, voucher and component budgets',mode=>{
-    const g=createGame(mode,2);const s=g.seats[0]!;const b=MODE_BUDGETS.modes[mode];
-    for(let r=1;r<=b.rounds;r++) {finishDrawRound(g);if(g.phase!=='finished')beginNextRound(g);assertGameIntegrity(g);}
-    expect(s.goldLedger.filter(e=>e.reason==='base_income').reduce((n,e)=>n+e.amount,0)).toBe(b.economy.base_income*(b.rounds-1));
-    expect(s.vouchersGranted).toBe(b.economy.equal_reroll_vouchers_total);expect(itemComponentShares(g)).toBe(b.economy.ordinary_component_budget*8);
-    expect(finalPlacements(g.seats).map(x=>x.place)).toEqual(Array(8).fill(1));
+  const modeCases = [
+    { mode: 'quick', total: 900, rounds: 6, pvp: 6, startingGold: 16, baseIncome: 35, learningGold: 3600, earnedShare: 51, arcCaps: [[600, 800, 900, 1300]] },
+    { mode: 'standard', total: 1800, rounds: 8, pvp: 7, startingGold: 14, baseIncome: 42, learningGold: 5000, earnedShare: 54, arcCaps: [[400, 600, 650, 850], [400, 600, 650, 850]] },
+    { mode: 'deep', total: 3600, rounds: 12, pvp: 10, startingGold: 12, baseIncome: 55, learningGold: 6900, earnedShare: 56, arcCaps: [[350, 550, 600, 800], [450, 750, 1100], [450, 750, 1100]] },
+  ] as const;
+  it.each(modeCases)('$mode schedules complete arcs and legal battle windows', ({ mode, total, arcCaps, rounds, pvp }) => {
+    const budget = MODE_BUDGETS.modes[mode];
+    const layout = arcCaps.map(caps => caps.length);
+    const slots = layout.reduce<number>((sum, length) => sum + length, 0);
+    expect(budget.rounds).toBe(rounds);
+    expect(budget.pvp_round_count).toBe(pvp);
+    expect(budget.study_arc_slots).toEqual(layout);
+    expect(budget.learning).toHaveLength(slots);
+    expect(budget.verification_weight_percent_by_block).toEqual(layout.flatMap(length => length === 4 ? [0, 0, 30, 100] : [0, 30, 100]));
+    const teach = [true, false, true, false, false];
+    const apply = [true, false, true, true, true];
+    const verify = [false, false, false, false, true];
+    expect(budget.learning_detail.every(slot => slot.seconds_by_phase.every(seconds => Number.isInteger(seconds) && seconds >= 0))).toBe(true);
+    expect(budget.learning_detail.map(slot => slot.seconds_by_phase.map(seconds => seconds > 0))).toEqual(layout.flatMap(length => length === 4 ? [teach, teach, apply, verify] : [teach, apply, verify]));
+    expect(budget.learning_detail.map(slot => slot.seconds_by_phase.reduce((sum, seconds) => sum + seconds, 0))).toEqual(budget.learning);
+    expect(budget.learning_detail.map(slot => slot.battle_rounds_after)).toEqual(budget.groups);
+    expect(budget.groups.flat()).toEqual(Array.from({ length: rounds }, (_, i) => i + 1));
+    expect(budget.timeline.filter(segment => segment.kind === 'learning').map(segment => segment.duration)).toEqual(budget.learning);
+    expect(budget.timeline.filter(segment => segment.kind === 'resource')).toHaveLength(slots);
+    expect(budget.timeline.filter(segment => segment.kind === 'strategy').map(segment => segment.duration)).toEqual(Array(rounds).fill(50));
+    expect(budget.timeline.filter(segment => segment.kind === 'battle' && segment.label.endsWith('PVP'))).toHaveLength(pvp);
+    expect(budget.timeline.filter(segment => segment.kind === 'battle' && segment.label.endsWith('PVE'))).toHaveLength(rounds - pvp);
+    for (const event of budget.events_detail) {
+      const eventIndex = budget.timeline.findIndex(segment => segment.kind === 'choice' && segment.label.startsWith(`R${event.round} ${event.name}`));
+      const anchorKind = event.position === 'before' ? 'strategy' : 'settlement';
+      const anchorIndex = budget.timeline.findIndex(segment => segment.kind === anchorKind && segment.label.startsWith(`R${event.round} `));
+      expect(anchorIndex).toBeGreaterThanOrEqual(0);
+      expect(eventIndex).toBeGreaterThanOrEqual(0);
+      expect(budget.timeline[eventIndex]?.duration).toBe(event.seconds);
+      expect(event.position === 'before' ? eventIndex + 1 : eventIndex - 1).toBe(anchorIndex);
+    }
+    let cursor = 0;
+    for (const segment of budget.timeline) {
+      expect(segment.start).toBe(cursor);
+      expect(segment.duration).toBeGreaterThan(0);
+      cursor += segment.duration;
+      expect(segment.end).toBe(cursor);
+    }
+    expect(cursor).toBe(total);
+    expect(budget.total).toBe(total);
+    expect(budget.computed).toBe(total);
+    expect(budget.budget_gap).toBe(0);
+  });
+  it.each(modeCases)('$mode reaches exact earned gold share, XP, voucher and component budgets', ({ mode, startingGold, baseIncome, learningGold, earnedShare, arcCaps }) => {
+    const game = createGame(mode, 2);
+    const seat = game.seats[0]!;
+    const budget = MODE_BUDGETS.modes[mode];
+    expect(seat.initialGold).toBe(startingGold);
+    expect(budget.economy.interest_cap).toBe(5);
+    expect(budget.learning_gold_cap_by_block_cents).toEqual(arcCaps.flatMap(caps => [...caps]));
+    expect(budget.learning_gold_total_max_cents).toBe(learningGold);
+    for (let round = 1; round <= budget.rounds; round++) {
+      const slot = budget.groups.findIndex(group => group[0] === round);
+      if (slot !== -1) {
+        const cents = seat.learningChargeCents + budget.learning_gold_cap_by_block_cents[slot]!;
+        applyLearningGoldGrant(seat, Math.floor(cents / 100), cents % 100);
+      }
+      finishDrawRound(game);
+      if (game.phase !== 'finished') beginNextRound(game);
+      assertGameIntegrity(game);
+    }
+    const earned = (reason: string) => seat.goldLedger.filter(entry => entry.reason === reason).reduce((sum, entry) => sum + entry.amount, 0);
+    const earnedLearning = earned('learning');
+    const earnedBase = earned('base_income');
+    expect(earnedBase).toBe(baseIncome);
+    expect(earnedBase).toBe(budget.economy.base_income * (budget.rounds - 1));
+    expect(earnedLearning * 100 + seat.learningChargeCents).toBe(learningGold);
+    expect(Math.round(100 * earnedLearning / (earnedLearning + earnedBase))).toBe(earnedShare);
+    const xpCosts = MODE_BUDGETS.xp_to_next as Record<string, number>;
+    let xp = seat.xp;
+    for (let level = budget.economy.starting_level; level < seat.level; level++) xp += xpCosts[level]!;
+    expect(xp).toBe(budget.economy.free_xp * (budget.rounds - 1));
+    expect(seat.vouchersGranted).toBe(budget.economy.equal_reroll_vouchers_total);
+    expect(itemComponentShares(game)).toBe(budget.economy.ordinary_component_budget * 8);
+    expect(finalPlacements(game.seats).map(x => x.place)).toEqual(Array(8).fill(1));
   });
   it('replays an identical legal command sequence to the exact same state hash',()=>{
     const a=createGame('quick',90210),b=createGame('quick',90210);

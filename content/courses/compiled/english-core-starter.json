@@ -1,31 +1,52 @@
 {
   "manifest": {
     "packId": "english-core-starter",
-    "coursePackVersion": "1.2.1",
+    "coursePackVersion": "2.0.0",
     "subject": "english",
     "title": "核心英语：情景交际、语法填空与语篇理解",
     "syllabusTag": "CC0-1.0",
-    "contentSha256": "bbcb4a1f304224ea34f719a8dca9ae4356d4e1cdbf48d6edc771ddd1470c3c33",
-    "itemCount": 24,
+    "contentSha256": "5b970ef4acdcb56fe742d214966c940ce281bdd5d4a7e1382c9ff585f5f7394b",
+    "itemCount": 72,
     "knowledgeGraph": [
       {
         "nodeId": "ENG_N1_VOCAB_DIALOGUE",
-        "title": "情景交际与日常沟通",
+        "title": "情景交际与日常高频词块",
         "prerequisites": []
       },
       {
         "nodeId": "ENG_N2_GRAMMAR_CLAUSE",
-        "title": "语法填空与完形语境",
+        "title": "时态语态与核心从句",
         "prerequisites": [
           "ENG_N1_VOCAB_DIALOGUE"
         ]
       },
       {
         "nodeId": "ENG_N3_CLOZE_READING",
-        "title": "信息获取、词义推断与语篇理解",
+        "title": "完形语境与信息推理",
         "prerequisites": [
           "ENG_N1_VOCAB_DIALOGUE",
           "ENG_N2_GRAMMAR_CLAUSE"
+        ]
+      },
+      {
+        "nodeId": "ENG_N4_ACADEMIC_VOCAB",
+        "title": "校园科技与高频词组搭配",
+        "prerequisites": [
+          "ENG_N1_VOCAB_DIALOGUE"
+        ]
+      },
+      {
+        "nodeId": "ENG_N5_NONFINITE_SYNTAX",
+        "title": "非谓语动词与长难句分析",
+        "prerequisites": [
+          "ENG_N2_GRAMMAR_CLAUSE"
+        ]
+      },
+      {
+        "nodeId": "ENG_N6_PASSAGE_INFER",
+        "title": "短篇阅读主旨与词义推断",
+        "prerequisites": [
+          "ENG_N3_CLOZE_READING"
         ]
       }
     ],
@@ -34,142 +55,19 @@
   "items": [
     {
       "questionId": "ENG_Q01",
-      "familyId": "FAM_ENG_Q01",
+      "familyId": "FAM_ENG_N1_1",
       "subject": "english",
       "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
       "stepRole": "practice",
       "questionType": "single_choice",
       "assessmentKind": "application",
       "allowMaterialReview": true,
-      "materialMd": "- Would you mind…?：询问对方是否介意。\n- Not at all.：不介意。",
-      "stemMd": "— Would you mind my opening the window for some fresh air?\n— ______. Go ahead.",
+      "materialMd": "礼貌请求：Could you…? 常用于请对方做事；答应可说 Certainly；拒绝宜给出理由。",
+      "stemMd": "— Could you pass me the salt? — ____",
       "options": [
         {
           "key": "A",
-          "text": "Yes, I would"
-        },
-        {
-          "key": "B",
-          "text": "Not at all"
-        },
-        {
-          "key": "C",
-          "text": "You’d better not"
-        },
-        {
-          "key": "D",
-          "text": "I’m afraid you can’t"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "B",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "Not at all 表示“不介意”，与 Go ahead 一致。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 35,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "ENG_Q02",
-      "familyId": "FAM_ENG_Q02",
-      "subject": "english",
-      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
-      "stepRole": "practice",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 根据前后话轮确认说话目的。\n- I’d like to…：我想……。",
-      "stemMd": "— Good morning. City Library. How may I help you?\n— ______.\n— Certainly. May I have your name, please?",
-      "options": [
-        {
-          "key": "A",
-          "text": "I enjoyed the talk yesterday"
-        },
-        {
-          "key": "B",
-          "text": "The library is next to the bank"
-        },
-        {
-          "key": "C",
-          "text": "I’d like to book a seat for Saturday’s talk"
-        },
-        {
-          "key": "D",
-          "text": "You should ask someone else"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "C",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "来电者要预约座位；后句询问姓名，与预订请求衔接。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 45,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "ENG_Q03",
-      "familyId": "FAM_ENG_Q03",
-      "subject": "english",
-      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
-      "stepRole": "resource_check",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 投诉回应要确认问题，并提出合理处理办法。",
-      "stemMd": "— Excuse me. The desk lamp I bought here yesterday does not work.\n— ______. Would you like a new one or your money back?",
-      "options": [
-        {
-          "key": "A",
-          "text": "I’m sorry about that"
-        },
-        {
-          "key": "B",
-          "text": "You’re welcome"
-        },
-        {
-          "key": "C",
-          "text": "Enjoy your trip"
-        },
-        {
-          "key": "D",
-          "text": "That sounds like a great idea"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "A",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "商家先表示歉意，再给出换货或退款方案；其他选项与投诉处理不一致。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 40,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "ENG_Q04",
-      "familyId": "FAM_ENG_Q04",
-      "subject": "english",
-      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
-      "stepRole": "resource_check",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- You’re welcome.：回应感谢。\n- Never mind.：常用于安慰或回应道歉。",
-      "stemMd": "— Thank you so much for giving me a lift to the station.\n— ______.",
-      "options": [
-        {
-          "key": "A",
-          "text": "You’re welcome"
+          "text": "Certainly"
         },
         {
           "key": "B",
@@ -177,11 +75,11 @@
         },
         {
           "key": "C",
-          "text": "I’m afraid not"
+          "text": "That is a pity"
         },
         {
           "key": "D",
-          "text": "That’s a pity"
+          "text": "Not at all"
         }
       ],
       "matchingPairs": [],
@@ -189,16 +87,57 @@
       "answerSpec": "A",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "You’re welcome 用于回应感谢。",
-      "difficulty": 2,
+      "explanationMd": "Certainly 表示同意递盐。",
+      "difficulty": 1,
       "weight": 10,
-      "estSeconds": 30,
+      "estSeconds": 55,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
-      "questionId": "ENG_Q05",
-      "familyId": "FAM_ENG_Q05",
+      "questionId": "ENG_Q02",
+      "familyId": "FAM_ENG_N1_1",
+      "subject": "english",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "礼貌请求：Could you…? 常用于请对方做事；答应可说 Certainly；拒绝宜给出理由。",
+      "stemMd": "— Could you help me carry this box? — ____ I have a free hand.",
+      "options": [
+        {
+          "key": "A",
+          "text": "I am afraid not."
+        },
+        {
+          "key": "B",
+          "text": "Of course."
+        },
+        {
+          "key": "C",
+          "text": "What a shame."
+        },
+        {
+          "key": "D",
+          "text": "No, you must not."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "后句说有空手，因此 Of course 表示愿意帮忙。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q03",
+      "familyId": "FAM_ENG_N1_1",
       "subject": "english",
       "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
       "stepRole": "verification",
@@ -206,23 +145,23 @@
       "assessmentKind": "application",
       "allowMaterialReview": false,
       "materialMd": "",
-      "stemMd": "— I’m sorry I have to turn down your invitation. I’ve already made other plans.\n— ______. We can meet another time.",
+      "stemMd": "— Could you check my report now? — ____ I am about to leave, but I can read it tomorrow.",
       "options": [
         {
           "key": "A",
-          "text": "You must be joking"
+          "text": "It is my pleasure."
         },
         {
           "key": "B",
-          "text": "Help yourself"
+          "text": "Here you are."
         },
         {
           "key": "C",
-          "text": "That’s all right"
+          "text": "I cannot right now."
         },
         {
           "key": "D",
-          "text": "Congratulations"
+          "text": "You are welcome."
         }
       ],
       "matchingPairs": [],
@@ -230,40 +169,40 @@
       "answerSpec": "C",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "That’s all right 表示谅解，与另约时间相符。",
-      "difficulty": 2,
+      "explanationMd": "马上要离开，故现在不能看，明天可看。",
+      "difficulty": 3,
       "weight": 10,
-      "estSeconds": 40,
+      "estSeconds": 55,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
-      "questionId": "ENG_Q06",
-      "familyId": "FAM_ENG_Q06",
+      "questionId": "ENG_Q04",
+      "familyId": "FAM_ENG_N1_2",
       "subject": "english",
       "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
-      "stepRole": "verification",
+      "stepRole": "practice",
       "questionType": "single_choice",
       "assessmentKind": "application",
-      "allowMaterialReview": false,
-      "materialMd": "",
-      "stemMd": "— We have a job interview for you on Tuesday. Does 9 a.m. work for you?\n— ______. I have a class then, but I’m free after 2 p.m.",
+      "allowMaterialReview": true,
+      "materialMd": "感谢与道歉：Thanks 的回应是 You are welcome；道歉可用 That is all right，不要混淆。",
+      "stemMd": "— Thanks for your help. — ____",
       "options": [
         {
           "key": "A",
-          "text": "Yes, 9 a.m. is perfect"
+          "text": "I am sorry."
         },
         {
           "key": "B",
-          "text": "I don’t know your name"
+          "text": "Good luck."
         },
         {
           "key": "C",
-          "text": "Thank you for the good news"
+          "text": "Never mind the rain."
         },
         {
           "key": "D",
-          "text": "Could we meet in the afternoon instead"
+          "text": "You are welcome."
         }
       ],
       "matchingPairs": [],
@@ -271,104 +210,203 @@
       "answerSpec": "D",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "答语说明上午有课并提出下午可行时间，因此请求改约下午。",
+      "explanationMd": "You are welcome 回应感谢。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q05",
+      "familyId": "FAM_ENG_N1_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "感谢与道歉：Thanks 的回应是 You are welcome；道歉可用 That is all right，不要混淆。",
+      "stemMd": "— Sorry I stepped on your foot. — ____ It was an accident.",
+      "options": [
+        {
+          "key": "A",
+          "text": "That is all right."
+        },
+        {
+          "key": "B",
+          "text": "Thank you."
+        },
+        {
+          "key": "C",
+          "text": "Congratulations."
+        },
+        {
+          "key": "D",
+          "text": "Here is your ticket."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "对方道歉，后句表明原谅，用 That is all right。",
       "difficulty": 2,
       "weight": 10,
-      "estSeconds": 45,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q06",
+      "familyId": "FAM_ENG_N1_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "— Thank you for waiting while I found the key. — ____",
+      "options": [
+        {
+          "key": "A",
+          "text": "I apologize for your wait."
+        },
+        {
+          "key": "B",
+          "text": "No problem."
+        },
+        {
+          "key": "C",
+          "text": "The key is made of metal."
+        },
+        {
+          "key": "D",
+          "text": "Please do not thank me tomorrow."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "No problem 可自然回应对方的感谢。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
       "questionId": "ENG_Q07",
-      "familyId": "FAM_ENG_Q07",
+      "familyId": "FAM_ENG_N1_3",
       "subject": "english",
-      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
       "stepRole": "practice",
       "questionType": "short_fill",
       "assessmentKind": "application",
       "allowMaterialReview": true,
-      "materialMd": "- 先判断空格所需词性，再根据语境变形。\n- patient：耐心的；patience：耐心。",
-      "stemMd": "With great ______ (patient), the nurse explained the instructions twice.\n（用所给词的适当形式填空。）",
+      "materialMd": "预约与改期：book a seat 预订座位；put off 推迟；确认可行时间应结合上下文。",
+      "stemMd": "— I would like to attend the lecture. How can I reserve a place? — You can ____ a seat online.（填一个动词，意为“预订”。）",
       "options": [],
       "matchingPairs": [],
       "stepsRubric": [],
-      "answerSpec": "patience",
+      "answerSpec": "book",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "with great patience 中需用名词；patient 的派生名词为 patience。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 35,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "ENG_Q08",
-      "familyId": "FAM_ENG_Q08",
-      "subject": "english",
-      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
-      "stepRole": "practice",
-      "questionType": "short_fill",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- since 引出过去的时间起点。\n- 延续至现在的状态或动作可用完成时；表达持续过程也可用完成进行时。",
-      "stemMd": "Tom ______ (live) in this city since he moved here in 2021, and he still lives here now.\n（用所给词的适当形式填空，可填多个词。）",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "has lived|has been living",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "过去开始、延续到现在的居住状态可用 has lived；强调持续过程也可用 has been living，两种答案均接受。",
-      "difficulty": 2,
+      "explanationMd": "book a seat 表示预订座位。",
+      "difficulty": 1,
       "weight": 10,
       "estSeconds": 45,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
-      "questionId": "ENG_Q09",
-      "familyId": "FAM_ENG_Q09",
+      "questionId": "ENG_Q08",
+      "familyId": "FAM_ENG_N1_3",
       "subject": "english",
-      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
       "stepRole": "resource_check",
-      "questionType": "short_fill",
+      "questionType": "single_choice",
       "assessmentKind": "application",
       "allowMaterialReview": true,
-      "materialMd": "- 被动语态：be + 过去分词。\n- 同时检查主语、动作关系和时间。",
-      "stemMd": "A new bridge ______ (build) over the river last year, and it is now open to traffic.\n（用所给词的适当形式填空，可填多个词。）",
+      "materialMd": "预约与改期：book a seat 预订座位；put off 推迟；确认可行时间应结合上下文。",
+      "stemMd": "— Is Monday at ten convenient? — No, I have class. ____",
+      "options": [
+        {
+          "key": "A",
+          "text": "Monday at ten is perfect."
+        },
+        {
+          "key": "B",
+          "text": "I have already met you."
+        },
+        {
+          "key": "C",
+          "text": "Your class is empty."
+        },
+        {
+          "key": "D",
+          "text": "Could we meet on Tuesday instead?"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "周一有课，因此提出改约周二。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q09",
+      "familyId": "FAM_ENG_N1_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "— Could we hold the meeting today? — The speaker is ill, so we must put it ____ until Friday.（填一个词）",
       "options": [],
       "matchingPairs": [],
       "stepsRubric": [],
-      "answerSpec": "was built",
+      "answerSpec": "off",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "主语 bridge 承受建造动作，last year 指过去，用一般过去时被动语态 was built。",
-      "difficulty": 2,
+      "explanationMd": "put off 表示推迟。",
+      "difficulty": 4,
       "weight": 10,
-      "estSeconds": 40,
+      "estSeconds": 45,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
       "questionId": "ENG_Q10",
-      "familyId": "FAM_ENG_Q10",
+      "familyId": "FAM_ENG_N1_4",
       "subject": "english",
-      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
-      "stepRole": "resource_check",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "practice",
       "questionType": "short_fill",
       "assessmentKind": "application",
       "allowMaterialReview": true,
-      "materialMd": "- 分词作状语时，先检查其逻辑主语与主句主语是否一致。\n- 本句城市是被观察的对象，用过去分词；不能把所有主动关系都机械等同于现在分词。",
-      "stemMd": "______ (see) from the top of the tower, the city looks especially beautiful at night.\n（用所给词的适当形式填空。）",
+      "materialMd": "日常词块：pick up 接人或取物；run out of 用完；根据上下文判断动作对象。",
+      "stemMd": "— Can you collect me from the station by car? — Yes, I will ____ you up at six.（填一个词）",
       "options": [],
       "matchingPairs": [],
       "stepsRubric": [],
-      "answerSpec": "Seen",
+      "answerSpec": "pick",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "the city 是 see 的承受者；此处用过去分词 Seen 作状语，相当于 When it is seen…。",
-      "difficulty": 3,
+      "explanationMd": "pick someone up 表示开车接人。",
+      "difficulty": 2,
       "weight": 10,
       "estSeconds": 45,
       "sourceLicense": "CC0-1.0",
@@ -376,318 +414,401 @@
     },
     {
       "questionId": "ENG_Q11",
-      "familyId": "FAM_ENG_PHONE_VOLUNTEER",
+      "familyId": "FAM_ENG_N1_4",
       "subject": "english",
-      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
-      "stepRole": "practice",
-      "questionType": "single_choice",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
       "assessmentKind": "application",
       "allowMaterialReview": true,
-      "materialMd": "- 完形填空要利用前后句的因果、转折和复现线索。",
-      "stemMd": "Last month, Li Hua joined a group that helps older people use their phones. At first, he thought the work would be easy because he used his own phone every day. However, he soon found that using an app was different from explaining it clearly. One visitor asked the same question several times. Li Hua felt impatient, but then he remembered how his grandfather had helped him learn to ride a bike. He slowed down and wrote each step on a card. The visitor finally sent a photo to her family by herself. Li Hua realized that good communication needs both knowledge and ______.\n\nChoose the best word for the blank.",
-      "options": [
-        {
-          "key": "A",
-          "text": "luck"
-        },
-        {
-          "key": "B",
-          "text": "money"
-        },
-        {
-          "key": "C",
-          "text": "patience"
-        },
-        {
-          "key": "D",
-          "text": "courage"
-        }
-      ],
+      "materialMd": "日常词块：pick up 接人或取物；run out of 用完；根据上下文判断动作对象。",
+      "stemMd": "— May I have some milk? — Sorry, we have run out ____ milk.（填一个词）",
+      "options": [],
       "matchingPairs": [],
       "stepsRubric": [],
-      "answerSpec": "C",
+      "answerSpec": "of",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "从 impatient 到放慢讲解，说明沟通除了知识还需要 patience。",
-      "difficulty": 2,
+      "explanationMd": "run out of 表示用完。",
+      "difficulty": 3,
       "weight": 10,
-      "estSeconds": 100,
+      "estSeconds": 45,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
       "questionId": "ENG_Q12",
-      "familyId": "FAM_ENG_PHONE_VOLUNTEER",
+      "familyId": "FAM_ENG_N1_4",
       "subject": "english",
-      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
-      "stepRole": "resource_check",
+      "knowledgeNode": "ENG_N1_VOCAB_DIALOGUE",
+      "stepRole": "verification",
       "questionType": "single_choice",
       "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- so that 可引出目的；even though 表示让步。",
-      "stemMd": "Last month, Li Hua joined a group that helps older people use their phones. At first, he thought the work would be easy because he used his own phone every day. However, he soon found that using an app was different from explaining it clearly. One visitor asked the same question several times. Li Hua felt impatient, but then he remembered how his grandfather had helped him learn to ride a bike. He slowed down and wrote each step on a card ______ the visitor could follow the instructions more easily. The visitor finally sent a photo to her family by herself. Li Hua realized that good communication needs both knowledge and patience.\n\nChoose the best expression for the blank.",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "— The printer has run out of paper. Could you help? — Certainly. I will ____.",
       "options": [
         {
           "key": "A",
-          "text": "even though"
+          "text": "Turn off the lights."
         },
         {
           "key": "B",
-          "text": "so that"
+          "text": "Buy more milk."
         },
         {
           "key": "C",
-          "text": "as if"
+          "text": "Open the window."
         },
         {
           "key": "D",
-          "text": "unless"
+          "text": "Put more paper in it."
         }
       ],
       "matchingPairs": [],
       "stepsRubric": [],
-      "answerSpec": "B",
+      "answerSpec": "D",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "写步骤是为了让对方更容易照做，用 so that 引导目的状语从句。",
-      "difficulty": 2,
+      "explanationMd": "打印机缺纸，首先应加纸。",
+      "difficulty": 4,
       "weight": 10,
-      "estSeconds": 105,
+      "estSeconds": 55,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
       "questionId": "ENG_Q13",
-      "familyId": "FAM_ENG_PARK_CLEANUP",
+      "familyId": "FAM_ENG_N2_1",
       "subject": "english",
       "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
-      "stepRole": "verification",
-      "questionType": "single_choice",
+      "stepRole": "practice",
+      "questionType": "short_fill",
       "assessmentKind": "application",
-      "allowMaterialReview": false,
-      "materialMd": "",
-      "stemMd": "On Friday, our class helped clean a small park. Before we started, our teacher asked us to work in pairs and take care of one another. I picked up paper while Lin collected empty bottles. After an hour, the park looked much ______. A visitor thanked us for our work. I felt tired, but I was happy to see children playing on the clean grass. On the way home, I decided to join the activity again.\n\nChoose the best word for the blank.",
-      "options": [
-        {
-          "key": "A",
-          "text": "darker"
-        },
-        {
-          "key": "B",
-          "text": "noisier"
-        },
-        {
-          "key": "C",
-          "text": "smaller"
-        },
-        {
-          "key": "D",
-          "text": "cleaner"
-        }
-      ],
+      "allowMaterialReview": true,
+      "materialMd": "一般过去时：明确过去时间 last year 指向过去时；规则动词通常加 -ed。",
+      "stemMd": "Yesterday she ____ (visit) her aunt.",
+      "options": [],
       "matchingPairs": [],
       "stepsRubric": [],
-      "answerSpec": "D",
+      "answerSpec": "visited",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "捡走纸张和瓶子后，公园更干净；much 修饰比较级 cleaner。",
-      "difficulty": 2,
+      "explanationMd": "Yesterday 表示过去，visit 的过去式是 visited。",
+      "difficulty": 1,
       "weight": 10,
-      "estSeconds": 90,
+      "estSeconds": 45,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
       "questionId": "ENG_Q14",
-      "familyId": "FAM_ENG_PARK_CLEANUP",
+      "familyId": "FAM_ENG_N2_1",
       "subject": "english",
       "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
-      "stepRole": "verification",
+      "stepRole": "resource_check",
       "questionType": "single_choice",
       "assessmentKind": "application",
-      "allowMaterialReview": false,
-      "materialMd": "",
-      "stemMd": "On Friday, our class helped clean a small park. Before we started, our teacher asked us to work in pairs and take care of one another. I picked up paper while Lin collected empty bottles. After an hour, the park looked much cleaner. A visitor thanked us for our work. I felt tired, ______ I was happy to see children playing on the clean grass. On the way home, I decided to join the activity again.\n\nChoose the best word for the blank.",
+      "allowMaterialReview": true,
+      "materialMd": "一般过去时：明确过去时间 last year 指向过去时；规则动词通常加 -ed。",
+      "stemMd": "Last night we ____ (watch) a film.",
       "options": [
         {
           "key": "A",
-          "text": "but"
+          "text": "watch"
         },
         {
           "key": "B",
-          "text": "so"
+          "text": "watched"
         },
         {
           "key": "C",
-          "text": "because"
+          "text": "watches"
         },
         {
           "key": "D",
-          "text": "or"
+          "text": "watching"
         }
       ],
       "matchingPairs": [],
       "stepsRubric": [],
-      "answerSpec": "A",
+      "answerSpec": "B",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "tired 与 happy 构成转折，用 but；不是并列顺承、因果或结果关系。",
+      "explanationMd": "Last night 标记过去，watch 变为 watched。",
       "difficulty": 2,
       "weight": 10,
-      "estSeconds": 90,
+      "estSeconds": 45,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
       "questionId": "ENG_Q15",
-      "familyId": "FAM_ENG_LIBRARY_TALK",
+      "familyId": "FAM_ENG_N2_1",
       "subject": "english",
-      "knowledgeNode": "ENG_N3_CLOZE_READING",
-      "stepRole": "practice",
-      "questionType": "single_choice",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "verification",
+      "questionType": "short_fill",
       "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 细节题要核对动作、截止时间和条件。",
-      "stemMd": "The City Library will hold a talk on local history this Saturday. The talk begins at 10 a.m. in the reading room on the second floor and lasts for one hour. Writer Anna Green will share old photographs and explain how the river changed the city. Entry is free, but booking is required because only forty seats are available. To book a seat, send your name and phone number to the library by 6 p.m. on Friday. Please arrive ten minutes before the talk starts. You may bring a notebook, but taking photographs during the talk is not allowed. After the talk, visitors can ask Anna questions for fifteen minutes.\n\nWhat must visitors do to book a seat?",
-      "options": [
-        {
-          "key": "A",
-          "text": "Buy a ticket at the entrance"
-        },
-        {
-          "key": "B",
-          "text": "Send their name and phone number by 6 p.m. on Friday"
-        },
-        {
-          "key": "C",
-          "text": "Send their questions to Anna after the talk"
-        },
-        {
-          "key": "D",
-          "text": "Arrive at the library at 10:15 a.m."
-        }
-      ],
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "The train ____ (leave) at eight yesterday morning.",
+      "options": [],
       "matchingPairs": [],
       "stepsRubric": [],
-      "answerSpec": "B",
+      "answerSpec": "left",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "To book a seat 后说明：周五下午6点前把姓名和电话号码发给图书馆。",
-      "difficulty": 2,
+      "explanationMd": "yesterday morning 指过去，leave 的过去式是 left。",
+      "difficulty": 3,
       "weight": 10,
-      "estSeconds": 100,
+      "estSeconds": 45,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
       "questionId": "ENG_Q16",
-      "familyId": "FAM_ENG_LIBRARY_TALK",
+      "familyId": "FAM_ENG_N2_2",
       "subject": "english",
-      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
       "stepRole": "practice",
-      "questionType": "single_choice",
+      "questionType": "short_fill",
       "assessmentKind": "application",
       "allowMaterialReview": true,
-      "materialMd": "- why 提问原因，注意 because 等线索。",
-      "stemMd": "The City Library will hold a talk on local history this Saturday. The talk begins at 10 a.m. in the reading room on the second floor and lasts for one hour. Writer Anna Green will share old photographs and explain how the river changed the city. Entry is free, but booking is required because only forty seats are available. To book a seat, send your name and phone number to the library by 6 p.m. on Friday. Please arrive ten minutes before the talk starts. You may bring a notebook, but taking photographs during the talk is not allowed. After the talk, visitors can ask Anna questions for fifteen minutes.\n\nWhy is booking required for the talk?",
-      "options": [
-        {
-          "key": "A",
-          "text": "All visitors must pay in advance"
-        },
-        {
-          "key": "B",
-          "text": "The library needs new photographs"
-        },
-        {
-          "key": "C",
-          "text": "Only forty seats are available"
-        },
-        {
-          "key": "D",
-          "text": "Anna will answer questions before the talk"
-        }
-      ],
+      "materialMd": "现在完成时：since 引出过去起点，延续至今可用 have/has + 过去分词。",
+      "stemMd": "She ____ (know) him since 2020.",
+      "options": [],
       "matchingPairs": [],
       "stepsRubric": [],
-      "answerSpec": "C",
+      "answerSpec": "has known",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "原文 because only forty seats are available 给出原因：座位有限。",
-      "difficulty": 2,
+      "explanationMd": "know 表状态，since 2020 延续至今，用 has known。",
+      "difficulty": 1,
       "weight": 10,
-      "estSeconds": 95,
+      "estSeconds": 45,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
       "questionId": "ENG_Q17",
-      "familyId": "FAM_ENG_MUSEUM_NOTICE",
+      "familyId": "FAM_ENG_N2_2",
       "subject": "english",
-      "knowledgeNode": "ENG_N3_CLOZE_READING",
-      "stepRole": "practice",
-      "questionType": "single_choice",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
       "assessmentKind": "application",
       "allowMaterialReview": true,
-      "materialMd": "- 核对票价对应年龄和团体优惠的最低人数。",
-      "stemMd": "Explore the River Museum this Sunday. Doors open at 9 a.m. and close at 5 p.m., with the last entry at 4 p.m. An adult ticket costs 40 yuan. Children aged six to twelve pay 20 yuan each, and children under six enter free. Groups of ten or more adults receive a 20 percent discount on adult tickets. This discount does not apply to children’s tickets. A free guided tour starts every hour from 10 a.m. to 3 p.m. and lasts forty minutes. You can buy tickets at the entrance or online. Please keep your ticket, as it also gives you free entry to the garden on the same day.\n\nTwo adults and one eight-year-old child visit the museum. How much do they pay in total?",
-      "options": [
-        {
-          "key": "A",
-          "text": "80 yuan"
-        },
-        {
-          "key": "B",
-          "text": "96 yuan"
-        },
-        {
-          "key": "C",
-          "text": "100 yuan"
-        },
-        {
-          "key": "D",
-          "text": "120 yuan"
-        }
-      ],
+      "materialMd": "现在完成时：since 引出过去起点，延续至今可用 have/has + 过去分词。",
+      "stemMd": "I ____ (be) a member of the club since 2022.",
+      "options": [],
       "matchingPairs": [],
       "stepsRubric": [],
-      "answerSpec": "C",
+      "answerSpec": "have been",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "两名成人不满足10名成人的团体折扣条件；2×40+20=100元。",
+      "explanationMd": "从 2022 年至今是会员，用 have been。",
       "difficulty": 2,
       "weight": 10,
-      "estSeconds": 110,
+      "estSeconds": 45,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
       "questionId": "ENG_Q18",
-      "familyId": "FAM_ENG_MUSEUM_NOTICE",
+      "familyId": "FAM_ENG_N2_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "They ____ (own) this house since 2019 and still own it.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "have owned",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "own 表拥有的状态，自 2019 年持续至今，用 have owned。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q19",
+      "familyId": "FAM_ENG_N2_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "被动语态：承受动作的主语使用 be + 过去分词；be 随时间和主语变化。",
+      "stemMd": "The room ____ (clean) yesterday.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "was cleaned",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "房间被打扫，yesterday 对应 was cleaned。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q20",
+      "familyId": "FAM_ENG_N2_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "被动语态：承受动作的主语使用 be + 过去分词；be 随时间和主语变化。",
+      "stemMd": "These letters ____ (send) last Monday.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "were sent",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "复数 letters 承受动作，过去时用 were sent。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q21",
+      "familyId": "FAM_ENG_N2_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "The bridge ____ (complete) in 2020.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "was completed",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "bridge 承受建造完成动作，过去时被动用 was completed。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q22",
+      "familyId": "FAM_ENG_N2_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "核心从句：because 引导原因；定语从句中 who 指人并作主语；if 可引导条件。",
+      "stemMd": "I stayed home ____ it was raining.（填一个词，表示“因为”。）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "because",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "下雨是待在家里的原因，用 because。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q23",
+      "familyId": "FAM_ENG_N2_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "核心从句：because 引导原因；定语从句中 who 指人并作主语；if 可引导条件。",
+      "stemMd": "The technician ____ fixed the sensor is my mentor.（填关系代词）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "who|that",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "先行词指人且关系词作主语，可用 who 或 that。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q24",
+      "familyId": "FAM_ENG_N2_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N2_GRAMMAR_CLAUSE",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "____ it rains tomorrow, we will stay inside.（填一个词）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "If",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "前句是后句的条件，用 If 引导条件状语从句。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q25",
+      "familyId": "FAM_ENG_N3_1",
       "subject": "english",
       "knowledgeNode": "ENG_N3_CLOZE_READING",
       "stepRole": "practice",
       "questionType": "single_choice",
       "assessmentKind": "application",
       "allowMaterialReview": true,
-      "materialMd": "- 区分闭馆时间与最晚入馆时间。",
-      "stemMd": "Explore the River Museum this Sunday. Doors open at 9 a.m. and close at 5 p.m., with the last entry at 4 p.m. An adult ticket costs 40 yuan. Children aged six to twelve pay 20 yuan each, and children under six enter free. Groups of ten or more adults receive a 20 percent discount on adult tickets. This discount does not apply to children’s tickets. A free guided tour starts every hour from 10 a.m. to 3 p.m. and lasts forty minutes. You can buy tickets at the entrance or online. Please keep your ticket, as it also gives you free entry to the garden on the same day.\n\nA visitor wants to enter the museum on Sunday afternoon. What is the latest time for entry?",
+      "materialMd": "语境中的因果：because 表原因；先判断空格前后的逻辑关系。",
+      "stemMd": "Mia was leaving home for a walk. The weather forecast was uncertain. Mia took an umbrella because the sky was dark. She expected ____.",
       "options": [
         {
           "key": "A",
-          "text": "4 p.m."
+          "text": "rain"
         },
         {
           "key": "B",
-          "text": "5 p.m."
+          "text": "snow in the kitchen"
         },
         {
           "key": "C",
-          "text": "3 p.m."
+          "text": "a phone call"
         },
         {
           "key": "D",
-          "text": "6 p.m."
+          "text": "a birthday cake"
         }
       ],
       "matchingPairs": [],
@@ -695,122 +816,40 @@
       "answerSpec": "A",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "close at 5 p.m. 是闭馆时间，last entry at 4 p.m. 才是最晚入馆时间。",
-      "difficulty": 2,
+      "explanationMd": "天色昏暗且带伞，最可能预期下雨。",
+      "difficulty": 1,
       "weight": 10,
-      "estSeconds": 95,
+      "estSeconds": 55,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
-      "questionId": "ENG_Q19",
-      "familyId": "FAM_ENG_SLEEP_HABITS",
+      "questionId": "ENG_Q26",
+      "familyId": "FAM_ENG_N3_1",
       "subject": "english",
       "knowledgeNode": "ENG_N3_CLOZE_READING",
       "stepRole": "resource_check",
       "questionType": "single_choice",
       "assessmentKind": "application",
       "allowMaterialReview": true,
-      "materialMd": "- 用上下文替换目标词，检查替换后的意思是否连贯。",
-      "stemMd": "Many people try to get more sleep at weekends after staying up late during the week. However, a regular sleep schedule is usually more helpful. Going to bed and getting up at similar times helps the body know when to rest. Bright screens may delay sleep because their light tells the brain to stay awake. Try putting your phone away half an hour before bedtime. A short walk during the day can also help, but hard exercise just before bed may have the opposite effect. If you cannot fall asleep, read a few pages of a quiet book instead of checking messages. Small changes can make a real difference.\n\nThe word “delay” in the passage is closest in meaning to ______.",
+      "materialMd": "语境中的因果：because 表原因；先判断空格前后的逻辑关系。",
+      "stemMd": "Ben was on his way to work. It had snowed overnight. The path was icy, so Ben walked slowly to avoid ____.",
       "options": [
         {
           "key": "A",
-          "text": "make something safer"
+          "text": "singing"
         },
         {
           "key": "B",
-          "text": "write something down"
+          "text": "falling"
         },
         {
           "key": "C",
-          "text": "ask someone for help"
+          "text": "reading"
         },
         {
           "key": "D",
-          "text": "make something happen later"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "D",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "屏幕光使人保持清醒，delay sleep 指让入睡发生得更晚。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 100,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "ENG_Q20",
-      "familyId": "FAM_ENG_SLEEP_HABITS",
-      "subject": "english",
-      "knowledgeNode": "ENG_N3_CLOZE_READING",
-      "stepRole": "resource_check",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 标题应覆盖全文，而不是只概括一个细节。",
-      "stemMd": "Many people try to get more sleep at weekends after staying up late during the week. However, a regular sleep schedule is usually more helpful. Going to bed and getting up at similar times helps the body know when to rest. Bright screens may delay sleep because their light tells the brain to stay awake. Try putting your phone away half an hour before bedtime. A short walk during the day can also help, but hard exercise just before bed may have the opposite effect. If you cannot fall asleep, read a few pages of a quiet book instead of checking messages. Small changes can make a real difference.\n\nWhat is the best title for the passage?",
-      "options": [
-        {
-          "key": "A",
-          "text": "Simple Habits for Better Sleep"
-        },
-        {
-          "key": "B",
-          "text": "The Best Time to Check Messages"
-        },
-        {
-          "key": "C",
-          "text": "Why Everyone Needs More Weekend Sleep"
-        },
-        {
-          "key": "D",
-          "text": "How to Exercise Hard Before Bed"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "A",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "全文围绕规律作息、减少屏幕光等改善睡眠的习惯展开。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 100,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "ENG_Q21",
-      "familyId": "FAM_ENG_BICYCLE_ACTIVITY",
-      "subject": "english",
-      "knowledgeNode": "ENG_N3_CLOZE_READING",
-      "stepRole": "resource_check",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 区分自行携带的物品和组织方提供的物品。",
-      "stemMd": "Green Hill School will hold a bicycle repair activity on Wednesday afternoon. Students will work in groups in the school garden from 2 to 4 p.m. A local worker will show them how to check the brakes and change a tyre. No repair experience is needed. Everyone must bring their own gloves, but the school will provide the tools. Students must not use a tool before the worker shows them how to use it safely. To join, give your name to Ms Brown by Monday afternoon. There is no fee. If it rains, the activity will take place in Room 105 instead. After the activity, each group will write a short guide to checking a bicycle before a ride.\n\nWhat must each student bring?",
-      "options": [
-        {
-          "key": "A",
-          "text": "A set of tools"
-        },
-        {
-          "key": "B",
-          "text": "Their own gloves"
-        },
-        {
-          "key": "C",
-          "text": "A new bicycle"
-        },
-        {
-          "key": "D",
-          "text": "A written repair guide"
+          "text": "drawing"
         }
       ],
       "matchingPairs": [],
@@ -818,16 +857,16 @@
       "answerSpec": "B",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "原文 Everyone must bring their own gloves；工具由学校提供。",
+      "explanationMd": "路面结冰，走慢是为了避免摔倒。",
       "difficulty": 2,
       "weight": 10,
-      "estSeconds": 105,
+      "estSeconds": 55,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
-      "questionId": "ENG_Q22",
-      "familyId": "FAM_ENG_BICYCLE_ACTIVITY",
+      "questionId": "ENG_Q27",
+      "familyId": "FAM_ENG_N3_1",
       "subject": "english",
       "knowledgeNode": "ENG_N3_CLOZE_READING",
       "stepRole": "verification",
@@ -835,23 +874,23 @@
       "assessmentKind": "application",
       "allowMaterialReview": false,
       "materialMd": "",
-      "stemMd": "Green Hill School will hold a bicycle repair activity on Wednesday afternoon. Students will work in groups in the school garden from 2 to 4 p.m. A local worker will show them how to check the brakes and change a tyre. No repair experience is needed. Everyone must bring their own gloves, but the school will provide the tools. Students must not use a tool before the worker shows them how to use it safely. To join, give your name to Ms Brown by Monday afternoon. There is no fee. If it rains, the activity will take place in Room 105 instead. After the activity, each group will write a short guide to checking a bicycle before a ride.\n\nWhere will students meet if it rains?",
+      "stemMd": "Nora was preparing a report. She did not want to lose her work. Nora saved the document twice because the computer had crashed earlier. Her action shows ____.",
       "options": [
         {
           "key": "A",
-          "text": "In the school garden"
+          "text": "boredom"
         },
         {
           "key": "B",
-          "text": "At a local shop"
+          "text": "anger at a friend"
         },
         {
           "key": "C",
-          "text": "In Room 105"
+          "text": "caution"
         },
         {
           "key": "D",
-          "text": "At Ms Brown’s home"
+          "text": "disinterest in the work"
         }
       ],
       "matchingPairs": [],
@@ -859,40 +898,40 @@
       "answerSpec": "C",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "条件句 If it rains 明确活动改到 Room 105。",
-      "difficulty": 2,
+      "explanationMd": "此前电脑崩溃，所以反复保存体现谨慎。",
+      "difficulty": 3,
       "weight": 10,
-      "estSeconds": 105,
+      "estSeconds": 55,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
-      "questionId": "ENG_Q23",
-      "familyId": "FAM_ENG_BICYCLE_ACTIVITY",
+      "questionId": "ENG_Q28",
+      "familyId": "FAM_ENG_N3_2",
       "subject": "english",
       "knowledgeNode": "ENG_N3_CLOZE_READING",
-      "stepRole": "verification",
+      "stepRole": "practice",
       "questionType": "single_choice",
       "assessmentKind": "application",
-      "allowMaterialReview": false,
-      "materialMd": "",
-      "stemMd": "Green Hill School will hold a bicycle repair activity on Wednesday afternoon. Students will work in groups in the school garden from 2 to 4 p.m. A local worker will show them how to check the brakes and change a tyre. No repair experience is needed. Everyone must bring their own gloves, but the school will provide the tools. Students must not use a tool before the worker shows them how to use it safely. To join, give your name to Ms Brown by Monday afternoon. There is no fee. If it rains, the activity will take place in Room 105 instead. After the activity, each group will write a short guide to checking a bicycle before a ride.\n\nWhich student can join the activity according to the notice?",
+      "allowMaterialReview": true,
+      "materialMd": "语境中的转折：but/however 引出与前文预期相反的信息。",
+      "stemMd": "Lee bought a bag for school. She was worried about carrying her books. The bag is small, but it is surprisingly ____. It holds all my books.",
       "options": [
         {
           "key": "A",
-          "text": "A student who can attend only on Thursday"
+          "text": "empty of space"
         },
         {
           "key": "B",
-          "text": "A student who refuses to wear gloves"
+          "text": "broken"
         },
         {
           "key": "C",
-          "text": "A student who registers after the activity"
+          "text": "heavy to open"
         },
         {
           "key": "D",
-          "text": "A beginner who gives their name to Ms Brown by Monday afternoon"
+          "text": "roomy"
         }
       ],
       "matchingPairs": [],
@@ -900,40 +939,40 @@
       "answerSpec": "D",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "通知明确 No repair experience is needed；周一下午前报名且可参加周三活动的新手符合条件。",
-      "difficulty": 2,
+      "explanationMd": "能装下所有书，说明虽然小但空间大。",
+      "difficulty": 1,
       "weight": 10,
-      "estSeconds": 110,
+      "estSeconds": 55,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     },
     {
-      "questionId": "ENG_Q24",
-      "familyId": "FAM_ENG_BICYCLE_ACTIVITY",
+      "questionId": "ENG_Q29",
+      "familyId": "FAM_ENG_N3_2",
       "subject": "english",
       "knowledgeNode": "ENG_N3_CLOZE_READING",
-      "stepRole": "verification",
+      "stepRole": "resource_check",
       "questionType": "single_choice",
       "assessmentKind": "application",
-      "allowMaterialReview": false,
-      "materialMd": "",
-      "stemMd": "Green Hill School will hold a bicycle repair activity on Wednesday afternoon. Students will work in groups in the school garden from 2 to 4 p.m. A local worker will show them how to check the brakes and change a tyre. No repair experience is needed. Everyone must bring their own gloves, but the school will provide the tools. Students must not use a tool before the worker shows them how to use it safely. To join, give your name to Ms Brown by Monday afternoon. There is no fee. If it rains, the activity will take place in Room 105 instead. After the activity, each group will write a short guide to checking a bicycle before a ride.\n\nWhat is the main purpose of the notice?",
+      "allowMaterialReview": true,
+      "materialMd": "语境中的转折：but/however 引出与前文预期相反的信息。",
+      "stemMd": "We visited a café at lunchtime. Several customers were already waiting. The café was busy; however, the staff served us ____.",
       "options": [
         {
           "key": "A",
-          "text": "To tell students how to join a repair activity"
+          "text": "quickly"
         },
         {
           "key": "B",
-          "text": "To advertise bicycles for sale"
+          "text": "never"
         },
         {
           "key": "C",
-          "text": "To ask students to buy tools for the school"
+          "text": "yesterday only"
         },
         {
           "key": "D",
-          "text": "To explain why all outdoor activities are cancelled"
+          "text": "without taking orders"
         }
       ],
       "matchingPairs": [],
@@ -941,10 +980,1484 @@
       "answerSpec": "A",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "通知介绍活动时间、内容、安全要求和报名方式，目的是告知学生如何参加修车活动。",
+      "explanationMd": "虽然繁忙，但 however 引出服务迅速。",
       "difficulty": 2,
       "weight": 10,
-      "estSeconds": 110,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q30",
+      "familyId": "FAM_ENG_N3_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "A team was building a model. They wanted it to work reliably. The first plan failed. Nevertheless, the team tried a different design and succeeded. The team was ____.",
+      "options": [
+        {
+          "key": "A",
+          "text": "unwilling to continue"
+        },
+        {
+          "key": "B",
+          "text": "persistent"
+        },
+        {
+          "key": "C",
+          "text": "unaware of the failure"
+        },
+        {
+          "key": "D",
+          "text": "certain the first plan worked"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "失败后换方案继续尝试，体现坚持不懈。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q31",
+      "familyId": "FAM_ENG_N3_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "指代与细节：代词通常回指语义最一致的前项，结合动作主体判断。",
+      "stemMd": "Lina was getting ready to leave home. She looked for something she needed. Lina found her key under the chair. She put it in her pocket. What does it refer to?",
+      "options": [
+        {
+          "key": "A",
+          "text": "the chair"
+        },
+        {
+          "key": "B",
+          "text": "Lina"
+        },
+        {
+          "key": "C",
+          "text": "the key"
+        },
+        {
+          "key": "D",
+          "text": "the pocket"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "能放进口袋的是刚找到的钥匙。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q32",
+      "familyId": "FAM_ENG_N3_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "指代与细节：代词通常回指语义最一致的前项，结合动作主体判断。",
+      "stemMd": "The library is collecting borrowed books this week. Students can return them at the front desk. A notice says: Return books by Friday. When is the deadline?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Monday"
+        },
+        {
+          "key": "B",
+          "text": "Saturday"
+        },
+        {
+          "key": "C",
+          "text": "Sunday"
+        },
+        {
+          "key": "D",
+          "text": "Friday"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "by Friday 表示最迟周五归还。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q33",
+      "familyId": "FAM_ENG_N3_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "The team was repairing a device. They needed to find the faulty part. The team tested a sensor and a battery. The sensor detected light, but the battery could not power the device. They replaced it. What did they replace?",
+      "options": [
+        {
+          "key": "A",
+          "text": "the battery"
+        },
+        {
+          "key": "B",
+          "text": "the light"
+        },
+        {
+          "key": "C",
+          "text": "the sensor"
+        },
+        {
+          "key": "D",
+          "text": "the team"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "电池无法供电，因而他们更换的是电池。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q34",
+      "familyId": "FAM_ENG_N3_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "推理应有证据：区分文本事实与过度推断，只选由线索支持的结论。",
+      "stemMd": "Sam is shopping for a notebook. He wants to pay before closing time. The shop closes at six. It is five fifty. How many minutes remain?（用数字填写）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "10",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "从 5:50 到 6:00 是 10 分钟。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q35",
+      "familyId": "FAM_ENG_N3_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "推理应有证据：区分文本事实与过度推断，只选由线索支持的结论。",
+      "stemMd": "Ada needed to get to work. She arrived at the bus stop on time. The bus was full, so Ada waited for the next one. Why did she wait?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The bus had not arrived."
+        },
+        {
+          "key": "B",
+          "text": "She lost her shoes."
+        },
+        {
+          "key": "C",
+          "text": "There was no room on the bus."
+        },
+        {
+          "key": "D",
+          "text": "The road was closed."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "full 表示车满了，没有空间。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q36",
+      "familyId": "FAM_ENG_N3_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N3_CLOZE_READING",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "A gardener checked the plants this morning. The weather has been unusually dry. A garden received no rain for two weeks. The soil is dry, and the leaves are drooping. Which action is most directly supported?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Paint the fence."
+        },
+        {
+          "key": "B",
+          "text": "Move the garden indoors immediately."
+        },
+        {
+          "key": "C",
+          "text": "Assume the plants need less sunlight."
+        },
+        {
+          "key": "D",
+          "text": "Water the plants."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "干土和垂叶支持先浇水；其他选项缺少依据。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q37",
+      "familyId": "FAM_ENG_N4_1",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "校园词汇：submit an assignment 提交作业；deadline 截止时间。",
+      "stemMd": "Please ____ your assignment online before Friday.（填一个动词，意为“提交”。）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "submit",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "submit an assignment 表示提交作业。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q38",
+      "familyId": "FAM_ENG_N4_1",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "应用表达常用搭配：注意介词、不定式与动名词的固定用法。",
+      "stemMd": "We look forward to ____ you at the workshop.",
+      "options": [
+        {
+          "key": "A",
+          "text": "meet"
+        },
+        {
+          "key": "B",
+          "text": "meeting"
+        },
+        {
+          "key": "C",
+          "text": "met"
+        },
+        {
+          "key": "D",
+          "text": "meets"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "look forward to 后接动名词。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q39",
+      "familyId": "FAM_ENG_N4_1",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "Who is responsible ____ sending the invitation?",
+      "options": [
+        {
+          "key": "A",
+          "text": "with"
+        },
+        {
+          "key": "B",
+          "text": "to"
+        },
+        {
+          "key": "C",
+          "text": "for"
+        },
+        {
+          "key": "D",
+          "text": "at"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "be responsible for 表示负责。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q40",
+      "familyId": "FAM_ENG_N4_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "根据句意和固定搭配，判断所需词形或介词。",
+      "stemMd": "I look forward to ____ (hear) from you soon.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "hearing",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "look forward to 后接动名词。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q41",
+      "familyId": "FAM_ENG_N4_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "应用表达常用搭配：注意介词、不定式与动名词的固定用法。",
+      "stemMd": "We invite you to ____ part in the community event.",
+      "options": [
+        {
+          "key": "A",
+          "text": "take"
+        },
+        {
+          "key": "B",
+          "text": "make"
+        },
+        {
+          "key": "C",
+          "text": "give"
+        },
+        {
+          "key": "D",
+          "text": "bring"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "take part in 表示参加。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q42",
+      "familyId": "FAM_ENG_N4_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "Please arrive early in order ____ prepare the room.",
+      "options": [
+        {
+          "key": "A",
+          "text": "for"
+        },
+        {
+          "key": "B",
+          "text": "to"
+        },
+        {
+          "key": "C",
+          "text": "of"
+        },
+        {
+          "key": "D",
+          "text": "at"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "in order to do 表示为了做某事。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q43",
+      "familyId": "FAM_ENG_N4_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "根据句意和固定搭配，判断所需词形或介词。",
+      "stemMd": "We are responsible ____ preparing the materials.（填一个介词）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "for",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "be responsible for 表示负责。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q44",
+      "familyId": "FAM_ENG_N4_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "应用表达常用搭配：注意介词、不定式与动名词的固定用法。",
+      "stemMd": "Thank you ____ your kind assistance.",
+      "options": [
+        {
+          "key": "A",
+          "text": "at"
+        },
+        {
+          "key": "B",
+          "text": "to"
+        },
+        {
+          "key": "C",
+          "text": "of"
+        },
+        {
+          "key": "D",
+          "text": "for"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "thank you for 后接感谢的事。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q45",
+      "familyId": "FAM_ENG_N4_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "Please let me know if you need any ____.",
+      "options": [
+        {
+          "key": "A",
+          "text": "help"
+        },
+        {
+          "key": "B",
+          "text": "helpful"
+        },
+        {
+          "key": "C",
+          "text": "helpfully"
+        },
+        {
+          "key": "D",
+          "text": "helping"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "any 后可接不可数名词 help。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q46",
+      "familyId": "FAM_ENG_N4_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "根据句意和固定搭配，判断所需词形或介词。",
+      "stemMd": "Please take part ____ the meeting on Monday.（填一个介词）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "in",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "take part in 表示参加。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q47",
+      "familyId": "FAM_ENG_N4_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "应用表达常用搭配：注意介词、不定式与动名词的固定用法。",
+      "stemMd": "We would like to ____ you to our exhibition.",
+      "options": [
+        {
+          "key": "A",
+          "text": "hope"
+        },
+        {
+          "key": "B",
+          "text": "thank"
+        },
+        {
+          "key": "C",
+          "text": "invite"
+        },
+        {
+          "key": "D",
+          "text": "look"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "invite somebody to 表示邀请某人参加。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q48",
+      "familyId": "FAM_ENG_N4_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N4_ACADEMIC_VOCAB",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "I would appreciate it if you could ____ me a reply by Friday.",
+      "options": [
+        {
+          "key": "A",
+          "text": "take"
+        },
+        {
+          "key": "B",
+          "text": "do"
+        },
+        {
+          "key": "C",
+          "text": "make"
+        },
+        {
+          "key": "D",
+          "text": "send"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "send a reply 意为发送回复。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q49",
+      "familyId": "FAM_ENG_N5_1",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "不定式表目的：to + 动词原形可表示做某事的目的。",
+      "stemMd": "She opened the window ____ let in fresh air.（填一个词，构成表示目的的不定式。）",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "to",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "to let in fresh air 表示开窗的目的。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q50",
+      "familyId": "FAM_ENG_N5_1",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "不定式表目的：to + 动词原形可表示做某事的目的。",
+      "stemMd": "He went to the library ____ (borrow) a book.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "to borrow",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "to borrow a book 表示去图书馆的目的。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q51",
+      "familyId": "FAM_ENG_N5_1",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "To reduce waste, the class decided ____ (reuse) paper for notes.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "to reuse",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "decide to do 表示决定做某事。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q52",
+      "familyId": "FAM_ENG_N5_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "动名词作主语或宾语：enjoy 后接动名词；动名词作主语时谓语通常用单数。",
+      "stemMd": "She enjoys ____ (read) after dinner.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "reading",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "enjoy 后接动名词 reading。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q53",
+      "familyId": "FAM_ENG_N5_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "动名词作主语或宾语：enjoy 后接动名词；动名词作主语时谓语通常用单数。",
+      "stemMd": "____ (swim) is good exercise.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "Swimming",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "动名词 Swimming 作主语。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q54",
+      "familyId": "FAM_ENG_N5_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "They finished ____ (paint) the wall before lunch.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "painting",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "finish 后接动名词 painting。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q55",
+      "familyId": "FAM_ENG_N5_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "分词作状语：先找逻辑主语；主动关系常用现在分词，被动关系常用过去分词。",
+      "stemMd": "____ (see) from above, the lake looks blue.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "Seen",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "湖被看见，用过去分词 Seen。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q56",
+      "familyId": "FAM_ENG_N5_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "分词作状语：先找逻辑主语；主动关系常用现在分词，被动关系常用过去分词。",
+      "stemMd": "____ (walk) home, Mei met her teacher.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "Walking",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "Mei 主动走路，用现在分词 Walking。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q57",
+      "familyId": "FAM_ENG_N5_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "____ (build) in 1900, the house still stands.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "Built",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "房子被建造，用过去分词 Built。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q58",
+      "familyId": "FAM_ENG_N5_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "根据句意和固定搭配，判断所需词形或介词。",
+      "stemMd": "The report ____ (write) by the team yesterday is on the desk.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "written",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "过去分词 written 作后置定语，表示报告被写。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q59",
+      "familyId": "FAM_ENG_N5_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "长句拆解：先找主句主谓，再识别从句和修饰语；不要把从句动词当作主句谓语。",
+      "stemMd": "The student thanked the teacher for ____ (help) her prepare for the competition.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "helping",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "介词 for 后接动名词 helping。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q60",
+      "familyId": "FAM_ENG_N5_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N5_NONFINITE_SYNTAX",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "The report that the team published after testing the device explains its limits. What does the report explain?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The team’s lunch."
+        },
+        {
+          "key": "B",
+          "text": "Why testing was forbidden."
+        },
+        {
+          "key": "C",
+          "text": "Who invented every device."
+        },
+        {
+          "key": "D",
+          "text": "The device’s limits."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "主句 report explains its limits；its 指所测试设备。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q61",
+      "familyId": "FAM_ENG_N6_1",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "主旨题：概括覆盖全文的共同信息，不用孤立细节替代主题。",
+      "stemMd": "The class started a small garden in spring. They wanted to see how plants grow. A class planted seeds and watered them each day. Weeks later, green shoots appeared. What is the main idea?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A class grew plants from seeds."
+        },
+        {
+          "key": "B",
+          "text": "A class repaired a roof."
+        },
+        {
+          "key": "C",
+          "text": "Seeds need no water."
+        },
+        {
+          "key": "D",
+          "text": "The shoots disappeared immediately."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "种子、浇水和发芽共同说明班级种植植物。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q62",
+      "familyId": "FAM_ENG_N6_1",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "主旨题：概括覆盖全文的共同信息，不用孤立细节替代主题。",
+      "stemMd": "The town wanted to encourage cleaner travel. Officials made changes to its roads. The town added bike lanes. More residents began cycling to work. What is the passage mainly about?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A ban on bicycles."
+        },
+        {
+          "key": "B",
+          "text": "A change that encouraged cycling."
+        },
+        {
+          "key": "C",
+          "text": "A new airport."
+        },
+        {
+          "key": "D",
+          "text": "A shortage of bicycles worldwide."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "新增车道及更多人骑车，共同指向促进骑行的变化。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q63",
+      "familyId": "FAM_ENG_N6_1",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "The school wanted to save water. It started a practical project. A school saved rainwater for its garden. Students measured how much they used and adjusted their watering. What best summarizes the passage?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Students stopped measuring water."
+        },
+        {
+          "key": "B",
+          "text": "Rain never fell at the school."
+        },
+        {
+          "key": "C",
+          "text": "Students managed water for a school garden."
+        },
+        {
+          "key": "D",
+          "text": "Every garden uses the same amount."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "收集、测量和调整用水共同体现管理花园用水。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q64",
+      "familyId": "FAM_ENG_N6_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "词义推断：用定义、同义改写或上下文动作推断，不脱离原句。",
+      "stemMd": "A group was walking through the hills. They followed a trail into the woods. The path was narrow: only one person could walk along it at a time. Copy the word that means “not wide”.",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "narrow",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "一次只能一人通过；原文 narrow 表示不宽。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 45,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q65",
+      "familyId": "FAM_ENG_N6_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "词义推断：用定义、同义改写或上下文动作推断，不脱离原句。",
+      "stemMd": "Kai was packing items for a move. One item needed special care. The glass was fragile, so Kai wrapped it carefully to prevent it from breaking. Fragile means ____.",
+      "options": [
+        {
+          "key": "A",
+          "text": "easily broken"
+        },
+        {
+          "key": "B",
+          "text": "very cheap"
+        },
+        {
+          "key": "C",
+          "text": "already repaired"
+        },
+        {
+          "key": "D",
+          "text": "difficult to see"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "为了防止破碎而小心包装，fragile 意为易碎的。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q66",
+      "familyId": "FAM_ENG_N6_2",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "The children visited a pond after heavy rain. They looked into the water. The pond was murky; the children could not see the stones beneath its surface. Murky means ____.",
+      "options": [
+        {
+          "key": "A",
+          "text": "perfectly transparent"
+        },
+        {
+          "key": "B",
+          "text": "cloudy and not clear"
+        },
+        {
+          "key": "C",
+          "text": "too shallow to hold stones"
+        },
+        {
+          "key": "D",
+          "text": "frozen solid"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "看不见水下石头说明池水浑浊、不清澈。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q67",
+      "familyId": "FAM_ENG_N6_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "作者态度：从明确评价和行动推断态度，避免将建议误当绝对保证。",
+      "stemMd": "The writer attended a local event last weekend. Many neighbours gathered to listen. I enjoyed the community concert and hope it returns next year. The writer feels ____.",
+      "options": [
+        {
+          "key": "A",
+          "text": "angry"
+        },
+        {
+          "key": "B",
+          "text": "indifferent"
+        },
+        {
+          "key": "C",
+          "text": "pleased"
+        },
+        {
+          "key": "D",
+          "text": "afraid"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "enjoyed 和 hope it returns 表明满意。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q68",
+      "familyId": "FAM_ENG_N6_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "作者态度：从明确评价和行动推断态度，避免将建议误当绝对保证。",
+      "stemMd": "A reviewer recently visited the new library. The review discusses its services. The author praises the new library but notes that its hours are too short. The view is ____.",
+      "options": [
+        {
+          "key": "A",
+          "text": "entirely negative"
+        },
+        {
+          "key": "B",
+          "text": "without any opinion"
+        },
+        {
+          "key": "C",
+          "text": "certain the library will close"
+        },
+        {
+          "key": "D",
+          "text": "positive with a reservation"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "赞扬图书馆但指出开放时间短，是肯定中有保留。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q69",
+      "familyId": "FAM_ENG_N6_3",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "A team plans to release a new app. The writer gives advice about the launch. The writer suggests testing the new app with a small group before wider use. This suggests a ____ approach.",
+      "options": [
+        {
+          "key": "A",
+          "text": "cautious"
+        },
+        {
+          "key": "B",
+          "text": "reckless"
+        },
+        {
+          "key": "C",
+          "text": "hostile to all technology"
+        },
+        {
+          "key": "D",
+          "text": "guaranteed successful"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "先小范围测试再推广体现谨慎，并不保证成功。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q70",
+      "familyId": "FAM_ENG_N6_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "推断与证据：优先选择能由原文支持的最小结论，避免绝对化。",
+      "stemMd": "Maya arrived at a shop late in the evening. She wanted to buy bread. The lights are off and the door is locked. The shop is probably ____.",
+      "options": [
+        {
+          "key": "A",
+          "text": "selling tickets now"
+        },
+        {
+          "key": "B",
+          "text": "closed"
+        },
+        {
+          "key": "C",
+          "text": "underwater"
+        },
+        {
+          "key": "D",
+          "text": "open all night"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "关灯且锁门，最合理推测是关门。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q71",
+      "familyId": "FAM_ENG_N6_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "推断与证据：优先选择能由原文支持的最小结论，避免绝对化。",
+      "stemMd": "Noah had an appointment in another town. He chose to travel by train. Noah left early to catch the first train. What can be inferred?",
+      "options": [
+        {
+          "key": "A",
+          "text": "He missed every train."
+        },
+        {
+          "key": "B",
+          "text": "He dislikes all travel."
+        },
+        {
+          "key": "C",
+          "text": "He wanted to take an early train."
+        },
+        {
+          "key": "D",
+          "text": "The train was cancelled."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "提前出发赶首班车，说明想乘早班车；不能推断是否误车。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 55,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "ENG_Q72",
+      "familyId": "FAM_ENG_N6_4",
+      "subject": "english",
+      "knowledgeNode": "ENG_N6_PASSAGE_INFER",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "",
+      "stemMd": "A school wanted to improve its playground. Volunteers planted trees there in spring. After several trees were planted, the playground had more shade at noon. Which conclusion is supported?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The trees caused all clouds to vanish."
+        },
+        {
+          "key": "B",
+          "text": "The playground is now cool in every season."
+        },
+        {
+          "key": "C",
+          "text": "No other factor could affect shade."
+        },
+        {
+          "key": "D",
+          "text": "The new trees may have increased shade."
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "植树后阴影增多支持可能有关，但单凭描述不能排除其他因素。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 55,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     }

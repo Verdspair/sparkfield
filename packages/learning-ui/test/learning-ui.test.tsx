@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { ClientQuestionView } from '@pkg/contracts';
+import type { ClientQuestionView, LearningArcMeta } from '@pkg/contracts';
 import {
   LEARNING_READING_THEME_STORAGE_KEY,
   LEARNING_UI_CSS,
@@ -235,5 +235,61 @@ describe('@pkg/learning-ui', () => {
     expect(treeHtml).toContain('聚变重型钨刃');
     expect(treeHtml).toContain('lui-recipe-glyph');
     expect(treeHtml).toContain('背包已有');
+  });
+
+  it('renders the top learning arc progress ribbon and adaptive branch badges when arcMeta is provided', () => {
+    const baseArcMeta: LearningArcMeta = {
+      arcIndex: 0,
+      arcCount: 2,
+      slotInArc: 2,
+      slotsPerArc: 4,
+      stageKind: 'remediate',
+      stageLabel: '错题拆解与变式订正',
+      topicTitle: '情景交际与日常高频词块 · 完形语境与信息推理',
+      strategy: 'modular_pack',
+      blueprintTags: ['情景交际', '阅读推理'],
+      adaptiveBranch: 'remediation_inserted',
+      stageOutline: [
+        { slot: 0, kind: 'intro', label: '熟悉与精讲', status: 'done' },
+        { slot: 1, kind: 'deepen', label: '变式深入', status: 'done' },
+        { slot: 2, kind: 'remediate', label: '错题拆解与变式订正', status: 'active' },
+        { slot: 3, kind: 'mastery', label: '综合终测验收', status: 'upcoming' },
+      ],
+    };
+
+    const remediateHtml = renderToStaticMarkup(
+      <QuestionStepCard arcMeta={baseArcMeta} question={makeBaseQuestion({})} variant="overlay" />,
+    );
+    expect(remediateHtml).toContain('data-testid="learning-arc-ribbon"');
+    expect(remediateHtml).toContain('大轮次 1/2');
+    expect(remediateHtml).toContain('情景交际与日常高频词块 · 完形语境与信息推理');
+    expect(remediateHtml).toContain('情景交际');
+    expect(remediateHtml).toContain('阅读推理');
+    expect(remediateHtml).toContain('动态插入 · 错题靶向订正');
+    expect(remediateHtml).toContain('lui-arc-node--done');
+    expect(remediateHtml).toContain('lui-arc-node--active');
+    expect(remediateHtml).toContain('lui-arc-node--upcoming');
+
+    const stretchHtml = renderToStaticMarkup(
+      <QuestionStepCard
+        arcMeta={{
+          ...baseArcMeta,
+          stageKind: 'stretch',
+          stageLabel: '进阶拓展挑战',
+          strategy: 'structured_topic',
+          blueprintTags: ['集合逻辑与函数性质'],
+          adaptiveBranch: 'stretch_promoted',
+          stageOutline: [
+            { slot: 0, kind: 'intro', label: '熟悉与精讲', status: 'done' },
+            { slot: 1, kind: 'deepen', label: '变式深入', status: 'done' },
+            { slot: 2, kind: 'stretch', label: '进阶拓展挑战', status: 'active' },
+            { slot: 3, kind: 'mastery', label: '综合终测验收', status: 'upcoming' },
+          ],
+        }}
+        question={makeBaseQuestion({})}
+      />,
+    );
+    expect(stretchHtml).toContain('高正确率 · 进阶挑战');
+    expect(stretchHtml).toContain('进阶');
   });
 });

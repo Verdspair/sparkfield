@@ -1,9 +1,14 @@
-import type { CoursePack, FsrsCardRecord, LessonStepKind, QueueType, QuestionItem, SubjectId, DurationMode } from '@pkg/contracts';
+import type { CoursePack, FsrsCardRecord, LessonStepKind, QueueType, QuestionItem, SubjectId, DurationMode, LearningArcMeta, MatchStudyBlueprint } from '@pkg/contracts';
 import { forgettingCurve, FSRS6_DEFAULT_WEIGHTS } from 'ts-fsrs/models/fsrs-6';
 import { toClientQuestionView, type SafeClientQuestionView } from './client-view.js';
 import { validDate } from './fsrs.js';
 import { gradeQuestionSubmission } from './grading.js';
 import { learningNodePolicy, type SubmissionMap } from './settlement.js';
+import { lessonArcMeta, selectArcLesson } from './arc-lesson.js';
+import { buildMatchStudyBlueprint } from './study-blueprint.js';
+
+export { buildMatchStudyBlueprint, type MatchStudyBlueprintInput } from './study-blueprint.js';
+export { locateMatchStudySlot } from './study-layout.js';
 
 export interface CourseProgress {
   subject: SubjectId;
@@ -17,6 +22,13 @@ export interface RecentLearningPerformance {
   hintRate: number;
   remediationAccuracy?: number;
 }
+export interface ArcAttempt {
+  questionId: string;
+  familyId: string;
+  isCorrect: boolean;
+  slotInArc?: number;
+}
+
 export interface PersonalizedLessonInput {
   packs: readonly CoursePack[];
   mode: DurationMode;
@@ -29,6 +41,8 @@ export interface PersonalizedLessonInput {
   progress?: readonly CourseProgress[];
   recentPerformance?: readonly RecentLearningPerformance[];
   usedQuestionIds?: readonly string[];
+  studyBlueprint?: MatchStudyBlueprint;
+  priorArcAttempts?: readonly ArcAttempt[];
   submissions?: SubmissionMap;
   assessmentComplete?: boolean;
 }
@@ -50,6 +64,8 @@ export interface PersonalizedLessonBundle {
   clientQuestions: readonly SafeClientQuestionView[];
   steps: readonly LessonBundleStep[];
   frozenDenominators: { resourceCheckWeight: string; verificationWeight: string };
+  arcMeta: LearningArcMeta;
+  blueprint: MatchStudyBlueprint;
   selectionEvidence: readonly { familyId: string; due: boolean; retrievability: number | null; priority: number }[];
 }
 function freeze<T>(value: T): T {
@@ -67,7 +83,7 @@ export function activateLessonRemediation(bundle: PersonalizedLessonBundle, subm
     q.stepRole === 'resource_check' && (Object.hasOwn(submissions, q.questionId) || assessmentComplete)
     && !gradeQuestionSubmission(q, Object.hasOwn(submissions, q.questionId) ? submissions[q.questionId] : undefined).isCorrect,
   ).map((q) => ({ questionId: q.questionId, explanationMd: q.explanationMd }));
-  return freeze({ ...bundle, steps: bundle.steps.map((step) => step.kind === 'remediation'
+  return freeze({ ...bundle, steps: bundle.steps.map((step) => step.kind === 'remediation' && step.plannedSeconds > 0
     ? { ...step, active: corrections.length > 0, questionIds: corrections.map((c) => c.questionId), corrections }
     : step) });
 }
@@ -84,6 +100,15 @@ export function buildPersonalizedLessonBundle(input: PersonalizedLessonInput): P
     if (item.remediationAccuracy !== undefined) validateRate(item.remediationAccuracy, 'Remediation accuracy');
     return [item.familyId, item] as const;
   }));
+  const blueprint = input.studyBlueprint ?? buildMatchStudyBlueprint({ ...input, subject: subjects[0]! });
+  if (input.studyBlueprint || input.priorArcAttempts !== undefined) {
+    const bundle = freeze(selectArcLesson(input, blueprint));
+    return input.submissions === undefined ? bundle : activateLessonRemediation(bundle, input.submissions, input.assessmentComplete);
+  }
+  const arcMeta = lessonArcMeta(blueprint, input.nodeIndex);
+  const phaseWeights = [10, 15, 15, 10, 10];
+  const phaseSeconds = phaseWeights.map(weight => Math.floor(policy.plannedSeconds * weight / 60));
+  phaseSeconds[4]! += policy.plannedSeconds - phaseSeconds.reduce((sum, seconds) => sum + seconds, 0);
   const used = new Set(input.usedQuestionIds ?? []);
   const seenQuestions = new Set<string>();
   const familySubjects = new Map<string, SubjectId>();
@@ -140,7 +165,7 @@ export function buildPersonalizedLessonBundle(input: PersonalizedLessonInput): P
       const targetB = pb && (pb.independentAccuracy < 0.6 || pb.hintRate > 0.5) ? 1 : 3;
       return Math.abs(a.difficulty - targetA) - Math.abs(b.difficulty - targetB) || a.questionId.localeCompare(b.questionId);
     });
-    const budget = policy.phaseSeconds[phaseIndex[role]]! / subjects.length;
+    const budget = phaseSeconds[phaseIndex[role]]! / subjects.length;
     const selectedFamilies = new Set<string>();
     let seconds = 0;
     let count = 0;
@@ -155,16 +180,16 @@ export function buildPersonalizedLessonBundle(input: PersonalizedLessonInput): P
   const materials = [...new Map(chosen.filter((q) => q.materialMd.trim()).map((q) => [q.materialMd, { familyId: q.familyId, materialMd: q.materialMd }])).values()];
   const kinds: LessonStepKind[] = ['material', 'practice', 'resource_check', 'remediation', 'verification'];
   const steps: LessonBundleStep[] = kinds.map((kind, i) => ({
-    kind, plannedSeconds: policy.phaseSeconds[i]!, active: kind !== 'remediation',
+    kind, plannedSeconds: phaseSeconds[i]!, active: kind !== 'remediation',
     questionIds: chosen.filter((q) => q.stepRole === kind).map((q) => q.questionId),
-    materials: kind === 'material' && policy.phaseSeconds[0]! > 0 ? materials : [], corrections: [],
+    materials: kind === 'material' && phaseSeconds[0]! > 0 ? materials : [], corrections: [],
   }));
   const weightSum = (role: string) => chosen.filter((q) => q.stepRole === role).reduce((sum, q) => {
     if (!Number.isSafeInteger(q.weight) || q.weight <= 0) throw new Error('Invalid frozen question weight');
     return sum + BigInt(q.weight);
   }, 0n).toString();
   const bundle = freeze({
-    mode: input.mode, nodeIndex: input.nodeIndex, subjects,
+    mode: input.mode, nodeIndex: input.nodeIndex, subjects, arcMeta, blueprint,
     plannedSeconds: policy.plannedSeconds, verificationWeightPercent: policy.verificationWeightPercent,
     questions: chosen, clientQuestions: chosen.map(toClientQuestionView), steps,
     frozenDenominators: { resourceCheckWeight: weightSum('resource_check'), verificationWeight: weightSum('verification') },

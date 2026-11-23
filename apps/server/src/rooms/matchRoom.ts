@@ -2,13 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { Room, ServerError, type Client } from '@colyseus/core';
 import { z } from 'zod';
 import { CommunicationClientSendSchema, ConfigurableCommunicationPolicy, DEFAULT_TACTICIAN_ID, FinalBoardSnapshotSchema, GameCommandSchema, getMatchChoiceKind, MODE_BUDGETS,
-  type CommunicationGovernancePolicy, type CoursePack, type GameCommand, type LessonStepKind,
-  type MatchPhaseKind, type ModeStandingSummary, type UserProfile } from '@pkg/contracts';
-import { activateLessonRemediation, buildPersonalizedLessonBundle, finalizeLearningGoldCarry,
-  gradeFrozenLearningUnits, gradeQuestionSubmission, settleLearningNodeGold,
-  type LearningGoldSettlement, type PersonalizedLessonBundle, type SubmissionInput } from '@pkg/learning-core';
-import { applyGameCommand, applyLearningGoldGrant, beginNextRound, computeActiveTraits, createGame,
-  decideBotPrepCommands, finalPlacements, finalizePrepDeadline, resolveRoundBattles, settleRound,
+  type CommunicationGovernancePolicy, type CoursePack, type GameCommand,
+  type MatchPhaseKind, type MatchStudyBlueprint, type ModeStandingSummary, type SubjectId, type UserProfile } from '@pkg/contracts';
+import { activateLessonRemediation, buildMatchStudyBlueprint, buildPersonalizedLessonBundle, finalizeLearningGoldCarry,
+  gradeFrozenLearningUnits, gradeQuestionSubmission, locateMatchStudySlot, settleLearningNodeGold,
+  type ArcAttempt, type LearningGoldSettlement, type MatchStudyBlueprintInput, type PersonalizedLessonBundle,
+  type RecentLearningPerformance, type SubmissionInput } from '@pkg/learning-core';
+import { applyGameCommand, applyLearningGoldGrant, BATTLE_REGULAR_MS, beginNextRound, computeActiveTraits, computeRoundBattleDurationMs, createGame,
+  decideBotPrepCommands, finalPlacements, finalizePrepDeadline, longestBattleElapsedMs, resolveRoundBattles, settleRound,
   type GameState, type ResolvedRound, type SeatState } from '@pkg/game-core';
 import type { AuthService, AuthenticatedSession } from '../auth/authService.js';
 import type { AppDatabase } from '../db/client.js';
@@ -36,8 +37,20 @@ interface LearningProgress {
   bundle: PersonalizedLessonBundle; submissions: Record<string, SubmissionInput>;
   step: number; complete: boolean; readyToProceed: boolean; feedback: Record<string, unknown>; settled: boolean;
 }
+interface MatchStudyState {
+  blueprint: MatchStudyBlueprint;
+  startEvidence: Pick<MatchStudyBlueprintInput,'now'|'cards'|'progress'|'recentPerformance'>;
+  arcIndex: number;
+  usedQuestionIds: Set<string>;
+  attempts: ArcAttempt[];
+}
 interface Binding { token: string; userId: string; epoch: number; seatId: string }
-const STEPS: LessonStepKind[] = ['material','practice','resource_check','remediation','verification'];
+interface PendingBattle {
+  payload: Pick<ResolvedRound,'round'|'battles'> & {
+    overtimeAtMs: number; longestBattleMs: number; startedAtEpochMs: number; timeScale: number;
+  };
+  outcomes: ResolvedRound['outcomes'];
+}
 const CHOICE_COMMANDS = new Set(['PICK_AUGMENT','REROLL_AUGMENT_SLOT','PICK_ANVIL_OPTION']);
 const LearningMessage = z.object({requestId:z.string().max(100).optional(), action:z.enum(['advance','submit']),
   questionId:z.string().optional(), submission:z.unknown().optional()}).strict();
@@ -59,6 +72,7 @@ export class MatchRoom extends Room {
   private readonly controllers = new Map<string, string>();
   private readonly disconnectedAt = new Map<string, number>();
   private readonly lessons = new Map<string, LearningProgress>();
+  private readonly studies = new Map<string, MatchStudyState>();
   private readonly wrong = new Map<string, Set<string>>();
   private readonly settlements = new Map<string, LearningGoldSettlement[]>();
   private readonly sendTimes = new Map<string, number[]>();
@@ -68,7 +82,7 @@ export class MatchRoom extends Room {
   private readonly responses = new Map<string, {phaseIndex:number;value:object}>();
   private readonly persistence = new Set<Promise<void>>();
   private readonly learningTotals = new Map<string,{rewardPointsGranted:number;attemptIds:string[]}>();
-  private pendingBattle: ResolvedRound | null = null;
+  private pendingBattle: PendingBattle | null = null;
   private sequence: Promise<unknown> = Promise.resolve();
   private timeout?: ReturnType<typeof setTimeout>;
   private guardTimer?: ReturnType<typeof setTimeout>;
@@ -82,7 +96,9 @@ export class MatchRoom extends Room {
     this.autoDispose = false; this.maxClients = 24; this.patchRate = null; this.maxMessagesPerSecond = 80;
     this.runtime = options.runtime; this.input = options.input; this.start = options.start; this.packs = options.packs;
     this.policy = this.runtime.communicationPolicy ?? new ConfigurableCommunicationPolicy();
-    this.game = createGame(this.input.durationMode, this.runtime.gameSeed ?? parseInt(randomUUID().slice(0,8),16));
+    const seed=this.runtime.gameSeed ?? parseInt(randomUUID().slice(0,8),16);
+    const now=new Date();
+    this.game = createGame(this.input.durationMode,seed);
     for (let i=0;i<this.game.seats.length;i++) {
       const seat=this.game.seats[i]!; const profile=this.input.humans[i];
       seat.botDifficulty=options.botDifficulty; seat.isBot=!profile;
@@ -91,6 +107,16 @@ export class MatchRoom extends Room {
         this.disconnectedAt.set(profile.userId,Date.now());
         this.learningTotals.set(profile.userId,{rewardPointsGranted:0,attemptIds:[]}); }
     }
+    await Promise.all([...this.humans].map(async ([userId,human])=>{
+      const prefs=this.input.humanPrefs[userId];
+      const subject=this.input.queueType==='ranked'?this.input.sharedSubject:prefs?.subject ?? this.input.sharedSubject;
+      const knowledgeNode=prefs?.learningStartSelections[subject] ?? human.profile.learningStartSelections[subject];
+      const [cards,recentPerformance]=await Promise.all([getPrivateFsrsCards(this.runtime.db,userId),
+        this.recentStudyPerformance(userId,subject)]);
+      const startEvidence={now,cards,recentPerformance,progress:knowledgeNode?[{subject,knowledgeNode}]:[]};
+      const blueprint=buildMatchStudyBlueprint({packs:this.packs,mode:this.game.mode,subject,seed,...startEvidence});
+      this.studies.set(userId,{blueprint,startEvidence,arcIndex:-1,usedQuestionIds:new Set(),attempts:[]});
+    }));
     await this.runtime.ranking.startMatch(this.start);
     if(this.input.queueType==='ranked')await Promise.all([...this.humans.keys()].map(async userId=>{
       this.standingsBefore.set(userId,await this.runtime.ranking.getStanding(this.start.seasonTermId,this.game.mode,userId));
@@ -112,6 +138,32 @@ export class MatchRoom extends Room {
     this.onMessage('communicate',(client,message:unknown)=> { void this.run(client,'communication_result',this.requestId(message),
       (session)=>this.communicate(session,message)); });
     await this.transition();
+  }
+  private async recentStudyPerformance(userId:string,subject:SubjectId):Promise<RecentLearningPerformance[]> {
+    const recent=await this.runtime.db.selectFrom('learning_attempts').select(['family_id','is_correct','answer_json'])
+      .where('user_id','=',userId).where('subject','=',subject).where('is_offline_unverified','=',false)
+      .orderBy('created_at','desc').orderBy('id','desc').limit(100).execute();
+    const groups=new Map<string,{attempts:number;independent:number;correct:number;hinted:number}>();
+    for(const row of recent) {
+      const payload=row.answer_json;
+      if(!payload || typeof payload!=='object' || Array.isArray(payload))continue;
+      const submission=payload.submission;
+      const wrapped=submission && typeof submission==='object' && !Array.isArray(submission)
+        && ('answer' in submission || 'status' in submission || 'questionId' in submission);
+      const answer=wrapped?submission.answer:submission;
+      if(answer==null || (typeof answer==='string' && !answer.trim()) ||
+        (wrapped && (submission.status==='skipped' || submission.status==='timed_out')))continue;
+      const group=groups.get(row.family_id) ?? {attempts:0,independent:0,correct:0,hinted:0};
+      group.attempts++;
+      if(wrapped && submission.hintUsed===true)group.hinted++;
+      else if(payload.stepRole==='resource_check' || payload.stepRole==='verification') {
+        group.independent++;
+        if(row.is_correct)group.correct++;
+      }
+      groups.set(row.family_id,group);
+    }
+    return [...groups].map(([familyId,group])=>({familyId,
+      independentAccuracy:group.independent?group.correct/group.independent:0.5,hintRate:group.hinted/group.attempts}));
   }
   private requestId(message:unknown): string | undefined {
     return message && typeof message==='object' && 'requestId' in message && typeof message.requestId==='string'
@@ -238,18 +290,18 @@ export class MatchRoom extends Room {
     return applyGameCommand(this.game,seatId,command);
   }
   private normalizeStep(progress:LearningProgress):void {
-    while(progress.step<STEPS.length) {
-      const kind=STEPS[progress.step]!; const step=progress.bundle.steps[progress.step]!;
-      if (!step.active || (kind!=='material' && kind!=='remediation' && step.questionIds.length===0)) {progress.step++;continue;}
+    while(progress.step<progress.bundle.steps.length) {
+      const step=progress.bundle.steps[progress.step]!;
+      if (!step.active || (step.kind!=='material' && step.kind!=='remediation' && step.questionIds.length===0)) {progress.step++;continue;}
       break;
     }
-    progress.complete=progress.step>=STEPS.length;
+    progress.complete=progress.step>=progress.bundle.steps.length;
   }
   private settleUserLearning(userId:string):void {
     const progress=this.lessons.get(userId);
     if(!progress || progress.settled)return;
     const seat=this.game.seats.find(s=>s.id===this.humans.get(userId)!.seatId)!;
-    const settlement=settleLearningNodeGold({mode:this.game.mode,blockIndex:this.nodeIndex,
+    const settlement=settleLearningNodeGold({mode:this.game.mode,blockIndex:this.nodeIndex,studyBlueprint:progress.bundle.blueprint,
       gradedUnits:gradeFrozenLearningUnits(progress.bundle.questions,progress.submissions),carryInCents:seat.learningChargeCents});
     applyLearningGoldGrant(seat,settlement.grantedIntegerGold,settlement.carryOutCents);
     seat.learningGoldOrbs=[...settlement.orbSplits]; progress.settled=true;
@@ -296,7 +348,7 @@ export class MatchRoom extends Room {
       }
       throw new ServiceError('LEARNING_ALREADY_COMPLETE');
     }
-    const kind=STEPS[progress.step]!; const step=progress.bundle.steps[progress.step]!;
+    const step=progress.bundle.steps[progress.step]!; const {kind}=step;
     if (message.action==='advance') {
       if (kind!=='material' && kind!=='remediation') throw new ServiceError('STEP_REQUIRES_SUBMISSIONS');
       progress.step++; this.normalizeStep(progress);
@@ -318,6 +370,8 @@ export class MatchRoom extends Room {
       && 'hintUsed' in parsed && parsed.hintUsed===true)throw new ServiceError('SCORED_QUESTION_HINT_FORBIDDEN');
     const grade=gradeQuestionSubmission(question,parsed);
     progress.submissions[question.questionId]=structuredClone(parsed);
+    if (!grade.isSkipped) this.studies.get(userId)!.attempts.push({questionId:question.questionId,
+      familyId:question.familyId,isCorrect:grade.isCorrect,slotInArc:progress.bundle.arcMeta.slotInArc});
     const feedback={...grade,explanationMd:question.explanationMd}; progress.feedback[question.questionId]=feedback;
     if (!grade.isCorrect) this.wrong.get(userId)!.add(question.questionId);
     if (step.questionIds.every(id=>Object.hasOwn(progress.submissions,id))) {
@@ -367,6 +421,8 @@ export class MatchRoom extends Room {
     if(this.phaseIndex>=timeline.length) {this.broadcast('match_complete',{matchId:this.start.matchId});
       this.clock.setTimeout(()=>{void this.disconnect();},300_000);return;}
     const event=timeline[this.phaseIndex]!; this.phase=event.kind as MatchPhaseKind;
+    let phaseDurationMs=event.duration*1000;
+    let phaseStartedAtMs: number | undefined;
     if(this.game.phase!=='finished' && this.game.settledRounds.includes(this.game.round) &&
       ['learning','strategy','choice'].includes(this.phase)) {
       const postBattleChoice=this.phase==='choice' && /战后|PVE.*补给|PVE.*选择/u.test(event.label);
@@ -375,12 +431,15 @@ export class MatchRoom extends Room {
     }
     if(this.phase==='learning') {
       this.nodeIndex++; this.lessons.clear();
-      for(const [userId,human] of this.humans) {
-        const prefs=this.input.humanPrefs[userId]; const subject=this.input.queueType==='ranked'?this.input.sharedSubject:prefs?.subject ?? this.input.sharedSubject;
+      for(const [userId,study] of this.studies) {
+        const {arcIndex}=locateMatchStudySlot(study.blueprint,this.nodeIndex);
+        if(arcIndex!==study.arcIndex) {
+          study.arcIndex=arcIndex;study.attempts.length=0;
+        }
         const bundle=buildPersonalizedLessonBundle({packs:this.packs,mode:this.game.mode,nodeIndex:this.nodeIndex,
-          queueType:this.input.queueType,selectedSubjects:[subject],rankedSubject:this.input.sharedSubject,now:new Date(),
-          cards:await getPrivateFsrsCards(this.runtime.db,userId),
-          progress:Object.entries(human.profile.learningStartSelections).map(([subject,knowledgeNode])=>({subject:subject as 'english'|'math',knowledgeNode:knowledgeNode!}))});
+          queueType:this.input.queueType,selectedSubjects:[study.blueprint.subject],rankedSubject:this.input.sharedSubject,
+          ...study.startEvidence,studyBlueprint:study.blueprint,usedQuestionIds:[...study.usedQuestionIds],priorArcAttempts:[...study.attempts]});
+        for(const question of bundle.questions)study.usedQuestionIds.add(question.questionId);
         const progress:LearningProgress={bundle,submissions:{},step:0,complete:false,readyToProceed:false,feedback:{},settled:false};
         this.normalizeStep(progress);this.lessons.set(userId,progress);
       }
@@ -389,16 +448,22 @@ export class MatchRoom extends Room {
     } else if(this.phase==='strategy' || this.phase==='choice') {
       this.runBots();
     } else if(this.phase==='battle') {
-      finalizePrepDeadline(this.game); this.pendingBattle=resolveRoundBattles(this.game);
-      this.broadcast('battle',{round:this.game.round,battles:this.pendingBattle.battles});
+      finalizePrepDeadline(this.game);
+      const {round,battles,outcomes}=resolveRoundBattles(this.game);
+      phaseDurationMs=computeRoundBattleDurationMs(battles);
+      const longestBattleMs=longestBattleElapsedMs(battles);
+      phaseStartedAtMs=Date.now();
+      this.pendingBattle={outcomes,payload:{round,battles,overtimeAtMs:BATTLE_REGULAR_MS,
+        longestBattleMs,startedAtEpochMs:phaseStartedAtMs,timeScale:this.runtime.timeScale}};
     } else if(this.phase==='settlement') {
       if(!this.pendingBattle)throw new Error('MISSING_BATTLE');
       settleRound(this.game,this.pendingBattle.outcomes);this.pendingBattle=null;
     } else if(this.phase==='exit') await this.finish();
     if(this.failure)return;
-    this.deadlineEpochMs=Date.now()+Math.max(1,event.duration*1000*this.runtime.timeScale);
+    this.deadlineEpochMs=(phaseStartedAtMs??Date.now())+Math.max(1,phaseDurationMs*this.runtime.timeScale);
+    if(this.phase==='battle' && this.pendingBattle)this.broadcast('battle',this.pendingBattle.payload);
     this.broadcastSnapshots();this.scheduleProtectionCheck();
-    this.timeout=setTimeout(()=>{void this.enqueue(()=>this.transition()).catch(error=>this.fail(error));},Math.max(1,this.deadlineEpochMs-Date.now()));
+    this.timeout=setTimeout(()=>{void this.enqueue(()=>this.transition()).catch(error=>this.fail(error));},Math.max(1,Math.ceil(this.deadlineEpochMs-Date.now())));
   }
   private async finish():Promise<void> {
     await Promise.all(this.persistence);if(this.failure)throw new Error(this.failure);
@@ -432,7 +497,7 @@ export class MatchRoom extends Room {
   }
   private snapshot(userId:string):Record<string,unknown> {
     const human=this.humans.get(userId)!;const progress=this.lessons.get(userId);
-    const current=progress && !progress.complete?STEPS[progress.step]:null;
+    const current=progress && !progress.complete?progress.bundle.steps[progress.step]!.kind:null;
     return {roomId:this.roomId,matchId:this.start.matchId,mode:this.game.mode,queueType:this.input.queueType,
       phase:this.phase,phaseIndex:this.phaseIndex,deadlineEpochMs:this.deadlineEpochMs,
       remainingSeconds:Math.max(0,(this.deadlineEpochMs-Date.now())/(1000*this.runtime.timeScale)),
@@ -444,8 +509,9 @@ export class MatchRoom extends Room {
           tacticianId:identity?.profile.preferredTacticianId ?? DEFAULT_TACTICIAN_ID,
           units:seat.units.filter(u=>u.location.zone==='board'),victoryPoints:seat.victoryPoints,
           ...(this.input.queueType==='solo'?{isBot:seat.isBot}:{}),chosenAugments:seat.chosenAugments};}),
-      battle:this.phase==='battle' && this.pendingBattle?{round:this.game.round,battles:this.pendingBattle.battles}:null,
+      battle:this.pendingBattle?.payload ?? null,
       learning:progress?{nodeIndex:this.nodeIndex,currentStep:current,complete:progress.complete,
+        arcMeta:progress.bundle.arcMeta,blueprint:this.studies.get(userId)!.blueprint,
         readyToProceed:progress.readyToProceed,
         readyHumansCount:[...this.humans.keys()].filter(uid=>{const p=this.lessons.get(uid);return Boolean(p&&p.complete&&p.readyToProceed);}).length,
         totalHumansCount:this.humans.size,

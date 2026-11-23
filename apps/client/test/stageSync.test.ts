@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Vector3 } from 'three';
 import { SEASON1_UNITS, type ArenaThemeId } from '@pkg/contracts';
-import { createGame, finalizePrepDeadline, resolveRoundBattles } from '@pkg/game-core';
+import { createGame, finalizePrepDeadline, resolveRoundBattles, runCombat } from '@pkg/game-core';
 import type { MatchRoomSnapshot } from '../src/api/matchSocket.js';
 import { LiveBattleChoreographer, SnapshotStageSynchronizer } from '../src/hud/stageSync.js';
 import {
@@ -24,6 +24,45 @@ import {
 } from '../src/stage/index.js';
 
 describe('live battle stage ownership', () => {
+  it('catches up to the shared battle start and replays the exact result through 45 seconds', async () => {
+    vi.useFakeTimers();
+    const game = createGame('quick', 4);
+    const [left, right] = game.seats;
+    for (const seat of [left!, right!]) {
+      seat.units = [{ ...seat.units[0]!, unitId: 'S01', bonusHp: 10_000, location: { zone: 'board', row: 0, col: 3 } }];
+    }
+    const result = runCombat(left!, right!, 'quick', 123);
+    const startedAtEpochMs = Date.now() - 19_950;
+    const snapshot = {
+      roomId: 'stage-room', matchId: 'stage-match', mode: 'quick', queueType: 'solo', phase: 'battle',
+      phaseIndex: 4, deadlineEpochMs: startedAtEpochMs + 46_800, remainingSeconds: 26.85, round: 1, nodeIndex: 0,
+      versionLock: { seasonTermId: 's1', gameSetVersion: 'v1', coursePackVersion: 'v1' }, seatId: left!.id,
+      self: left!, seats: [left!, right!].map(seat => ({ seatId: seat.id, nickname: seat.id,
+        level: seat.level, units: seat.units, victoryPoints: 0, chosenAugments: seat.chosenAugments })),
+      learning: null, resourceSettlement: null, summary: null, completed: false, failure: null,
+    } satisfies MatchRoomSnapshot;
+    const stage = {
+      setPhase: vi.fn(), syncUnits: vi.fn(), playUnitSkillCast: vi.fn(), playUnitAttack: vi.fn(),
+      triggerUnitHit: vi.fn(), spawnDamageNumber: vi.fn(), triggerTacticianEmote: vi.fn(),
+    } as unknown as BoardStageEngine;
+    const choreographer = new LiveBattleChoreographer();
+    const onTelemetry = vi.fn();
+    try {
+      choreographer.start({ stage, snapshot, viewedSeatId: left!.id, stageSeatIndex: 0, onTelemetry,
+        battlePayload: { round: 1, overtimeAtMs: 30_000, longestBattleMs: result.elapsedMs, startedAtEpochMs,
+          battles: [{ leftSeatId: left!.id, rightSeatId: right!.id, pve: false, result }] } });
+      expect(choreographer['combat']?.elapsedMs).toBe(19_950);
+      await vi.advanceTimersByTimeAsync(10_050);
+      expect(choreographer['combat']?.elapsedMs).toBe(30_000);
+      expect(choreographer['combat']?.result).toBeNull();
+      await vi.advanceTimersByTimeAsync(15_000);
+      expect(choreographer['combat']?.result).toEqual(result);
+      expect(result).toMatchObject({ elapsedMs: 45_000, enteredOvertime: true, outcome: 'draw' });
+      expect(onTelemetry).toHaveBeenLastCalledWith(result.telemetry);
+      expect(choreographer['timer']).toBeNull();
+    } finally { choreographer.stop(); vi.useRealTimers(); }
+  });
+
   it('enters battle mode and cancels a strategy interaction before the first combat frame', () => {
     const game = createGame('quick', 4);
     const home = game.seats[0]!;

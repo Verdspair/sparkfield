@@ -2,8 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
-import { ClientQuestionViewSchema, DEFAULT_TACTICIAN_ID, FinalBoardSnapshotSchema, MODE_BUDGETS, SEASON1_UNITS_BY_ID, TacticianIdSchema,
-  type CoursePack, type DurationMode, type GameCommand, type UserProfile } from '@pkg/contracts';
+import { ClientQuestionViewSchema, DEFAULT_TACTICIAN_ID, FinalBoardSnapshotSchema, LearningArcMetaSchema,
+  MatchStudyBlueprintSchema, MODE_BUDGETS, SEASON1_UNITS_BY_ID, TacticianIdSchema,
+  type CoursePack, type DurationMode, type GameCommand, type LearningArcMeta, type MatchStudyBlueprint, type UserProfile } from '@pkg/contracts';
 import type { SeatState } from '@pkg/game-core';
 import type { LearningGoldSettlement } from '@pkg/learning-core';
 import { compileCoursePack, serializeCoursePackToAuthoring } from '@pkg/pack-compiler';
@@ -88,7 +89,8 @@ interface Snapshot {
   versionLock: { seasonTermId: string; gameSetVersion: string; coursePackVersion: string };
   seatId: string; self: SeatState; seats: Record<string, unknown>[];
   learning: null | { currentStep: string | null; complete: boolean; clientQuestions: { questionId: string; stepRole: string; subject: string }[];
-    steps: unknown[]; submittedQuestionIds: string[]; feedback: Record<string, unknown> };
+    arcMeta: LearningArcMeta; blueprint: MatchStudyBlueprint;
+    steps: { kind: string; active: boolean; questionIds: string[] }[]; submittedQuestionIds: string[]; feedback: Record<string, unknown> };
   resourceSettlement: LearningGoldSettlement | null;
   summary?: { competitive: unknown; learning: unknown };
 }
@@ -474,10 +476,14 @@ function assertPrivateSnapshot(snapshot: Snapshot, queueType: string) {
   expect(snapshot.self.id).toBe(snapshot.seatId); expect(snapshot.self.shop).toHaveLength(5);
   for (const seat of snapshot.seats) {
     expect(TacticianIdSchema.safeParse(seat.tacticianId).success).toBe(true);
-    for (const key of ['shop', 'gold', 'inventoryItems', 'profile', 'preferredTacticianId', 'learningStartSelections', 'learning', 'fsrs', 'submissions', 'answerSpec']) expect(seat).not.toHaveProperty(key);
+    for (const key of ['shop', 'gold', 'inventoryItems', 'profile', 'preferredTacticianId', 'learningStartSelections', 'learning', 'blueprint', 'arcMeta', 'fsrs', 'submissions', 'answerSpec']) expect(seat).not.toHaveProperty(key);
     if (queueType !== 'solo') expect(seat).not.toHaveProperty('isBot');
   }
-  if (snapshot.learning) safeQuestions(snapshot.learning.clientQuestions);
+  if (snapshot.learning) {
+    safeQuestions(snapshot.learning.clientQuestions);
+    expect(MatchStudyBlueprintSchema.parse(snapshot.learning.blueprint)).toEqual(snapshot.learning.blueprint);
+    expect(LearningArcMetaSchema.parse(snapshot.learning.arcMeta)).toEqual(snapshot.learning.arcMeta);
+  }
 }
 
 describe.each([
@@ -486,6 +492,7 @@ describe.each([
   it('runs its whole clock, restores the same seat after login takeover and persists an immutable final result', async () => {
     const person = await account(), other = await account(), intruder = await account();
     let selected: LobbyState;
+    let secondStartNode: string | undefined;
     if (queueType === 'solo') {
       await ok('/api/me/profile', person.token, { preferredTacticianId: 'tactician_europa_fin' }, 'PATCH');
       const prep = await enter(person, mode, queueType);
@@ -506,6 +513,8 @@ describe.each([
       const timedOut = await lobby(other); expect(timedOut.match).toBeNull(); expect(timedOut.prepRoom!.status).toBe('idle');
     } else {
       await enter(person, mode, queueType, 'english'); await enter(other, mode, queueType, 'math');
+      secondStartNode = (await getCoursePack(db, 'math-core-starter')).manifest.knowledgeGraph[1]!.nodeId;
+      await ok('/api/lobby/member-prefs', other.token, { learningStartSelections: { math: secondStartNode } });
       await ok('/api/lobby/start', person.token, {}); await ok('/api/lobby/start', other.token, {});
       const prompt = (await waitForLobby(person, (state) => state.acceptPrompt !== null)).acceptPrompt!;
       const otherPrompt = (await lobby(other)).acceptPrompt!;
@@ -515,6 +524,9 @@ describe.each([
       expect((await lobby(other)).match!.roomId).toBe(selected.match!.roomId);
     }
     const roomId = selected.match!.roomId, matchId = selected.match!.matchId;
+    const room = server.matches.getRoom(roomId)!;
+    const study = room['studies'].get(person.profile.userId)!;
+    const startingBlueprint = study.blueprint;
     const inbox = await join(roomId, person.token);
     const streams = [inbox];
     const initial = await inbox.snapshot();
@@ -569,11 +581,18 @@ describe.each([
       const secondLesson = await secondInbox!.wait<Snapshot>('snapshot', (s) => s.phase === 'learning' && s.nodeIndex === 0);
       expect(secondLesson.learning!.currentStep).toBe('material');
       expect((await requestLearning(secondInbox!, 'advance')).ok).toBe(true);
-      const secondPractice = await secondInbox!.snapshot();
-      expect(secondPractice.learning!.clientQuestions.length).toBeGreaterThan(0);
-      expect(secondPractice.learning!.clientQuestions.every((q) => q.subject === 'math')).toBe(true);
-      safeQuestions(secondPractice.learning!.clientQuestions);
+      const secondAssessment = await secondInbox!.snapshot();
+      expect(secondAssessment.learning!.blueprint.subject).toBe('math');
+      expect(secondAssessment.learning!.blueprint.arcs[0]!.primaryNodeId).toBe(secondStartNode);
+      expect(secondAssessment.learning!.clientQuestions.length).toBeGreaterThan(0);
+      expect(secondAssessment.learning!.clientQuestions.every((q) => q.subject === 'math')).toBe(true);
+      safeQuestions(secondAssessment.learning!.clientQuestions);
     }
+    const firstBlueprint = lesson.learning!.blueprint;
+    const expectedArcSlots = { quick: [4], standard: [4, 4], deep: [4, 3, 3] }[mode];
+    expect(firstBlueprint).toMatchObject({ mode, subject: 'english', arcCount: expectedArcSlots.length });
+    expect(firstBlueprint.arcs.map((arc) => arc.slotsInArc)).toEqual(expectedArcSlots);
+    expect(firstBlueprint).toEqual(startingBlueprint);
     let current = lesson;
     const firstNodeQuestionIds = new Set<string>();
     for (let step = 0; step < 8 && current.phase === 'learning' && current.learning && !current.learning.complete; step++) {
@@ -596,19 +615,22 @@ describe.each([
       }
       current = await studyInbox.snapshot();
     }
+    expect(study.attempts.map((attempt) => attempt.questionId)).toEqual([...firstNodeQuestionIds]);
+    expect(study.attempts.every((attempt) => attempt.isCorrect && attempt.slotInArc === 0)).toBe(true);
     if (queueType === 'ranked') {
       const resource = current.phase === 'resource' && current.nodeIndex === 0
         ? current
         : await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'resource' && s.nodeIndex === 0);
-      expect(resource.resourceSettlement).toMatchObject({ nodeIndex: 0, rawEarnedCents: 850, carryInCents: 0,
-        grantedIntegerGold: 8, carryOutCents: 50, orbSplits: [2, 2, 2, 2] });
-      expect(resource.self.gold).toBe(lesson.self.gold + 8);
-      expect(resource.self.learningChargeCents).toBe(50); expect(resource.self.learningGoldOrbs).toEqual([2, 2, 2, 2]);
+      expect(resource.resourceSettlement).toMatchObject({ nodeIndex: 0, rawEarnedCents: 600, carryInCents: 0,
+        grantedIntegerGold: 6, carryOutCents: 0, orbSplits: [2, 2, 2] });
+      expect(resource.self.gold).toBe(lesson.self.gold + 6);
+      expect(resource.self.learningChargeCents).toBe(0); expect(resource.self.learningGoldOrbs).toEqual([2, 2, 2]);
       expect(resource.self.learningGoldOrbs.every(Number.isInteger)).toBe(true);
-      expect(resource.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual([{ reason: 'learning', amount: 8 }]);
+      expect(resource.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual([{ reason: 'learning', amount: 6 }]);
       const persistedLearning = await studyInbox.wait<{ nodeIndex: number; rewardPointsGranted: number; attemptIds: string[] }>(
         'learning_persisted', (event) => event.nodeIndex === 0);
-      expect(persistedLearning.rewardPointsGranted).toBeGreaterThan(0); expect(persistedLearning.attemptIds.length).toBeGreaterThan(0);
+      expect(persistedLearning.rewardPointsGranted).toBe(0);
+      expect(persistedLearning.attemptIds).toHaveLength(firstNodeQuestionIds.size);
       expect((await ok<{ balance: number }>('/api/rewards/balance', person.token)).balance).toBe(persistedLearning.rewardPointsGranted);
     }
     const strategy = await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'strategy' && s.round === 1);
@@ -652,7 +674,7 @@ describe.each([
     expect(await studyInbox.command({ type: 'BUY_XP' })).toMatchObject({ ok: false, reason: 'STRATEGY_PHASE_REQUIRED' });
     expect((await studyInbox.snapshot()).self.gold).toBe(frozenGold);
     if (queueType === 'ranked') {
-      expect((await ok<{ balance: number }>('/api/rewards/balance', person.token)).balance).toBeGreaterThan(0);
+      expect((await ok<{ balance: number }>('/api/rewards/balance', person.token)).balance).toBe(0);
       const author = serializeCoursePackToAuthoring(englishPack);
       const draft = await ok<{ draftId: string }>('/api/admin/packs/compile-preview', adminToken, {
         meta: { ...author.meta, coursePackVersion: '2.1.0' }, csvSources: [{ file: 'questions.csv', text: author.csvText }],
@@ -675,10 +697,10 @@ describe.each([
       expect((await studyInbox.snapshot()).self.chosenAugments).toHaveLength(choice.self.chosenAugments.length + 1);
       const roundTwo = await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'strategy' && s.round === 2);
       const roundThree = await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'strategy' && s.round === 3);
-      expect(roundTwo.resourceSettlement).toMatchObject({ nodeIndex: 1, rawEarnedCents: 0, carryInCents: 50, grantedIntegerGold: 0, carryOutCents: 50 });
+      expect(roundTwo.resourceSettlement).toMatchObject({ nodeIndex: 1, rawEarnedCents: 0, carryInCents: 0, grantedIntegerGold: 0, carryOutCents: 0 });
       expect(roundThree.resourceSettlement).toEqual(roundTwo.resourceSettlement);
-      expect(roundThree.self.learningChargeCents).toBe(50);
-      expect(roundThree.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual([{ reason: 'learning', amount: 8 }]);
+      expect(roundThree.self.learningChargeCents).toBe(0);
+      expect(roundThree.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual([{ reason: 'learning', amount: 6 }]);
       expect(roundThree.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual(roundTwo.self.goldLedger.filter((entry) => entry.reason === 'learning'));
     }
     const summary = await studyInbox.wait<{ competitive: { finalBoardSnapshot: unknown; standing: unknown }; learning: { wrongQuestionIds: string[]; nodes: unknown[] } }>('summary', () => true, 0, 55_000);
@@ -692,6 +714,27 @@ describe.each([
     expect(exit.versionLock).toEqual(initial.versionLock); expect(exit.summary).toEqual(summary);
     const snapshots = streams.flatMap((stream) => stream.messages)
       .filter((message) => message.type === 'snapshot').map((message) => message.data as Snapshot);
+    let nodeIndex = 0;
+    const questionIds = new Set<string>();
+    for (const { arcIndex, slotStages } of firstBlueprint.arcs) {
+      for (let slotInArc = 0; slotInArc < slotStages.length; slotInArc++, nodeIndex++) {
+        const learning = snapshots.find((s) => s.phase === 'learning' && s.nodeIndex === nodeIndex)!.learning!;
+        expect(learning.blueprint).toEqual(firstBlueprint);
+        expect(learning.arcMeta).toMatchObject({ arcIndex, slotInArc, arcCount: firstBlueprint.arcCount, slotsPerArc: slotStages.length });
+        expect(learning.steps.find((step) => step.kind === 'practice')!.active).toBe(false);
+        if (slotStages[slotInArc] === 'mastery') {
+          expect(learning.currentStep).toBe('verification');
+          expect(learning.steps.filter((step) => step.active).map((step) => step.kind)).toEqual(['verification']);
+        }
+        for (const questionId of learning.steps.flatMap((step) => step.questionIds)) {
+          expect(questionIds.has(questionId)).toBe(false);
+          questionIds.add(questionId);
+        }
+      }
+    }
+    expect(study.blueprint).toBe(startingBlueprint);
+    if (firstBlueprint.arcCount > 1) expect(study.attempts).toEqual([]);
+    expect(study.usedQuestionIds).toEqual(questionIds);
     const indexes = [...new Set(snapshots.map((snapshot) => snapshot.phaseIndex))];
     expect(indexes).toEqual(MODE_BUDGETS.modes[mode].timeline.map((_, index) => index));
     const phases = indexes.map((index) => snapshots.find((s) => s.phaseIndex === index)!.phase);
@@ -732,22 +775,17 @@ describe.each([
       expect(await db.selectFrom('match_participants').select('seat_id').where('user_id', '=', other.profile.userId).execute()).toEqual([]);
       expect((await lobby(other)).match).toBeNull();
       const balanceBefore = (await ok<{ balance: number }>('/api/rewards/balance', person.token)).balance;
-      expect(balanceBefore).toBeGreaterThan(0);
       let direct = await ok<DirectState>('/api/learning/standalone/start', person.token, { mode: 'quick', nodeIndex: 0, selectedSubjects: ['english'] });
-      const directFamilies = new Set<string>();
       for (let step = 0; step < 5; step++) {
         for (const question of direct.currentStep.questions) {
-          directFamilies.add(englishPack.items.find((q) => q.questionId === question.questionId)!.familyId);
           await ok('/api/learning/standalone/submit', person.token, { sessionId: direct.sessionId, questionId: question.questionId, submission: answerFor(question.questionId) });
         }
         direct = step < 4
           ? await ok<DirectState>('/api/learning/standalone/submit', person.token, { sessionId: direct.sessionId, action: 'advance' })
           : await ok<DirectState>(`/api/learning/direct/sessions/${direct.sessionId}`, person.token);
       }
-      const matchFamilies = new Set([...firstNodeQuestionIds].map((id) => englishPack.items.find((q) => q.questionId === id)!.familyId));
-      expect(directFamilies.size).toBeGreaterThan(0); expect(directFamilies).toEqual(matchFamilies);
-      expect(direct.completed).toBe(true); expect(direct.result!.rewardPointsGranted).toBe(0);
-      expect((await ok<{ balance: number }>('/api/rewards/balance', person.token)).balance).toBe(balanceBefore);
+      expect(direct.completed).toBe(true); expect(direct.result!.rewardPointsGranted).toBeGreaterThan(0);
+      expect((await ok<{ balance: number }>('/api/rewards/balance', person.token)).balance).toBe(balanceBefore + direct.result!.rewardPointsGranted);
     }
     const history = await ok<{ matchId: string; finalBoardSnapshot: unknown }[]>('/api/matches/history', person.token);
     expect(history).toHaveLength(1); expect(history[0]!.matchId).toBe(matchId); expect(history[0]!.finalBoardSnapshot).toEqual(own.final_board_snapshot);

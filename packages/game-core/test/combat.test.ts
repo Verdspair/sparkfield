@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { SEASON1_UNITS, SEASON1_UNITS_BY_ID, SEASON1_ITEMS, UnitCombatTelemetrySchema } from '@pkg/contracts';
 import type { SeatState, UnitInstance } from '../src/types.js';
 import { hashState, cloneState } from '../src/rng.js';
-import { createCombat, stepCombat, runCombat, hexDistance, hexNeighbors, findAttackPath, gainMana, isManaLocked, healCombatUnit, shieldCombatUnit, type CombatState, type CombatUnit, type CombatProjectile } from '../src/combat.js';
+import { BATTLE_REGULAR_MS, BATTLE_OVERTIME_MS, computeRoundBattleDurationMs, createCombat, stepCombat, runCombat, hexDistance, hexNeighbors, findAttackPath, gainMana, isManaLocked, healCombatUnit, shieldCombatUnit, type CombatState, type CombatUnit, type CombatProjectile } from '../src/combat.js';
 const NEVER=1e9;
+const HARD_DEADLINE=BATTLE_REGULAR_MS+BATTLE_OVERTIME_MS;
 function unit(id:string,unitId='S01',row=0,col=3,items:string[]=[]):UnitInstance{return {instanceId:id,unitId,star:1,location:{zone:'board',row,col},items,cryoRounds:0,frozenUntilRound:null,bonusHp:0,bonusSkillEfficiency:0};}
 function seat(id:string,units:UnitInstance[],chosenAugments:string[]=[]):SeatState{return {id,units,chosenAugments,level:9,xp:0,gold:0,initialGold:0,goldLedger:[],shop:[null,null,null,null,null],shopLocked:false,inventoryItems:[],magneticCharges:0,reforgerCharges:0,cryoPodEnabled:false,augmentOffer:null,anvils:[],previousBattleTraits:[],lineupPlan:[],victoryPoints:0,pvpWinStreak:0,moraleGoldGranted:0,rerollVouchers:0,voucherRound:null,vouchersGranted:0,pendingAugmentRerollRounds:0,pendingLevelFreeRefreshes:0,learningChargeCents:0,learningGoldOrbs:[],pendingCommands:[],isBot:false,botDifficulty:'standard'};}
 function freeze(s:CombatState){for(const u of s.units){u.nextAttackAt=NEVER;u.mana=0;u.manaLockUntil=NEVER;}}
@@ -13,15 +14,96 @@ function fixture(unitId:string){const s=createCombat(seat('L',[unit('caster',uni
 describe('isolated deterministic combat',()=>{
   it('same seed has identical outcomes, telemetry, and state; management entities never mutate',()=>{const l=seat('L',[unit('a','S32',0,3,['I_STRONG_CRIT_EDGE']),unit('b','S05',2,3)]),r=seat('R',[unit('x','S33'),unit('y','S36',2,3)]);const before=hashState([l,r]);const a=runCombat(l,r,'quick',42),b=runCombat(l,r,'quick',42);expect(a).toEqual(b);expect(hashState([l,r])).toBe(before);for(const t of a.telemetry)expect(UnitCombatTelemetrySchema.safeParse(t).success).toBe(true);const snap=createCombat(l,r,'quick',42);stepCombat(snap,2000);expect(snap).toEqual(stepCombat(createCombat(l,r,'quick',42),2000));snap.units[0]!.items.push('C_BELT');expect(hashState([l,r])).toBe(before);});
   it('serializable mid-fight state resumes identically',()=>{const l=seat('L',[unit('a','S29')]),r=seat('R',[unit('b','S33')]);const a=createCombat(l,r,'deep',123);stepCombat(a,4150);const b=cloneState(a);stepCombat(a,9000);stepCombat(b,9000);expect(hashState(a)).toBe(hashState(b));});
-  it.each([['quick',20000],['standard',35000],['deep',45000]] as const)('%s has a strict %i ms deadline', (mode,deadline)=>{const s=createCombat(seat('L',[unit('a')]),seat('R',[unit('b')]),mode);freeze(s);stepCombat(s,100000);expect(s.elapsedMs).toBe(deadline);expect(s.result?.outcome).toBe('draw');});
-  it('empty boards settle without extending the budget',()=>{expect(runCombat(seat('L',[]),seat('R',[]),'quick').outcome).toBe('draw');});
+  it.each(['quick','standard','deep'] as const)('%s keeps both surviving sides until 45 seconds', (mode)=>{
+    const s=createCombat(seat('L',[unit('a')]),seat('R',[unit('b')]),mode);
+    freeze(s);
+    expect(s.overtimeAtMs).toBe(30_000);
+    stepCombat(s,44_950);
+    expect(s.result).toBeNull();
+    stepCombat(s);
+    expect(s.result).toMatchObject({outcome:'draw',elapsedMs:45_000,enteredOvertime:true,survivors:{left:['a'],right:['b']}});
+  });
+  it('empty boards settle without extending the budget',()=>{expect(runCombat(seat('L',[]),seat('R',[]),'quick')).toMatchObject({outcome:'draw',elapsedMs:50,enteredOvertime:false});});
+});
+
+describe('real round time and overtime',()=>{
+  it('uses the table maximum plus 1.8 seconds, with a 2.8 second floor',()=>{
+    const battles=(...times:number[])=>times.map(elapsedMs=>({result:{elapsedMs}}));
+    expect(computeRoundBattleDurationMs([])).toBe(2800);
+    expect(computeRoundBattleDurationMs(battles(50,700))).toBe(2800);
+    expect(computeRoundBattleDurationMs(battles(2500,100))).toBe(4300);
+    expect(computeRoundBattleDurationMs(battles(7400,45000,950))).toBe(46800);
+  });
+
+  it('breaks a live tank stalemate before 45s that would have drawn without overtime',()=>{
+    const items=['I_ONEILL_ARMOR','I_KEEL_FIELD'];
+    const s=createCombat(seat('L',[unit('a','S12',0,3,items)]),seat('R',[unit('b','S12',0,3,items)]),'quick',1);
+    stepCombat(s,BATTLE_REGULAR_MS-50);
+    expect(s.result).toBeNull();
+    expect(s.units.every(u=>u.alive&&u.telemetry.healingAndShielding>0)).toBe(true);
+    const regular=cloneState(s);
+    regular.overtimeAtMs=Infinity;
+    stepCombat(regular,HARD_DEADLINE);
+    expect(regular.result).toMatchObject({outcome:'draw',enteredOvertime:false,elapsedMs:HARD_DEADLINE});
+    stepCombat(s,HARD_DEADLINE);
+    expect(s.result?.enteredOvertime).toBe(true);
+    expect(s.result?.winnerSide).not.toBeNull();
+    expect(s.result?.elapsedMs).toBeGreaterThan(BATTLE_REGULAR_MS);
+    expect(s.result?.elapsedMs).toBeLessThan(HARD_DEADLINE);
+  });
+
+  it('scales active attack, skill hits, healing, shielding, and movement at 30 seconds',()=>{
+    const s=createCombat(seat('L',[unit('a','S04')]),seat('R',[unit('b')]),'quick');
+    freeze(s);
+    const [a,b]=s.units as [CombatUnit,CombatUnit];
+    a.range=8;
+    a.crit=0;
+    a.atkSpeed=1;
+    a.atk=50;
+    b.armor=b.mr=0;
+    b.hp=2000;
+    b.maxHp=3000;
+    s.elapsedMs=BATTLE_REGULAR_MS-100;
+    a.nextAttackAt=BATTLE_REGULAR_MS-50;
+    const regular=cloneState(s);
+    regular.overtimeAtMs=Infinity;
+    stepCombat(s,50);
+    stepCombat(regular,50);
+    expect(a.nextAttackAt-s.elapsedMs).toBe(1000);
+    expect(healCombatUnit(s,a,b,100)).toBe(100);
+    expect(shieldCombatUnit(s,a,b,100,500)).toBe(100);
+    b.shields=[];
+    regular.units[1]!.hp+=100;
+    const skill={...impact(a,b,50,BATTLE_REGULAR_MS),damageType:'magic',skill:true} as const;
+    s.projectiles.push(skill);
+    regular.projectiles.push({...skill});
+    stepCombat(s,100);
+    stepCombat(regular,100);
+    expect(a.nextAttackAt-BATTLE_REGULAR_MS).toBe(380);
+    expect(regular.units[0]!.nextAttackAt-(BATTLE_REGULAR_MS-50)).toBe(1000);
+    expect(a.telemetry.physicalDealt).toBe(2*regular.units[0]!.telemetry.physicalDealt);
+    expect(a.telemetry.magicDealt).toBe(2*regular.units[0]!.telemetry.magicDealt);
+    expect(a.telemetry.physicalDealt).toBe(100);
+    expect(a.telemetry.magicDealt).toBe(100);
+    expect(healCombatUnit(s,a,b,100)).toBeCloseTo(35);
+    expect(shieldCombatUnit(s,a,b,100,500)).toBeCloseTo(35);
+
+    const moving=createCombat(seat('L',[unit('a','S01',3)]),seat('R',[unit('b','S01',3)]),'quick');
+    moving.elapsedMs=BATTLE_REGULAR_MS-100;
+    stepCombat(moving,50);
+    const move=moving.units[0]!.move!;
+    expect(move.arriveAt-move.startAt).toBe(300);
+    stepCombat(moving,50);
+    expect(move.arriveAt-move.startAt).toBe(180);
+    expect(move.arriveAt-BATTLE_REGULAR_MS).toBe(150);
+  });
 });
 
 describe('independent commitments and simultaneous settlement',()=>{
   it('last projectile survives its shooter and can make a real double KO',()=>{const s=createCombat(seat('L',[unit('a')]),seat('R',[unit('b')]),'quick');freeze(s);const [a,b]=s.units as [CombatUnit,CombatUnit];a.hp=b.hp=50;s.projectiles=[impact(a,b,100,100),impact(b,a,100,300)];stepCombat(s,150);expect(b.alive).toBe(false);expect(a.alive).toBe(true);expect(s.result).toBeNull();stepCombat(s,150);expect(s.result?.outcome).toBe('draw');expect(a.telemetry.trueDealt).toBe(50);expect(b.telemetry.trueDealt).toBe(50);});
   it('committed delayed skill fires after caster death',()=>{const s=createCombat(seat('L',[unit('a','S04')]),seat('R',[unit('b')]),'quick');freeze(s);const [a,b]=s.units as [CombatUnit,CombatUnit];a.mana=a.maxMana;a.manaLockUntil=0;a.hp=20;b.hp=50;stepCombat(s,50);expect(s.events.some(x=>x.kind==='skill')).toBe(true);s.projectiles.push(impact(b,a,30,100));stepCombat(s,100);expect(a.alive).toBe(false);expect(s.result).toBeNull();stepCombat(s,600);expect(s.result?.outcome).toBe('draw');});
-  it('no pending projectile extends hard deadline',()=>{const s=createCombat(seat('L',[unit('a')]),seat('R',[unit('b')]),'quick');freeze(s);const [a,b]=s.units as [CombatUnit,CombatUnit];s.projectiles=[impact(a,b,NEVER,20100)];stepCombat(s,NEVER);expect(s.elapsedMs).toBe(20000);expect(s.result?.outcome).toBe('draw');expect(b.alive).toBe(true);});
-  it('all damage due at the hard deadline resolves before settlement',()=>{const s=createCombat(seat('L',[unit('a')]),seat('R',[unit('b')]),'quick');freeze(s);const [a,b]=s.units as [CombatUnit,CombatUnit];s.projectiles=[impact(a,b,NEVER,20000),impact(b,a,NEVER,20000)];stepCombat(s,NEVER);expect(s.result?.outcome).toBe('draw');expect(s.result?.survivors).toEqual({left:[],right:[]});});
+  it('no pending projectile extends hard deadline',()=>{const s=createCombat(seat('L',[unit('a')]),seat('R',[unit('b')]),'quick');freeze(s);const [a,b]=s.units as [CombatUnit,CombatUnit];s.projectiles=[impact(a,b,NEVER,HARD_DEADLINE+100)];stepCombat(s,NEVER);expect(s.elapsedMs).toBe(HARD_DEADLINE);expect(s.result?.outcome).toBe('draw');expect(b.alive).toBe(true);});
+  it('all damage due at the hard deadline resolves before settlement',()=>{const s=createCombat(seat('L',[unit('a')]),seat('R',[unit('b')]),'quick');freeze(s);const [a,b]=s.units as [CombatUnit,CombatUnit];s.projectiles=[impact(a,b,NEVER,HARD_DEADLINE),impact(b,a,NEVER,HARD_DEADLINE)];stepCombat(s,NEVER);expect(s.result?.outcome).toBe('draw');expect(s.result?.survivors).toEqual({left:[],right:[]});});
 });
 
 describe('mana locks and deferred refunds',()=>{
@@ -85,10 +167,10 @@ describe('all 36 concrete skill specs',()=>{
 });
 
 describe('numeric equipment / trait / augment integration',()=>{
-  it.each(SEASON1_ITEMS.completedItems.map(x=>[x.id]))('%s has finite deterministic battle behavior',id=>{const a=seat('L',[unit('a','S28',0,3,[id!]),unit('c','S31',2,3)]),b=seat('R',[unit('b','S29'),unit('d','S35',1,2)]);const result=runCombat(a,b,'quick',91);for(const t of result.telemetry)expect(UnitCombatTelemetrySchema.safeParse(t).success).toBe(true);expect(result.elapsedMs).toBeLessThanOrEqual(20000);expect(result).toEqual(runCombat(a,b,'quick',91));});
+  it.each(SEASON1_ITEMS.completedItems.map(x=>[x.id]))('%s has finite deterministic battle behavior',id=>{const a=seat('L',[unit('a','S28',0,3,[id!]),unit('c','S31',2,3)]),b=seat('R',[unit('b','S29'),unit('d','S35',1,2)]);const result=runCombat(a,b,'quick',91);for(const t of result.telemetry)expect(UnitCombatTelemetrySchema.safeParse(t).success).toBe(true);expect(result.elapsedMs).toBeLessThanOrEqual(HARD_DEADLINE);expect(result).toEqual(runCombat(a,b,'quick',91));});
   it('completed items inherit both component stats and their explicit effects',()=>{const s=createCombat(seat('L',[unit('a','S01',0,3,['I_ONEILL_ARMOR','I_FUSION_BLADE','I_HYPER_SWARM'])]),seat('R',[unit('b')]),'quick');const a=s.units[0]!;expect(a.maxHp).toBeCloseTo((715+300+450)*1.08);expect(a.atk).toBeCloseTo((40+20)*1.25);expect(a.atkSpeed).toBeCloseTo(0.65*1.48);expect(a.range).toBe(2);});
   it('duplicate native cards do not inflate trait count, and emblems add at most one',()=>{const l=seat('L',[unit('a','S01'),unit('c','S01',0,2),unit('d','S03',1,2,['E_DYSON']),unit('e','S04',1,4,['E_DYSON'])]);const s=createCombat(l,seat('R',[unit('b')]),'quick');expect(s.traits[0]['戴森工团']?.count).toBe(2);});
-  it('overtime -> strongest wound -> horizon is applied once, in fixed multiplicative order',()=>{const {s,caster}=fixture('S31');freeze(s);const target=s.units.find(x=>x.instanceId==='ally1')!;target.hp=100;target.maxHp=10000;s.elapsedMs=s.overtimeAtMs;s.flags['horizon:1']=1;target.buffs.push({key:'antiHeal',value:33,until:NEVER,source:'a'},{key:'antiHeal',value:20,until:NEVER,source:'b'},{key:'shieldReduce',value:25,until:NEVER,source:'c'});expect(healCombatUnit(s,caster,target,100)).toBeCloseTo(100*0.5*0.67*0.75);expect(shieldCombatUnit(s,caster,target,100,1000)).toBeCloseTo(100*0.5*0.75*0.75);});
+  it('overtime -> strongest wound -> horizon is applied once, in fixed multiplicative order',()=>{const {s,caster}=fixture('S31');freeze(s);const target=s.units.find(x=>x.instanceId==='ally1')!;target.hp=100;target.maxHp=10000;s.elapsedMs=s.overtimeAtMs;s.flags['horizon:1']=1;target.buffs.push({key:'antiHeal',value:33,until:NEVER,source:'a'},{key:'antiHeal',value:20,until:NEVER,source:'b'},{key:'shieldReduce',value:25,until:NEVER,source:'c'});expect(healCombatUnit(s,caster,target,100)).toBeCloseTo(100*0.35*0.67*0.75);expect(shieldCombatUnit(s,caster,target,100,1000)).toBeCloseTo(100*0.35*0.75*0.75);});
   it('positioning and defensive combat augments modify combat numbers, not source units',()=>{const l=seat('L',[unit('a','S01'),unit('c','S09',3,1)],['AUG_S04','AUG_S05','AUG_S07','AUG_G09','AUG_P05']);const s=createCombat(l,seat('R',[unit('b')]),'quick');const a=s.units[0]!,c=s.units[1]!;expect(a.armor).toBe(30+12+45);expect(a.mana).toBe(65);expect(a.shields.length).toBe(2);expect(c.range).toBe(5);expect(c.buffs.some(b=>b.key==='amp'&&b.value===10)).toBe(true);expect(s.units.every(u=>u.buffs.some(b=>b.key==='asSlow'&&b.value===20))).toBe(true);expect(l.units[0]!.bonusHp).toBe(0);});
 });
 

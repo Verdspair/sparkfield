@@ -1,7 +1,76 @@
 import { z } from 'zod';
+import { DurationModeSchema, MATCH_STUDY_ARC_SLOTS } from './modes.js';
 
 export const SubjectIdSchema = z.enum(['english', 'math']);
 export type SubjectId = z.infer<typeof SubjectIdSchema>;
+
+export const ArcStageKindSchema = z.enum(['intro', 'deepen', 'remediate', 'stretch', 'mastery', 'diagnose']);
+export type ArcStageKind = z.infer<typeof ArcStageKindSchema>;
+
+export const StudyArcStrategySchema = z.enum(['structured_topic', 'modular_pack']);
+export const StudyDifficultyTierSchema = z.enum(['foundational', 'standard', 'advanced']);
+export type StudyDifficultyTier = z.infer<typeof StudyDifficultyTierSchema>;
+
+export const StudyArcSlotsSchema = z.union([z.literal(3), z.literal(4), z.literal(5)]);
+export type StudyArcSlots = z.infer<typeof StudyArcSlotsSchema>;
+
+export const MatchStudyArcPlanSchema = z.object({
+  arcIndex: z.number().int().nonnegative(),
+  topicNodeIds: z.array(z.string().min(1)).min(1),
+  primaryNodeId: z.string().min(1),
+  title: z.string().min(1),
+  subject: SubjectIdSchema,
+  strategy: StudyArcStrategySchema,
+  tags: z.array(z.string().min(1)),
+  loadScore: z.number().nonnegative(),
+  slotsInArc: StudyArcSlotsSchema,
+  slotStages: z.array(ArcStageKindSchema).min(3).max(5),
+}).refine(arc => arc.topicNodeIds.includes(arc.primaryNodeId), { path: ['primaryNodeId'] })
+  .refine(arc => arc.slotStages.length === arc.slotsInArc && arc.slotStages[0] === 'intro'
+    && arc.slotStages.at(-1) === 'mastery', { path: ['slotStages'] });
+export type MatchStudyArcPlan = z.infer<typeof MatchStudyArcPlanSchema>;
+
+export const MatchStudyBlueprintSchema = z.object({
+  mode: DurationModeSchema,
+  subject: SubjectIdSchema,
+  arcCount: z.number().int().positive(),
+  slotsPerArc: StudyArcSlotsSchema,
+  difficultyTier: StudyDifficultyTierSchema,
+  seed: z.number().int(),
+  arcs: z.array(MatchStudyArcPlanSchema).min(1),
+}).refine(blueprint => {
+  const [min, max] = MATCH_STUDY_ARC_SLOTS[blueprint.mode];
+  const total = blueprint.arcs.reduce((sum, arc) => sum + arc.slotsInArc, 0);
+  return total >= min && total <= max && blueprint.arcCount === blueprint.arcs.length
+    && blueprint.slotsPerArc === Math.max(...blueprint.arcs.map(arc => arc.slotsInArc))
+    && blueprint.arcs.every((arc, index) => arc.arcIndex === index && arc.subject === blueprint.subject);
+}, { path: ['arcs'] });
+export type MatchStudyBlueprint = z.infer<typeof MatchStudyBlueprintSchema>;
+
+export const LearningArcMetaSchema = z.object({
+  arcIndex: z.number().int().nonnegative(),
+  arcCount: z.number().int().positive(),
+  slotInArc: z.number().int().nonnegative(),
+  slotsPerArc: StudyArcSlotsSchema,
+  stageKind: ArcStageKindSchema,
+  stageLabel: z.string().min(1),
+  topicTitle: z.string().min(1),
+  strategy: StudyArcStrategySchema,
+  blueprintTags: z.array(z.string().min(1)),
+  adaptiveBranch: z.enum(['standard', 'remediation_inserted', 'stretch_promoted']),
+  stageOutline: z.array(z.object({
+    slot: z.number().int().nonnegative(),
+    kind: ArcStageKindSchema,
+    label: z.string().min(1),
+    status: z.enum(['done', 'active', 'upcoming']),
+  })).min(3).max(5),
+}).refine(meta => meta.arcIndex < meta.arcCount && meta.slotInArc < meta.slotsPerArc
+  && meta.stageOutline.length === meta.slotsPerArc
+  && meta.stageOutline.every((stage, index) => stage.slot === index
+    && stage.status === (index === meta.slotInArc ? 'active' : index < meta.slotInArc ? 'done' : 'upcoming'))
+  && meta.stageOutline[meta.slotInArc]?.kind === meta.stageKind, { path: ['slotInArc'] });
+export type LearningArcMeta = z.infer<typeof LearningArcMetaSchema>;
+
 
 export const LessonStepKindSchema = z.enum([
   'material',

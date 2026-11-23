@@ -1,6 +1,22 @@
-import { MODE_BUDGETS, SEASON1_UNITS_BY_ID, SEASON1_ITEMS, SEASON1_TRAITS, type DurationMode, type UnitCombatTelemetry } from '@pkg/contracts';
+import { SEASON1_UNITS_BY_ID, SEASON1_ITEMS, SEASON1_TRAITS, type DurationMode, type UnitCombatTelemetry } from '@pkg/contracts';
 import type { SeatState, UnitInstance, RngState } from './types.js';
 import { createRng, nextRandom } from './rng.js';
+
+export const BATTLE_REGULAR_MS = 30_000;
+export const BATTLE_OVERTIME_MS = 15_000;
+export const BATTLE_FINISH_BUFFER_MS = 1_800;
+export const BATTLE_MIN_DURATION_MS = 2_800;
+export const BATTLE_TICK_MS = 50;
+
+interface TimedBattle { readonly result: { readonly elapsedMs: number } }
+
+export function longestBattleElapsedMs(battles: readonly TimedBattle[]): number {
+  return battles.reduce((longest, battle) => Math.max(longest, battle.result.elapsedMs), 0);
+}
+
+export function computeRoundBattleDurationMs(battles: readonly TimedBattle[]): number {
+  return Math.max(BATTLE_MIN_DURATION_MS, longestBattleElapsedMs(battles) + BATTLE_FINISH_BUFFER_MS);
+}
 
 export type CombatSide = 0 | 1;
 export type DamageType = 'physical' | 'magic' | 'true';
@@ -15,14 +31,19 @@ export interface CombatUnit {
   buffs: CombatBuff[]; shields: CombatShield[]; flags: Record<string, number>;
   alive: boolean; targetId: string | null; nextAttackAt: number; castUntil: number; manaLockUntil: number;
   pendingManaRefund: number; damageManaWindow: number; damageManaGained: number;
-  move: { to: CombatHex; arriveAt: number } | null; blockedTicks: number; attacks: number; lastHitTargetId: string | null; sameTargetHits: number;
+  move: { to: CombatHex; startAt: number; arriveAt: number } | null; blockedTicks: number; attacks: number; lastHitTargetId: string | null; sameTargetHits: number;
   telemetry: UnitCombatTelemetry;
 }
 export interface CombatProjectile { id: number; sourceId: string; targetId: string; impactAt: number; amount: number; damageType: DamageType; skill: boolean; auto: boolean; aoe: boolean; vampPct: number; killRefund: number; effects: CombatBuff[]; bypass: number; crit: boolean; attackIndex: number }
 export interface CombatEvent { id: number; at: number; sourceId: string; kind: 'skill' | 'pulse' | 'gamma' | 'dot' | 'wake' | 'mirror'; targetId: string | null; power: number; remaining: number; cell?: CombatHex; normalCast?: boolean; firstCast?: boolean }
-export interface CombatResult { outcome: 'win' | 'draw' | 'loss'; winnerSide: CombatSide | null; winnerSeatId: string | null; elapsedMs: number; telemetry: UnitCombatTelemetry[]; survivors: { left: string[]; right: string[] } }
-export interface CombatState { mode: DurationMode; rng: RngState; elapsedMs: number; hardDeadlineMs: number; overtimeAtMs: number; units: CombatUnit[]; projectiles: CombatProjectile[]; events: CombatEvent[]; nextEntityId: number; seats: [string,string]; augments: [string[],string[]]; traits: [Record<string, Record<string, unknown>>,Record<string, Record<string, unknown>>]; flags: Record<string, number>; result: CombatResult | null }
+export interface CombatResult { outcome: 'win' | 'draw' | 'loss'; winnerSide: CombatSide | null; winnerSeatId: string | null; elapsedMs: number; enteredOvertime: boolean; seed: number; telemetry: UnitCombatTelemetry[]; survivors: { left: string[]; right: string[] } }
+export interface CombatState { mode: DurationMode; seed: number; rng: RngState; elapsedMs: number; hardDeadlineMs: number; overtimeAtMs: number; units: CombatUnit[]; projectiles: CombatProjectile[]; events: CombatEvent[]; nextEntityId: number; seats: [string,string]; augments: [string[],string[]]; traits: [Record<string, Record<string, unknown>>,Record<string, Record<string, unknown>>]; flags: Record<string, number>; result: CombatResult | null }
 const FOREVER = Number.MAX_SAFE_INTEGER;
+const OVERTIME_ATTACK_SPEED = 2.5;
+const OVERTIME_DAMAGE = 2;
+const OVERTIME_SUSTAIN = 0.35;
+const OVERTIME_MOVE_DURATION = 0.6;
+const inOvertime = (s: CombatState) => s.elapsedMs >= s.overtimeAtMs;
 const n = (o: Record<string, unknown>, k: string, d=0): number => typeof o[k] === 'number' ? o[k] as number : d;
 const spec = (u: CombatUnit) => SEASON1_UNITS_BY_ID.get(u.unitId)!.skillSpec;
 const def = (u: CombatUnit) => SEASON1_UNITS_BY_ID.get(u.unitId)!;
@@ -53,7 +74,7 @@ export function isManaLocked(s:CombatState,u:CombatUnit):boolean{return s.elapse
 export function gainMana(s:CombatState,u:CombatUnit,amount:number):number{if(!u.alive||isManaLocked(s,u))return 0;const old=u.mana;u.mana=Math.min(u.maxMana*(1+val(s,u,'manaTax')/100),u.mana+Math.max(0,amount));return u.mana-old;}
 function healShieldScale(s:CombatState,source:CombatUnit,target:CombatUnit,shield:boolean){
   const efficiency=1+n(ownTrait(s,source,'维生'),'healShieldPct')/100+(shield?n(ownTrait(s,source,'矩阵'),'apAndShieldPct')/100:0);
-  return efficiency*(s.elapsedMs>=s.overtimeAtMs?0.5:1)*(shield?1:1-val(s,target,'antiHeal')/100)*(shield?1-val(s,target,'shieldReduce')/100:1)*(s.flags[`horizon:${1-target.side}`]?0.75:1);
+  return efficiency*(inOvertime(s)?OVERTIME_SUSTAIN:1)*(shield?1:1-val(s,target,'antiHeal')/100)*(shield?1-val(s,target,'shieldReduce')/100:1)*(s.flags[`horizon:${1-target.side}`]?0.75:1);
 }
 export function healCombatUnit(s:CombatState,source:CombatUnit,target:CombatUnit,amount:number):number{if(!target.alive)return 0;const actual=Math.max(0,Math.min(target.maxHp-target.hp,amount*healShieldScale(s,source,target,false)));target.hp+=actual;source.telemetry.healingAndShielding+=actual;return actual;}
 export function shieldCombatUnit(s:CombatState,source:CombatUnit,target:CombatUnit,amount:number,durationMs:number,skillLock=false):number{if(!target.alive)return 0;const actual=Math.max(0,amount*healShieldScale(s,source,target,true));target.shields.push({amount:actual,until:s.elapsedMs+durationMs,skillLock});source.telemetry.healingAndShielding+=actual;return actual;}
@@ -77,7 +98,7 @@ function lowHpEffects(s:CombatState,u:CombatUnit){
   const cloud=ownTrait(s,u,'云端星环');if(ratio<0.35&&n(cloud,'pulseDmg')&&!s.flags[`cloud:${u.side}`]){s.flags[`cloud:${u.side}`]=1;addEvent(s,{at:s.elapsedMs+1000,sourceId:u.id,kind:'pulse',targetId:null,power:n(cloud,'pulseDmg'),remaining:1});}
 }
 function damage(s:CombatState,p:CombatProjectile){const u=get(s,p.sourceId),t=get(s,p.targetId);if(!u||!t||!t.alive||t.hp<=0)return;
-  let raw=p.amount;const adj=enemies(s,u).filter(x=>x.id!==t.id&&hexDistance(t,x)===1).length;
+  let raw=p.amount*(inOvertime(s)?OVERTIME_DAMAGE:1);const adj=enemies(s,u).filter(x=>x.id!==t.id&&hexDistance(t,x)===1).length;
   const dil=ownTrait(s,u,'钟慢远征');const isolation=adj===0?1:adj===1&&aug(s,u.side,'AUG_G05')?0.5:0;
   raw*=1+(sum(s,u,'amp')+n(ownTrait(s,u,'失控蜂群'),'ampPct')+n(dil,'isoAmpPct')*isolation+(t.hp<t.maxHp/2?n(ownTrait(s,u,'跃迁'),'lowHpAmpPct'):0)+(t.maxHp>u.maxHp?effect(u,'giantSlayerBonusPct'):0))/100;
   raw*=1+val(s,t,'vuln')/100;
@@ -203,7 +224,7 @@ function makeUnit(source:UnitInstance,side:CombatSide):CombatUnit{
 }
 export function createCombat(left:SeatState,right:SeatState,mode:DurationMode,seed=1):CombatState{
   const units=[...left.units.filter(u=>u.location.zone==='board'&&u.frozenUntilRound===null).map(u=>makeUnit(u,0)),...right.units.filter(u=>u.location.zone==='board'&&u.frozenUntilRound===null).map(u=>makeUnit(u,1))].sort(cmp);
-  const s:CombatState={mode,rng:createRng(seed),elapsedMs:0,hardDeadlineMs:MODE_BUDGETS.modes[mode].combat*1000,overtimeAtMs:(MODE_BUDGETS.modes[mode].combat-(mode==='quick'?5:10))*1000,units,projectiles:[],events:[],nextEntityId:1,seats:[left.id,right.id],augments:[[...left.chosenAugments],[...right.chosenAugments]],traits:[countTraits(units.filter(u=>u.side===0)),countTraits(units.filter(u=>u.side===1))],flags:{},result:null};
+  const s:CombatState={mode,seed,rng:createRng(seed),elapsedMs:0,hardDeadlineMs:BATTLE_REGULAR_MS+BATTLE_OVERTIME_MS,overtimeAtMs:BATTLE_REGULAR_MS,units,projectiles:[],events:[],nextEntityId:1,seats:[left.id,right.id],augments:[[...left.chosenAugments],[...right.chosenAugments]],traits:[countTraits(units.filter(u=>u.side===0)),countTraits(units.filter(u=>u.side===1))],flags:{},result:null};
   for(const u of units){
     const heavy=ownTrait(s,u,'重装');u.armor+=n(trait(s,u,'重装'),'teamResist');u.mr+=n(trait(s,u,'重装'),'teamResist');u.maxHp*=1+n(heavy,'hpBonusPct')/100;u.hp=u.maxHp;
     u.ap+=n(trait(s,u,'光子'),'teamApPct')+n(ownTrait(s,u,'光子'),'apPct')+n(ownTrait(s,u,'矩阵'),'apAndShieldPct');
@@ -286,12 +307,23 @@ function periodic(s:CombatState,previous:number){
 function finish(s:CombatState,hard=false){const left=live(s,0),right=live(s,1);if(!hard&&left.length&&right.length)return;
   const pending=s.projectiles.some(p=>p.impactAt<=s.hardDeadlineMs&&get(s,p.targetId)?.alive)||s.events.some(e=>e.at<=s.hardDeadlineMs&&e.kind!=='mirror'&&enemies(s,get(s,e.sourceId)!).length>0);
   if(!hard&&pending)return;const winnerSide:CombatSide|null=left.length&&!right.length?0:right.length&&!left.length?1:null;
-  s.result={outcome:winnerSide===null?'draw':winnerSide===0?'win':'loss',winnerSide,winnerSeatId:winnerSide===null?null:s.seats[winnerSide],elapsedMs:s.elapsedMs,telemetry:s.units.map(u=>({...u.telemetry})),survivors:{left:left.map(u=>u.instanceId),right:right.map(u=>u.instanceId)}};
+  s.result={outcome:winnerSide===null?'draw':winnerSide===0?'win':'loss',winnerSide,winnerSeatId:winnerSide===null?null:s.seats[winnerSide],elapsedMs:s.elapsedMs,enteredOvertime:inOvertime(s),seed:s.seed,telemetry:s.units.map(u=>({...u.telemetry})),survivors:{left:left.map(u=>u.instanceId),right:right.map(u=>u.instanceId)}};
 }
-export function stepCombat(s:CombatState,deltaMs=50):CombatState{
+function accelerateCooldowns(s:CombatState) {
+  const start=s.overtimeAtMs;
+  for(const u of live(s)) {
+    if(u.nextAttackAt>start)u.nextAttackAt=start+(u.nextAttackAt-start)/OVERTIME_ATTACK_SPEED;
+    if(u.move&&u.move.arriveAt>start) {
+      u.move.startAt=start+(u.move.startAt-start)*OVERTIME_MOVE_DURATION;
+      u.move.arriveAt=start+(u.move.arriveAt-start)*OVERTIME_MOVE_DURATION;
+    }
+  }
+}
+export function stepCombat(s:CombatState,deltaMs=BATTLE_TICK_MS):CombatState{
   if(!Number.isFinite(deltaMs)||deltaMs<0)throw new Error('deltaMs must be finite and nonnegative');
   let remaining=Math.min(deltaMs,s.hardDeadlineMs-s.elapsedMs);
-  while(remaining>0&&!s.result){const dt=Math.min(50,remaining),previous=s.elapsedMs;s.elapsedMs+=dt;remaining-=dt;
+  while(remaining>0&&!s.result){const dt=Math.min(BATTLE_TICK_MS,remaining),previous=s.elapsedMs;s.elapsedMs+=dt;remaining-=dt;
+    if(previous<s.overtimeAtMs&&inOvertime(s))accelerateCooldowns(s);
     periodic(s,previous);
     for(const u of live(s))if(u.move&&u.move.arriveAt<=s.elapsedMs){if(!live(s).some(x=>x.id!==u.id&&sameCell(x,u.move!.to))){u.row=u.move.to.row;u.col=u.move.to.col;u.blockedTicks=0;}else u.blockedTicks++;u.move=null;}
     resolveEvents(s);
@@ -301,8 +333,8 @@ export function stepCombat(s:CombatState,deltaMs=50):CombatState{
       const maxMana=u.maxMana*(1+val(s,u,'manaTax')/100);
       if(u.mana>=maxMana&&!isManaLocked(s,u)){beginCast(s,u);continue;}
       if(u.move)continue;
-      if(choice.path.length>1){const to=choice.path[1]!;if(!live(s).some(x=>x.move&&sameCell(x.move.to,to))){u.move={to,arriveAt:s.elapsedMs+(n(ownTrait(s,u,'星门摆渡'),'count')?240:300)};}else u.blockedTicks++;continue;}
-      if(s.elapsedMs>=u.nextAttackAt){u.attacks++;const speed=u.atkSpeed*(1+sum(s,u,'as')/100)*(1-val(s,u,'asSlow')/100)*(s.elapsedMs>=s.overtimeAtMs?1.5:1);u.nextAttackAt=s.elapsedMs+1000/Math.max(0.1,speed);shoot(s,u,choice.target,u.atk,'physical',{skill:false,auto:true});}
+      if(choice.path.length>1){const to=choice.path[1]!;if(!live(s).some(x=>x.move&&sameCell(x.move.to,to))){const moveMs=n(ownTrait(s,u,'星门摆渡'),'count')?240:300;u.move={to,startAt:s.elapsedMs,arriveAt:s.elapsedMs+moveMs*(inOvertime(s)?OVERTIME_MOVE_DURATION:1)};}else u.blockedTicks++;continue;}
+      if(s.elapsedMs>=u.nextAttackAt){u.attacks++;const speed=u.atkSpeed*(1+sum(s,u,'as')/100)*(1-val(s,u,'asSlow')/100)*(inOvertime(s)?OVERTIME_ATTACK_SPEED:1);u.nextAttackAt=s.elapsedMs+1000/Math.max(0.1,speed);shoot(s,u,choice.target,u.atk,'physical',{skill:false,auto:true});}
     }
     const hits=s.projectiles.filter(p=>p.impactAt<=s.elapsedMs).sort((a,b)=>a.impactAt-b.impactAt||a.id-b.id);s.projectiles=s.projectiles.filter(p=>p.impactAt>s.elapsedMs);for(const p of hits)damage(s,p);
     deaths(s);finish(s,s.elapsedMs>=s.hardDeadlineMs);

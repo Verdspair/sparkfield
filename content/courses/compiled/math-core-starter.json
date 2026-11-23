@@ -1,30 +1,51 @@
 {
   "manifest": {
     "packId": "math-core-starter",
-    "coursePackVersion": "1.2.0",
+    "coursePackVersion": "2.0.0",
     "subject": "math",
     "title": "核心数学：集合函数、三角数列与解析几何",
     "syllabusTag": "CC0-1.0",
-    "contentSha256": "5ea63d1a640778d79c8bf86bd61919a67540f30f0a410631d2443d6e650b66c7",
-    "itemCount": 24,
+    "contentSha256": "13ca43cb6df781cf5fdc3e7947702aded9d7d9860183470beb435d749161d0b4",
+    "itemCount": 72,
     "knowledgeGraph": [
       {
         "nodeId": "MATH_N1_SET_FUNC",
-        "title": "集合充要条件、不等式与函数性质",
+        "title": "集合逻辑与函数性质",
         "prerequisites": []
       },
       {
         "nodeId": "MATH_N2_TRIG_SEQ",
-        "title": "三角函数与等差、等比数列",
+        "title": "三角函数与恒等变换",
         "prerequisites": [
           "MATH_N1_SET_FUNC"
         ]
       },
       {
         "nodeId": "MATH_N3_VEC_GEOM_PROB",
-        "title": "平面向量、直线与圆及概率统计",
+        "title": "等差、等比数列与求和",
         "prerequisites": [
           "MATH_N2_TRIG_SEQ"
+        ]
+      },
+      {
+        "nodeId": "MATH_N4_VECTOR_LINE",
+        "title": "平面向量与直线方程",
+        "prerequisites": [
+          "MATH_N1_SET_FUNC"
+        ]
+      },
+      {
+        "nodeId": "MATH_N5_CIRCLE_CONIC",
+        "title": "圆的方程与解析几何",
+        "prerequisites": [
+          "MATH_N4_VECTOR_LINE"
+        ]
+      },
+      {
+        "nodeId": "MATH_N6_PROB_STAT",
+        "title": "古典概型与统计特征",
+        "prerequisites": [
+          "MATH_N1_SET_FUNC"
         ]
       }
     ],
@@ -32,864 +53,20 @@
   },
   "items": [
     {
-      "questionId": "MATH_Q01",
-      "familyId": "FAM_MATH_Q01",
+      "questionId": "MATH_V2_Q01",
+      "familyId": "FAM_MATH_N1_1",
       "subject": "math",
       "knowledgeNode": "MATH_N1_SET_FUNC",
       "stepRole": "practice",
       "questionType": "single_choice",
       "assessmentKind": "application",
       "allowMaterialReview": true,
-      "materialMd": "- $A\\cap B$：同时属于两集合；$A\\cup B$：至少属于其中一个。\n- $\\complement_U A$：属于 $U$ 但不属于 $A$。",
-      "stemMd": "已知 $A=\\{-1,0,1,2\\}$，$B=\\{x\\mid x^2-x-2<0\\}$，则 $A\\cap B=$",
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "集合 $A=\\{1,2,3\\}$，$B=\\{2,3,4\\}$，$A\\cap B$ 有几个元素？",
       "options": [
         {
           "key": "A",
-          "text": "$\\{0,1\\}$"
-        },
-        {
-          "key": "B",
-          "text": "$\\{-1,0,1\\}$"
-        },
-        {
-          "key": "C",
-          "text": "$\\{0,1,2\\}$"
-        },
-        {
-          "key": "D",
-          "text": "$\\{-1,2\\}$"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "A",
-      "partialRubric": "",
-      "hintMd": "先解二次不等式，注意端点。",
-      "explanationMd": "$x^2-x-2=(x+1)(x-2)<0$，故 $B=(-1,2)$，交集为 $\\{0,1\\}$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 50,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q02",
-      "familyId": "FAM_MATH_Q02",
-      "subject": "math",
-      "knowledgeNode": "MATH_N1_SET_FUNC",
-      "stepRole": "practice",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- $p\\Rightarrow q$：$p$ 是 $q$ 的充分条件。\n- $q\\Rightarrow p$：$p$ 是 $q$ 的必要条件。",
-      "stemMd": "“$x=3$”是“$x^2-9=0$”的",
-      "options": [
-        {
-          "key": "A",
-          "text": "必要不充分条件"
-        },
-        {
-          "key": "B",
-          "text": "充分不必要条件"
-        },
-        {
-          "key": "C",
-          "text": "充要条件"
-        },
-        {
-          "key": "D",
-          "text": "既不充分也不必要条件"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "B",
-      "partialRubric": "",
-      "hintMd": "分别检查两个方向能否推出。",
-      "explanationMd": "$x=3$ 能推出 $x^2-9=0$，但后者还允许 $x=-3$，故为充分不必要条件。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 40,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q03",
-      "familyId": "FAM_MATH_Q03",
-      "subject": "math",
-      "knowledgeNode": "MATH_N1_SET_FUNC",
-      "stepRole": "practice",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 偶次根式：被开方数不小于 $0$。\n- 分式：分母不等于 $0$；各限制取交集。",
-      "stemMd": "函数 $f(x)=\\sqrt{4-x}+\\frac{1}{x-1}$ 的定义域为",
-      "options": [
-        {
-          "key": "A",
-          "text": "$(-\\infty,4]$"
-        },
-        {
-          "key": "B",
-          "text": "$[1,4]$"
-        },
-        {
-          "key": "C",
-          "text": "$(-\\infty,1)\\cup(1,4]$"
-        },
-        {
-          "key": "D",
-          "text": "$(-\\infty,1)\\cup(1,4)$"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "C",
-      "partialRubric": "",
-      "hintMd": "根式与分式各给出一个限制。",
-      "explanationMd": "需同时满足 $x\\le4$ 与 $x\\ne1$，故定义域为 $(-\\infty,1)\\cup(1,4]$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 45,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q04",
-      "familyId": "FAM_MATH_Q04",
-      "subject": "math",
-      "knowledgeNode": "MATH_N1_SET_FUNC",
-      "stepRole": "resource_check",
-      "questionType": "single_choice",
-      "assessmentKind": "retrieval",
-      "allowMaterialReview": false,
-      "materialMd": "- $A\\cap B$：同时属于两集合；$A\\cup B$：至少属于其中一个。\n- $\\complement_U A$：属于 $U$ 但不属于 $A$。",
-      "stemMd": "已知全集 $U=\\{1,2,3,4\\}$，$A=\\{1,2\\}$，$B=\\{2,3\\}$，则 $(\\complement_U A)\\cap B=$",
-      "options": [
-        {
-          "key": "A",
-          "text": "$\\{2\\}$"
-        },
-        {
-          "key": "B",
-          "text": "$\\{1,2,3\\}$"
-        },
-        {
-          "key": "C",
-          "text": "$\\{3\\}$"
-        },
-        {
-          "key": "D",
-          "text": "$\\{3,4\\}$"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "C",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "$\\complement_U A=\\{3,4\\}$，与 $B=\\{2,3\\}$ 的交集为 $\\{3\\}$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 45,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q05",
-      "familyId": "FAM_MATH_Q05",
-      "subject": "math",
-      "knowledgeNode": "MATH_N1_SET_FUNC",
-      "stepRole": "resource_check",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- $|u|<a\\ (a>0)\\iff -a<u<a$。\n- 二次式先求零点，再按开口方向确定正负区间。",
-      "stemMd": "不等式 $|2x-1|<3$ 的解集为",
-      "options": [
-        {
-          "key": "A",
-          "text": "$(-2,1)$"
-        },
-        {
-          "key": "B",
-          "text": "$[-1,2]$"
-        },
-        {
-          "key": "C",
-          "text": "$(-\\infty,-1)\\cup(2,+\\infty)$"
-        },
-        {
-          "key": "D",
-          "text": "$(-1,2)$"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "D",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "$-3<2x-1<3\\Rightarrow-2<2x<4\\Rightarrow-1<x<2$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 45,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q06",
-      "familyId": "FAM_MATH_Q06",
-      "subject": "math",
-      "knowledgeNode": "MATH_N1_SET_FUNC",
-      "stepRole": "resource_check",
-      "questionType": "numeric",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- $\\log_a a^k=k\\ (a>0,\\ a\\ne1)$。\n- $a^{m/n}=\\sqrt[n]{a^m}\\ (a>0)$；$b^0=1\\ (b\\ne0)$。",
-      "stemMd": "计算 $\\log_3 27+8^{\\frac{2}{3}}-(\\pi-3)^0$。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "6:0",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "原式 $=3+4-1=6$；$\\pi-3\\ne0$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 45,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q07",
-      "familyId": "FAM_MATH_Q07",
-      "subject": "math",
-      "knowledgeNode": "MATH_N1_SET_FUNC",
-      "stepRole": "verification",
-      "questionType": "numeric",
-      "assessmentKind": "application",
-      "allowMaterialReview": false,
-      "materialMd": "- 奇函数：定义域关于原点对称，$f(-x)=-f(x)$。\n- 先求正自变量的函数值，再取相反数。",
-      "stemMd": "已知 $f(x)$ 是定义在 $\\mathbb{R}$ 上的奇函数，且 $x>0$ 时 $f(x)=x^2+2x$，求 $f(-2)$。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "-8:0",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "$f(2)=4+4=8$，由奇函数性质得 $f(-2)=-8$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 45,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q08",
-      "familyId": "FAM_MATH_Q08",
-      "subject": "math",
-      "knowledgeNode": "MATH_N1_SET_FUNC",
-      "stepRole": "verification",
-      "questionType": "multi_step_numeric",
-      "assessmentKind": "application",
-      "allowMaterialReview": false,
-      "materialMd": "- $f(x)=a(x-h)^2+k$ 的对称轴为 $x=h$。\n- 闭区间最值：比较区间内的顶点值与两个端点值。",
-      "stemMd": "已知 $f(x)=x^2-2x+3$，$x\\in[-1,2]$。分别求 $f(x)$ 的最小值与最大值。\n\n请写出必要的推导过程，并填写各问结果。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [
-        {
-          "stepId": "min",
-          "prompt": "最小值",
-          "expected": 2,
-          "tolerance": 0,
-          "weightShare": 0.5
-        },
-        {
-          "stepId": "max",
-          "prompt": "最大值",
-          "expected": 6,
-          "tolerance": 0,
-          "weightShare": 0.5
-        }
-      ],
-      "answerSpec": "min=2;max=6",
-      "partialRubric": "step_shares",
-      "hintMd": "",
-      "explanationMd": "$f(x)=(x-1)^2+2$。顶点在区间内，最小值为 $2$；端点值 $f(-1)=6$、$f(2)=3$，最大值为 $6$。",
-      "difficulty": 3,
-      "weight": 15,
-      "estSeconds": 80,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q09",
-      "familyId": "FAM_MATH_Q09",
-      "subject": "math",
-      "knowledgeNode": "MATH_N2_TRIG_SEQ",
-      "stepRole": "practice",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- $\\sin^2\\alpha+\\cos^2\\alpha=1$；$\\tan\\alpha=\\frac{\\sin\\alpha}{\\cos\\alpha}$。\n- 第二象限：正弦为正，余弦、正切为负。",
-      "stemMd": "已知 $\\sin\\alpha=\\frac45$，$\\alpha\\in(\\frac\\pi2,\\pi)$，则 $(\\cos\\alpha,\\tan\\alpha)$ 为",
-      "options": [
-        {
-          "key": "A",
-          "text": "$(-\\frac35,-\\frac43)$"
-        },
-        {
-          "key": "B",
-          "text": "$(\\frac35,\\frac43)$"
-        },
-        {
-          "key": "C",
-          "text": "$(-\\frac35,\\frac43)$"
-        },
-        {
-          "key": "D",
-          "text": "$(\\frac35,-\\frac43)$"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "A",
-      "partialRubric": "",
-      "hintMd": "先确定象限中的符号。",
-      "explanationMd": "第二象限余弦为负，$\\cos\\alpha=-\\sqrt{1-\\frac{16}{25}}=-\\frac35$，$\\tan\\alpha=-\\frac43$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 55,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q10",
-      "familyId": "FAM_MATH_Q10",
-      "subject": "math",
-      "knowledgeNode": "MATH_N2_TRIG_SEQ",
-      "stepRole": "practice",
-      "questionType": "numeric",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- $\\sin(\\alpha+\\beta)=\\sin\\alpha\\cos\\beta+\\cos\\alpha\\sin\\beta$。\n- $\\cos(\\alpha-\\beta)=\\cos\\alpha\\cos\\beta+\\sin\\alpha\\sin\\beta$。",
-      "stemMd": "计算 $\\sin75^\\circ\\cos15^\\circ+\\cos75^\\circ\\sin15^\\circ$。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "1:0",
-      "partialRubric": "",
-      "hintMd": "把两项合成一个正弦。",
-      "explanationMd": "原式 $=\\sin(75^\\circ+15^\\circ)=\\sin90^\\circ=1$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 40,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q11",
-      "familyId": "FAM_MATH_Q11",
-      "subject": "math",
-      "knowledgeNode": "MATH_N2_TRIG_SEQ",
-      "stepRole": "practice",
-      "questionType": "single_choice",
-      "assessmentKind": "retrieval",
-      "allowMaterialReview": false,
-      "materialMd": "- $y=A\\sin(\\omega x+\\varphi)$ 的最小正周期为 $T=\\frac{2\\pi}{|\\omega|}$。\n- 振幅为 $|A|$，不改变周期。",
-      "stemMd": "函数 $y=2\\sin(2x+\\frac\\pi6)$ 的最小正周期为",
-      "options": [
-        {
-          "key": "A",
-          "text": "$\\frac\\pi2$"
-        },
-        {
-          "key": "B",
-          "text": "$2\\pi$"
-        },
-        {
-          "key": "C",
-          "text": "$\\pi$"
-        },
-        {
-          "key": "D",
-          "text": "$4\\pi$"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "C",
-      "partialRubric": "",
-      "hintMd": "周期取决于自变量的系数。",
-      "explanationMd": "$\\omega=2$，故 $T=\\frac{2\\pi}{2}=\\pi$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 35,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q12",
-      "familyId": "FAM_MATH_Q12",
-      "subject": "math",
-      "knowledgeNode": "MATH_N2_TRIG_SEQ",
-      "stepRole": "resource_check",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 等差数列：$a_n=a_1+(n-1)d$。\n- $S_n=\\frac{n(a_1+a_n)}{2}$；$a_k+a_{n+1-k}=a_1+a_n$。",
-      "stemMd": "等差数列 $\\{a_n\\}$ 中，$a_2+a_8=10$，则前 $9$ 项和 $S_9=$",
-      "options": [
-        {
-          "key": "A",
-          "text": "40"
-        },
-        {
-          "key": "B",
-          "text": "45"
-        },
-        {
-          "key": "C",
-          "text": "50"
-        },
-        {
-          "key": "D",
-          "text": "90"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "B",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "$a_1+a_9=a_2+a_8=10$，故 $S_9=\\frac{9\\times10}{2}=45$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 45,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q13",
-      "familyId": "FAM_MATH_Q13",
-      "subject": "math",
-      "knowledgeNode": "MATH_N2_TRIG_SEQ",
-      "stepRole": "resource_check",
-      "questionType": "numeric",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 等比数列：$a_n=a_1q^{n-1}$，$a_1\\ne0$，$q\\ne0$。\n- $q\\ne1$ 时，$S_n=\\frac{a_1(1-q^n)}{1-q}$；$q=1$ 时，$S_n=na_1$。",
-      "stemMd": "等比数列 $\\{a_n\\}$ 中，$a_2=6$，$a_5=48$，求前 $5$ 项和 $S_5$。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "93:0",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "$q^3=\\frac{48}{6}=8$，故 $q=2$，$a_1=3$；$S_5=3(2^5-1)=93$。",
-      "difficulty": 3,
-      "weight": 10,
-      "estSeconds": 65,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q14",
-      "familyId": "FAM_MATH_Q14",
-      "subject": "math",
-      "knowledgeNode": "MATH_N2_TRIG_SEQ",
-      "stepRole": "resource_check",
-      "questionType": "single_choice",
-      "assessmentKind": "retrieval",
-      "allowMaterialReview": false,
-      "materialMd": "- $\\sin(\\pi-\\alpha)=\\sin\\alpha$；$\\cos(\\pi+\\alpha)=-\\cos\\alpha$。\n- $\\tan(\\pi+\\alpha)=\\tan\\alpha$；$\\sin^2\\alpha+\\cos^2\\alpha=1$。",
-      "stemMd": "下列恒等式中，正确的是（各式均在有意义时讨论）。",
-      "options": [
-        {
-          "key": "A",
-          "text": "$\\sin(\\pi-\\alpha)=-\\sin\\alpha$"
-        },
-        {
-          "key": "B",
-          "text": "$\\cos(\\pi+\\alpha)=\\cos\\alpha$"
-        },
-        {
-          "key": "C",
-          "text": "$\\sin^2\\alpha+\\cos^2\\alpha=1$"
-        },
-        {
-          "key": "D",
-          "text": "$\\tan(\\pi+\\alpha)=-\\tan\\alpha$"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "C",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "C 为同角三角函数的基本恒等式；A 应为 $\\sin\\alpha$，B 应为 $-\\cos\\alpha$，D 应为 $\\tan\\alpha$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 50,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q15",
-      "familyId": "FAM_MATH_Q15",
-      "subject": "math",
-      "knowledgeNode": "MATH_N2_TRIG_SEQ",
-      "stepRole": "verification",
-      "questionType": "short_fill",
-      "assessmentKind": "retrieval",
-      "allowMaterialReview": false,
-      "materialMd": "- 等差数列：$a_n=a_1+(n-1)d$。\n- $S_n=\\frac{n(a_1+a_n)}{2}$；$a_k+a_{n+1-k}=a_1+a_n$。",
-      "stemMd": "等差数列的通项为 $a_n=3n-2$，其公差 $d=$ ______。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "3",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "$d=a_{n+1}-a_n=3$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 30,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q16",
-      "familyId": "FAM_MATH_Q16",
-      "subject": "math",
-      "knowledgeNode": "MATH_N2_TRIG_SEQ",
-      "stepRole": "verification",
-      "questionType": "multi_step_numeric",
-      "assessmentKind": "application",
-      "allowMaterialReview": false,
-      "materialMd": "- 等差数列：$a_n=a_1+(n-1)d$。\n- $S_n=\\frac{n(a_1+a_n)}{2}$；$a_k+a_{n+1-k}=a_1+a_n$。",
-      "stemMd": "等差数列 $\\{a_n\\}$ 满足 $a_2=5$，$a_5=11$。\n\n（1）求公差 $d$ 与 $a_8$；（2）求前 $8$ 项和 $S_8$。\n\n请写出必要的推导过程，并填写各问结果。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [
-        {
-          "stepId": "d",
-          "prompt": "（1）公差 $d$",
-          "expected": 2,
-          "tolerance": 0,
-          "weightShare": 0.25
-        },
-        {
-          "stepId": "a8",
-          "prompt": "（1）第 $8$ 项 $a_8$",
-          "expected": 17,
-          "tolerance": 0,
-          "weightShare": 0.25
-        },
-        {
-          "stepId": "s8",
-          "prompt": "（2）前 $8$ 项和 $S_8$",
-          "expected": 80,
-          "tolerance": 0,
-          "weightShare": 0.5
-        }
-      ],
-      "answerSpec": "d=2;a8=17;s8=80",
-      "partialRubric": "step_shares",
-      "hintMd": "",
-      "explanationMd": "$3d=a_5-a_2=6$，得 $d=2$、$a_1=3$；$a_8=3+7\\times2=17$；$S_8=\\frac{8(3+17)}2=80$。",
-      "difficulty": 3,
-      "weight": 15,
-      "estSeconds": 110,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q17",
-      "familyId": "FAM_MATH_Q17",
-      "subject": "math",
-      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
-      "stepRole": "practice",
-      "questionType": "numeric",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 向量加减与数乘按对应坐标计算。\n- $(x_1,y_1)\\cdot(x_2,y_2)=x_1x_2+y_1y_2$。",
-      "stemMd": "已知 $\\vec a=(1,-2)$，$\\vec b=(3,1)$，$\\vec c=2\\vec a-\\vec b$，求 $\\vec c\\cdot\\vec b$。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "-8:0",
-      "partialRubric": "",
-      "hintMd": "先求向量的坐标，再算内积。",
-      "explanationMd": "$\\vec c=(2,-4)-(3,1)=(-1,-5)$，故 $\\vec c\\cdot\\vec b=-3-5=-8$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 55,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q18",
-      "familyId": "FAM_MATH_Q18",
-      "subject": "math",
-      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
-      "stepRole": "practice",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 平行：$x_1y_2-x_2y_1=0$。\n- 垂直：$x_1x_2+y_1y_2=0$；两向量均非零。",
-      "stemMd": "与向量 $(1,2)$ 垂直的向量是",
-      "options": [
-        {
-          "key": "A",
-          "text": "$(2,4)$"
-        },
-        {
-          "key": "B",
-          "text": "$(-2,1)$"
-        },
-        {
-          "key": "C",
-          "text": "$(2,1)$"
-        },
-        {
-          "key": "D",
-          "text": "$(1,0)$"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "B",
-      "partialRubric": "",
-      "hintMd": "两非零向量垂直时，内积等于零。",
-      "explanationMd": "$(1,2)\\cdot(-2,1)=-2+2=0$。其余三项与 $(1,2)$ 的内积依次为 $10,4,1$，都不为零。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 55,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q19",
-      "familyId": "FAM_MATH_Q19",
-      "subject": "math",
-      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
-      "stepRole": "practice",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 斜率 $k=\\tan\\theta$，倾斜角 $\\theta\\in[0,\\pi)$。\n- 斜率存在时，两直线平行须斜率相等且不重合；垂直满足 $k_1k_2=-1$。",
-      "stemMd": "直线 $l:y=\\sqrt3x+1$ 的倾斜角为 $\\theta$，直线 $m:x+\\sqrt3y-2=0$。则",
-      "options": [
-        {
-          "key": "A",
-          "text": "$\\theta=\\frac\\pi6$，$l\\parallel m$"
-        },
-        {
-          "key": "B",
-          "text": "$\\theta=\\frac\\pi3$，$l\\parallel m$"
-        },
-        {
-          "key": "C",
-          "text": "$\\theta=\\frac\\pi6$，$l\\perp m$"
-        },
-        {
-          "key": "D",
-          "text": "$\\theta=\\frac\\pi3$，$l\\perp m$"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "D",
-      "partialRubric": "",
-      "hintMd": "求出两条直线的斜率。",
-      "explanationMd": "$\\tan\\theta=\\sqrt3$，故 $\\theta=\\frac\\pi3$；$m$ 的斜率为 $-\\frac1{\\sqrt3}$，与 $l$ 的斜率之积为 $-1$。",
-      "difficulty": 3,
-      "weight": 10,
-      "estSeconds": 60,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q20",
-      "familyId": "FAM_MATH_Q20",
-      "subject": "math",
-      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
-      "stepRole": "resource_check",
-      "questionType": "numeric",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 点 $(x_0,y_0)$ 到直线 $Ax+By+C=0$ 的距离：$d=\\frac{|Ax_0+By_0+C|}{\\sqrt{A^2+B^2}}$。\n- 分子取绝对值，分母为法向量的模。",
-      "stemMd": "求点 $P(1,-1)$ 到直线 $3x-4y+3=0$ 的距离。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "2:0",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "$d=\\frac{|3\\times1-4\\times(-1)+3|}{\\sqrt{3^2+(-4)^2}}=\\frac{10}{5}=2$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 50,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q21",
-      "familyId": "FAM_MATH_Q21",
-      "subject": "math",
-      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
-      "stepRole": "resource_check",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- 古典概型：$P(A)=\\frac{m}{n}$，基本事件须等可能。\n- 不放回抽取：每取出一个，总数随之减少。",
-      "stemMd": "袋中有 3 个红球和 2 个蓝球，大小、质地相同。随机不放回地取出 2 个球，两球均为红球的概率为",
-      "options": [
-        {
-          "key": "A",
-          "text": "$\\frac35$"
-        },
-        {
-          "key": "B",
-          "text": "$\\frac9{25}$"
-        },
-        {
-          "key": "C",
-          "text": "$\\frac3{10}$"
-        },
-        {
-          "key": "D",
-          "text": "$\\frac15$"
-        }
-      ],
-      "matchingPairs": [],
-      "stepsRubric": [],
-      "answerSpec": "C",
-      "partialRubric": "",
-      "hintMd": "",
-      "explanationMd": "$P=\\frac35\\times\\frac24=\\frac3{10}$。",
-      "difficulty": 2,
-      "weight": 10,
-      "estSeconds": 50,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q22",
-      "familyId": "FAM_MATH_Q22",
-      "subject": "math",
-      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
-      "stepRole": "resource_check",
-      "questionType": "multi_step_numeric",
-      "assessmentKind": "application",
-      "allowMaterialReview": true,
-      "materialMd": "- $(x-a)^2+(y-b)^2=r^2$ 的圆心为 $(a,b)$，半径为 $r$。\n- 一般方程先配方；直线与圆相切时，圆心到直线距离等于半径。",
-      "stemMd": "已知圆 $C:x^2+y^2-4x+2y-4=0$。\n\n（1）求圆心坐标及半径；（2）若直线 $3x+4y+c=0\\ (c>0)$ 与圆 $C$ 相切，求 $c$。\n\n请写出必要的推导过程，并填写各问结果。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [
-        {
-          "stepId": "cx",
-          "prompt": "（1）圆心横坐标",
-          "expected": 2,
-          "tolerance": 0,
-          "weightShare": 0.2
-        },
-        {
-          "stepId": "cy",
-          "prompt": "（1）圆心纵坐标",
-          "expected": -1,
-          "tolerance": 0,
-          "weightShare": 0.2
-        },
-        {
-          "stepId": "r",
-          "prompt": "（1）半径",
-          "expected": 3,
-          "tolerance": 0,
-          "weightShare": 0.2
-        },
-        {
-          "stepId": "c",
-          "prompt": "（2）参数 $c$",
-          "expected": 13,
-          "tolerance": 0,
-          "weightShare": 0.4
-        }
-      ],
-      "answerSpec": "cx=2;cy=-1;r=3;c=13",
-      "partialRubric": "step_shares",
-      "hintMd": "",
-      "explanationMd": "配方得 $(x-2)^2+(y+1)^2=9$，圆心 $(2,-1)$、半径 $3$。相切有 $\\frac{|c+2|}{5}=3$，结合 $c>0$ 得 $c=13$。",
-      "difficulty": 3,
-      "weight": 15,
-      "estSeconds": 130,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q23",
-      "familyId": "FAM_MATH_Q23",
-      "subject": "math",
-      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
-      "stepRole": "verification",
-      "questionType": "multi_step_numeric",
-      "assessmentKind": "application",
-      "allowMaterialReview": false,
-      "materialMd": "- 样本平均数：$\\bar x=\\frac1n\\sum_{i=1}^n x_i$。\n- 本题标准差：$s=\\sqrt{\\frac1n\\sum_{i=1}^n(x_i-\\bar x)^2}$。",
-      "stemMd": "样本数据为 $2,3,3,4,8$。求平均数 $\\bar x$、方差 $s^2$ 与标准差 $s$。本题方差按除以 $n$ 计算；标准差保留两位小数。请写出必要的计算过程，并填写各问结果。",
-      "options": [],
-      "matchingPairs": [],
-      "stepsRubric": [
-        {
-          "stepId": "mean",
-          "prompt": "平均数",
-          "expected": 4,
-          "tolerance": 0,
-          "weightShare": 0.3
-        },
-        {
-          "stepId": "variance",
-          "prompt": "方差（中间结果）",
-          "expected": 4.4,
-          "tolerance": 0.0001,
-          "weightShare": 0.3
-        },
-        {
-          "stepId": "std",
-          "prompt": "标准差（保留两位小数）",
-          "expected": 2.1,
-          "tolerance": 0.00001,
-          "weightShare": 0.4
-        }
-      ],
-      "answerSpec": "mean=4;variance=4.4;std=2.1",
-      "partialRubric": "step_shares",
-      "hintMd": "",
-      "explanationMd": "$\\bar x=\\frac{2+3+3+4+8}{5}=4$；$s^2=\\frac{4+1+1+0+16}{5}=4.4$；$s=\\sqrt{4.4}\\approx2.10$。",
-      "difficulty": 2,
-      "weight": 15,
-      "estSeconds": 110,
-      "sourceLicense": "CC0-1.0",
-      "audioRefOptional": null
-    },
-    {
-      "questionId": "MATH_Q24",
-      "familyId": "FAM_MATH_Q24",
-      "subject": "math",
-      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
-      "stepRole": "verification",
-      "questionType": "single_choice",
-      "assessmentKind": "application",
-      "allowMaterialReview": false,
-      "materialMd": "- 斜率 $k=\\tan\\theta$，倾斜角 $\\theta\\in[0,\\pi)$。\n- 斜率存在时，两直线平行须斜率相等且不重合；垂直满足 $k_1k_2=-1$。",
-      "stemMd": "若直线 $l_1:2x-y+1=0$ 与 $l_2:(m+1)x-2y+3=0$ 平行，则 $m=$",
-      "options": [
-        {
-          "key": "A",
-          "text": "1"
+          "text": "2"
         },
         {
           "key": "B",
@@ -897,11 +74,651 @@
         },
         {
           "key": "C",
-          "text": "-3"
+          "text": "4"
         },
         {
           "key": "D",
-          "text": "-5"
+          "text": "5"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "交集为 $\\{2,3\\}$，共有 2 个元素。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q02",
+      "familyId": "FAM_MATH_N1_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "practice",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "$f(x)=2x+1$，求 $f(2)$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "5:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "代入得 $f(2)=2\\times2+1=5$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q03",
+      "familyId": "FAM_MATH_N1_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "方程 $2x-6=0$ 的解为多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "3",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "移项得 $2x=6$，故 $x=3$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q04",
+      "familyId": "FAM_MATH_N1_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "practice",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "$f(x)=(x-1)^2+2$，求顶点横坐标与最小值。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 1,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 2,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=1;second=2",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "顶点式直接给出横坐标 $1$ 和最小值 $2$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q05",
+      "familyId": "FAM_MATH_N1_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "集合 $A=\\{1,2,3,4\\}$，$B=\\{3,4,5\\}$，$A\\cup B$ 有几个元素？",
+      "options": [
+        {
+          "key": "A",
+          "text": "6"
+        },
+        {
+          "key": "B",
+          "text": "7"
+        },
+        {
+          "key": "C",
+          "text": "8"
+        },
+        {
+          "key": "D",
+          "text": "5"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "并集为 $\\{1,2,3,4,5\\}$，共有 5 个元素。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q06",
+      "familyId": "FAM_MATH_N1_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "resource_check",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "$f(x)=x^2-1$，求 $f(-3)$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "8:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "代入得 $(-3)^2-1=8$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q07",
+      "familyId": "FAM_MATH_N1_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "若 $f(x)=3x-2$ 且 $f(x)=10$，求 $x$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "4",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "由 $3x-2=10$ 得 $x=4$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q08",
+      "familyId": "FAM_MATH_N1_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "resource_check",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "$f(x)=x^2-4x+5$，求顶点横坐标与最小值。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 2,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 1,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=2;second=1",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "配方得 $f(x)=(x-2)^2+1$，因此两值为 $2,1$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q09",
+      "familyId": "FAM_MATH_N1_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "有限集合 $A,B$ 满足 $|A|=7,|B|=6,|A\\cup B|=10$，求 $|A\\cap B|$。",
+      "options": [
+        {
+          "key": "A",
+          "text": "5"
+        },
+        {
+          "key": "B",
+          "text": "6"
+        },
+        {
+          "key": "C",
+          "text": "3"
+        },
+        {
+          "key": "D",
+          "text": "4"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "由容斥公式，$|A\\cap B|=7+6-10=3$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q10",
+      "familyId": "FAM_MATH_N1_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "verification",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "$f(x)=2x+1$，若 $f(f(a))=15$，求 $a$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "3:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$f(f(a))=4a+3=15$，解得 $a=3$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q11",
+      "familyId": "FAM_MATH_N1_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "方程 $|x^2-4x|=5$ 有多少个不同的实数根？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "2",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "当 $x^2-4x=5$ 时，解为 $-1,5$；当 $x^2-4x=-5$ 时，判别式为 $-4$，没有实根，故共 $2$ 根。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q12",
+      "familyId": "FAM_MATH_N1_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N1_SET_FUNC",
+      "stepRole": "verification",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：集合与函数\n- $|A\\cup B|=|A|+|B|-|A\\cap B|$；函数复合从内向外代入。\n- 二次函数配方后用顶点和端点比较闭区间最值。易错：定义域限制必须同时满足，分母不能为零。",
+      "stemMd": "二次函数 $f(x)=x^2+bx+c$ 的最小值为 $1$，且 $f(0)=5$、顶点横坐标为正。求 $b$ 与 $c$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": -4,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 5,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=-4;second=5",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "由 $f(0)=5$ 得 $c=5$；配方后最小值为 $5-b^2/4=1$，故 $b=\\pm4$。顶点横坐标 $-b/2>0$，取 $b=-4$。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q13",
+      "familyId": "FAM_MATH_N2_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "$\\sin 30^\\circ$ 的两倍是多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "2"
+        },
+        {
+          "key": "B",
+          "text": "3"
+        },
+        {
+          "key": "C",
+          "text": "4"
+        },
+        {
+          "key": "D",
+          "text": "1"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$\\sin30^\\circ=1/2$，两倍为 $1$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q14",
+      "familyId": "FAM_MATH_N2_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "practice",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "计算 $\\sin^2 x+\\cos^2 x$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "1:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "由同角平方关系，结果为 $1$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q15",
+      "familyId": "FAM_MATH_N2_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "$y=\\sin x$ 的最小正周期是多少个 $\\pi$？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "2",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "正弦函数的最小正周期为 $2\\pi$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q16",
+      "familyId": "FAM_MATH_N2_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "practice",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "求 $2\\sin30^\\circ$ 和 $2\\cos60^\\circ$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 1,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 1,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=1;second=1",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "两项分别为 $2\\times1/2=1$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q17",
+      "familyId": "FAM_MATH_N2_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "$\\cos 60^\\circ$ 的四倍是多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "4"
+        },
+        {
+          "key": "B",
+          "text": "5"
+        },
+        {
+          "key": "C",
+          "text": "2"
+        },
+        {
+          "key": "D",
+          "text": "3"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$\\cos60^\\circ=1/2$，四倍为 $2$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q18",
+      "familyId": "FAM_MATH_N2_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "resource_check",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "若 $\\sin x=3/5$，求 $25\\cos^2x$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "16:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$\\cos^2x=1-9/25=16/25$，故结果为 $16$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q19",
+      "familyId": "FAM_MATH_N2_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "$y=\\sin 2x$ 的最小正周期是多少个 $\\pi$？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "1",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "周期 $T=2\\pi/2=\\pi$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q20",
+      "familyId": "FAM_MATH_N2_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "resource_check",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "求 $2\\sin150^\\circ$ 和 $2\\cos120^\\circ$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 1,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": -1,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=1;second=-1",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "诱导公式给出 $\\sin150^\\circ=1/2$、$\\cos120^\\circ=-1/2$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q21",
+      "familyId": "FAM_MATH_N2_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "$\\sin150^\\circ+\\cos60^\\circ$ 等于多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "4"
+        },
+        {
+          "key": "B",
+          "text": "1"
+        },
+        {
+          "key": "C",
+          "text": "2"
+        },
+        {
+          "key": "D",
+          "text": "3"
         }
       ],
       "matchingPairs": [],
@@ -909,10 +726,1633 @@
       "answerSpec": "B",
       "partialRubric": "",
       "hintMd": "",
-      "explanationMd": "斜率相等得 $2=\\frac{m+1}{2}$，解得 $m=3$；此时两直线不重合。",
+      "explanationMd": "$\\sin150^\\circ=\\sin30^\\circ=1/2$，两项相加为 $1$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q22",
+      "familyId": "FAM_MATH_N2_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "verification",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "若 $\\tan x=2$，求 $1/\\cos^2x$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "5:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "由 $1+\\tan^2x=1/\\cos^2x$，结果为 $5$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q23",
+      "familyId": "FAM_MATH_N2_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "在 $[0,4\\pi]$ 内，方程 $\\sin x=1/2$ 有多少个不同的解？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "4",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "每个长度为 $2\\pi$ 的周期有两个解，区间两端都不是解，共 $4$ 个。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q24",
+      "familyId": "FAM_MATH_N2_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N2_TRIG_SEQ",
+      "stepRole": "verification",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：三角函数\n- $\\sin^2x+\\cos^2x=1$，$1+\\tan^2x=1/\\cos^2x$。\n- $y=\\sin(\\omega x+\\varphi)$ 的最小正周期为 $2\\pi/|\\omega|$。易错：诱导公式还要判断象限符号。",
+      "stemMd": "已知 $\\sin\\alpha=3/5$ 且 $\\alpha$ 在第二象限，求 $25\\sin2\\alpha$ 与 $25\\cos2\\alpha$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": -24,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 7,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=-24;second=7",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "由象限与平方关系得 $\\cos\\alpha=-4/5$。倍角公式给出 $25\\sin2\\alpha=25\\times2\\times3/5\\times(-4/5)=-24$，$25\\cos2\\alpha=25(16/25-9/25)=7$。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q25",
+      "familyId": "FAM_MATH_N3_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "等差数列首项为 $2$，公差为 $3$，第二项是多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "7"
+        },
+        {
+          "key": "B",
+          "text": "8"
+        },
+        {
+          "key": "C",
+          "text": "5"
+        },
+        {
+          "key": "D",
+          "text": "6"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$a_2=2+3=5$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q26",
+      "familyId": "FAM_MATH_N3_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "practice",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "等比数列首项为 $2$，公比为 $3$，第三项是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "18:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$a_3=2\\times3^2=18$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q27",
+      "familyId": "FAM_MATH_N3_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "数列 $a_n=2n+1$ 的公差是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "2",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$a_{n+1}-a_n=2$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q28",
+      "familyId": "FAM_MATH_N3_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "practice",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "等差数列 $a_1=1,d=2$，求 $a_3$ 和 $S_3$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 5,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 9,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=5;second=9",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "前三项为 $1,3,5$，所以 $a_3=5,S_3=9$。",
       "difficulty": 2,
       "weight": 10,
-      "estSeconds": 50,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q29",
+      "familyId": "FAM_MATH_N3_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "等差数列首项为 $2$，公差为 $3$，第五项是多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "17"
+        },
+        {
+          "key": "B",
+          "text": "14"
+        },
+        {
+          "key": "C",
+          "text": "15"
+        },
+        {
+          "key": "D",
+          "text": "16"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$a_5=2+4\\times3=14$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q30",
+      "familyId": "FAM_MATH_N3_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "resource_check",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "等比数列 $a_1=3,q=2$，前四项和是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "45:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "前四项为 $3,6,12,24$，和为 $45$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q31",
+      "familyId": "FAM_MATH_N3_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "等差数列 $a_1=4,a_5=16$，公差是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "3",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$4d=16-4=12$，故 $d=3$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q32",
+      "familyId": "FAM_MATH_N3_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "resource_check",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "等比数列 $a_1=2,q=2$，求 $a_4$ 和 $S_4$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 16,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 30,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=16;second=30",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "前四项为 $2,4,8,16$，故 $a_4=16,S_4=30$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q33",
+      "familyId": "FAM_MATH_N3_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "等差数列 $a_3=7,a_7=19$，公差是多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "3"
+        },
+        {
+          "key": "B",
+          "text": "4"
+        },
+        {
+          "key": "C",
+          "text": "5"
+        },
+        {
+          "key": "D",
+          "text": "6"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$a_7-a_3=4d=12$，故 $d=3$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q34",
+      "familyId": "FAM_MATH_N3_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "verification",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "等比数列 $a_2=6,a_4=24$，且 $q>0$，求 $a_1$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "3:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$q^2=24/6=4$，正公比为 $2$，故首项为 $3$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q35",
+      "familyId": "FAM_MATH_N3_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "数列前 $n$ 项和 $S_n=3n^2+2n$，求第 $10$ 项 $a_{10}$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "59",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "$a_{10}=S_{10}-S_9=320-261=59$。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q36",
+      "familyId": "FAM_MATH_N3_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N3_VEC_GEOM_PROB",
+      "stepRole": "verification",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：数列\n- 等差数列 $a_n=a_1+(n-1)d$，$S_n=n(a_1+a_n)/2$。\n- 等比数列 $a_n=a_1q^{n-1}$；$n\\ge2$ 时 $a_n=S_n-S_{n-1}$。易错：从第 $2$ 项到第 $5$ 项跨越三个公差。",
+      "stemMd": "等差数列前四项和为 $28$，第四项为 $13$。求公差 $d$ 与前八项和 $S_8$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 4,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 120,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=4;second=120",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "$28=2(a_1+13)$ 得 $a_1=1$，于是 $d=4$，$S_8=8(1+29)/2=120$。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q37",
+      "familyId": "FAM_MATH_N4_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "向量 $\\vec a=(1,2),\\vec b=(3,1)$，$\\vec a+\\vec b$ 的横坐标是多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "7"
+        },
+        {
+          "key": "B",
+          "text": "4"
+        },
+        {
+          "key": "C",
+          "text": "5"
+        },
+        {
+          "key": "D",
+          "text": "6"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "横坐标相加，$1+3=4$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q38",
+      "familyId": "FAM_MATH_N4_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "practice",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "向量 $(1,2)$ 与 $(3,4)$ 的数量积是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "11:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "数量积为 $1\\times3+2\\times4=11$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q39",
+      "familyId": "FAM_MATH_N4_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "直线 $y=2x+3$ 的斜率是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "2",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "斜截式中 $x$ 的系数是斜率，故为 $2$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q40",
+      "familyId": "FAM_MATH_N4_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "practice",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "直线 $y=2x+1$，求 $x=0$ 和 $x=2$ 时的纵坐标。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 1,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 5,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=1;second=5",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "分别代入可得 $1,5$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q41",
+      "familyId": "FAM_MATH_N4_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "向量 $\\vec a=(2,3),\\vec b=(1,-1)$，$2\\vec a-\\vec b$ 的纵坐标是多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "7"
+        },
+        {
+          "key": "B",
+          "text": "8"
+        },
+        {
+          "key": "C",
+          "text": "9"
+        },
+        {
+          "key": "D",
+          "text": "10"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "纵坐标为 $2\\times3-(-1)=7$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q42",
+      "familyId": "FAM_MATH_N4_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "resource_check",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "向量 $(2,1)$ 与 $(k,4)$ 垂直，求 $k$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "-2:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "数量积为零：$2k+4=0$，故 $k=-2$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q43",
+      "familyId": "FAM_MATH_N4_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "过 $(0,1)$ 和 $(2,5)$ 的直线斜率是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "2",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "斜率为 $(5-1)/(2-0)=2$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q44",
+      "familyId": "FAM_MATH_N4_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "resource_check",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "直线经过 $(0,2)$ 和 $(1,5)$，求其斜率和纵截距。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 3,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 2,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=3;second=2",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "斜率为 $(5-2)/(1-0)=3$，纵截距为 $2$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q45",
+      "familyId": "FAM_MATH_N4_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "若 $(2,k)$ 与 $(1,3)$ 平行，求 $k$。",
+      "options": [
+        {
+          "key": "A",
+          "text": "7"
+        },
+        {
+          "key": "B",
+          "text": "8"
+        },
+        {
+          "key": "C",
+          "text": "9"
+        },
+        {
+          "key": "D",
+          "text": "6"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "平行时行列式为零，$2\\times3-k=0$，所以 $k=6$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q46",
+      "familyId": "FAM_MATH_N4_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "verification",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "$|\\vec a|=2,|\\vec b|=3$，夹角为 $60^\\circ$，求 $|\\vec a+\\vec b|^2$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "19:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "展开得 $4+9+2\\times2\\times3\\times1/2=19$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q47",
+      "familyId": "FAM_MATH_N4_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "过点 $(2,1)$ 且与直线 $3x-4y+7=0$ 垂直的直线与 $x$ 轴交点的横坐标是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "2.75",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "已知直线斜率为 $3/4$，垂线斜率为 $-4/3$；令 $y=0$ 得 $x=2+3/4=2.75$。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q48",
+      "familyId": "FAM_MATH_N4_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N4_VECTOR_LINE",
+      "stepRole": "verification",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：向量与直线\n- $\\vec a\\cdot\\vec b=x_1x_2+y_1y_2$；垂直时数量积为零。\n- 直线斜率为 $k=(y_2-y_1)/(x_2-x_1)$；非竖直垂线的斜率互为负倒数。易错：垂足还必须满足直线方程。",
+      "stemMd": "求原点到直线 $3x+4y=25$ 的垂足横、纵坐标。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 3,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 4,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=3;second=4",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "垂足位于法向量 $(3,4)$ 的倍数上。设垂足为 $(3t,4t)$，代入直线得 $25t=25$，所以为 $(3,4)$。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q49",
+      "familyId": "FAM_MATH_N5_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "圆 $x^2+y^2=9$ 的半径是多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "3"
+        },
+        {
+          "key": "B",
+          "text": "4"
+        },
+        {
+          "key": "C",
+          "text": "5"
+        },
+        {
+          "key": "D",
+          "text": "6"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "A",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "标准式 $x^2+y^2=r^2$，故 $r=3$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q50",
+      "familyId": "FAM_MATH_N5_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "practice",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "点 $(0,0)$ 到点 $(3,4)$ 的距离是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "5:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "距离为 $\\sqrt{3^2+4^2}=5$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q51",
+      "familyId": "FAM_MATH_N5_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "圆 $(x-2)^2+y^2=1$ 的圆心横坐标是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "2",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "与标准式比较得圆心为 $(2,0)$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q52",
+      "familyId": "FAM_MATH_N5_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "practice",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "圆 $(x-1)^2+(y-2)^2=9$，求圆心横坐标和半径。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 1,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 3,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=1;second=3",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "直接比较标准式，圆心 $(1,2)$，半径 $3$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q53",
+      "familyId": "FAM_MATH_N5_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "圆 $(x-1)^2+(y+2)^2=16$ 的半径是多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "5"
+        },
+        {
+          "key": "B",
+          "text": "6"
+        },
+        {
+          "key": "C",
+          "text": "7"
+        },
+        {
+          "key": "D",
+          "text": "4"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "半径是 $\\sqrt{16}=4$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q54",
+      "familyId": "FAM_MATH_N5_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "resource_check",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "圆心为 $(1,2)$、半径为 $3$，点 $(4,2)$ 到圆心的距离是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "3:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "距离为 $\\sqrt{(4-1)^2+(2-2)^2}=3$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q55",
+      "familyId": "FAM_MATH_N5_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "圆 $x^2+y^2+6x-2y=0$ 的圆心横坐标是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "-3",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "配方为 $(x+3)^2+(y-1)^2=10$，横坐标为 $-3$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q56",
+      "familyId": "FAM_MATH_N5_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "resource_check",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "圆 $x^2+y^2-4x+6y-12=0$，求圆心横坐标与纵坐标。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 2,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": -3,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=2;second=-3",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "配方得 $(x-2)^2+(y+3)^2=25$，圆心为 $(2,-3)$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q57",
+      "familyId": "FAM_MATH_N5_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "圆 $x^2+y^2-4x+6y-12=0$ 的半径是多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "7"
+        },
+        {
+          "key": "B",
+          "text": "8"
+        },
+        {
+          "key": "C",
+          "text": "5"
+        },
+        {
+          "key": "D",
+          "text": "6"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "配方得 $(x-2)^2+(y+3)^2=25$，半径为 $5$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q58",
+      "familyId": "FAM_MATH_N5_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "verification",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "圆 $x^2+y^2=25$ 被直线 $y=3$ 截得的弦长是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "8:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "圆心到直线距离为 $3$，半弦长 $\\sqrt{25-9}=4$，故弦长 $8$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q59",
+      "familyId": "FAM_MATH_N5_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "直线 $y=2x+5$ 与圆 $x^2+y^2=25$ 两个交点的横坐标之和是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "-4",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "代入圆得 $5x^2+20x=0$，两根之和为 $-20/5=-4$。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q60",
+      "familyId": "FAM_MATH_N5_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N5_CIRCLE_CONIC",
+      "stepRole": "verification",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：圆与解析几何\n- 圆的标准式为 $(x-a)^2+(y-b)^2=r^2$；一般式先配方。\n- 直线与圆联立可求交点；半弦长满足 $l^2=r^2-d^2$。易错：$r^2$ 是半径的平方，不是半径。",
+      "stemMd": "直线 $x+y=1$ 与圆 $x^2+y^2=25$ 相交，求两个交点的横坐标（先小后大）。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": -3,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 4,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=-3;second=4",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "代入 $y=1-x$，化简得 $x^2-x-12=0$，两根依次为 $-3,4$。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q61",
+      "familyId": "FAM_MATH_N6_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "practice",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "掷一枚公平六面骰，出现偶数的概率乘以 $6$ 等于多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "4"
+        },
+        {
+          "key": "B",
+          "text": "5"
+        },
+        {
+          "key": "C",
+          "text": "6"
+        },
+        {
+          "key": "D",
+          "text": "3"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "D",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "偶数有 $2,4,6$ 三种，概率 $3/6$，乘以 $6$ 得 $3$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q62",
+      "familyId": "FAM_MATH_N6_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "practice",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "数据 $1,2,3$ 的平均数是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "2:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "和为 $6$，除以 $3$ 得 $2$。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q63",
+      "familyId": "FAM_MATH_N6_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "practice",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "数据 $2,2,3,4$ 的众数是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "2",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "数字 $2$ 出现两次，其余数各出现一次。",
+      "difficulty": 1,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q64",
+      "familyId": "FAM_MATH_N6_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "practice",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "袋中有 $3$ 个红球和 $2$ 个蓝球，随机取一个，求红球的有利结果数及全部结果数。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 3,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 5,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=3;second=5",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "同大小球视为等可能的独立个体，红球 $3$ 个，全部 $5$ 个。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q65",
+      "familyId": "FAM_MATH_N6_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "resource_check",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "掷一枚公平六面骰，点数大于 $4$ 的概率乘以 $6$ 等于多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "4"
+        },
+        {
+          "key": "B",
+          "text": "5"
+        },
+        {
+          "key": "C",
+          "text": "2"
+        },
+        {
+          "key": "D",
+          "text": "3"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "C",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "满足条件的点数为 $5,6$，概率为 $2/6$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q66",
+      "familyId": "FAM_MATH_N6_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "resource_check",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "数据 $2,4,6,8$ 的中位数是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "5:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "中间两个数为 $4,6$，中位数为 $(4+6)/2=5$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q67",
+      "familyId": "FAM_MATH_N6_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "resource_check",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "数据 $1,2,2,3,5$ 的中位数是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "2",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "数据已按大小排列，中间第三个数为 $2$。",
+      "difficulty": 2,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q68",
+      "familyId": "FAM_MATH_N6_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "resource_check",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": true,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "数据 $1,2,3,4,5$，求平均数与中位数。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 3,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 3,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=3;second=3",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "总和为 $15$，均值为 $3$；第三个数为中位数 $3$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q69",
+      "familyId": "FAM_MATH_N6_1",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "verification",
+      "questionType": "single_choice",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "两次独立掷公平硬币，恰有一次正面的概率乘以 $4$ 等于多少？",
+      "options": [
+        {
+          "key": "A",
+          "text": "5"
+        },
+        {
+          "key": "B",
+          "text": "2"
+        },
+        {
+          "key": "C",
+          "text": "3"
+        },
+        {
+          "key": "D",
+          "text": "4"
+        }
+      ],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "B",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "四个等可能结果中正反、反正满足条件，概率为 $2/4$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q70",
+      "familyId": "FAM_MATH_N6_2",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "verification",
+      "questionType": "numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "四个数的平均数为 $5$，加入一个数后五个数的平均数为 $6$，加入的数是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "10:0",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "原总和为 $20$，新总和为 $30$，差为 $10$。",
+      "difficulty": 3,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q71",
+      "familyId": "FAM_MATH_N6_3",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "verification",
+      "questionType": "short_fill",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "数据 $1,3,5,7$ 的每个数都先乘 $2$ 再加 $1$，所得数据的方差是多少？",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [],
+      "answerSpec": "20",
+      "partialRubric": "",
+      "hintMd": "",
+      "explanationMd": "原数据均值为 $4$，方差为 $(9+1+1+9)/4=5$；乘 $2$ 使方差变为原来的 $4$ 倍，加 $1$ 不改变方差，故为 $20$。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
+      "sourceLicense": "CC0-1.0",
+      "audioRefOptional": null
+    },
+    {
+      "questionId": "MATH_V2_Q72",
+      "familyId": "FAM_MATH_N6_4",
+      "subject": "math",
+      "knowledgeNode": "MATH_N6_PROB_STAT",
+      "stepRole": "verification",
+      "questionType": "multi_step_numeric",
+      "assessmentKind": "application",
+      "allowMaterialReview": false,
+      "materialMd": "### 精讲卡：概率与统计\n- 等可能情形下 $P=\\frac{\\text{有利结果数}}{\\text{全部结果数}}$。\n- 平均数 $\\bar x=\\sum x_i/n$，方差 $s^2=\\sum(x_i-\\bar x)^2/n$。易错：平移不改变方差，乘常数使方差乘常数的平方。",
+      "stemMd": "四个数据 $1,3,x,y$ 的平均数为 $4$，方差为 $5$，且 $x>y$。求 $x$ 和 $y$。",
+      "options": [],
+      "matchingPairs": [],
+      "stepsRubric": [
+        {
+          "stepId": "first",
+          "prompt": "第一问",
+          "expected": 7,
+          "tolerance": 0,
+          "weightShare": 0.5
+        },
+        {
+          "stepId": "second",
+          "prompt": "第二问",
+          "expected": 5,
+          "tolerance": 0,
+          "weightShare": 0.5
+        }
+      ],
+      "answerSpec": "first=7;second=5",
+      "partialRubric": "step_shares",
+      "hintMd": "",
+      "explanationMd": "均值条件给出 $x+y=12$；由方差公式可得 $x^2+y^2=4(5+4^2)-1-9=74$，故 $xy=(12^2-74)/2=35$。$x,y$ 是方程 $t^2-12t+35=0$ 的两根；由 $x>y$ 得 $x=7,y=5$。",
+      "difficulty": 4,
+      "weight": 10,
+      "estSeconds": 90,
       "sourceLicense": "CC0-1.0",
       "audioRefOptional": null
     }

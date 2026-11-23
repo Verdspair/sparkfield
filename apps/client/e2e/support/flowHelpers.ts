@@ -10,7 +10,7 @@ export const tacticians = [
   { id: 'tactician_europa_fin', name: '冰核 · 小鲸' },
   { id: 'tactician_singularity_mew', name: '奇点 · 小猫' },
 ] as const;
-export const firstEnglishTitle = '情景交际与日常沟通';
+export const firstEnglishTitle = '情景交际与日常高频词块';
 
 const subpages = {
   learning: ['学习中心', 'learning-home-page'],
