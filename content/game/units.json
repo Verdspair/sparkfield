@@ -5,7 +5,7 @@
   "units": [
     {
       "id": "S01",
-      "name": "轨道兵",
+      "name": "巴斯蒂",
       "nameLength": 3,
       "cost": 1,
       "poolCopies": 28,
@@ -35,8 +35,8 @@
         "I_RED_GIANT_MAIL"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "钛白零重力外骨骼＋六角蜂窝等离子磁盾"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "锻金六足履带巨蟹，双钳合成六角磁盾，背列散热百叶与锚钩"
       },
       "skillSummary": "架起六角等离子磁盾获1.35P护盾4秒，期间受普攻伤害降低12%。",
       "skillSpec": {
@@ -48,8 +48,8 @@
     },
     {
       "id": "S02",
-      "name": "光帆技师",
-      "nameLength": 4,
+      "name": "琉璃",
+      "nameLength": 2,
       "cost": 1,
       "poolCopies": 28,
       "faction": "戴森工团",
@@ -77,8 +77,8 @@
         "I_SUPERCOMP_ARRAY"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "背负液态铑焊罐与太阳风锚索的轨道技师"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "三对六角镀金箔翼的机械蝶，翼脉分明，折腹藏纳米修复尾针"
       },
       "skillSummary": "释放纳米镀膜修复生命最低友军1.15P生命并加15双抗3秒。",
       "skillSpec": {
@@ -122,7 +122,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "高速自转的蓝宝石正八面体光子算力棱镜"
+        "silhouetteDesc": "白瓷折纸飞隼，三角棱翼带冷青刃口，翼根后收为分叉尾羽"
       },
       "skillSummary": "折射冷青激光切入侧翼造成1.10P物理伤害，使目标4秒内获盾量降低25%。",
       "skillSpec": {
@@ -135,7 +135,7 @@
     },
     {
       "id": "S04",
-      "name": "脉冲",
+      "name": "伏特",
       "nameLength": 2,
       "cost": 1,
       "poolCopies": 28,
@@ -165,7 +165,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "张开双翼离子散热帆的深空先遣无人探测艇"
+        "silhouetteDesc": "青铜齿轮甲虫炮车，背负四根透明真空电浆管"
       },
       "skillSummary": "发射高能离子电浆弹命中当前目标及1名邻敌，各造成0.75P魔法伤害。",
       "skillSpec": {
@@ -208,8 +208,8 @@
         "I_ZERO_POINT_SPRING"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "穿银蓝抗过载航行服、手托蓝水晶信匣的领航员"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "倒悬青铜双锥沙漏，暖金星尘在锥内流动，外绕三枚发条指针"
       },
       "skillSummary": "开启跨世纪信标治疗最近2名友军0.55P生命，并使其下次技能效能+12%。",
       "skillSpec": {
@@ -221,8 +221,8 @@
     },
     {
       "id": "S06",
-      "name": "引力井",
-      "nameLength": 3,
+      "name": "幽母",
+      "nameLength": 2,
       "cost": 1,
       "poolCopies": 28,
       "faction": "木卫冰海",
@@ -251,7 +251,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "悬浮磁力底座上的微型环形重力锚，绕冰蓝波纹"
+        "silhouetteDesc": "多层冰晶伞盖下悬一枚冰核，垂落六条发光阻尼触须"
       },
       "skillSummary": "释放重力阻尼环对目标及邻敌造成0.80P魔法伤害，降低20%攻速2.5秒。",
       "skillSpec": {
@@ -264,8 +264,8 @@
     },
     {
       "id": "S07",
-      "name": "观测者",
-      "nameLength": 3,
+      "name": "星鸮",
+      "nameLength": 2,
       "cost": 1,
       "poolCopies": 28,
       "faction": "深空阵列",
@@ -293,8 +293,8 @@
         "I_SUPERCOMP_ARRAY"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "披防辐射银灰斗篷、身前环绕三枚全息星图球的学者"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "海军蓝钛银机械鸮，双目嵌星图透镜，双翼展开黄铜坐标刻盘"
       },
       "skillSummary": "投射校准星图恢复最低血友军0.90P生命，并清除减攻速效果。",
       "skillSpec": {
@@ -336,7 +336,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "流线银黑钨合金高周波穿刺无人机，翼缘泛冷青电光"
+        "silhouetteDesc": "黑曜双刃飞梭，贯通的中空磁轨槽拖出紫红剪切尾焰"
       },
       "skillSummary": "高周波翼刃横掠面前2名敌人，各造成0.85P物理伤害并附加3秒33%重伤。",
       "skillSpec": {
@@ -350,8 +350,8 @@
     },
     {
       "id": "S09",
-      "name": "轨道炮",
-      "nameLength": 3,
+      "name": "弩",
+      "nameLength": 1,
       "cost": 1,
       "poolCopies": 28,
       "faction": "反物质院",
@@ -381,7 +381,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "双联超导磁悬浮长轨重炮平台，导轨拉出电浆弧"
+        "silhouetteDesc": "三趾锚爪托起双弧磁弓，中置直轨与发光钨芯长箭"
       },
       "skillSummary": "超导电容满额放电，钨芯弹直线贯穿最多2名敌人，各造成0.85P物理伤害。",
       "skillSpec": {
@@ -393,8 +393,8 @@
     },
     {
       "id": "S10",
-      "name": "质量投射",
-      "nameLength": 4,
+      "name": "赤蝎",
+      "nameLength": 2,
       "cost": 2,
       "poolCopies": 24,
       "faction": "戴森工团",
@@ -424,7 +424,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "环形电磁弹射轨道台，抛射炽白铁镍弹丸"
+        "silhouetteDesc": "低伏四足锻铜蝎，两侧展聚光翼，五节液压蝎尾架起电磁轨炮"
       },
       "skillSummary": "电磁轨道高速点射造成1.20P物理伤害，自身获0.65P护盾3秒。",
       "skillSpec": {
@@ -437,7 +437,7 @@
     },
     {
       "id": "S11",
-      "name": "火墙矩阵",
+      "name": "阿特拉斯",
       "nameLength": 4,
       "cost": 2,
       "poolCopies": 24,
@@ -468,7 +468,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "三面悬浮正六边形白瓷超导逻辑屏障塔"
+        "silhouetteDesc": "多层白瓷悬浮菱舟，三面舒展半透明六角结晶盾板"
       },
       "skillSummary": "展开双层逻辑护盾，自身与相邻最低血友军各获0.90P护盾4秒。",
       "skillSpec": {
@@ -480,8 +480,8 @@
     },
     {
       "id": "S12",
-      "name": "记忆切片",
-      "nameLength": 4,
+      "name": "诗琴",
+      "nameLength": 2,
       "cost": 2,
       "poolCopies": 24,
       "faction": "云端星环",
@@ -510,7 +510,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "飞秒激光扫描环与金色脑神经网络全息投影台"
+        "silhouetteDesc": "上下白瓷弧翼托起悬浮七弦琴，冷青数据弦跨过中空琴腔"
       },
       "skillSummary": "注入备份记忆赋能前排最低血友军0.95P护盾与20%攻速4秒。",
       "skillSpec": {
@@ -522,7 +522,7 @@
     },
     {
       "id": "S13",
-      "name": "日冕船",
+      "name": "伊卡洛",
       "nameLength": 3,
       "cost": 2,
       "poolCopies": 24,
@@ -553,7 +553,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "顶钨碳隔热金伞贴太阳火海滑行的打捞快艇"
+        "silhouetteDesc": "斜掠的双体弯刀光帆，灼金双刃朝前，推进槽嵌在背翼"
       },
       "skillSummary": "掠入目标侧翼释放日冕热浪造成1.15P物理伤害，额外摧毁0.50P护盾。",
       "skillSpec": {
@@ -565,7 +565,7 @@
     },
     {
       "id": "S14",
-      "name": "钟慢人",
+      "name": "克洛诺",
       "nameLength": 3,
       "cost": 2,
       "poolCopies": 24,
@@ -595,8 +595,8 @@
         "I_KEEL_FIELD"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "穿旧世纪宇航服、持相变高周波振刀的时空孤兵"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "星靛青铜发条螳螂，双月刃错相开合，胸壳露出擒纵齿轮"
       },
       "skillSummary": "瞬步切入目标侧翼斩击造成1.20P物理伤害，并恢复实际伤害18%的生命。",
       "skillSpec": {
@@ -608,8 +608,8 @@
     },
     {
       "id": "S15",
-      "name": "冰海潜航",
-      "nameLength": 4,
+      "name": "沧鳐",
+      "nameLength": 2,
       "cost": 2,
       "poolCopies": 24,
       "faction": "木卫冰海",
@@ -639,7 +639,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "鲸形钛合金深海抗压潜航舰，舰首半球声纳力场盾"
+        "silhouetteDesc": "宽翼冰蓝潜航鳐，厚甲前缘破冰，背鳍开散热槽，双尾拖声呐鞭"
       },
       "skillSummary": "展开声纳力场恢复0.75P生命，使自身及身后1格友军获18双抗4秒。",
       "skillSpec": {
@@ -651,8 +651,8 @@
     },
     {
       "id": "S16",
-      "name": "戴森镜",
-      "nameLength": 3,
+      "name": "阿雷西博",
+      "nameLength": 4,
       "cost": 2,
       "poolCopies": 24,
       "faction": "深空阵列",
@@ -682,7 +682,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "展开六片鎏金六角反射镜面的太空聚光阵列"
+        "silhouetteDesc": "三足驮起钛银抛物反射锅，镀金蜂窝镜前悬三臂聚焦馈源"
       },
       "skillSummary": "聚焦恒星光束灼烧当前目标及邻敌各0.90P魔法伤害，并削减20%魔抗4秒。",
       "skillSpec": {
@@ -695,8 +695,8 @@
     },
     {
       "id": "S17",
-      "name": "反物质井",
-      "nameLength": 4,
+      "name": "狄拉克",
+      "nameLength": 3,
       "cost": 2,
       "poolCopies": 24,
       "faction": "反物质院",
@@ -726,7 +726,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "潘宁强磁约束真空球笼，球心跃动紫白反氢电浆"
+        "silhouetteDesc": "四柱磁阱悬托双倒置黑曜菱锥，中央反氢腔间跃动紫红弧"
       },
       "skillSummary": "释放微量反氢湮灭束，对目标及邻格最多2敌造成0.95P魔法伤害；单目标+25%。",
       "skillSpec": {
@@ -739,8 +739,8 @@
     },
     {
       "id": "S18",
-      "name": "光锥信使",
-      "nameLength": 4,
+      "name": "青鸢",
+      "nameLength": 2,
       "cost": 2,
       "poolCopies": 24,
       "faction": "星门摆渡",
@@ -769,7 +769,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "张开极薄金色太阳帆的激光通信中继艇，悬量子存储球"
+        "silhouetteDesc": "翡翠古铜双叉燕尾艇，纤长尾羽藏标定器，背悬微型星门信标环"
       },
       "skillSummary": "激光标定目标4秒使其受伤害+12%，并为最近友军回复14法力与0.70P护盾。",
       "skillSpec": {
@@ -782,8 +782,8 @@
     },
     {
       "id": "S19",
-      "name": "日冕舰",
-      "nameLength": 3,
+      "name": "赫利俄斯",
+      "nameLength": 4,
       "cost": 3,
       "poolCopies": 20,
       "faction": "戴森工团",
@@ -813,7 +813,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "双体磁勺采集母舰，舰腹牵引金色恒星耀斑团"
+        "silhouetteDesc": "三足锻金三棱灯塔，旋转塔身顶起三片倾仰熔炉聚光镜"
       },
       "skillSummary": "倾泻恒星耀斑电浆束，对沿途最多3敌依次造成0.95P/0.75P/0.55P魔法伤害。",
       "skillSpec": {
@@ -828,7 +828,7 @@
     },
     {
       "id": "S20",
-      "name": "仲裁官",
+      "name": "米迦勒",
       "nameLength": 3,
       "cost": 3,
       "poolCopies": 20,
@@ -858,8 +858,8 @@
         "I_LORENTZ_RAIL"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "悬浮纯白几何流体机神，背后展开六翼光纤环"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "白瓷光戟垂在天平中央，两臂悬着自转的环形秤盘与陶瓷羽片"
       },
       "skillSummary": "锁定目标发射高密度数据穿甲束造成1.15P物理伤害，邻格溅射0.50P。",
       "skillSpec": {
@@ -871,8 +871,8 @@
     },
     {
       "id": "S21",
-      "name": "三号备份",
-      "nameLength": 4,
+      "name": "西格玛",
+      "nameLength": 3,
       "cost": 3,
       "poolCopies": 20,
       "faction": "云端星环",
@@ -901,8 +901,8 @@
         "I_STELLAR_CROWN"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "半透明仿生白瓷躯壳，胸腔嵌发光蓝宝石晶格心"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "三座陶瓷菱塔品字互绕，冷青光柱交于中央，三环浮刻标尺"
       },
       "skillSummary": "超频释放光子脉冲弹射最多3名敌军，共造成0.90P/0.70P/0.50P魔法伤害。",
       "skillSpec": {
@@ -917,7 +917,7 @@
     },
     {
       "id": "S22",
-      "name": "蜂群",
+      "name": "维克",
       "nameLength": 2,
       "cost": 3,
       "poolCopies": 20,
@@ -948,7 +948,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "上千枚银灰六角纳米机械虫聚合成的变形几何阵列"
+        "silhouetteDesc": "暗红不规则多面体母巢，复眼环列，七只尖三角子蜂绕行"
       },
       "skillSummary": "纳米虫群撕裂最密集敌群最多3人，造成0.85P物理伤害并降低20%攻速2.5秒。",
       "skillSpec": {
@@ -962,8 +962,8 @@
     },
     {
       "id": "S23",
-      "name": "磁轨母舰",
-      "nameLength": 4,
+      "name": "方舟",
+      "nameLength": 2,
       "cost": 3,
       "poolCopies": 20,
       "faction": "钟慢远征",
@@ -993,7 +993,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "缩微十公里级银灰星际母舰，伴飞两架护航浮游炮"
+        "silhouetteDesc": "青铜长龙骨托起多层星靛舰甲板，四艘三角护航艇分悬两舷"
       },
       "skillSummary": "放出浮游炮协同齐射造成1.20P物理伤害；目标孤立无邻友时伤害+25%。",
       "skillSpec": {
@@ -1005,8 +1005,8 @@
     },
     {
       "id": "S24",
-      "name": "星云哨站",
-      "nameLength": 4,
+      "name": "欧罗巴",
+      "nameLength": 3,
       "cost": 3,
       "poolCopies": 20,
       "faction": "木卫冰海",
@@ -1036,7 +1036,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "锚定在蓝白彗核冰山上的四联全自动电磁速射堡垒"
+        "silhouetteDesc": "冰晶菱形双体哨标，四门电磁炮环列，下悬深渊声呐锥"
       },
       "skillSummary": "四联电磁炮高速连射3波，每波0.48P物理伤害并为自身叠6%攻速（上限4层）。",
       "skillSpec": {
@@ -1081,7 +1081,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "十万年前外星遗留的纯白超流体圆环星门巨构"
+        "silhouetteDesc": "海军蓝钛银双同心竖环反向转动，中央为驻波盾面"
       },
       "skillSummary": "激发空间驻波屏障获1.15P护盾4秒，并对前方2格敌军释放0.75P引力震荡。",
       "skillSpec": {
@@ -1094,8 +1094,8 @@
     },
     {
       "id": "S26",
-      "name": "风帆船长",
-      "nameLength": 4,
+      "name": "麦哲伦",
+      "nameLength": 3,
       "cost": 3,
       "poolCopies": 20,
       "faction": "星门摆渡",
@@ -1124,8 +1124,8 @@
         "I_LORENTZ_RAIL"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "立于银色光帆舰桥、手握激光六分仪的老领航家"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "翡翠古铜非对称三帆舰，三叶饱满弧帆下悬双联鱼雷架"
       },
       "skillSummary": "借太阳风滑步至相邻安全格并射出2枚光子鱼雷，每枚0.70P物理+0.30P魔法溅射。",
       "skillSpec": {
@@ -1169,7 +1169,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "百米缩微行星级超导托卡马克磁笼巨环，内奔蓝白核火"
+        "silhouetteDesc": "双倒置黑曜托卡马克方尖碑，四根斜磁柱间架设三道紫红电弧"
       },
       "skillSummary": "过载托卡马克强磁幕获1.45P巨盾5秒，嘲讽邻敌1.0秒并释放0.60P电弧震击。",
       "skillSpec": {
@@ -1183,7 +1183,7 @@
     },
     {
       "id": "S28",
-      "name": "拆星舰",
+      "name": "伏尔甘",
       "nameLength": 3,
       "cost": 4,
       "poolCopies": 14,
@@ -1214,7 +1214,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "三叉戟行星破拆母舰，舰首悬三道引力破碎束"
+        "silhouetteDesc": "锻金破拆巨构，倒锥三叶钻下探，双液压重锤分列，巨飞轮高悬"
       },
       "skillSummary": "引力重锤砸击前中排最多3敌，造成0.85P物理伤害、眩晕1.0秒并击碎30%护甲4秒。",
       "skillSpec": {
@@ -1229,8 +1229,8 @@
     },
     {
       "id": "S29",
-      "name": "光速孤旅",
-      "nameLength": 4,
+      "name": "利维坦",
+      "nameLength": 3,
       "cost": 4,
       "poolCopies": 14,
       "faction": "钟慢远征",
@@ -1260,7 +1260,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "舰首覆相对论蓝移流光锥的突击巡洋舰，四联粒子炮"
+        "silhouetteDesc": "青铜龙骨与星靛钛甲覆成座头鲸舰，四联背鳍炮、光鳃与光翼尾舵"
       },
       "skillSummary": "四联相对论粒子炮向锥形区倾泻3波弹幕，主目标1.55P物理伤害，击杀返20法力。",
       "skillSpec": {
@@ -1273,7 +1273,7 @@
     },
     {
       "id": "S30",
-      "name": "白矮",
+      "name": "天狼",
       "nameLength": 2,
       "cost": 4,
       "poolCopies": 14,
@@ -1304,7 +1304,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "引力透镜阵列聚焦形成的微缩刺目蓝白致密星核投影"
+        "silhouetteDesc": "十字钛银磁笼悬托耀白致密星核，外套两层偏折透镜环及聚焦棱镜"
       },
       "skillSummary": "借引力透镜倍增射线，对最近与最远两个敌群各降下0.95P范围魔法轰击。",
       "skillSpec": {
@@ -1316,8 +1316,8 @@
     },
     {
       "id": "S31",
-      "name": "旧人类",
-      "nameLength": 3,
+      "name": "塞壬",
+      "nameLength": 2,
       "cost": 4,
       "poolCopies": 14,
       "faction": "木卫冰海",
@@ -1346,8 +1346,8 @@
         "I_SUPERCOMP_ARRAY"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "穿朴素宇航服、手捧真实绿苗培养舱的白发女学者"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "十二片分层冰晶瓣合托发光双螺旋树种，开合如一座海底温室"
       },
       "skillSummary": "展开碳基生机圣域（零伤害纯保护）：治疗最低血3名友军0.95P，全队+15%攻速与0.40P盾。",
       "skillSpec": {
@@ -1392,7 +1392,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "镜面液态金属凝聚成的锐利银色多面体猎杀母核"
+        "silhouetteDesc": "悬浮暗红黑曜液态金属六翼磁刃掠行体，六片悬浮液态镰翼与猩红晶核以折线轨迹高速贯穿敌阵"
       },
       "skillSummary": "液态刚体沿折线连续高速贯穿最多3名不同敌人，各造成1.10P物理伤害并获0.50P盾。",
       "skillSpec": {
@@ -1405,8 +1405,8 @@
     },
     {
       "id": "S33",
-      "name": "潮汐电站",
-      "nameLength": 4,
+      "name": "彭罗斯",
+      "nameLength": 3,
       "cost": 5,
       "poolCopies": 9,
       "faction": "云端星环",
@@ -1436,7 +1436,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "环绕漆黑球形视界与金色弯曲吸积盘的超导巨环"
+        "silhouetteDesc": "白瓷多环嵌套星仪，倾斜冠环镌标尺，围住黑洞能层与伽马极轴光柱"
       },
       "skillSummary": "引爆彭罗斯能层，1.0秒后全图降下伽马射流造成0.85P魔法伤害并挂20%易伤4秒。",
       "skillSpec": {
@@ -1450,8 +1450,8 @@
     },
     {
       "id": "S34",
-      "name": "百年旅人",
-      "nameLength": 4,
+      "name": "苍龙",
+      "nameLength": 2,
       "cost": 5,
       "poolCopies": 9,
       "faction": "星门摆渡",
@@ -1480,8 +1480,8 @@
         "I_DEADHAND_BELT"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "穿初代探春号宇航服、脚踏弯曲时空光环的传奇领航员"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "翡翠机械星龙盘过古铜星门，分节龙脊、发光长须与双形态龙首炮"
       },
       "skillSummary": "前2排激活时间膨胀近距重轰（1.45P物理+25%吸血）；后2排无限射程狙杀敌最高伤主C（1.60P）。",
       "skillSpec": {
@@ -1493,7 +1493,7 @@
     },
     {
       "id": "S35",
-      "name": "老舰长",
+      "name": "卡西尼",
       "nameLength": 3,
       "cost": 5,
       "poolCopies": 9,
@@ -1523,8 +1523,8 @@
         "I_ECOSPHERE_FILM"
       ],
       "modelProfile": {
-        "archetype": "humanoid_rig",
-        "silhouetteDesc": "立于纯机械手摇火控舰桥、免疫木马的独眼老统帅"
+        "archetype": "hard_surface_vessel",
+        "silhouetteDesc": "四足青铜龟堡，厚重分片甲壳上转动星靛浑天仪，三联实心炮前探"
       },
       "skillSummary": "全队前排获0.80P防辐射装甲盾4秒，并对目标区降下1.05P物理重炮压制。",
       "skillSpec": {
@@ -1537,8 +1537,8 @@
     },
     {
       "id": "S36",
-      "name": "渊",
-      "nameLength": 1,
+      "name": "深渊之冕",
+      "nameLength": 4,
       "cost": 5,
       "poolCopies": 9,
       "faction": "失控蜂群",
@@ -1568,7 +1568,7 @@
       ],
       "modelProfile": {
         "archetype": "hard_surface_vessel",
-        "silhouetteDesc": "悬浮半空的微型原生黑洞奇点，环绕绚丽爱因斯坦环"
+        "silhouetteDesc": "漆黑视界球心扭弯赤红吸积盘，十二根暗红骨刺悬成断冠"
       },
       "skillSummary": "展开事件视界引力坍缩4秒造成1.15P魔法伤害；区内敌人每秒受4%最大生命伤害并减疗33%。",
       "skillSpec": {

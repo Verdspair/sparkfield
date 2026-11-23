@@ -206,6 +206,7 @@ export class BoardStageEngine {
   private nudgedFriendlyId: string | null = null;
   private itemDropTargetUnitId: string | null = null;
   private overSellZone = false;
+  private battleFrameActive = false;
 
   private lastFrameTimestampMs = 0;
   private lastSubpageRenderMs = 0;
@@ -902,6 +903,9 @@ export class BoardStageEngine {
   public setPhase(phase: MatchPhaseKind): void {
     const changed = this.currentPhase !== phase;
     this.currentPhase = phase;
+    if (phase !== 'battle') {
+      this.battleFrameActive = false;
+    }
     this.arena.setBattleGridDimmed(phase === 'battle');
     if (changed) {
       this.arena.triggerConduitSweep();
@@ -925,6 +929,7 @@ export class BoardStageEngine {
   public scoutSeat(seatIndex: number): void {
     const normalized = ((Math.floor(seatIndex) % 8) + 8) % 8;
     if (normalized === this.activeSeatIndex) return;
+    this.battleFrameActive = false;
     this.activeSeatIndex = normalized;
     const origin = getSeatWorldOrigin(normalized);
     this.arena.triggerConduitSweep();
@@ -997,6 +1002,12 @@ export class BoardStageEngine {
 
     for (const [id, rig] of this.unitRigs.entries()) {
       if (!incomingIds.has(id)) {
+        if (this.currentPhase === 'battle' && this.battleFrameActive) {
+          const prevState = this.unitStates.get(id);
+          if (prevState && prevState.location.zone === 'board' && (prevState.seatIndex ?? 0) === this.activeSeatIndex) {
+            this.audioBus.emit('onUnitDeath', { instanceId: id });
+          }
+        }
         if (this.itemDropTargetUnitId === id) {
           this.itemDropTargetUnitId = null;
           this.itemDropRingMesh.visible = false;
@@ -1058,10 +1069,16 @@ export class BoardStageEngine {
 
     this.arena.setBenchOccupancy(occupiedBenchSlots);
     this.unitFactory.syncGroundBatches(this.unitRigs.values());
+    if (this.currentPhase === 'battle') {
+      this.battleFrameActive = true;
+    }
   }
 
   public syncLootOrbs(orbs: readonly StageLootOrbState[]): void {
     const { addedBloom, removedBloom } = this.vfx.syncLootOrbs(orbs);
+    if (addedBloom.length > 0 && this.sceneMode === 'match') {
+      this.audioBus.emit('onLootOrb', { action: 'drop' });
+    }
     if (this.selectiveBloom) {
       for (const m of removedBloom) this.selectiveBloom.selection.delete(m);
       if (this.sceneMode === 'match') {
@@ -1135,6 +1152,7 @@ export class BoardStageEngine {
       goldAmount,
     );
     this.matchTacticianRig.triggerEmote('collect_orb');
+    this.audioBus.emit('onLootOrb', { action: 'collect', gold: goldAmount });
     this.callbacks.onCollectLootOrb?.(orbId, goldAmount);
   }
 
@@ -1253,6 +1271,9 @@ export class BoardStageEngine {
 
   public spawnDamageNumber(event: StageDamageEvent): void {
     this.hudOverlay?.spawnDamageFloat(event, this.unitRigs);
+    if (this.currentPhase === 'battle') {
+      this.audioBus.emit('onCombatHit', { damageType: event.kind });
+    }
   }
 
   private resolveTargetWorldPos(
@@ -1570,6 +1591,7 @@ export class BoardStageEngine {
 
   private startDraggingUnit(instanceId: string): void {
     this.draggingInstanceId = instanceId;
+    this.audioBus.emit('onUnitMove', { kind: 'pick' });
     this.arena.setDeployHighlightActive(true);
     const rig = this.unitRigs.get(instanceId);
     const st = this.unitStates.get(instanceId);
@@ -1777,6 +1799,7 @@ export class BoardStageEngine {
     to: UnitLocation,
     resolvedBoardHex: { row: number; col: number } | null,
   ): void {
+    this.audioBus.emit('onUnitMove', { kind: 'drop' });
     this.callbacks.onMoveUnit?.(instanceId, to, resolvedBoardHex);
   }
 

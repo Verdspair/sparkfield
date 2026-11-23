@@ -9,6 +9,10 @@ import {
   getArenaPreviewUrl,
 } from '../stage/index.js';
 import {
+  getSharedWebAudioEngine,
+  type AudioSettings,
+} from '../audio/WebAudioEngine.js';
+import {
   useAppStore,
   type SettingsTab,
   type ShopDockPosition,
@@ -40,6 +44,67 @@ function readInitialArenaPreviews(): Record<ArenaThemeId, string> {
     mercury_dyson_forge: getArenaPreviewUrl('mercury_dyson_forge', { size: 256 }),
     event_horizon_observatory: getArenaPreviewUrl('event_horizon_observatory', { size: 256 }),
   };
+}
+
+function AudioGlyphSvg({
+  kind,
+  muted = false,
+}: {
+  readonly kind: 'master' | 'bgm' | 'sfx';
+  readonly muted?: boolean;
+}): React.JSX.Element {
+  return (
+    <svg width="15" height="15" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      {kind === 'master' ? (
+        <>
+          <path
+            d="M3.2 7.1H6.2L10.3 3.7V14.3L6.2 10.9H3.2V7.1Z"
+            fill="currentColor"
+            fillOpacity="0.16"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          />
+          {muted ? (
+            <path
+              d="M12.6 6.8L15.6 11.2M15.6 6.8L12.6 11.2"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          ) : (
+            <>
+              <path d="M12.4 6.6C13.3 7.4 13.8 8.2 13.8 9C13.8 9.8 13.3 10.6 12.4 11.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              <path d="M14.3 4.8C15.6 6 16.3 7.4 16.3 9C16.3 10.6 15.6 12 14.3 13.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </>
+          )}
+        </>
+      ) : null}
+      {kind === 'bgm' ? (
+        <>
+          <path
+            d="M7 13.2V4.8L14.5 3.4V11.8"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="5.2" cy="13.4" r="2" fill="currentColor" fillOpacity="0.22" stroke="currentColor" strokeWidth="1.35" />
+          <circle cx="12.7" cy="12" r="2" fill="currentColor" fillOpacity="0.22" stroke="currentColor" strokeWidth="1.35" />
+        </>
+      ) : null}
+      {kind === 'sfx' ? (
+        <path
+          d="M9 2.2L10.9 6.8L15.8 9L10.9 11.2L9 15.8L7.1 11.2L2.2 9L7.1 6.8Z"
+          fill="currentColor"
+          fillOpacity="0.2"
+          stroke="currentColor"
+          strokeWidth="1.35"
+          strokeLinejoin="round"
+        />
+      ) : null}
+    </svg>
+  );
 }
 
 function ShopLayoutDiagramSvg({
@@ -200,6 +265,7 @@ function ShopLayoutDiagramSvg({
 }
 
 export function SettingsModal(): React.JSX.Element | null {
+  const store = useAppStore();
   const {
     settingsModalOpen,
     settingsInitialTab,
@@ -225,7 +291,10 @@ export function SettingsModal(): React.JSX.Element | null {
     setActiveTab,
     closeRedemption,
     setViewingPrepRoom,
-  } = useAppStore();
+  } = store;
+
+  const audioEngine = store.audioEngine ?? getSharedWebAudioEngine();
+  const [audioSettings, setAudioSettings] = useState<AudioSettings>(() => audioEngine.getSettings());
 
   const [tab, setTab] = useState<SettingsTab>(settingsInitialTab);
   const [packs, setPacks] = useState<readonly CoursePackManifest[]>(() =>
@@ -251,6 +320,11 @@ export function SettingsModal(): React.JSX.Element | null {
   const isOffline = authMode === 'offline_practice';
   const isStaff = profile?.role === 'admin' || profile?.role === 'editor';
   const isFullscreen = Boolean(profile?.displaySettings?.fullscreen);
+
+  useEffect(() => {
+    setAudioSettings(audioEngine.getSettings());
+    return audioEngine.subscribe(setAudioSettings);
+  }, [audioEngine]);
 
   useEffect(() => {
     if (!settingsModalOpen) return;
@@ -619,6 +693,179 @@ export function SettingsModal(): React.JSX.Element | null {
                     >
                       全屏横屏
                     </button>
+                  </div>
+                </div>
+
+                <div className="sf-settings-card" data-testid="audio-settings-card">
+                  <div className="sf-settings-card__head">
+                    <h3>音频</h3>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={audioSettings.muted}
+                      aria-label="全局静音"
+                      onClick={() => {
+                        const nextMuted = !audioSettings.muted;
+                        audioEngine.updateSettings({ muted: nextMuted });
+                        if (!nextMuted) audioEngine.playPreviewSfx();
+                      }}
+                      data-testid="audio-mute-switch"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '5px 10px',
+                        borderRadius: 'var(--sf-radius-pill, 5px)',
+                        border: audioSettings.muted
+                          ? '1px solid rgba(224, 122, 134, 0.56)'
+                          : '1px solid var(--hairline-accent, rgba(216, 194, 148, 0.34))',
+                        background: audioSettings.muted
+                          ? 'rgba(48, 32, 42, 0.85)'
+                          : 'rgba(14, 23, 40, 0.85)',
+                        color: audioSettings.muted
+                          ? '#f0b6be'
+                          : 'var(--gold-light, #f2e1bc)',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'border-color 150ms ease, background-color 150ms ease',
+                      }}
+                    >
+                      <AudioGlyphSvg kind="master" muted={audioSettings.muted} />
+                      <span>{audioSettings.muted ? '已静音' : '开启声音'}</span>
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          width: 28,
+                          height: 15,
+                          borderRadius: 999,
+                          padding: 2,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: audioSettings.muted ? 'flex-end' : 'flex-start',
+                          background: audioSettings.muted
+                            ? 'rgba(224, 122, 134, 0.38)'
+                            : 'rgba(222, 197, 146, 0.28)',
+                          border: '1px solid rgba(222, 197, 146, 0.42)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 9,
+                            height: 9,
+                            borderRadius: '50%',
+                            background: audioSettings.muted
+                              ? '#e07a86'
+                              : 'var(--accent-gold-bright, #f2e1bc)',
+                          }}
+                        />
+                      </span>
+                    </button>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 10,
+                      opacity: audioSettings.muted ? 0.58 : 1,
+                      transition: 'opacity 150ms ease',
+                    }}
+                  >
+                    {(
+                      [
+                        {
+                          key: 'masterVolume' as const,
+                          kind: 'master' as const,
+                          label: '主音量',
+                          testId: 'audio-master-slider',
+                          value: audioSettings.masterVolume,
+                        },
+                        {
+                          key: 'bgmVolume' as const,
+                          kind: 'bgm' as const,
+                          label: '背景音乐',
+                          testId: 'audio-bgm-slider',
+                          value: audioSettings.bgmVolume,
+                        },
+                        {
+                          key: 'sfxVolume' as const,
+                          kind: 'sfx' as const,
+                          label: '交互音效',
+                          testId: 'audio-sfx-slider',
+                          value: audioSettings.sfxVolume,
+                        },
+                      ] as const
+                    ).map((track) => {
+                      const pct = Math.round(track.value * 100);
+                      return (
+                        <label
+                          key={track.key}
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '96px minmax(0, 1fr) 44px',
+                            alignItems: 'center',
+                            gap: 12,
+                            padding: '8px 12px',
+                            borderRadius: 'var(--sf-radius-slot, 6px)',
+                            border: '1px solid rgba(216, 194, 148, 0.16)',
+                            background: 'var(--sf-surface-inset, rgba(11, 18, 32, 0.78))',
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              fontSize: 13,
+                              fontWeight: 600,
+                              color: 'var(--text-primary, #e6edf7)',
+                            }}
+                          >
+                            <span style={{ color: 'var(--accent-gold, #dec592)', display: 'inline-flex' }}>
+                              <AudioGlyphSvg kind={track.kind} muted={track.kind === 'master' && audioSettings.muted} />
+                            </span>
+                            <span>{track.label}</span>
+                          </span>
+
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            step={1}
+                            value={pct}
+                            aria-label={track.label}
+                            data-testid={track.testId}
+                            onChange={(e) => {
+                              const nextVal = Number(e.target.value) / 100;
+                              audioEngine.updateSettings({ [track.key]: nextVal });
+                              if (track.key === 'sfxVolume') {
+                                audioEngine.playPreviewSfx();
+                              }
+                            }}
+                            style={{
+                              width: '100%',
+                              height: 6,
+                              margin: 0,
+                              accentColor: 'var(--accent-gold, #dec592)',
+                              cursor: 'pointer',
+                            }}
+                          />
+
+                          <span
+                            style={{
+                              fontVariantNumeric: 'tabular-nums',
+                              fontSize: 12.5,
+                              fontWeight: 700,
+                              color: 'var(--gold-light, #f2e1bc)',
+                              textAlign: 'right',
+                            }}
+                          >
+                            {pct}%
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
 

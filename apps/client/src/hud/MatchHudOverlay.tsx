@@ -706,6 +706,142 @@ export function MatchHudOverlay(): React.JSX.Element | null {
     getStageEngine,
   ]);
 
+  const activeBattleTop =
+    matchSnapshot?.phase === 'battle' ? (matchSnapshot.battle ?? null) : null;
+  const elapsedBattleScaledMsTop =
+    activeBattleTop?.startedAtEpochMs !== undefined
+      ? Math.max(0, (nowMs - activeBattleTop.startedAtEpochMs) / (activeBattleTop.timeScale ?? 1))
+      : null;
+  const isBattleOvertimeTop =
+    elapsedBattleScaledMsTop !== null &&
+    Boolean(activeBattleTop?.overtimeAtMs) &&
+    elapsedBattleScaledMsTop >= activeBattleTop!.overtimeAtMs! &&
+    (!activeBattleTop?.longestBattleMs || elapsedBattleScaledMsTop < activeBattleTop.longestBattleMs);
+  const myRoundBattleTop =
+    matchSnapshot && activeBattleTop
+      ? activeBattleTop.battles.find(
+          (b) => b.leftSeatId === matchSnapshot.seatId || b.rightSeatId === matchSnapshot.seatId,
+        ) ?? null
+      : null;
+  const inLearningFocus = Boolean(
+    matchSnapshot &&
+      ((matchSnapshot.phase === 'learning' && !matchSnapshot.learning?.complete) ||
+        (learningReview &&
+          learningReview.nodeIndex === matchSnapshot.nodeIndex &&
+          !['battle', 'settlement', 'exit'].includes(matchSnapshot.phase))),
+  );
+
+  useEffect(() => {
+    if (!matchSnapshot || !modeSpecTop) return;
+    audioBus.emit('onBgmContext', {
+      scene: 'match',
+      roundIndex: matchSnapshot.round,
+      totalRounds: modeSpecTop.rounds,
+      phase: matchSnapshot.phase,
+      isOvertime: isBattleOvertimeTop,
+      focusDuck: inLearningFocus,
+    });
+  }, [
+    audioBus,
+    inLearningFocus,
+    isBattleOvertimeTop,
+    matchSnapshot?.phase,
+    matchSnapshot?.round,
+    modeSpecTop,
+  ]);
+
+  const audioMatchIdRef = useRef<string>('');
+  const audioPrevLevelRef = useRef<number | null>(null);
+  const audioPrevPhaseRef = useRef<string | null>(null);
+  const audioAnnouncedRoundRef = useRef<number | null>(null);
+  const audioLastBattleRef = useRef<{
+    round: number;
+    outcome: 'win' | 'draw' | 'loss';
+    elapsedMs: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!matchSnapshot) {
+      audioMatchIdRef.current = '';
+      audioPrevLevelRef.current = null;
+      audioPrevPhaseRef.current = null;
+      audioAnnouncedRoundRef.current = null;
+      audioLastBattleRef.current = null;
+      return;
+    }
+
+    if (audioMatchIdRef.current !== matchSnapshot.matchId) {
+      audioMatchIdRef.current = matchSnapshot.matchId;
+      audioPrevLevelRef.current = matchSnapshot.self.level;
+      audioPrevPhaseRef.current = matchSnapshot.phase;
+      audioAnnouncedRoundRef.current = null;
+      audioLastBattleRef.current = null;
+    }
+
+    if (audioPrevLevelRef.current !== null && matchSnapshot.self.level > audioPrevLevelRef.current) {
+      audioBus.emit('onShopAction', { action: 'level_up' });
+    }
+    audioPrevLevelRef.current = matchSnapshot.self.level;
+
+    if (myRoundBattleTop) {
+      const res = myRoundBattleTop.result;
+      const myOutcome: 'win' | 'draw' | 'loss' =
+        res.outcome === 'draw'
+          ? 'draw'
+          : res.winnerSeatId === matchSnapshot.seatId
+            ? 'win'
+            : 'loss';
+      audioLastBattleRef.current = {
+        round: matchSnapshot.round,
+        outcome: myOutcome,
+        elapsedMs: res.elapsedMs,
+      };
+    }
+
+    const prevPhase = audioPrevPhaseRef.current;
+    if (prevPhase !== matchSnapshot.phase) {
+      if (matchSnapshot.phase === 'battle') {
+        audioBus.emit('onBattleStart', {
+          roundIndex: matchSnapshot.round,
+          isPve: myRoundBattleTop?.pve ?? false,
+        });
+      } else {
+        if (
+          prevPhase === 'battle' &&
+          audioLastBattleRef.current &&
+          audioAnnouncedRoundRef.current !== audioLastBattleRef.current.round
+        ) {
+          audioAnnouncedRoundRef.current = audioLastBattleRef.current.round;
+          audioBus.emit('onRoundResult', {
+            outcome: audioLastBattleRef.current.outcome,
+            quarterPointsEarned: matchSnapshot.self.victoryPoints,
+          });
+        }
+        audioBus.emit('onPhaseChange', {
+          phase: matchSnapshot.phase,
+          roundIndex: matchSnapshot.round,
+        });
+      }
+    }
+
+    if (
+      matchSnapshot.phase === 'battle' &&
+      elapsedBattleScaledMsTop !== null &&
+      audioLastBattleRef.current &&
+      audioLastBattleRef.current.round === matchSnapshot.round &&
+      elapsedBattleScaledMsTop >= audioLastBattleRef.current.elapsedMs &&
+      audioAnnouncedRoundRef.current !== matchSnapshot.round
+    ) {
+      audioAnnouncedRoundRef.current = matchSnapshot.round;
+      audioBus.emit('onRoundResult', {
+        outcome: audioLastBattleRef.current.outcome,
+        quarterPointsEarned: matchSnapshot.self.victoryPoints,
+      });
+    }
+
+    audioPrevPhaseRef.current = matchSnapshot.phase;
+  }, [audioBus, elapsedBattleScaledMsTop, matchSnapshot, myRoundBattleTop]);
+
   if (!matchSnapshot) return null;
 
   const self = matchSnapshot.self;
@@ -805,12 +941,14 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   };
 
   const openCodex = (tab: 'items' | 'units', itemId: string | null = null) => {
+    audioBus.emit('onUiFeedback', { kind: 'open' });
     setCodexInitialTab(tab);
     setCodexInitialItemId(itemId);
     setCodexOpen(true);
   };
 
   const armTargetAction = (action: TargetAction) => {
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     clearInspectedUnit();
     setTargetAction((previous) =>
       previous?.phaseIndex === action.phaseIndex &&
@@ -837,6 +975,9 @@ export function MatchHudOverlay(): React.JSX.Element | null {
     })
       .then((ack) => {
         if (!ack.ok) throw new Error(ack.reason ?? 'LEARNING_SUBMISSION_REJECTED');
+        if (ack.feedback && !ack.feedback.isSkipped) {
+          audioBus.emit('onLearningFeedback', { correct: ack.feedback.isCorrect });
+        }
         setLearningReview((current) =>
           current === review ? { ...review, feedback: ack.feedback ?? null } : current,
         );
@@ -1076,7 +1217,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
           <button
             type="button"
             className="ui-metal-frame blc-btn blc-btn--metal blc-btn--sm"
-            onClick={() => setPlannerOpen(true)}
+            onClick={() => { audioBus.emit('onUiFeedback', { kind: 'open' }); setPlannerOpen(true); }}
             data-testid="open-lineup-planner-btn"
           >
             阵容 {self.lineupPlan.length}/{LINEUP_PLANNER_MAX_SLOTS}
@@ -1131,7 +1272,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             role="tab"
             aria-selected={leftTab === 'traits'}
             className={`sf-rail-tab ${leftTab === 'traits' ? 'sf-rail-tab--active' : ''}`}
-            onClick={() => setLeftTab('traits')}
+            onClick={() => { audioBus.emit('onUiFeedback', { kind: 'click' }); setLeftTab('traits'); }}
             data-testid="hud-left-traits-tab"
           >
             羁绊 ({activeTraits.filter((t) => t.activeTier > 0).length})
@@ -1141,7 +1282,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             role="tab"
             aria-selected={leftTab === 'items'}
             className={`sf-rail-tab ${leftTab === 'items' ? 'sf-rail-tab--active' : ''}`}
-            onClick={() => setLeftTab('items')}
+            onClick={() => { audioBus.emit('onUiFeedback', { kind: 'click' }); setLeftTab('items'); }}
             data-testid="hud-left-items-tab"
           >
             装备 ({self.inventoryItems.length})
@@ -1480,7 +1621,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                       <div
                         key={`${itemId}-${idx}`}
                         className="sf-bag-slot-cell"
-                        onMouseEnter={() => setHoveredBagIndex(idx)}
+                        onMouseEnter={() => { audioBus.emit('onUiFeedback', { kind: 'hover' }); setHoveredBagIndex(idx); }}
                       >
                         <button
                           type="button"
@@ -1746,7 +1887,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             role="tab"
             aria-selected={rightTab === 'score'}
             className={`sf-rail-tab ${rightTab === 'score' ? 'sf-rail-tab--active' : ''}`}
-            onClick={() => setRightTab('score')}
+            onClick={() => { audioBus.emit('onUiFeedback', { kind: 'click' }); setRightTab('score'); }}
             data-testid="hud-right-score-tab"
           >
             胜点
@@ -1756,7 +1897,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             role="tab"
             aria-selected={rightTab === 'damage'}
             className={`sf-rail-tab ${rightTab === 'damage' ? 'sf-rail-tab--active' : ''}`}
-            onClick={() => setRightTab('damage')}
+            onClick={() => { audioBus.emit('onUiFeedback', { kind: 'click' }); setRightTab('damage'); }}
             data-testid="hud-right-damage-tab"
           >
             伤害
@@ -2390,6 +2531,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                               ? 'sf-shop-card--pair'
                               : ''
                         }`.trim()}
+                        onMouseEnter={() => { if (preview.canBuy) audioBus.emit('onUiFeedback', { kind: 'hover' }); }}
                         onClick={() => sendMatchCommand({ type: 'BUY_CARD', shopIndex: sIdx })}
                         data-testid={`shop-card-slot-${sIdx}`}
                         data-starup={isStarUp ? String(preview.targetStar ?? 2) : undefined}
@@ -2649,7 +2791,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
           serverCommandsLocked={serverCommandsLocked}
           onClearPlan={() => sendMatchCommand({ type: 'SET_LINEUP_PLAN', unitIds: [] })}
           onToggleUnit={togglePlannerUnit}
-          onClose={() => setPlannerOpen(false)}
+          onClose={() => { audioBus.emit('onUiFeedback', { kind: 'close' }); setPlannerOpen(false); }}
         />
       ) : null}
 
@@ -2661,7 +2803,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
           initialTab={codexInitialTab}
           initialItemId={codexInitialItemId}
           onSelectUnit={setCodexUnitId}
-          onClose={() => setCodexOpen(false)}
+          onClose={() => { audioBus.emit('onUiFeedback', { kind: 'close' }); setCodexOpen(false); }}
         />
       ) : null}
 

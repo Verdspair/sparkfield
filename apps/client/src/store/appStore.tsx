@@ -10,7 +10,7 @@ import React, {
 import {
   AudioEventBus,
   DEFAULT_TACTICIAN_ID,
-  NullAudioAdapter,
+  SEASON1_UNITS_BY_ID,
   TacticianIdSchema,
   type ArenaThemeId,
   type DisplaySettings,
@@ -25,6 +25,8 @@ import {
   type UnitCombatTelemetry,
   type UserProfile,
 } from '@pkg/contracts';
+import { previewItemEquip } from '@pkg/game-core';
+import { getSharedWebAudioEngine, type WebAudioEngine } from '../audio/WebAudioEngine.js';
 import type { BoardStageEngine } from '../stage/index.js';
 import {
   LiveBattleChoreographer,
@@ -221,6 +223,7 @@ export interface AppStoreValue {
   exitMatchToLobby: () => Promise<void>;
 
   audioBus: AudioEventBus;
+  audioEngine: WebAudioEngine;
   arenaTheme: ArenaThemeId;
   setArenaThemeLive: (theme: ArenaThemeId, persist?: boolean) => Promise<void>;
   registerStageEngine: (engine: BoardStageEngine | null) => void;
@@ -286,11 +289,48 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
   const [overSellDropzone, setOverSellDropzone] = useState<boolean>(false);
   const [customStageOverride, setCustomStageOverride] = useState<boolean>(false);
 
+  const audioEngine = useMemo(() => getSharedWebAudioEngine(), []);
   const audioBus = useMemo(() => {
     const bus = new AudioEventBus();
-    bus.setAdapter(NullAudioAdapter);
+    bus.setAdapter(audioEngine);
     return bus;
-  }, []);
+  }, [audioEngine]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleUnlock = () => {
+      void audioEngine.unlock();
+    };
+    window.addEventListener('pointerdown', handleUnlock, { passive: true });
+    window.addEventListener('keydown', handleUnlock, { passive: true });
+    return () => {
+      window.removeEventListener('pointerdown', handleUnlock);
+      window.removeEventListener('keydown', handleUnlock);
+    };
+  }, [audioEngine]);
+
+  useEffect(() => {
+    if (matchSnapshot) return;
+    const isLobby =
+      !entryGatePassed ||
+      authMode === 'booting' ||
+      authMode === 'unauthenticated' ||
+      viewingPrepRoom ||
+      activeTab === 'lobby';
+    audioBus.emit('onBgmContext', {
+      scene: isLobby ? 'lobby' : 'subpage',
+      focusDuck:
+        !redemptionOpen && activeTab === 'learning' && entryGatePassed && !viewingPrepRoom,
+    });
+  }, [
+    activeTab,
+    audioBus,
+    authMode,
+    entryGatePassed,
+    matchSnapshot,
+    redemptionOpen,
+    viewingPrepRoom,
+  ]);
 
   const sessionVersionRef = useRef(0);
   const lobbyRequestVersionRef = useRef(0);
@@ -342,14 +382,25 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
   }, []);
 
   const setShopDockPosition = useCallback((position: ShopDockPosition) => {
+    audioBus.emit('onUiFeedback', { kind: 'toggle' });
     setShopDockPositionState(position);
     try {
       window.localStorage.setItem(SHOP_DOCK_POSITION_KEY, position);
     } catch {
     }
-  }, []);
-  const openSettings = useCallback((tab: SettingsTab = 'match') => setSettingsTab(tab), []);
-  const closeSettings = useCallback(() => setSettingsTab(null), []);
+  }, [audioBus]);
+  const setShopCollapsedWithSfx = useCallback((collapsed: boolean) => {
+    audioBus.emit('onUiFeedback', { kind: 'toggle' });
+    setShopCollapsed(collapsed);
+  }, [audioBus]);
+  const openSettings = useCallback((tab: SettingsTab = 'match') => {
+    audioBus.emit('onUiFeedback', { kind: 'open' });
+    setSettingsTab(tab);
+  }, [audioBus]);
+  const closeSettings = useCallback(() => {
+    audioBus.emit('onUiFeedback', { kind: 'close' });
+    setSettingsTab(null);
+  }, [audioBus]);
   const openLearningStartEditor = useCallback(() => openSettings('learning'), [openSettings]);
 
   const cleanupActiveMatchRuntime = useCallback(async () => {
@@ -560,26 +611,83 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     return map[raw] ?? raw;
   }, []);
 
+  const emitCommandSfx = useCallback((command: GameCommand) => {
+    const snap = matchSnapshotRef.current;
+    switch (command.type) {
+      case 'BUY_CARD': {
+        const unitId = snap?.self.shop[command.shopIndex] ?? 'S01';
+        const cost = SEASON1_UNITS_BY_ID.get(unitId)?.cost ?? 1;
+        audioBus.emit('onUnitPurchase', { unitId, cost });
+        break;
+      }
+      case 'REFRESH_SHOP':
+      case 'REROLL_AUGMENT_SLOT':
+        audioBus.emit('onShopAction', { action: 'reroll' });
+        break;
+      case 'SELL_UNIT':
+        audioBus.emit('onShopAction', { action: 'sell' });
+        break;
+      case 'TOGGLE_LOCK_SHOP':
+        audioBus.emit('onShopAction', { action: 'lock' });
+        break;
+      case 'BUY_XP':
+        audioBus.emit('onShopAction', { action: 'buy_xp' });
+        break;
+      case 'EQUIP_ITEM': {
+        const itemId = snap?.self.inventoryItems[command.inventoryItemIndex];
+        const unit = snap?.self.units.find((u) => u.instanceId === command.targetInstanceId);
+        const preview = itemId && unit ? previewItemEquip(unit, itemId) : null;
+        audioBus.emit('onItemAction', {
+          action: preview?.ok && preview.craftedItemId ? 'combine' : 'equip',
+        });
+        break;
+      }
+      case 'USE_MAGNETIC_REMOVER':
+        audioBus.emit('onItemAction', { action: 'remover' });
+        break;
+      case 'USE_REFORGER':
+        audioBus.emit('onItemAction', { action: 'reforge' });
+        break;
+      case 'PICK_AUGMENT':
+      case 'PICK_ANVIL_OPTION':
+        audioBus.emit('onUiFeedback', { kind: 'augment_pick' });
+        break;
+      case 'SET_LINEUP_PLAN':
+        audioBus.emit('onUiFeedback', { kind: 'toggle' });
+        break;
+      default:
+        break;
+    }
+  }, [audioBus]);
+
   const sendMatchCommand = useCallback((command: GameCommand) => {
     if (offlineMatchRef.current) {
       const res = offlineMatchRef.current.sendCommand(command);
-      if (!res.ok && res.reason) {
-        pushToast(formatCommandReason(res.reason), 'warning');
+      if (!res.ok) {
+        audioBus.emit('onUiFeedback', { kind: 'error' });
+        if (res.reason) {
+          pushToast(formatCommandReason(res.reason), 'warning');
+        }
+      } else {
+        emitCommandSfx(command);
       }
       return;
     }
     if (!socketRef.current) {
+      audioBus.emit('onUiFeedback', { kind: 'error' });
       pushToast('对局连接尚未恢复，请稍后重试。', 'warning');
       return;
     }
+    emitCommandSfx(command);
     const action = captureSessionAction();
     void socketRef.current.sendCommand(command).catch((err: unknown) => {
       if (isCurrentSessionAction(action)) {
+        audioBus.emit('onUiFeedback', { kind: 'error' });
         const raw = err instanceof Error ? err.message : '对局指令未发送';
         pushToast(formatCommandReason(raw), 'warning');
       }
     });
-  }, [captureSessionAction, formatCommandReason, isCurrentSessionAction, pushToast]);
+  }, [audioBus, captureSessionAction, emitCommandSfx, formatCommandReason, isCurrentSessionAction, pushToast]);
 
   const sendMatchLearningSubmit = useCallback(
     (
@@ -1040,19 +1148,22 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
   );
 
   const setActiveTab = useCallback((tab: BottomNavTab) => {
+    audioBus.emit('onUiFeedback', { kind: 'click' });
     setRedemptionOpen(false);
     setActiveTabState(tab);
-  }, []);
+  }, [audioBus]);
 
   const openRedemption = useCallback((origin: 'lobby' | 'profile') => {
+    audioBus.emit('onUiFeedback', { kind: 'open' });
     setRedemptionOriginTab(origin);
     setRedemptionOpen(true);
-  }, []);
+  }, [audioBus]);
 
   const closeRedemption = useCallback(() => {
+    audioBus.emit('onUiFeedback', { kind: 'close' });
     setRedemptionOpen(false);
     setActiveTabState(redemptionOriginTab);
-  }, [redemptionOriginTab]);
+  }, [audioBus, redemptionOriginTab]);
 
   const recordPendingVerifyOrder = useCallback((order: RedeemOrder) => {
     setPendingVerifyOrders((prev) => [
@@ -1319,6 +1430,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
 
   const respondMatchAccept = useCallback(
     async (ticketId: string, accept: boolean) => {
+      audioBus.emit('onUiFeedback', { kind: accept ? 'match_accept' : 'close' });
       try {
         const next = await requestLobbyChange(() => httpClient.acceptMatch(ticketId, accept));
         if (next.match?.roomId) {
@@ -1329,7 +1441,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
         pushToast(err instanceof Error ? err.message : '提交匹配确认失败', 'error');
       }
     },
-    [joinOnlineMatchRoom, pushToast, requestLobbyChange],
+    [audioBus, joinOnlineMatchRoom, pushToast, requestLobbyChange],
   );
 
   const scoutMatchSeat = useCallback((seatId: string | null) => {
@@ -1409,6 +1521,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
 
   const openOnboarding = useCallback(
     (mode: OnboardingMode | 'learning_start' = 'choice') => {
+      audioBus.emit('onUiFeedback', { kind: 'open' });
       if (mode === 'learning_start') {
         openLearningStartEditor();
         return;
@@ -1416,17 +1529,20 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
       setOnboardingInitialMode(mode);
       setOnboardingOpen(true);
     },
-    [openLearningStartEditor],
+    [audioBus, openLearningStartEditor],
   );
 
   const enterGameFromStartScreen = useCallback(() => {
+    void audioEngine.unlock();
+    audioBus.emit('onUiFeedback', { kind: 'open' });
     setEntryGatePassed(true);
-  }, []);
+  }, [audioBus, audioEngine]);
 
   const closeOnboarding = useCallback(() => {
+    audioBus.emit('onUiFeedback', { kind: 'close' });
     setOnboardingOpen(false);
     setCustomStageOverride(false);
-  }, []);
+  }, [audioBus]);
 
   const value: AppStoreValue = {
     authMode,
@@ -1469,7 +1585,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     shopDockPosition,
     shopCollapsed,
     setShopDockPosition,
-    setShopCollapsed,
+    setShopCollapsed: setShopCollapsedWithSfx,
     preferredTacticianId,
     setPreferredTacticianId,
 
@@ -1514,6 +1630,7 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     exitMatchToLobby,
 
     audioBus,
+    audioEngine,
     arenaTheme,
     setArenaThemeLive,
     registerStageEngine,

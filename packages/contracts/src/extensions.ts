@@ -20,7 +20,7 @@ export const CommunicationEnvelopeSchema = z.object({
   channel: CommunicationChannelSchema,
   targetId: z.string().min(1),
   kind: CommunicationKindSchema,
-  senderUserId: z.string().min(1), 
+  senderUserId: z.string().min(1),
   senderNickname: z.string().min(1),
   payload: z.string().min(1).max(500),
   createdAtEpochMs: z.number().int().positive(),
@@ -76,22 +76,46 @@ export class ConfigurableCommunicationPolicy implements CommunicationGovernanceP
   }
 }
 
-export interface AudioEventPayloads {
+export interface AudioCoreEventPayloads {
   onPhaseChange: { phase: string; roundIndex: number };
   onUnitPurchase: { unitId: string; cost: number };
   onUnitStarUp: { unitId: string; newStar: 2 | 3 };
   onBattleStart: { roundIndex: number; isPve: boolean };
   onSkillCast: { unitId: string; casterInstanceId: string };
-  onUnitDeath: { unitId: string; instanceId: string };
+  onUnitDeath: { instanceId: string };
   onRoundResult: { outcome: 'win' | 'draw' | 'loss'; quarterPointsEarned: number };
   onLessonAudioPlay: { audioRef: string };
 }
 
+export interface AudioExtendedEventPayloads {
+  onShopAction: { action: 'reroll' | 'sell' | 'lock' | 'buy_xp' | 'level_up' };
+  onUnitMove: { kind: 'pick' | 'drop' };
+  onItemAction: { action: 'equip' | 'combine' | 'remover' | 'reforge' };
+  onLootOrb: { action: 'drop' | 'collect'; gold?: number };
+  onUiFeedback: {
+    kind: 'click' | 'hover' | 'open' | 'close' | 'toggle' | 'error' | 'augment_pick' | 'match_accept';
+  };
+  onLearningFeedback: { correct: boolean };
+  onCombatHit: { damageType: 'physical' | 'magic' | 'true' };
+  onBgmContext: {
+    scene: 'lobby' | 'match' | 'subpage';
+    roundIndex?: number;
+    totalRounds?: number;
+    phase?: string;
+    isOvertime?: boolean;
+    focusDuck?: boolean;
+  };
+}
+
+export interface AudioEventPayloads extends AudioCoreEventPayloads, AudioExtendedEventPayloads {}
+
 export type AudioAdapter = {
-  [K in keyof AudioEventPayloads]: (payload: AudioEventPayloads[K]) => void;
+  [K in keyof AudioCoreEventPayloads]: (payload: AudioCoreEventPayloads[K]) => void;
+} & {
+  [K in keyof AudioExtendedEventPayloads]?: (payload: AudioExtendedEventPayloads[K]) => void;
 };
 
-export const NullAudioAdapter: AudioAdapter = {
+export const NullAudioAdapter: Required<AudioAdapter> = {
   onPhaseChange: () => {},
   onUnitPurchase: () => {},
   onUnitStarUp: () => {},
@@ -100,6 +124,14 @@ export const NullAudioAdapter: AudioAdapter = {
   onUnitDeath: () => {},
   onRoundResult: () => {},
   onLessonAudioPlay: () => {},
+  onShopAction: () => {},
+  onUnitMove: () => {},
+  onItemAction: () => {},
+  onLootOrb: () => {},
+  onUiFeedback: () => {},
+  onLearningFeedback: () => {},
+  onCombatHit: () => {},
+  onBgmContext: () => {},
 };
 
 export class AudioEventBus {
@@ -110,7 +142,8 @@ export class AudioEventBus {
   }
 
   public emit<K extends keyof AudioEventPayloads>(event: K, payload: AudioEventPayloads[K]): void {
-    this.adapter[event](payload);
+    const handler = this.adapter[event] as ((payload: AudioEventPayloads[K]) => void) | undefined;
+    handler?.call(this.adapter, payload);
   }
 }
 

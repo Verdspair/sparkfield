@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import {
   createBevelExtrudePart,
+  createChamferedHexPart,
   createCreatureFin,
+  createCurvedBladePart,
   createCurvedVisorPart,
   createFacetedCrystalPart,
   createFlowingRibbonMesh,
@@ -9,9 +11,10 @@ import {
   createLathePart,
   createOrganicLimb,
   createPetalPart,
-  createSculptedClothLathe,
   createTaperedTubePart,
   createTeardropPart,
+  createTubePart,
+  makeSegmentTransform,
   makeTransform,
   trackGeo,
   type BespokeUnitBuilder,
@@ -36,7 +39,7 @@ function buildWarpedAccretionRing(
   colorB: RgbTriple,
 ): THREE.BufferGeometry {
   const pts: Vec3Tuple[] = [];
-  const sampleCount = 20;
+  const sampleCount = 24;
   for (let i = 0; i < sampleCount; i += 1) {
     const theta = (i / sampleCount) * Math.PI * 2;
     const r = radius + Math.sin(theta * radialWarpFreq + warpPhaseY * 0.7) * radialWarpAmp;
@@ -47,7 +50,18 @@ function buildWarpedAccretionRing(
   }
   return trackGeo(
     out,
-    createFlowingRibbonMesh(pts, widthProfile, 0.012, 3.0, segsLength, segsWidth, thickness, colorA, colorB, true),
+    createFlowingRibbonMesh(
+      pts,
+      widthProfile,
+      0.011,
+      3.0,
+      segsLength,
+      segsWidth,
+      thickness,
+      colorA,
+      colorB,
+      true,
+    ),
   );
 }
 
@@ -58,2754 +72,2380 @@ function buildWarpedFilament(
   warpFreqY: number,
   warpPhaseY: number,
   radialWarpAmp: number,
-  radialWarpFreq: number,
   tubeRadius: number,
-  tubularSegs: number,
-  radialSegs: number,
+  segs: number,
 ): THREE.BufferGeometry {
-  const pts: THREE.Vector3[] = [];
-  const sampleCount = 20;
+  const pts: Vec3Tuple[] = [];
+  const sampleCount = 18;
   for (let i = 0; i < sampleCount; i += 1) {
     const theta = (i / sampleCount) * Math.PI * 2;
-    const r = radius + Math.sin(theta * radialWarpFreq + warpPhaseY * 0.7) * radialWarpAmp;
-    const y =
-      Math.sin(theta * warpFreqY + warpPhaseY) * warpAmpY +
-      Math.cos(theta * (warpFreqY + 1) - warpPhaseY) * (warpAmpY * 0.34);
-    pts.push(new THREE.Vector3(Math.cos(theta) * r, y, Math.sin(theta) * r));
+    const r = radius + Math.sin(theta * 3 + warpPhaseY) * radialWarpAmp;
+    const y = Math.sin(theta * warpFreqY + warpPhaseY) * warpAmpY;
+    pts.push([Math.cos(theta) * r, y, Math.sin(theta) * r]);
   }
-  const curve = new THREE.CatmullRomCurve3(pts, true);
-  return trackGeo(out, new THREE.TubeGeometry(curve, tubularSegs, tubeRadius, radialSegs, true));
+  return trackGeo(out, createTubePart(pts, tubeRadius, segs, 6, true));
 }
 
-function createSplitPleatedCoatSkirt(
-  profile: readonly (readonly [number, number])[],
-  openHemRad: number,
-  openWaistRad: number,
-  pleatCount: number,
-  pleatAmp: number,
-  windX: number,
-  windZ: number,
-  thickness: number,
-  rSegs: number,
-  colorBot: RgbTriple,
-  colorTop: RgbTriple,
-  colorInner: RgbTriple,
-): THREE.BufferGeometry {
-  const vCount = profile.length - 1;
-  const cols = rSegs + 1;
-  const rows = vCount + 1;
-  const positions: number[] = [];
-  const uvs: number[] = [];
-  const colors: number[] = [];
-  const indices: number[] = [];
-
-  const minY = profile[0]![1];
-  const maxY = profile[vCount]![1];
-  const spanY = Math.max(0.0001, maxY - minY);
-
-  const evalPoint = (iv: number, ir: number, radOffset: number): readonly [number, number, number, number] => {
-    const [baseR, y] = profile[iv]!;
-    const hFrac = Math.max(0, Math.min(1, (y - minY) / spanY));
-    const drop = 1 - hFrac;
-    const dropSq = drop * drop;
-    const halfOpen = openWaistRad + (openHemRad - openWaistRad) * Math.pow(drop, 0.72);
-    const phiSpan = Math.PI * 2 - halfOpen * 2;
-    const uFrac = ir / rSegs;
-    const phi = halfOpen + uFrac * phiSpan;
-    const edgeDamp = Math.sin(uFrac * Math.PI);
-    const pleat =
-      (Math.sin(phi * pleatCount) * 0.72 + Math.cos(phi * (pleatCount + 3) + 0.7) * 0.28) *
-      pleatAmp *
-      dropSq *
-      (0.35 + 0.65 * edgeDamp);
-    const r = Math.max(0.01, baseR * (1 + pleat) + radOffset);
-    const x = Math.sin(phi) * r + windX * dropSq;
-    const z = Math.cos(phi) * r + windZ * dropSq;
-    return [x, y, z, hFrac];
-  };
-
-  for (let side = 0; side < 2; side += 1) {
-    const isOuter = side === 0;
-    const radOff = isOuter ? thickness * 0.5 : -thickness * 0.5;
-    const baseIdx = side * rows * cols;
-    for (let iv = 0; iv < rows; iv += 1) {
-      for (let ir = 0; ir < cols; ir += 1) {
-        const [x, y, z, hFrac] = evalPoint(iv, ir, radOff);
-        positions.push(x, y, z);
-        uvs.push((ir / rSegs) * 2, hFrac * 2);
-        if (isOuter) {
-          colors.push(
-            colorBot[0] + (colorTop[0] - colorBot[0]) * hFrac,
-            colorBot[1] + (colorTop[1] - colorBot[1]) * hFrac,
-            colorBot[2] + (colorTop[2] - colorBot[2]) * hFrac,
-          );
-        } else {
-          colors.push(colorInner[0], colorInner[1], colorInner[2]);
-        }
-      }
-    }
-    for (let iv = 0; iv < vCount; iv += 1) {
-      for (let ir = 0; ir < rSegs; ir += 1) {
-        const a = baseIdx + iv * cols + ir;
-        const b = a + 1;
-        const c = a + cols;
-        const d = c + 1;
-        if (isOuter) {
-          indices.push(a, b, d, a, d, c);
-        } else {
-          indices.push(a, d, b, a, c, d);
-        }
-      }
-    }
+function makeLookAtBasis(
+  origin: THREE.Vector3,
+  tangent: THREE.Vector3,
+  upHint = new THREE.Vector3(0, 1, 0),
+): THREE.Matrix4 {
+  const zAxis = tangent.clone().normalize();
+  const xAxis = new THREE.Vector3().crossVectors(upHint, zAxis);
+  if (xAxis.lengthSq() < 0.0001) {
+    xAxis.set(1, 0, 0);
+  } else {
+    xAxis.normalize();
   }
-
-  const innerBase = rows * cols;
-  for (let ir = 0; ir < rSegs; ir += 1) {
-    const o0 = ir;
-    const o1 = ir + 1;
-    const i0 = innerBase + ir;
-    const i1 = innerBase + ir + 1;
-    indices.push(o0, i0, i1, o0, i1, o1);
-  }
-  for (let iv = 0; iv < vCount; iv += 1) {
-    const oL0 = iv * cols;
-    const oL1 = (iv + 1) * cols;
-    const iL0 = innerBase + oL0;
-    const iL1 = innerBase + oL1;
-    indices.push(oL0, oL1, iL1, oL0, iL1, iL0);
-
-    const oR0 = iv * cols + rSegs;
-    const oR1 = (iv + 1) * cols + rSegs;
-    const iR0 = innerBase + oR0;
-    const iR1 = innerBase + oR1;
-    indices.push(oR0, iR1, oR1, oR0, iR0, iR1);
-  }
-
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  geo.setIndex(indices);
-  geo.computeVertexNormals();
-  return geo;
+  const yAxis = new THREE.Vector3().crossVectors(zAxis, xAxis).normalize();
+  const m = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+  m.setPosition(origin);
+  return m;
 }
 
-function buildS29RelativisticCruiser(out: UnitBlueprintParts): void {
-  const mirrorSilver: RgbTriple = [0.92, 0.96, 1.0];
-  const deepSilver: RgbTriple = [0.68, 0.78, 0.90];
-  const pearlWhite: RgbTriple = [0.94, 0.97, 1.0];
-  const carbonNavy: RgbTriple = [0.14, 0.20, 0.30];
-  const trimGold: RgbTriple = [0.94, 0.84, 0.56];
-  const blueshiftWhite: RgbTriple = [0.88, 0.98, 1.0];
-  const cherenkovCyan: RgbTriple = [0.28, 0.88, 1.0];
-  const cherenkovViolet: RgbTriple = [0.18, 0.44, 1.0];
+function buildS29Leviathan(out: UnitBlueprintParts): void {
+  const starIndigo: RgbTriple = [0.16, 0.25, 0.42];
+  const titaniumTeal: RgbTriple = [0.27, 0.45, 0.58];
+  const paleAlloy: RgbTriple = [0.56, 0.70, 0.78];
+  const deepSlate: RgbTriple = [0.10, 0.14, 0.22];
+  const warmBronze: RgbTriple = [0.78, 0.60, 0.34];
+  const antiqueBronze: RgbTriple = [0.58, 0.42, 0.22];
+  const cherenkovCyan: RgbTriple = [0.46, 0.86, 0.98];
+  const iceFoam: RgbTriple = [0.78, 0.95, 1.0];
 
-  const craft = makeTransform(0.02, 0.96, 0.04, -0.14, -0.44, 0.12);
+  const whaleFrame = makeTransform(0, 1.08, 0.22, -0.24, 0.04, 0.06);
 
-  const needleHull = trackGeo(
-    out,
-    createTeardropPart(1.38, 0.114, 2.35, 18, 14, 0.008, deepSilver, mirrorSilver),
-  );
+  const wakeRing = trackGeo(out, new THREE.TorusGeometry(0.46, 0.013, 8, 32));
   out.trim.push({
-    geo: needleHull,
-    matrix: craft.clone().multiply(makeTransform(0, 0, 0.06, Math.PI * 0.5, 0, 0, 1.04, 1.0, 0.78)),
+    geo: wakeRing,
+    matrix: makeTransform(0, 0.20, -0.02, Math.PI * 0.5, 0, 0, 1.04, 1.24, 1.0),
+    colorRgb: antiqueBronze,
   });
-
-  const dorsalCowling = trackGeo(
-    out,
-    createTeardropPart(0.96, 0.084, 1.75, 14, 10, 0.012, pearlWhite, mirrorSilver),
-  );
-  out.armor.push(
-    {
-      geo: dorsalCowling,
-      matrix: craft.clone().multiply(makeTransform(0, 0.042, -0.04, Math.PI * 0.5, 0, 0, 0.88, 1.0, 0.56)),
-    },
-    {
-      geo: dorsalCowling,
-      matrix: craft.clone().multiply(makeTransform(0, -0.040, -0.06, Math.PI * 0.5, 0, Math.PI, 0.82, 0.92, 0.50)),
-      colorRgb: deepSilver,
-    },
-  );
-
-  const keelSpine = trackGeo(
-    out,
-    createOrganicLimb(
-      [
-        [0, 0.082, 0.38],
-        [0, 0.106, 0.02],
-        [0, 0.068, -0.40],
-      ],
-      0.014,
-      0.022,
-      0.012,
-      10,
-      8,
-      carbonNavy,
-      carbonNavy,
-    ),
-  );
-  out.matte.push({ geo: keelSpine, matrix: craft });
-
-  const bulkheadRing = trackGeo(out, new THREE.TorusGeometry(0.112, 0.009, 6, 18));
-  out.matte.push(
-    { geo: bulkheadRing, matrix: craft.clone().multiply(makeTransform(0, 0, -0.10, 0, 0, 0, 1.05, 0.82, 1.0)), colorRgb: carbonNavy },
-    { geo: bulkheadRing, matrix: craft.clone().multiply(makeTransform(0, 0, -0.32, 0, 0, 0, 0.92, 0.74, 1.0)), colorRgb: carbonNavy },
-  );
-  const goldCollar = trackGeo(out, new THREE.TorusGeometry(0.104, 0.008, 6, 18));
-  out.trim.push({
-    geo: goldCollar,
-    matrix: craft.clone().multiply(makeTransform(0, 0, 0.16, 0, 0, 0, 0.96, 0.78, 1.0)),
-    colorRgb: trimGold,
-  });
-
-  const bowSpear = trackGeo(
-    out,
-    createTeardropPart(0.30, 0.026, 2.4, 12, 10, 0, cherenkovCyan, blueshiftWhite),
-  );
+  const wakeInner = trackGeo(out, new THREE.TorusGeometry(0.32, 0.009, 6, 26));
   out.energy.push({
-    geo: bowSpear,
-    matrix: craft.clone().multiply(makeTransform(0, 0, 0.77, Math.PI * 0.5, 0, 0)),
+    geo: wakeInner,
+    matrix: makeTransform(0, 0.21, -0.02, Math.PI * 0.5, 0, 0, 1.02, 1.22, 1.0),
+    colorRgb: cherenkovCyan,
   });
-
-  const shockSpecs: readonly { readonly z: number; readonly r0: number; readonly r1: number; readonly len: number }[] = [
-    { z: 0.71, r0: 0.014, r1: 0.192, len: 0.25 },
-    { z: 0.56, r0: 0.072, r1: 0.298, len: 0.32 },
-    { z: 0.39, r0: 0.118, r1: 0.402, len: 0.38 },
-  ];
-  for (let i = 0; i < shockSpecs.length; i += 1) {
-    const sp = shockSpecs[i]!;
-    const coneProfile: readonly (readonly [number, number])[] = [
-      [sp.r1, -sp.len],
-      [sp.r0 + (sp.r1 - sp.r0) * 0.68, -sp.len * 0.58],
-      [sp.r0 + (sp.r1 - sp.r0) * 0.28, -sp.len * 0.20],
-      [sp.r0, 0.0],
-    ];
-    const coneGeo = trackGeo(out, createLathePart(coneProfile, 22));
-    out.crystal.push({
-      geo: coneGeo,
-      matrix: craft.clone().multiply(makeTransform(0, 0, sp.z, Math.PI * 0.5, 0, 0)),
-      colorRgb: i === 0 ? blueshiftWhite : i === 1 ? cherenkovCyan : cherenkovViolet,
-    });
-
-    const machRing = trackGeo(out, new THREE.TorusGeometry(sp.r1 * 0.985, 0.0068 - i * 0.001, 5, 22));
-    out.energy.push({
-      geo: machRing,
-      matrix: craft.clone().multiply(makeTransform(0, 0, sp.z - sp.len)),
-      colorRgb: i === 0 ? blueshiftWhite : cherenkovCyan,
-    });
-  }
-
-  const cannonOffsets: readonly (readonly [number, number])[] = [
-    [-0.120, 0.054],
-    [0.120, 0.054],
-    [-0.120, -0.054],
-    [0.120, -0.054],
-  ];
-  const barrelGeo = trackGeo(out, new THREE.CylinderGeometry(0.011, 0.017, 0.50, 8));
-  const railStripGeo = trackGeo(out, new THREE.CylinderGeometry(0.0045, 0.006, 0.46, 5));
-  const barrelRing = trackGeo(out, new THREE.TorusGeometry(0.018, 0.0045, 5, 10));
-  for (const [cx, cy] of cannonOffsets) {
-    out.matte.push({
-      geo: barrelGeo,
-      matrix: craft.clone().multiply(makeTransform(cx, cy, 0.12, Math.PI * 0.5, 0, 0)),
-      colorRgb: carbonNavy,
-    });
-    out.energy.push({
-      geo: railStripGeo,
-      matrix: craft.clone().multiply(makeTransform(cx * 1.12, cy * 1.12, 0.14, Math.PI * 0.5, 0, 0)),
-      colorRgb: cherenkovCyan,
-    });
-    out.trim.push(
-      { geo: barrelRing, matrix: craft.clone().multiply(makeTransform(cx, cy, 0.30)), colorRgb: mirrorSilver },
-      { geo: barrelRing, matrix: craft.clone().multiply(makeTransform(cx, cy, 0.14)), colorRgb: trimGold },
-    );
-    const pylon = trackGeo(
-      out,
-      createOrganicLimb(
-        [
-          [cx * 0.45, cy * 0.45, 0.04],
-          [cx * 0.96, cy * 0.96, 0.08],
-        ],
-        0.013,
-        0.011,
-        0.009,
-        4,
-        6,
-        pearlWhite,
-        carbonNavy,
-      ),
-    );
-    out.armor.push({ geo: pylon, matrix: craft });
-  }
-
-  const mainWing = trackGeo(out, createCreatureFin(0.28, 0.66, 0.48, 0.044, 0.018, 8, 4, pearlWhite, deepSilver));
-  const wingEdgeCrystal = trackGeo(out, createCreatureFin(0.18, 0.70, 0.52, 0.048, 0.006, 8, 4, cherenkovCyan, cherenkovViolet));
-  const dorsalFin = trackGeo(out, createCreatureFin(0.22, 0.28, 0.24, 0.018, 0.012, 6, 4, mirrorSilver, deepSilver));
-
-  for (const side of [-1, 1] as const) {
-    out.armor.push({
-      geo: mainWing,
-      matrix: craft.clone().multiply(makeTransform(side * 0.080, 0.0, -0.06, 0, 0, side * 0.08, side, 1, 1)),
-    });
-    out.crystal.push({
-      geo: wingEdgeCrystal,
-      matrix: craft.clone().multiply(makeTransform(side * 0.088, -0.004, -0.14, 0, 0, side * 0.08, side, 1, 1)),
-    });
-    const wingTrim = trackGeo(
-      out,
-      createOrganicLimb(
-        [
-          [side * 0.09, 0.0, 0.02],
-          [side * 0.40, 0.042, -0.18],
-          [side * 0.72, 0.032, -0.50],
-        ],
-        0.011,
-        0.008,
-        0.004,
-        8,
-        6,
-      ),
-    );
-    out.trim.push({ geo: wingTrim, matrix: craft, colorRgb: mirrorSilver });
-    out.armor.push({
-      geo: dorsalFin,
-      matrix: craft.clone().multiply(makeTransform(side * 0.034, 0.040, -0.38, 0, 0, side * 1.08, side, 1, 1)),
-    });
-  }
-
-  const nozzleProfile: readonly (readonly [number, number])[] = [
-    [0.080, 0.0],
-    [0.062, -0.05],
-    [0.076, -0.11],
-    [0.090, -0.16],
-  ];
-  const nozzleGeo = trackGeo(out, createLathePart(nozzleProfile, 16));
-  out.matte.push({
-    geo: nozzleGeo,
-    matrix: craft.clone().multiply(makeTransform(0, 0, -0.50, Math.PI * 0.5, 0, 0)),
-    colorRgb: carbonNavy,
-  });
-
-  const thrustNeedle = trackGeo(
-    out,
-    createTeardropPart(0.56, 0.056, 2.0, 12, 10, 0, blueshiftWhite, cherenkovCyan),
-  );
-  out.energy.push({
-    geo: thrustNeedle,
-    matrix: craft.clone().multiply(makeTransform(0, 0, -0.78, -Math.PI * 0.5, 0, 0)),
-  });
-
-  for (let s = 0; s < 3; s += 1) {
-    const phase = (s / 3) * Math.PI * 2;
-    const pts: Vec3Tuple[] = [];
-    for (let k = 0; k <= 7; k += 1) {
-      const f = k / 7;
-      const r = 0.050 * (1 - f * 0.55) + Math.sin(f * Math.PI) * 0.026;
-      const a = phase + f * Math.PI * 1.85;
-      pts.push([Math.cos(a) * r, Math.sin(a) * r, -0.60 - f * 0.56]);
-    }
-    const streamRibbon = trackGeo(
-      out,
-      createFlowingRibbonMesh(pts, [0.042, 0.026, 0.005], 0.008, 2.0, 14, 2, 0, blueshiftWhite, cherenkovViolet),
-    );
-    out.crystal.push({ geo: streamRibbon, matrix: craft });
-  }
-
-  for (const side of [-1, 1] as const) {
-    out.wingParts.push({
-      geo: mainWing,
-      matrix: craft.clone().multiply(makeTransform(side * 0.14, 0.08, -0.14, 0, 0, side * 0.42, side * 1.15, 1.15, 1.15)),
-      colorRgb: trimGold,
-    });
-  }
-
-  out.crystalHex = 0x38bdf8;
-  out.crystalOpacity = 0.44;
-  out.crystalIntensity = 0.72;
-  out.weaponGlowHex = 0x67e8f9;
-  out.headTopLocalY = 1.56;
-}
-
-function buildS30WhiteDwarfBeacon(out: UnitBlueprintParts): void {
-  const starWhite: RgbTriple = [0.92, 0.98, 1.0];
-  const starCyan: RgbTriple = [0.52, 0.86, 1.0];
-  const dwarfViolet: RgbTriple = [0.58, 0.66, 1.0];
-  const ceramicWhite: RgbTriple = [0.92, 0.95, 1.0];
-  const armillaryGold: RgbTriple = [0.98, 0.82, 0.40];
-  const deepGold: RgbTriple = [0.86, 0.64, 0.24];
-  const carbonSlate: RgbTriple = [0.16, 0.20, 0.29];
-
-  const centerY = 1.04;
-  const centerMat = makeTransform(0, centerY, 0);
-
-  const coreSphere = trackGeo(out, new THREE.SphereGeometry(0.148, 16, 12));
-  out.energy.push({ geo: coreSphere, matrix: centerMat, colorRgb: starWhite });
-
-  const diamondShell = trackGeo(out, createFacetedCrystalPart(0.35, 0.175, 8, 0.5, 0.5, starCyan, starWhite));
+  const wakeDisc = trackGeo(out, new THREE.CylinderGeometry(0.40, 0.44, 0.012, 24));
   out.crystal.push({
-    geo: diamondShell,
-    matrix: makeTransform(0, centerY, 0, 0.22, 0.4, 0.18),
+    geo: wakeDisc,
+    matrix: makeTransform(0, 0.19, -0.02, 0, 0, 0, 1.0, 1.0, 1.18),
+    colorRgb: cherenkovCyan,
   });
 
-  const degeneracyHalo = trackGeo(out, new THREE.SphereGeometry(0.228, 16, 12));
-  out.crystal.push({
-    geo: degeneracyHalo,
-    matrix: centerMat,
-    colorRgb: dwarfViolet,
-  });
-
-  const einsteinRing = trackGeo(out, new THREE.TorusGeometry(0.268, 0.0085, 6, 24));
-  out.energy.push({
-    geo: einsteinRing,
-    matrix: makeTransform(0, centerY, 0, 0.12, 0.24, 0),
-    colorRgb: starCyan,
-  });
-
-  const ringA = trackGeo(out, new THREE.TorusGeometry(0.335, 0.015, 6, 24));
-  const ringAMat = makeTransform(0, centerY, 0, 0.92, 0.36, -0.44);
-  out.trim.push({ geo: ringA, matrix: ringAMat, colorRgb: armillaryGold });
-
-  const vernierTick = trackGeo(out, createFacetedCrystalPart(0.062, 0.012, 4, 0.65, 0.35, deepGold, armillaryGold));
-  for (let i = 0; i < 8; i += 1) {
-    const a = (i / 8) * Math.PI * 2;
-    const vx = Math.cos(a) * 0.305;
-    const vy = Math.sin(a) * 0.305;
-    out.trim.push({
-      geo: vernierTick,
-      matrix: ringAMat.clone().multiply(makeTransform(vx, vy, 0, 0, 0, a + Math.PI * 0.5)),
-    });
-  }
-
-  const ringBMat = makeTransform(0, centerY, 0, -0.46, 0.58, 0.54);
-  const ringBMain = trackGeo(out, new THREE.TorusGeometry(0.465, 0.018, 6, 26));
-  const ringBRail = trackGeo(out, new THREE.TorusGeometry(0.492, 0.008, 5, 24));
-  out.armor.push({ geo: ringBMain, matrix: ringBMat, colorRgb: ceramicWhite });
-  out.trim.push(
-    { geo: ringBRail, matrix: ringBMat.clone().multiply(makeTransform(0, 0, 0.014)), colorRgb: armillaryGold },
-    { geo: ringBRail, matrix: ringBMat.clone().multiply(makeTransform(0, 0, -0.014)), colorRgb: armillaryGold },
-  );
-
-  const hexMirror = trackGeo(out, createHexMirrorTilePart(0.068, 0.016, 0.007, 0.008, armillaryGold, deepGold));
-  const hexBack = trackGeo(out, createHexMirrorTilePart(0.062, 0.012, 0.005, 0));
-  const zAxis = new THREE.Vector3(0, 0, 1);
-  const qMirror = new THREE.Quaternion();
-  const dirMirror = new THREE.Vector3();
-  for (let i = 0; i < 6; i += 1) {
-    const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
-    const mx = Math.cos(a) * 0.465;
-    const my = Math.sin(a) * 0.465;
-    dirMirror.set(-mx, -my, 0).normalize();
-    qMirror.setFromUnitVectors(zAxis, dirMirror);
-    const mLocal = new THREE.Matrix4().compose(new THREE.Vector3(mx, my, 0), qMirror, new THREE.Vector3(1, 1, 1));
-    const mWorld = ringBMat.clone().multiply(mLocal);
-    out.trim.push({ geo: hexMirror, matrix: mWorld });
-    out.matte.push({
-      geo: hexBack,
-      matrix: mWorld.clone().multiply(makeTransform(0, 0, -0.016)),
-      colorRgb: carbonSlate,
-    });
-  }
-
-  const ringCMat = makeTransform(0, centerY, 0, 1.32, -0.18, 0.14);
-  const ringCOuter = trackGeo(out, new THREE.TorusGeometry(0.595, 0.020, 6, 28));
-  const ringCInner = trackGeo(out, new THREE.TorusGeometry(0.548, 0.010, 5, 24));
-  out.trim.push(
-    { geo: ringCOuter, matrix: ringCMat, colorRgb: armillaryGold },
-    { geo: ringCInner, matrix: ringCMat, colorRgb: deepGold },
-  );
-
-  const podHousing = trackGeo(out, createTeardropPart(0.155, 0.044, 1.35, 12, 10, 0, ceramicWhite, armillaryGold));
-  const podLamp = trackGeo(out, new THREE.SphereGeometry(0.022, 8, 6));
-  for (let i = 0; i < 4; i += 1) {
-    const a = (i / 4) * Math.PI * 2 + Math.PI * 0.25;
-    const px = Math.cos(a) * 0.595;
-    const py = Math.sin(a) * 0.595;
-    const pMat = ringCMat.clone().multiply(makeTransform(px, py, 0, 0, 0, a - Math.PI * 0.5));
-    out.armor.push({ geo: podHousing, matrix: pMat });
-    out.energy.push({ geo: podLamp, matrix: pMat.clone().multiply(makeTransform(0, -0.068, 0)), colorRgb: starCyan });
-
-    const truss = trackGeo(
-      out,
-      createOrganicLimb(
-        [
-          [Math.cos(a) * 0.548, Math.sin(a) * 0.548, 0],
-          [Math.cos(a) * 0.595, Math.sin(a) * 0.595, 0],
-        ],
-        0.010,
-        0.010,
-        0.010,
-        3,
-        6,
-      ),
-    );
-    out.matte.push({ geo: truss, matrix: ringCMat, colorRgb: carbonSlate });
-  }
-
-  const axisTilt = makeTransform(0, centerY, 0, 0.16, 0.12, -0.18);
-  const spireProfile: readonly (readonly [number, number])[] = [
-    [0.062, 0.34],
-    [0.044, 0.46],
-    [0.022, 0.62],
-    [0.004, 0.74],
-  ];
-  const spireGeo = trackGeo(out, createLathePart(spireProfile, 14));
-  const focusConeProfile: readonly (readonly [number, number])[] = [
-    [0.145, 0.24],
-    [0.068, 0.44],
-    [0.016, 0.68],
-  ];
-  const focusCone = trackGeo(out, createLathePart(focusConeProfile, 16));
-  const collarFocus = trackGeo(out, new THREE.TorusGeometry(0.088, 0.010, 5, 16));
-  collarFocus.rotateX(Math.PI * 0.5);
-  const focalBead = trackGeo(out, new THREE.SphereGeometry(0.028, 10, 8));
-
-  for (const dir of [1, -1] as const) {
-    const sMat = axisTilt.clone().multiply(makeTransform(0, 0, 0, dir === 1 ? 0 : Math.PI, 0, 0));
-    out.armor.push({ geo: spireGeo, matrix: sMat, colorRgb: ceramicWhite });
-    out.crystal.push({ geo: focusCone, matrix: sMat, colorRgb: starCyan });
-    out.trim.push({ geo: collarFocus, matrix: sMat.clone().multiply(makeTransform(0, 0.42, 0)), colorRgb: armillaryGold });
-    out.energy.push({ geo: focalBead, matrix: sMat.clone().multiply(makeTransform(0, 0.74, 0)), colorRgb: starWhite });
-
-    for (let k = 0; k < 3; k += 1) {
-      const a = (k / 3) * Math.PI * 2;
-      const strut = trackGeo(
-        out,
-        createOrganicLimb(
-          [
-            [Math.cos(a) * 0.088, 0.42, Math.sin(a) * 0.088],
-            [Math.cos(a) * 0.028, 0.66, Math.sin(a) * 0.028],
-          ],
-          0.006,
-          0.005,
-          0.004,
-          4,
-          6,
-        ),
-      );
-      out.matte.push({ geo: strut, matrix: sMat, colorRgb: carbonSlate });
-    }
-  }
-
-  const baseGyro = trackGeo(out, new THREE.TorusGeometry(0.24, 0.014, 6, 22));
-  baseGyro.rotateX(Math.PI * 0.5);
-  out.matte.push({ geo: baseGyro, matrix: makeTransform(0, 0.22, 0), colorRgb: carbonSlate });
-  const baseGyroGold = trackGeo(out, new THREE.TorusGeometry(0.262, 0.007, 5, 22));
-  baseGyroGold.rotateX(Math.PI * 0.5);
-  out.trim.push({ geo: baseGyroGold, matrix: makeTransform(0, 0.22, 0), colorRgb: armillaryGold });
-
-  const wingRing = trackGeo(out, new THREE.TorusGeometry(0.68, 0.012, 5, 24));
-  out.wingParts.push(
-    { geo: wingRing, matrix: makeTransform(0, centerY, 0, 0.42, 0.68, 0), colorRgb: armillaryGold },
-    { geo: wingRing, matrix: makeTransform(0, centerY, 0, -0.42, -0.68, 0), colorRgb: armillaryGold },
-  );
-
-  out.crystalHex = 0x7dd3fc;
-  out.crystalOpacity = 0.36;
-  out.crystalIntensity = 0.68;
-  out.weaponGlowHex = 0xbae6fd;
-  out.headTopLocalY = 1.82;
-}
-
-function buildS31UnuploadedHuman(out: UnitBlueprintParts): void {
-  const iceWhite: RgbTriple = [0.94, 0.97, 1.0];
-  const glacierBlue: RgbTriple = [0.76, 0.89, 0.96];
-  const coatShadow: RgbTriple = [0.64, 0.78, 0.88];
-  const deepSlate: RgbTriple = [0.19, 0.26, 0.36];
-  const warmGold: RgbTriple = [0.96, 0.82, 0.44];
-  const skinWarm: RgbTriple = [0.95, 0.85, 0.78];
-  const skinShadow: RgbTriple = [0.80, 0.68, 0.61];
-  const silverHair: RgbTriple = [0.90, 0.93, 0.98];
-  const soilUmber: RgbTriple = [0.34, 0.22, 0.13];
-  const soilDark: RgbTriple = [0.22, 0.14, 0.08];
-  const sproutGreen: RgbTriple = [0.30, 0.94, 0.44];
-  const sproutTip: RgbTriple = [0.78, 1.0, 0.68];
-  const glassTint: RgbTriple = [0.86, 0.96, 1.0];
-  const dialIvory: RgbTriple = [0.98, 0.96, 0.90];
-
-  const torsoYaw = 0.09;
-  const headYaw = -0.10;
-  const rotT = (x: number, y: number, z: number): THREE.Vector3 => {
-    const c = Math.cos(torsoYaw);
-    const sn = Math.sin(torsoYaw);
-    return new THREE.Vector3(x * c + z * sn, y, -x * sn + z * c);
-  };
-
-  const innerTunic = trackGeo(
+  const mainHull = trackGeo(
     out,
-    createLathePart(
-      [
-        [0.012, 0.0],
-        [0.096, 0.06],
-        [0.090, 0.18],
-        [0.118, 0.36],
-        [0.126, 0.45],
-        [0.068, 0.56],
-      ],
-      12,
-    ),
-  );
-  out.matte.push({
-    geo: innerTunic,
-    matrix: makeTransform(0, 0.74, 0, 0.02, torsoYaw, 0, 1.0, 1.0, 0.76),
-    colorRgb: deepSlate,
-  });
-
-  const coatBodice = trackGeo(
-    out,
-    createSculptedClothLathe(
-      [
-        [0.102, 0.0],
-        [0.098, 0.10],
-        [0.136, 0.28],
-        [0.142, 0.38],
-        [0.088, 0.46],
-        [0.068, 0.50],
-      ],
-      14,
-      4,
-      0.04,
-      0.32,
-      glacierBlue,
-      iceWhite,
-    ),
+    createTeardropPart(1.36, 0.235, 1.45, 22, 16, 0.024, starIndigo, titaniumTeal),
   );
   out.armor.push({
-    geo: coatBodice,
-    matrix: makeTransform(0, 0.84, -0.004, 0.02, torsoYaw, 0, 1.0, 1.0, 0.80),
+    geo: mainHull,
+    matrix: whaleFrame
+      .clone()
+      .multiply(makeTransform(0, 0.01, 0.06, -Math.PI * 0.5, 0, 0, 0.98, 1.0, 0.84)),
   });
 
-  const lapelGeo = trackGeo(
+  const cranialCap = trackGeo(
     out,
-    createBevelExtrudePart(
-      [
-        [0.0, -0.095],
-        [0.052, -0.032],
-        [0.070, 0.065],
-        [0.024, 0.098],
-      ],
-      0.014,
-      0.004,
-      0.004,
-      1,
-      2,
-    ),
-  );
-  const claspStud = trackGeo(out, new THREE.SphereGeometry(0.009, 5, 4));
-  for (const side of [-1, 1] as const) {
-    const lp = rotT(side * 0.018, 1.15, 0.098);
-    out.armor.push({
-      geo: lapelGeo,
-      matrix: makeTransform(lp.x, lp.y, lp.z, -0.06, torsoYaw + side * 0.16, side * 0.05, side, 1, 1),
-      colorRgb: iceWhite,
-    });
-    const cp = rotT(side * 0.042, 1.24, 0.092);
-    out.trim.push({ geo: claspStud, matrix: makeTransform(cp.x, cp.y, cp.z), colorRgb: warmGold });
-  }
-
-  const splitExpeditionSkirt = trackGeo(
-    out,
-    createSplitPleatedCoatSkirt(
-      [
-        [0.218, 0.0],
-        [0.190, 0.16],
-        [0.152, 0.34],
-        [0.116, 0.50],
-        [0.104, 0.59],
-      ],
-      0.50,
-      0.14,
-      8,
-      0.105,
-      -0.018,
-      -0.042,
-      0.013,
-      22,
-      glacierBlue,
-      iceWhite,
-      coatShadow,
-    ),
+    createTeardropPart(0.84, 0.195, 1.15, 18, 12, 0.016, titaniumTeal, paleAlloy),
   );
   out.armor.push({
-    geo: splitExpeditionSkirt,
-    matrix: makeTransform(0, 0.31, -0.004, 0.02, torsoYaw, 0, 1.0, 1.0, 0.84),
-  });
-
-  for (const side of [-1, 1] as const) {
-    const seamLine = trackGeo(
-      out,
-      createTaperedTubePart(
-        [
-          rotT(side * 0.024, 0.89, 0.084),
-          rotT(side * 0.072, 0.62, 0.108),
-          rotT(side * 0.108, 0.32, 0.104),
-        ].map((v) => [v.x, v.y, v.z] as Vec3Tuple),
-        0.0048,
-        0.0042,
-        7,
-        4,
-      ),
-    );
-    out.trim.push({ geo: seamLine, colorRgb: warmGold });
-  }
-
-  const waistBelt = trackGeo(out, new THREE.TorusGeometry(0.106, 0.012, 4, 14));
-  waistBelt.rotateX(Math.PI * 0.5);
-  out.matte.push({
-    geo: waistBelt,
-    matrix: makeTransform(0, 0.90, 0.004, 0, torsoYaw, 0, 1.0, 1.0, 0.84),
-    colorRgb: deepSlate,
-  });
-  const waistGold = trackGeo(out, new THREE.TorusGeometry(0.108, 0.0055, 3, 14));
-  waistGold.rotateX(Math.PI * 0.5);
-  out.trim.push({
-    geo: waistGold,
-    matrix: makeTransform(0, 0.908, 0.004, 0, torsoYaw, 0, 1.0, 1.0, 0.84),
-    colorRgb: warmGold,
-  });
-  const sashTailPts: Vec3Tuple[] = [
-    rotT(-0.074, 0.89, 0.088),
-    rotT(-0.095, 0.76, 0.118),
-    rotT(-0.112, 0.62, 0.125),
-  ].map((v) => [v.x, v.y, v.z]);
-  const sashTail = trackGeo(out, createFlowingRibbonMesh(sashTailPts, [0.024, 0.026, 0.018], 0.008, 1.4, 7, 2, 0.005, warmGold, glacierBlue));
-  out.trim.push({ geo: sashTail });
-
-  const collarRing = trackGeo(out, new THREE.TorusGeometry(0.108, 0.013, 4, 14));
-  collarRing.rotateX(Math.PI * 0.5);
-  out.armor.push({
-    geo: collarRing,
-    matrix: makeTransform(0, 1.31, 0.006, 0.08, torsoYaw, 0),
-    colorRgb: iceWhite,
-  });
-  const collarGold = trackGeo(out, new THREE.TorusGeometry(0.116, 0.006, 4, 14));
-  collarGold.rotateX(Math.PI * 0.5);
-  out.trim.push({
-    geo: collarGold,
-    matrix: makeTransform(0, 1.32, 0.006, 0.08, torsoYaw, 0),
-    colorRgb: warmGold,
-  });
-
-  const backPos = rotT(0, 1.10, -0.14);
-  const backPod = trackGeo(out, createTeardropPart(0.30, 0.078, 1.15, 10, 8, 0, glacierBlue, iceWhite));
-  out.armor.push({
-    geo: backPod,
-    matrix: makeTransform(backPos.x, backPos.y, backPos.z, 0.06, torsoYaw, 0, 1.10, 1.0, 0.60),
-  });
-  const backVent = trackGeo(out, new THREE.TorusGeometry(0.040, 0.006, 4, 10));
-  const bvPos = rotT(0, 1.12, -0.188);
-  out.matte.push({
-    geo: backVent,
-    matrix: makeTransform(bvPos.x, bvPos.y, bvPos.z, 0.06, torsoYaw, 0),
-    colorRgb: deepSlate,
-  });
-
-  const legSpecs: readonly { readonly pts: readonly Vec3Tuple[]; readonly footYaw: number }[] = [
-    {
-      pts: [
-        [-0.068, 0.74, 0.006],
-        [-0.082, 0.41, 0.064],
-        [-0.086, 0.082, 0.056],
-      ],
-      footYaw: 0.14,
-    },
-    {
-      pts: [
-        [0.068, 0.74, -0.010],
-        [0.078, 0.40, -0.024],
-        [0.086, 0.082, -0.054],
-      ],
-      footYaw: -0.18,
-    },
-  ];
-  const bootGeo = trackGeo(out, createTeardropPart(0.172, 0.040, 1.18, 10, 8, 0, iceWhite, glacierBlue));
-  const ankleRing = trackGeo(out, new THREE.TorusGeometry(0.038, 0.0055, 3, 10));
-  ankleRing.rotateX(Math.PI * 0.5);
-  const kneeSeam = trackGeo(out, new THREE.TorusGeometry(0.044, 0.005, 3, 9));
-  kneeSeam.rotateX(Math.PI * 0.5);
-
-  for (const lg of legSpecs) {
-    const legGeo = trackGeo(out, createOrganicLimb(lg.pts, 0.052, 0.042, 0.034, 7, 7, deepSlate, deepSlate));
-    out.matte.push({ geo: legGeo });
-    const k = lg.pts[1]!;
-    const a = lg.pts[2]!;
-    const greaveGeo = trackGeo(
-      out,
-      createOrganicLimb(
-        [
-          [k[0], k[1] - 0.01, k[2] + 0.006],
-          [(k[0] + a[0]) * 0.5, (k[1] + a[1]) * 0.5, (k[2] + a[2]) * 0.5 + 0.008],
-          [a[0], a[1] + 0.01, a[2] + 0.006],
-        ],
-        0.044,
-        0.040,
-        0.035,
-        5,
-        7,
-        iceWhite,
-        glacierBlue,
-      ),
-    );
-    out.armor.push({ geo: greaveGeo });
-    out.trim.push({ geo: kneeSeam, matrix: makeTransform(k[0], k[1], k[2], 0, lg.footYaw, 0), colorRgb: warmGold });
-    out.armor.push({
-      geo: bootGeo,
-      matrix: makeTransform(a[0], 0.042, a[2] + 0.042, Math.PI * 0.5, lg.footYaw, 0, 0.88, 1.0, 0.70),
-    });
-    out.trim.push({
-      geo: ankleRing,
-      matrix: makeTransform(a[0], 0.088, a[2], 0, lg.footYaw, 0),
-      colorRgb: warmGold,
-    });
-  }
-
-  for (const side of [-1, 1] as const) {
-    const sh = rotT(side * 0.132, 1.24, 0.0);
-    const el = rotT(side * 0.198, 1.04, 0.13);
-    const ha = rotT(side * 0.145, 0.93, 0.305);
-    const armGeo = trackGeo(
-      out,
-      createOrganicLimb(
-        [
-          [sh.x, sh.y, sh.z],
-          [el.x, el.y, el.z],
-          [ha.x, ha.y, ha.z],
-        ],
-        0.043,
-        0.035,
-        0.028,
-        7,
-        7,
-        iceWhite,
-        glacierBlue,
-      ),
-    );
-    out.armor.push({ geo: armGeo });
-
-    const shoulderEp = trackGeo(out, createCurvedVisorPart(0.056, 0.050, 0.054, 2.0, 0.4, 1.1, 7, 4));
-    out.armor.push({
-      geo: shoulderEp,
-      matrix: makeTransform(sh.x + side * 0.006, sh.y + 0.010, sh.z, 0.05, torsoYaw + side * -Math.PI * 0.45, side * -0.18),
-      colorRgb: iceWhite,
-    });
-
-    const cuffRing = trackGeo(out, new THREE.TorusGeometry(0.031, 0.005, 3, 10));
-    out.trim.push({
-      geo: cuffRing,
-      matrix: makeTransform(ha.x, ha.y, ha.z, 0.25, torsoYaw + side * -0.42, 0),
-      colorRgb: warmGold,
-    });
-
-    const glove = trackGeo(out, new THREE.SphereGeometry(0.029, 7, 5));
-    out.matte.push({
-      geo: glove,
-      matrix: makeTransform(ha.x - side * 0.006, ha.y - 0.004, ha.z + 0.026, 0, torsoYaw, 0, 0.92, 0.82, 1.15),
-      colorRgb: deepSlate,
-    });
-  }
-
-  const headMat = makeTransform(0, 1.468, 0.012, 0.08, torsoYaw + headYaw, 0);
-  const neckGeo = trackGeo(out, new THREE.CylinderGeometry(0.033, 0.038, 0.095, 8));
-  out.armor.push({
-    geo: neckGeo,
-    matrix: makeTransform(0, 1.35, 0.008),
-    colorRgb: skinWarm,
-  });
-
-  const headCranium = trackGeo(out, new THREE.SphereGeometry(0.084, 12, 9));
-  out.armor.push({
-    geo: headCranium,
-    matrix: headMat.clone().multiply(makeTransform(0, 0.004, -0.004, 0, 0, 0, 0.88, 1.08, 0.95)),
-    colorRgb: skinWarm,
-  });
-
-  const noseRidge = trackGeo(out, createTeardropPart(0.034, 0.009, 1.4, 6, 4, 0, skinWarm, skinWarm));
-  out.armor.push({
-    geo: noseRidge,
-    matrix: headMat.clone().multiply(makeTransform(0, -0.004, 0.076, -0.22, 0, 0)),
-  });
-
-  const browVisorArc = trackGeo(out, createCurvedVisorPart(0.080, 0.026, 0.086, 1.54, 1.24, 0.22, 10, 3));
-  out.crystal.push({
-    geo: browVisorArc,
-    matrix: headMat.clone().multiply(makeTransform(0, 0.008, 0.006)),
-    colorRgb: glassTint,
-  });
-  const bioReaderLine = trackGeo(out, new THREE.TorusGeometry(0.082, 0.0028, 3, 14, Math.PI * 0.72));
-  out.energy.push({
-    geo: bioReaderLine,
-    matrix: headMat.clone().multiply(makeTransform(0, 0.010, 0.008, Math.PI * 0.5, 0, -Math.PI * 0.36)),
-    colorRgb: sproutTip,
-  });
-
-  const jawContour = trackGeo(out, new THREE.SphereGeometry(0.056, 9, 6));
-  out.armor.push({
-    geo: jawContour,
-    matrix: headMat.clone().multiply(makeTransform(0, -0.044, 0.012, 0, 0, 0, 0.86, 0.85, 0.96)),
-    colorRgb: skinShadow,
-  });
-
-  const hairCrown = trackGeo(
-    out,
-    new THREE.SphereGeometry(0.094, 12, 9, 0, Math.PI * 2, 0, Math.PI * 0.60),
-  );
-  out.armor.push({
-    geo: hairCrown,
-    matrix: headMat.clone().multiply(makeTransform(0, 0.012, -0.012, -0.34, 0, 0, 0.96, 1.02, 1.04)),
-    colorRgb: silverHair,
-  });
-
-  for (const side of [-1, 1] as const) {
-    const hairWave = trackGeo(
-      out,
-      createFlowingRibbonMesh(
-        [
-          [side * 0.026, 0.082, 0.044],
-          [side * 0.076, 0.042, 0.040],
-          [side * 0.084, -0.015, 0.008],
-          [side * 0.052, -0.036, -0.068],
-        ],
-        [0.024, 0.034, 0.026],
-        0.005,
-        1.2,
-        8,
-        3,
-        0.008,
-        silverHair,
-        glacierBlue,
-      ),
-    );
-    out.armor.push({ geo: hairWave, matrix: headMat });
-  }
-
-  const chignonCore = trackGeo(out, new THREE.SphereGeometry(0.048, 9, 7));
-  const chignonCoil = trackGeo(out, new THREE.TorusGeometry(0.046, 0.012, 4, 12));
-  const hairpinShaft = trackGeo(out, new THREE.CylinderGeometry(0.0032, 0.0022, 0.155, 5));
-  const hairpinBud = trackGeo(out, new THREE.OctahedronGeometry(0.011, 0));
-  out.armor.push(
-    { geo: chignonCore, matrix: headMat.clone().multiply(makeTransform(0, -0.002, -0.098, 0, 0, 0, 1.08, 0.92, 0.88)), colorRgb: silverHair },
-    { geo: chignonCoil, matrix: headMat.clone().multiply(makeTransform(0, -0.002, -0.096, 0.35, 0.2, 0)), colorRgb: silverHair },
-  );
-  out.trim.push(
-    { geo: hairpinShaft, matrix: headMat.clone().multiply(makeTransform(0.008, 0.006, -0.104, 0.15, 0, 1.18)), colorRgb: warmGold },
-    { geo: hairpinBud, matrix: headMat.clone().multiply(makeTransform(0.078, 0.036, -0.098)), colorRgb: warmGold },
-  );
-
-  const helmetGlass = trackGeo(out, new THREE.SphereGeometry(0.152, 16, 12));
-  out.crystal.push({
-    geo: helmetGlass,
-    matrix: headMat.clone().multiply(makeTransform(0, 0.012, 0, 0, 0, 0, 0.98, 1.04, 1.0)),
-    colorRgb: glassTint,
-  });
-
-  const helmetSpine = trackGeo(
-    out,
-    createOrganicLimb(
-      [
-        [0, -0.135, -0.105],
-        [0, 0.028, -0.146],
-        [0, 0.156, -0.040],
-        [0, 0.150, 0.040],
-      ],
-      0.013,
-      0.011,
-      0.008,
-      6,
-      5,
-      iceWhite,
-      iceWhite,
-    ),
-  );
-  out.armor.push({ geo: helmetSpine, matrix: headMat });
-
-  const helmetSideArch = trackGeo(
-    out,
-    createOrganicLimb(
-      [
-        [-0.144, -0.010, -0.004],
-        [-0.120, 0.118, -0.022],
-        [0, 0.158, -0.028],
-        [0.120, 0.118, -0.022],
-        [0.144, -0.010, -0.004],
-      ],
-      0.006,
-      0.0055,
-      0.006,
-      8,
-      4,
-    ),
-  );
-  out.trim.push({ geo: helmetSideArch, matrix: headMat, colorRgb: warmGold });
-
-  const podPos = rotT(0, 0.94, 0.358);
-  const podMat = makeTransform(podPos.x, podPos.y, podPos.z, 0, torsoYaw, 0);
-  const podBaseProfile: readonly (readonly [number, number])[] = [
-    [0.004, -0.165],
-    [0.096, -0.158],
-    [0.142, -0.130],
-    [0.148, -0.095],
-    [0.132, -0.082],
-  ];
-  const podBaseGeo = trackGeo(out, createLathePart(podBaseProfile, 14));
-  const podCapProfile: readonly (readonly [number, number])[] = [
-    [0.132, 0.165],
-    [0.144, 0.182],
-    [0.112, 0.214],
-    [0.048, 0.236],
-    [0.004, 0.246],
-  ];
-  const podCapGeo = trackGeo(out, createLathePart(podCapProfile, 14));
-  out.armor.push(
-    { geo: podBaseGeo, matrix: podMat, colorRgb: glacierBlue },
-    { geo: podCapGeo, matrix: podMat, colorRgb: iceWhite },
-  );
-
-  const glassShellProfile: readonly (readonly [number, number])[] = [
-    [0.136, -0.088],
-    [0.158, -0.015],
-    [0.162, 0.062],
-    [0.150, 0.132],
-    [0.134, 0.172],
-  ];
-  const podGlassGeo = trackGeo(out, createLathePart(glassShellProfile, 16));
-  out.crystal.push({
-    geo: podGlassGeo,
-    matrix: podMat,
-    colorRgb: glassTint,
-  });
-
-  const thermoRing = trackGeo(out, new THREE.TorusGeometry(0.148, 0.0085, 4, 16));
-  thermoRing.rotateX(Math.PI * 0.5);
-  out.trim.push(
-    { geo: thermoRing, matrix: podMat.clone().multiply(makeTransform(0, -0.094, 0)), colorRgb: warmGold },
-    { geo: thermoRing, matrix: podMat.clone().multiply(makeTransform(0, 0.174, 0)), colorRgb: warmGold },
-  );
-
-  const dialBezel = trackGeo(out, new THREE.TorusGeometry(0.022, 0.0045, 3, 10));
-  const dialFace = trackGeo(out, new THREE.CylinderGeometry(0.019, 0.019, 0.006, 8));
-  dialFace.rotateX(Math.PI * 0.5);
-  const dialNeedle = trackGeo(out, new THREE.CylinderGeometry(0.0018, 0.0022, 0.015, 4));
-  for (const dx of [-0.042, 0.042]) {
-    const dm = podMat.clone().multiply(makeTransform(dx, -0.118, 0.144, 0.18, dx * 3.0, 0));
-    out.trim.push({ geo: dialBezel, matrix: dm, colorRgb: warmGold });
-    out.armor.push({ geo: dialFace, matrix: dm.clone().multiply(makeTransform(0, 0, -0.002)), colorRgb: dialIvory });
-    out.matte.push({ geo: dialNeedle, matrix: dm.clone().multiply(makeTransform(0.003, 0.004, 0.004, 0, 0, -0.6)), colorRgb: deepSlate });
-  }
-
-  const sensorNode = trackGeo(out, new THREE.SphereGeometry(0.012, 5, 4));
-  const sensorLed = trackGeo(out, new THREE.SphereGeometry(0.0075, 5, 4));
-  for (let i = 0; i < 3; i += 1) {
-    const ang = (i / 3) * Math.PI * 2 + Math.PI / 6;
-    const ca = Math.cos(ang);
-    const sa = Math.sin(ang);
-    const rib = trackGeo(
-      out,
-      createOrganicLimb(
-        [
-          [ca * 0.146, -0.094, sa * 0.146],
-          [ca * 0.168, 0.042, sa * 0.168],
-          [ca * 0.146, 0.174, sa * 0.146],
-        ],
-        0.005,
-        0.005,
-        0.005,
-        5,
-        4,
-      ),
-    );
-    const dripTube = trackGeo(
-      out,
-      createTaperedTubePart(
-        [
-          [ca * 0.122, 0.158, sa * 0.122],
-          [ca * 0.126, 0.052, sa * 0.126],
-          [ca * 0.072, -0.036, sa * 0.072],
-        ],
-        0.0032,
-        0.0025,
-        6,
-        4,
-      ),
-    );
-    out.trim.push({ geo: rib, matrix: podMat, colorRgb: warmGold });
-    out.matte.push({ geo: dripTube, matrix: podMat, colorRgb: deepSlate });
-    out.matte.push({
-      geo: sensorNode,
-      matrix: podMat.clone().multiply(makeTransform(ca * 0.154, -0.094, sa * 0.154)),
-      colorRgb: deepSlate,
-    });
-    out.energy.push({
-      geo: sensorLed,
-      matrix: podMat.clone().multiply(makeTransform(ca * 0.164, -0.094, sa * 0.164)),
-      colorRgb: sproutGreen,
-    });
-  }
-
-  const soilProfile: readonly (readonly [number, number])[] = [
-    [0.124, -0.088],
-    [0.118, -0.056],
-    [0.088, -0.034],
-    [0.042, -0.022],
-    [0.003, -0.018],
-  ];
-  const soilGeo = trackGeo(out, createLathePart(soilProfile, 12));
-  out.matte.push({ geo: soilGeo, matrix: podMat, colorRgb: soilUmber });
-
-  const soilClod = trackGeo(out, new THREE.DodecahedronGeometry(0.014, 0));
-  const clodCoords: readonly Vec3Tuple[] = [
-    [-0.068, -0.048, 0.042],
-    [0.058, -0.046, 0.052],
-    [-0.028, -0.032, 0.072],
-    [0.074, -0.052, -0.026],
-    [-0.076, -0.052, -0.034],
-    [0.022, -0.028, -0.058],
-    [-0.042, -0.036, -0.048],
-    [0.036, -0.034, 0.028],
-    [-0.014, -0.026, 0.034],
-  ];
-  for (let c = 0; c < clodCoords.length; c += 1) {
-    const [cx, cy, cz] = clodCoords[c]!;
-    out.matte.push({
-      geo: soilClod,
-      matrix: podMat.clone().multiply(makeTransform(cx, cy, cz, c * 0.7, c * 1.1, 0, 0.8 + (c % 3) * 0.24, 0.65, 0.9)),
-      colorRgb: c % 2 === 0 ? soilDark : soilUmber,
-    });
-  }
-
-  const stemGeo = trackGeo(
-    out,
-    createOrganicLimb(
-      [
-        [0, -0.028, 0],
-        [-0.008, 0.028, 0.004],
-        [0.006, 0.082, -0.002],
-        [0, 0.118, 0.003],
-      ],
-      0.010,
-      0.0075,
-      0.004,
-      6,
-      5,
-      sproutGreen,
-      sproutTip,
-    ),
-  );
-  out.energy.push({ geo: stemGeo, matrix: podMat });
-
-  const leafLarge = trackGeo(out, createPetalPart(0.118, 0.066, 0.018, 0.022, 1.18, 6, 4, sproutGreen, sproutTip));
-  const leafMid = trackGeo(out, createPetalPart(0.092, 0.052, 0.015, 0.018, 1.20, 6, 3, sproutGreen, sproutTip));
-  const leafBud = trackGeo(out, createPetalPart(0.064, 0.036, 0.012, 0.014, 1.25, 5, 3, sproutTip, dialIvory));
-  const leafMidrib = trackGeo(out, new THREE.CylinderGeometry(0.0018, 0.0032, 0.086, 4));
-
-  const leafTransforms: readonly { readonly geo: THREE.BufferGeometry; readonly m: THREE.Matrix4; readonly hasVein: boolean }[] = [
-    { geo: leafLarge, m: podMat.clone().multiply(makeTransform(-0.004, 0.048, 0.006, 0.18, 0.25, 0.92)), hasVein: true },
-    { geo: leafLarge, m: podMat.clone().multiply(makeTransform(0.004, 0.056, 0.002, 0.16, -0.28, -0.88)), hasVein: true },
-    { geo: leafMid, m: podMat.clone().multiply(makeTransform(0.002, 0.078, -0.006, -0.34, 1.25, 0.72)), hasVein: true },
-    { geo: leafMid, m: podMat.clone().multiply(makeTransform(-0.003, 0.086, 0.008, 0.36, -1.15, -0.68)), hasVein: true },
-    { geo: leafBud, m: podMat.clone().multiply(makeTransform(0.0, 0.106, 0.004, 0.14, 0.18, 0.24)), hasVein: false },
-  ];
-  for (const lf of leafTransforms) {
-    out.energy.push({ geo: lf.geo, matrix: lf.m });
-    if (lf.hasVein) {
-      out.trim.push({
-        geo: leafMidrib,
-        matrix: lf.m.clone().multiply(makeTransform(0, 0.048, 0.004)),
-        colorRgb: sproutTip,
-      });
-    }
-  }
-
-  const growRing = trackGeo(out, new THREE.TorusGeometry(0.118, 0.0045, 3, 14));
-  growRing.rotateX(Math.PI * 0.5);
-  out.energy.push({
-    geo: growRing,
-    matrix: podMat.clone().multiply(makeTransform(0, 0.158, 0)),
-    colorRgb: sproutTip,
-  });
-
-  const bioHalo = trackGeo(out, new THREE.TorusGeometry(0.46, 0.010, 4, 20));
-  out.wingParts.push({
-    geo: bioHalo,
-    matrix: makeTransform(0, 1.18, -0.18, 0.08, 0, 0),
-    colorRgb: warmGold,
-  });
-
-  out.crystalHex = 0xbae6fd;
-  out.crystalOpacity = 0.26;
-  out.crystalIntensity = 0.30;
-  out.weaponGlowHex = 0x4ade80;
-  out.headTopLocalY = 1.71;
-}
-
-function buildS32EntropySingularity(out: UnitBlueprintParts): void {
-  const mirrorSilver: RgbTriple = [0.93, 0.96, 1.0];
-  const chromeSteel: RgbTriple = [0.72, 0.78, 0.88];
-  const charredCore: RgbTriple = [0.10, 0.08, 0.12];
-  const crimsonHot: RgbTriple = [1.0, 0.18, 0.32];
-  const crimsonCore: RgbTriple = [1.0, 0.72, 0.76];
-  const moltenRedGold: RgbTriple = [1.0, 0.64, 0.24];
-  const deepCrimson: RgbTriple = [0.86, 0.12, 0.24];
-
-  const centerY = 1.00;
-  const centerMat = makeTransform(0, centerY, 0);
-
-  const innerCore = trackGeo(out, new THREE.IcosahedronGeometry(0.172, 1));
-  out.matte.push({ geo: innerCore, matrix: centerMat, colorRgb: charredCore });
-
-  const unstableHeart = trackGeo(out, new THREE.SphereGeometry(0.182, 18, 14));
-  out.energy.push({
-    geo: unstableHeart,
-    matrix: makeTransform(0, centerY, 0, 0, 0, 0, 1.02, 0.96, 1.04),
-    colorRgb: crimsonHot,
-  });
-
-  const fractureHalo = trackGeo(out, new THREE.TorusGeometry(0.245, 0.011, 6, 22));
-  out.energy.push(
-    { geo: fractureHalo, matrix: makeTransform(0, centerY, 0, 0.62, 0.34, 0.22), colorRgb: crimsonCore },
-    { geo: fractureHalo, matrix: makeTransform(0, centerY, 0, -0.48, 1.12, -0.54), colorRgb: crimsonHot },
-  );
-
-  const fissureSpike = trackGeo(out, createFacetedCrystalPart(0.48, 0.048, 5, 0.65, 0.35, crimsonHot, crimsonCore));
-  const fissureAxes: readonly (readonly [number, number, number])[] = [
-    [0.35, 0.25, 0.62],
-    [-0.58, 0.42, 0.22],
-    [0.24, -0.52, -0.46],
-    [-0.36, -0.32, 0.54],
-    [0.64, 0.14, -0.38],
-    [-0.18, 0.72, -0.28],
-    [0.12, -0.68, 0.34],
-    [-0.54, -0.14, -0.48],
-  ];
-  const upVec = new THREE.Vector3(0, 1, 0);
-  const qFissure = new THREE.Quaternion();
-  const dirVec = new THREE.Vector3();
-  for (const [fx, fy, fz] of fissureAxes) {
-    dirVec.set(fx, fy, fz).normalize();
-    qFissure.setFromUnitVectors(upVec, dirVec);
-    const fMat = new THREE.Matrix4().compose(
-      new THREE.Vector3(dirVec.x * 0.14, centerY + dirVec.y * 0.14, dirVec.z * 0.14),
-      qFissure,
-      new THREE.Vector3(1, 1, 1),
-    );
-    out.energy.push({ geo: fissureSpike, matrix: fMat });
-  }
-
-  const shellPlateA = trackGeo(
-    out,
-    createBevelExtrudePart(
-      [
-        [0.0, 0.148],
-        [0.126, -0.058],
-        [-0.018, -0.116],
-        [-0.122, -0.046],
-      ],
-      0.026,
-      0.009,
-      0.009,
-      2,
-      2,
-    ),
-  );
-  const shellPlateB = trackGeo(
-    out,
-    createBevelExtrudePart(
-      [
-        [0.016, 0.134],
-        [0.112, 0.018],
-        [0.054, -0.110],
-        [-0.102, -0.074],
-        [-0.096, 0.058],
-      ],
-      0.024,
-      0.008,
-      0.008,
-      2,
-      2,
-    ),
-  );
-
-  const zAxis = new THREE.Vector3(0, 0, 1);
-  const goldenRatio = (1 + Math.sqrt(5)) * 0.5;
-  const icoDirs: readonly Vec3Tuple[] = [
-    [0, 1, goldenRatio],
-    [0, -1, goldenRatio],
-    [0, 1, -goldenRatio],
-    [0, -1, -goldenRatio],
-    [1, goldenRatio, 0],
-    [-1, goldenRatio, 0],
-    [1, -goldenRatio, 0],
-    [-1, -goldenRatio, 0],
-    [goldenRatio, 0, 1],
-    [-goldenRatio, 0, 1],
-    [goldenRatio, 0, -1],
-    [-goldenRatio, 0, -1],
-  ];
-
-  icoDirs.forEach((rawDir, idx) => {
-    dirVec.set(rawDir[0], rawDir[1], rawDir[2]).normalize();
-    const dist = 0.245 + (idx % 4) * 0.038;
-    qFissure.setFromUnitVectors(zAxis, dirVec);
-    const tumble = new THREE.Quaternion().setFromEuler(
-      new THREE.Euler(((idx % 3) - 1) * 0.22, (((idx * 5) % 4) - 1.5) * 0.18, idx * 0.55),
-    );
-    qFissure.multiply(tumble);
-    const scale = 0.90 + (idx % 3) * 0.12;
-    const plateMat = new THREE.Matrix4().compose(
-      new THREE.Vector3(dirVec.x * dist, centerY + dirVec.y * dist, dirVec.z * dist),
-      qFissure,
-      new THREE.Vector3(scale, scale, 1.0),
-    );
-    const geoUse = idx % 2 === 0 ? shellPlateA : shellPlateB;
-    out.trim.push({ geo: geoUse, matrix: plateMat, colorRgb: idx % 2 === 0 ? mirrorSilver : chromeSteel });
-    out.matte.push({
-      geo: geoUse,
-      matrix: plateMat.clone().multiply(makeTransform(0, 0, -0.020, 0, 0, 0, 0.90, 0.90, 0.70)),
-      colorRgb: charredCore,
-    });
-  });
-
-  const hunterSpear = trackGeo(out, createTeardropPart(0.48, 0.038, 2.35, 14, 10, 0, chromeSteel, mirrorSilver));
-  const spearAngles = [0.25, 1.82, 3.48, 5.05];
-  for (let i = 0; i < spearAngles.length; i += 1) {
-    const a = spearAngles[i]!;
-    const r = 0.42 + (i % 2) * 0.07;
-    const sy = centerY + (i % 2 === 0 ? 0.16 : -0.16);
-    out.armor.push({
-      geo: hunterSpear,
-      matrix: makeTransform(Math.cos(a) * r, sy, Math.sin(a) * r, 0.55 * (i % 2 === 0 ? 1 : -1), a, 0.35),
-    });
-  }
-
-  for (let rIdx = 0; rIdx < 4; rIdx += 1) {
-    const pts: Vec3Tuple[] = [];
-    const phase = rIdx * 1.57;
-    const radBase = 0.39 + rIdx * 0.056;
-    for (let k = 0; k <= 14; k += 1) {
-      const t = k / 14;
-      const theta = phase + t * Math.PI * 2.35;
-      const r = radBase + Math.sin(t * Math.PI * 3 + phase) * 0.098;
-      const y = centerY + Math.cos(theta * 1.5 + phase) * 0.36 + Math.sin(t * Math.PI * 2) * 0.12;
-      pts.push([Math.cos(theta) * r, y, Math.sin(theta) * r]);
-    }
-    const ribbon = trackGeo(
-      out,
-      createFlowingRibbonMesh(
-        pts,
-        [0.016, 0.054, 0.008],
-        0.020,
-        2.5,
-        28,
-        3,
-        0,
-        rIdx % 2 === 0 ? moltenRedGold : crimsonCore,
-        deepCrimson,
-      ),
-    );
-    if (rIdx % 2 === 0) {
-      out.trim.push({ geo: ribbon });
-    } else {
-      out.crystal.push({ geo: ribbon });
-    }
-  }
-
-  for (let aIdx = 0; aIdx < 4; aIdx += 1) {
-    const a0 = aIdx * 1.57;
-    const arcPts: Vec3Tuple[] = [
-      [Math.cos(a0) * 0.15, centerY + 0.06, Math.sin(a0) * 0.15],
-      [Math.cos(a0 + 0.5) * 0.33, centerY + ((aIdx % 2) * 2 - 1) * 0.20, Math.sin(a0 + 0.5) * 0.33],
-      [Math.cos(a0 + 1.1) * 0.46, centerY + ((aIdx % 2) * -2 + 1) * 0.16, Math.sin(a0 + 1.1) * 0.46],
-    ];
-    const arc = trackGeo(out, createTaperedTubePart(arcPts, 0.011, 0.003, 14, 6));
-    out.energy.push({ geo: arc, colorRgb: aIdx % 2 === 0 ? crimsonCore : crimsonHot });
-  }
-
-  const nanoShard = trackGeo(out, createFacetedCrystalPart(0.12, 0.030, 5, 0.62, 0.38, chromeSteel, mirrorSilver));
-  for (let i = 0; i < 10; i += 1) {
-    const a = (i / 10) * Math.PI * 2 + 0.3;
-    const r = 0.50 + (i % 3) * 0.07;
-    const y = 0.34 + (i / 9) * 1.24;
-    out.trim.push({
-      geo: nanoShard,
-      matrix: makeTransform(Math.cos(a) * r, y, Math.sin(a) * r, i * 0.6, a, i * 0.4),
-    });
-  }
-
-  for (const side of [-1, 1] as const) {
-    out.wingParts.push({
-      geo: hunterSpear,
-      matrix: makeTransform(side * 0.54, centerY + 0.16, -0.14, 0.24, side * 0.3, side * -0.45, 1.35, 1.35, 1.35),
-      colorRgb: moltenRedGold,
-    });
-  }
-
-  out.crystalHex = 0xf43f5e;
-  out.crystalOpacity = 0.44;
-  out.crystalIntensity = 0.68;
-  out.weaponGlowHex = 0xfb2c50;
-  out.headTopLocalY = 1.68;
-}
-
-function buildS34CenturyDelayedPioneer(out: UnitBlueprintParts): void {
-  const champagnePearl: RgbTriple = [0.92, 0.86, 0.74];
-  const suitCanvas: RgbTriple = [0.78, 0.70, 0.56];
-  const antiqueBronze: RgbTriple = [0.64, 0.46, 0.26];
-  const warmGold: RgbTriple = [1.0, 0.84, 0.38];
-  const darkBronzeSteel: RgbTriple = [0.22, 0.20, 0.20];
-  const dialIvory: RgbTriple = [0.98, 0.96, 0.90];
-  const starlightGold: RgbTriple = [1.0, 0.93, 0.60];
-  const chronoEmerald: RgbTriple = [0.34, 0.92, 0.74];
-
-  const torsoYaw = -0.14;
-  const headYaw = 0.16;
-  const rotT = (x: number, y: number, z: number): THREE.Vector3 => {
-    const c = Math.cos(torsoYaw);
-    const sn = Math.sin(torsoYaw);
-    return new THREE.Vector3(x * c + z * sn, y, -x * sn + z * c);
-  };
-
-  const torsoProfile: readonly (readonly [number, number])[] = [
-    [0.014, 0.0],
-    [0.128, 0.06],
-    [0.108, 0.22],
-    [0.152, 0.45],
-    [0.136, 0.55],
-    [0.088, 0.61],
-  ];
-  const torsoGeo = trackGeo(
-    out,
-    createSculptedClothLathe(torsoProfile, 12, 4, 0.025, 0.4, suitCanvas, champagnePearl),
-  );
-  out.armor.push({
-    geo: torsoGeo,
-    matrix: makeTransform(0, 0.74, 0, 0.04, torsoYaw, 0, 1.02, 1.0, 0.78),
-  });
-
-  const waistBellow = trackGeo(out, new THREE.TorusGeometry(0.112, 0.010, 4, 14));
-  waistBellow.rotateX(Math.PI * 0.5);
-  for (let w = 0; w < 3; w += 1) {
-    out.matte.push({
-      geo: waistBellow,
-      matrix: makeTransform(0, 0.94 + w * 0.026, 0.004, 0.03, torsoYaw, 0, 1.02 + w * 0.02, 1.0, 0.80),
-      colorRgb: darkBronzeSteel,
-    });
-  }
-
-  const waistBelt = trackGeo(out, new THREE.TorusGeometry(0.120, 0.011, 4, 14));
-  waistBelt.rotateX(Math.PI * 0.5);
-  out.trim.push({
-    geo: waistBelt,
-    matrix: makeTransform(0, 0.915, 0.005, 0.02, torsoYaw, 0, 1.02, 1.0, 0.82),
-    colorRgb: warmGold,
-  });
-
-  const dcmPos = rotT(0, 1.155, 0.128);
-  const dcmMat = makeTransform(dcmPos.x, dcmPos.y, dcmPos.z, -0.06, torsoYaw, 0);
-  const dcmBox = trackGeo(
-    out,
-    createBevelExtrudePart(
-      [
-        [-0.072, -0.064],
-        [0.072, -0.064],
-        [0.080, 0.056],
-        [-0.080, 0.056],
-      ],
-      0.040,
-      0.008,
-      0.008,
-      1,
-      2,
-    ),
-  );
-  out.armor.push({ geo: dcmBox, matrix: dcmMat, colorRgb: antiqueBronze });
-
-  const dcmDialBezel = trackGeo(out, new THREE.TorusGeometry(0.027, 0.005, 3, 12));
-  const dcmDialFace = trackGeo(out, new THREE.CylinderGeometry(0.024, 0.024, 0.006, 10));
-  dcmDialFace.rotateX(Math.PI * 0.5);
-  const dcmNeedle = trackGeo(out, new THREE.CylinderGeometry(0.002, 0.0025, 0.019, 4));
-  const togglePin = trackGeo(out, new THREE.CylinderGeometry(0.0032, 0.0038, 0.018, 4));
-  togglePin.rotateX(Math.PI * 0.5);
-  const dcmVentBar = trackGeo(out, new THREE.CylinderGeometry(0.0035, 0.0035, 0.048, 4));
-  dcmVentBar.rotateZ(Math.PI * 0.5);
-
-  out.trim.push({ geo: dcmDialBezel, matrix: dcmMat.clone().multiply(makeTransform(-0.028, 0.014, 0.044)), colorRgb: warmGold });
-  out.armor.push({ geo: dcmDialFace, matrix: dcmMat.clone().multiply(makeTransform(-0.028, 0.014, 0.042)), colorRgb: dialIvory });
-  out.matte.push({ geo: dcmNeedle, matrix: dcmMat.clone().multiply(makeTransform(-0.024, 0.018, 0.047, 0, 0, -0.58)), colorRgb: darkBronzeSteel });
-
-  for (let tv = 0; tv < 3; tv += 1) {
-    out.trim.push({ geo: togglePin, matrix: dcmMat.clone().multiply(makeTransform(0.036, 0.030 - tv * 0.022, 0.046)), colorRgb: warmGold });
-  }
-  for (let vb = 0; vb < 2; vb += 1) {
-    out.matte.push({ geo: dcmVentBar, matrix: dcmMat.clone().multiply(makeTransform(-0.014, -0.026 - vb * 0.014, 0.044)), colorRgb: darkBronzeSteel });
-  }
-  const chestCore = trackGeo(out, new THREE.SphereGeometry(0.010, 6, 4));
-  out.energy.push({
-    geo: chestCore,
-    matrix: dcmMat.clone().multiply(makeTransform(0.036, -0.034, 0.046, 0, 0, 0, 1, 1, 0.5)),
-    colorRgb: starlightGold,
-  });
-
-  for (const side of [-1, 1] as const) {
-    const pTop = rotT(side * 0.088, 1.32, 0.048);
-    const pMid = rotT(side * 0.094, 1.15, 0.132);
-    const pBot = rotT(side * 0.086, 0.92, 0.096);
-    const strap = trackGeo(
-      out,
-      createTaperedTubePart(
-        [
-          [pTop.x, pTop.y, pTop.z],
-          [pMid.x, pMid.y, pMid.z],
-          [pBot.x, pBot.y, pBot.z],
-        ],
-        0.010,
-        0.009,
-        6,
-        4,
-      ),
-    );
-    out.matte.push({ geo: strap, colorRgb: darkBronzeSteel });
-  }
-
-  const neckSeal = trackGeo(out, new THREE.TorusGeometry(0.110, 0.015, 5, 16));
-  neckSeal.rotateX(Math.PI * 0.5);
-  out.trim.push({
-    geo: neckSeal,
-    matrix: makeTransform(0, 1.35, 0.008, 0.05, torsoYaw, 0),
-    colorRgb: warmGold,
-  });
-
-  const tankCap = trackGeo(out, new THREE.TorusGeometry(0.040, 0.006, 3, 10));
-  tankCap.rotateX(Math.PI * 0.5);
-  for (const side of [-1, 1] as const) {
-    const tp = rotT(side * 0.068, 1.11, -0.156);
-    const tankGeo = trackGeo(out, createTeardropPart(0.32, 0.054, 1.1, 10, 8, 0, antiqueBronze, champagnePearl));
-    out.armor.push({
-      geo: tankGeo,
-      matrix: makeTransform(tp.x, tp.y, tp.z, 0.05, torsoYaw, 0),
-    });
-    out.trim.push({
-      geo: tankCap,
-      matrix: makeTransform(tp.x, tp.y + 0.10, tp.z + 0.004, 0, torsoYaw, 0),
-      colorRgb: warmGold,
-    });
-    const h0 = rotT(side * 0.072, 1.24, -0.145);
-    const h1 = rotT(side * 0.142, 1.18, -0.045);
-    const h2 = rotT(side * 0.088, 1.14, 0.118);
-    const hose = trackGeo(
-      out,
-      createOrganicLimb(
-        [
-          [h0.x, h0.y, h0.z],
-          [h1.x, h1.y, h1.z],
-          [h2.x, h2.y, h2.z],
-        ],
-        0.009,
-        0.009,
-        0.008,
-        5,
-        4,
-      ),
-    );
-    out.matte.push({ geo: hose, colorRgb: darkBronzeSteel });
-  }
-
-  const legSpecs: readonly { readonly pts: readonly Vec3Tuple[]; readonly footYaw: number }[] = [
-    {
-      pts: [
-        [-0.082, 0.79, 0.012],
-        [-0.122, 0.44, 0.086],
-        [-0.128, 0.09, 0.068],
-      ],
-      footYaw: 0.18,
-    },
-    {
-      pts: [
-        [0.082, 0.79, -0.012],
-        [0.106, 0.43, -0.024],
-        [0.118, 0.09, -0.074],
-      ],
-      footYaw: -0.22,
-    },
-  ];
-  const thighSuitShell = trackGeo(
-    out,
-    createLathePart(
-      [
-        [0.048, -0.44],
-        [0.064, -0.14],
-        [0.072, 0.18],
-        [0.062, 0.44],
-      ],
-      9,
-    ),
-  );
-  const shinSuitShell = trackGeo(
-    out,
-    createLathePart(
-      [
-        [0.042, -0.45],
-        [0.052, -0.14],
-        [0.060, 0.16],
-        [0.052, 0.44],
-      ],
-      9,
-    ),
-  );
-  const kneeBellow = trackGeo(out, new THREE.TorusGeometry(0.052, 0.008, 3, 10));
-  kneeBellow.rotateX(Math.PI * 0.5);
-  const bootGeo = trackGeo(out, createTeardropPart(0.186, 0.046, 1.18, 10, 8, 0, antiqueBronze, champagnePearl));
-  const clampRing = trackGeo(out, new THREE.TorusGeometry(0.044, 0.0065, 3, 10));
-  clampRing.rotateX(Math.PI * 0.5);
-
-  for (const lg of legSpecs) {
-    const hipV = new THREE.Vector3(...lg.pts[0]!);
-    const kneeV = new THREE.Vector3(...lg.pts[1]!);
-    const ankleV = new THREE.Vector3(...lg.pts[2]!);
-    const legGeo = trackGeo(out, createOrganicLimb(lg.pts, 0.046, 0.040, 0.034, 7, 6, darkBronzeSteel, suitCanvas));
-    out.matte.push({ geo: legGeo });
-
-    const thighLen = hipV.distanceTo(kneeV) * 0.78;
-    const thighMid = hipV.clone().lerp(kneeV, 0.44);
-    const thighDir = new THREE.Vector3().subVectors(kneeV, hipV).normalize();
-    const thighQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), thighDir);
-    out.armor.push({
-      geo: thighSuitShell,
-      matrix: new THREE.Matrix4().compose(thighMid, thighQ, new THREE.Vector3(1.0, thighLen, 1.06)),
-      colorRgb: champagnePearl,
-    });
-
-    const shinLen = kneeV.distanceTo(ankleV) * 0.80;
-    const shinMid = kneeV.clone().lerp(ankleV, 0.54);
-    const shinDir = new THREE.Vector3().subVectors(ankleV, kneeV).normalize();
-    const shinQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), shinDir);
-    out.armor.push({
-      geo: shinSuitShell,
-      matrix: new THREE.Matrix4().compose(shinMid, shinQ, new THREE.Vector3(1.0, shinLen, 1.08)),
-      colorRgb: suitCanvas,
-    });
-
-    const k = lg.pts[1]!;
-    for (let r = 0; r < 4; r += 1) {
-      out.matte.push({
-        geo: kneeBellow,
-        matrix: makeTransform(k[0], k[1] - 0.030 + r * 0.020, k[2], -0.10, lg.footYaw, 0),
-        colorRgb: r % 2 === 0 ? darkBronzeSteel : antiqueBronze,
-      });
-    }
-
-    const ankle = lg.pts[2]!;
-    out.armor.push({
-      geo: bootGeo,
-      matrix: makeTransform(ankle[0], 0.046, ankle[2] + 0.044, Math.PI * 0.5, lg.footYaw, 0, 0.90, 1.0, 0.72),
-    });
-    out.matte.push({
-      geo: bootGeo,
-      matrix: makeTransform(ankle[0], 0.024, ankle[2] + 0.040, Math.PI * 0.5, lg.footYaw, 0, 0.96, 1.02, 0.34),
-      colorRgb: darkBronzeSteel,
-    });
-    out.trim.push({
-      geo: clampRing,
-      matrix: makeTransform(ankle[0], 0.092, ankle[2], 0, lg.footYaw, 0),
-      colorRgb: warmGold,
-    });
-  }
-
-  const leftArmPts = [rotT(0.154, 1.26, 0.0), rotT(0.242, 1.08, 0.09), rotT(0.214, 1.03, 0.242)];
-  const rightArmPts = [rotT(-0.154, 1.26, 0.0), rotT(-0.248, 1.08, 0.07), rotT(-0.228, 0.99, 0.222)];
-  const elbowBellow = trackGeo(out, new THREE.TorusGeometry(0.040, 0.007, 3, 9));
-  elbowBellow.rotateX(Math.PI * 0.5);
-  const shBellow = trackGeo(out, new THREE.TorusGeometry(0.052, 0.008, 3, 10));
-  const cuff = trackGeo(out, new THREE.TorusGeometry(0.035, 0.0055, 3, 10));
-  const glove = trackGeo(out, new THREE.SphereGeometry(0.031, 6, 5));
-
-  for (const armPts of [leftArmPts, rightArmPts]) {
-    const sh = armPts[0]!;
-    const el = armPts[1]!;
-    const wr = armPts[2]!;
-    const armGeo = trackGeo(
-      out,
-      createOrganicLimb(
-        [
-          [sh.x, sh.y, sh.z],
-          [el.x, el.y, el.z],
-          [wr.x, wr.y, wr.z],
-        ],
-        0.045,
-        0.038,
-        0.030,
-        7,
-        7,
-        champagnePearl,
-        suitCanvas,
-      ),
-    );
-    out.armor.push({ geo: armGeo });
-    out.matte.push({
-      geo: shBellow,
-      matrix: makeTransform(sh.x, sh.y, sh.z, 0, torsoYaw + Math.PI * 0.5, 0),
-      colorRgb: darkBronzeSteel,
-    });
-    for (const dy of [-0.016, 0, 0.016]) {
-      out.matte.push({
-        geo: elbowBellow,
-        matrix: makeTransform(el.x, el.y + dy, el.z, 0.35, torsoYaw, 0),
-        colorRgb: darkBronzeSteel,
-      });
-    }
-    out.trim.push({ geo: cuff, matrix: makeTransform(wr.x, wr.y, wr.z, Math.PI * 0.45, torsoYaw, 0), colorRgb: warmGold });
-    out.matte.push({ geo: glove, matrix: makeTransform(wr.x, wr.y - 0.004, wr.z + 0.018), colorRgb: darkBronzeSteel });
-  }
-
-  const headMat = makeTransform(0, 1.505, 0.010, 0.05, torsoYaw + headYaw, 0);
-  const helmetShell = trackGeo(out, new THREE.SphereGeometry(0.144, 14, 10));
-  out.armor.push({
-    geo: helmetShell,
-    matrix: headMat.clone().multiply(makeTransform(0, 0, 0, 0, 0, 0, 0.98, 1.02, 1.04)),
-    colorRgb: champagnePearl,
-  });
-
-  const goldVisor = trackGeo(
-    out,
-    new THREE.SphereGeometry(0.136, 12, 9, -Math.PI * 0.36, Math.PI * 0.72, Math.PI * 0.22, Math.PI * 0.54),
-  );
-  out.trim.push({
-    geo: goldVisor,
-    matrix: headMat.clone().multiply(makeTransform(0, 0.006, 0.028, 0, Math.PI * 0.5, 0)),
-    colorRgb: warmGold,
-  });
-
-  const visorGlaze = trackGeo(
-    out,
-    new THREE.SphereGeometry(0.144, 10, 8, -Math.PI * 0.34, Math.PI * 0.68, Math.PI * 0.24, Math.PI * 0.50),
-  );
-  out.crystal.push({
-    geo: visorGlaze,
-    matrix: headMat.clone().multiply(makeTransform(0, 0.006, 0.032, 0, Math.PI * 0.5, 0)),
-    colorRgb: starlightGold,
-  });
-
-  const visorBezel = trackGeo(out, new THREE.TorusGeometry(0.116, 0.009, 4, 16));
-  out.matte.push({
-    geo: visorBezel,
-    matrix: headMat.clone().multiply(makeTransform(0, 0.005, 0.102, 0.06, 0, 0, 0.94, 0.84, 0.62)),
-    colorRgb: darkBronzeSteel,
-  });
-  const earComm = trackGeo(out, new THREE.CylinderGeometry(0.034, 0.036, 0.030, 8));
-  earComm.rotateZ(Math.PI * 0.5);
-  for (const side of [-1, 1] as const) {
-    out.matte.push({
-      geo: earComm,
-      matrix: headMat.clone().multiply(makeTransform(side * 0.138, 0.0, -0.010)),
-      colorRgb: darkBronzeSteel,
-    });
-  }
-
-  const whipAntenna = trackGeo(
-    out,
-    createOrganicLimb(
-      [
-        [0.140, 0.015, -0.015],
-        [0.155, 0.155, -0.028],
-        [0.160, 0.275, -0.042],
-      ],
-      0.007,
-      0.005,
-      0.003,
-      5,
-      4,
-    ),
-  );
-  out.trim.push({ geo: whipAntenna, matrix: headMat, colorRgb: warmGold });
-  const antennaTip = trackGeo(out, new THREE.SphereGeometry(0.011, 5, 4));
-  out.energy.push({ geo: antennaTip, matrix: headMat.clone().multiply(makeTransform(0.160, 0.280, -0.042)), colorRgb: starlightGold });
-
-  const lHand = leftArmPts[2]!;
-  const watchMat = makeTransform(lHand.x + 0.012, lHand.y + 0.048, lHand.z + 0.056, -0.18, torsoYaw - 0.34, 0.12);
-  const watchCase = trackGeo(out, new THREE.CylinderGeometry(0.086, 0.086, 0.022, 16));
-  watchCase.rotateX(Math.PI * 0.5);
-  out.trim.push({ geo: watchCase, matrix: watchMat, colorRgb: warmGold });
-
-  const watchBezel = trackGeo(out, new THREE.TorusGeometry(0.088, 0.010, 4, 16));
-  out.trim.push({
-    geo: watchBezel,
-    matrix: watchMat.clone().multiply(makeTransform(0, 0, 0.008)),
-    colorRgb: warmGold,
-  });
-
-  const lidPivotMat = watchMat.clone().multiply(makeTransform(0, 0.088, 0.012, -1.08, 0, 0));
-  const lidRim = trackGeo(out, new THREE.TorusGeometry(0.080, 0.0065, 4, 14));
-  const lidInner = trackGeo(out, new THREE.TorusGeometry(0.040, 0.0045, 3, 10));
-  const lidSpoke = trackGeo(out, new THREE.CylinderGeometry(0.003, 0.003, 0.156, 4));
-  out.trim.push(
-    { geo: lidRim, matrix: lidPivotMat.clone().multiply(makeTransform(0, 0.080, 0)), colorRgb: warmGold },
-    { geo: lidInner, matrix: lidPivotMat.clone().multiply(makeTransform(0, 0.080, 0)), colorRgb: antiqueBronze },
-    { geo: lidSpoke, matrix: lidPivotMat.clone().multiply(makeTransform(0, 0.080, 0)), colorRgb: warmGold },
-    { geo: lidSpoke, matrix: lidPivotMat.clone().multiply(makeTransform(0, 0.080, 0, 0, 0, Math.PI * 0.5)), colorRgb: warmGold },
-  );
-
-  const watchBow = trackGeo(out, new THREE.TorusGeometry(0.022, 0.0045, 3, 9));
-  out.trim.push({
-    geo: watchBow,
-    matrix: watchMat.clone().multiply(makeTransform(0, 0.104, -0.004)),
-    colorRgb: warmGold,
-  });
-
-  const watchDial = trackGeo(out, new THREE.CylinderGeometry(0.074, 0.074, 0.006, 14));
-  watchDial.rotateX(Math.PI * 0.5);
-  out.armor.push({
-    geo: watchDial,
-    matrix: watchMat.clone().multiply(makeTransform(0, 0, 0.012)),
-    colorRgb: dialIvory,
-  });
-
-  const hourHand = trackGeo(out, createOrganicLimb([[0, 0, 0.017], [-0.028, 0.034, 0.017]], 0.005, 0.004, 0.002, 2, 4));
-  const minuteHand = trackGeo(out, createOrganicLimb([[0, 0, 0.019], [0.044, 0.046, 0.019]], 0.004, 0.0035, 0.0018, 2, 4));
-  out.matte.push(
-    { geo: hourHand, matrix: watchMat, colorRgb: darkBronzeSteel },
-    { geo: minuteHand, matrix: watchMat, colorRgb: darkBronzeSteel },
-  );
-
-  const watchTick = trackGeo(out, new THREE.SphereGeometry(0.005, 4, 4));
-  for (let i = 0; i < 8; i += 1) {
-    const a = (i / 8) * Math.PI * 2;
-    out.trim.push({
-      geo: watchTick,
-      matrix: watchMat.clone().multiply(makeTransform(Math.cos(a) * 0.062, Math.sin(a) * 0.062, 0.016)),
-      colorRgb: antiqueBronze,
-    });
-  }
-  const watchPin = trackGeo(out, new THREE.SphereGeometry(0.0085, 5, 4));
-  out.energy.push({
-    geo: watchPin,
-    matrix: watchMat.clone().multiply(makeTransform(0, 0, 0.021)),
-    colorRgb: starlightGold,
-  });
-  const watchCrystal = trackGeo(out, new THREE.SphereGeometry(0.076, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.36));
-  out.crystal.push({
-    geo: watchCrystal,
-    matrix: watchMat.clone().multiply(makeTransform(0, 0, -0.022, Math.PI * 0.5, 0, 0)),
-    colorRgb: starlightGold,
-  });
-
-  const chainPts: Vec3Tuple[] = [
-    [lHand.x + 0.005, lHand.y + 0.145, lHand.z + 0.052],
-    [lHand.x - 0.025, lHand.y + 0.025, lHand.z - 0.005],
-    [dcmPos.x + 0.072, dcmPos.y - 0.055, dcmPos.z + 0.032],
-    [dcmPos.x + 0.062, dcmPos.y + 0.022, dcmPos.z + 0.028],
-  ];
-  const watchChain = trackGeo(out, createTaperedTubePart(chainPts, 0.0045, 0.0045, 8, 4));
-  out.trim.push({ geo: watchChain, colorRgb: warmGold });
-  const chainCurve = new THREE.CatmullRomCurve3(chainPts.map((p) => new THREE.Vector3(...p)));
-  const chainGear = trackGeo(out, new THREE.TorusGeometry(0.011, 0.0032, 3, 7));
-  for (let g = 1; g <= 5; g += 1) {
-    const pt = chainCurve.getPoint(g / 6);
-    out.trim.push({
-      geo: chainGear,
-      matrix: makeTransform(pt.x, pt.y, pt.z, g * 0.6, g * 0.8, 0),
-      colorRgb: warmGold,
-    });
-  }
-
-  const rHand = rightArmPts[2]!;
-  const rifleMat = makeTransform(rHand.x - 0.035, rHand.y + 0.03, rHand.z + 0.03, -0.50, torsoYaw - 0.18, 0.10);
-  const rifleStock = trackGeo(out, createTeardropPart(0.42, 0.034, 1.25, 10, 8, 0, antiqueBronze, champagnePearl));
-  out.armor.push({
-    geo: rifleStock,
-    matrix: rifleMat.clone().multiply(makeTransform(0, 0, -0.10, Math.PI * 0.5, 0, 0, 0.72, 1.0, 1.20)),
-  });
-
-  const rifleBarrel = trackGeo(out, new THREE.CylinderGeometry(0.011, 0.018, 0.64, 7));
-  out.matte.push({
-    geo: rifleBarrel,
-    matrix: rifleMat.clone().multiply(makeTransform(0, 0.012, 0.26, Math.PI * 0.5, 0, 0)),
-    colorRgb: darkBronzeSteel,
-  });
-
-  const rifleRail = trackGeo(out, new THREE.CylinderGeometry(0.0055, 0.008, 0.58, 5));
-  out.energy.push({
-    geo: rifleRail,
-    matrix: rifleMat.clone().multiply(makeTransform(0, -0.008, 0.26, Math.PI * 0.5, 0, 0)),
-    colorRgb: starlightGold,
-  });
-
-  const rifleCollar = trackGeo(out, new THREE.TorusGeometry(0.022, 0.005, 3, 9));
-  for (const zOff of [0.06, 0.16, 0.26, 0.36, 0.46]) {
-    out.trim.push({
-      geo: rifleCollar,
-      matrix: rifleMat.clone().multiply(makeTransform(0, 0.004, zOff)),
-      colorRgb: warmGold,
-    });
-  }
-
-  const scopeBody = trackGeo(out, new THREE.CylinderGeometry(0.017, 0.013, 0.23, 7));
-  out.trim.push({
-    geo: scopeBody,
-    matrix: rifleMat.clone().multiply(makeTransform(0, 0.054, 0.06, Math.PI * 0.5, 0, 0)),
-    colorRgb: warmGold,
-  });
-  const scopeLens = trackGeo(out, new THREE.SphereGeometry(0.015, 6, 4));
-  out.crystal.push({
-    geo: scopeLens,
-    matrix: rifleMat.clone().multiply(makeTransform(0, 0.054, 0.175)),
-    colorRgb: chronoEmerald,
-  });
-  const muzzleStar = trackGeo(out, createFacetedCrystalPart(0.088, 0.020, 4, 0.6, 0.4, starlightGold, dialIvory));
-  out.energy.push({
-    geo: muzzleStar,
-    matrix: rifleMat.clone().multiply(makeTransform(0, 0.008, 0.58, Math.PI * 0.5, 0, 0)),
-  });
-
-  const timeRingA = buildWarpedAccretionRing(
-    out,
-    0.42,
-    [0.036, 0.046, 0.036],
-    0.055,
-    2,
-    0.2,
-    0.022,
-    2,
-    20,
-    2,
-    0,
-    starlightGold,
-    chronoEmerald,
-  );
-  out.crystal.push({
-    geo: timeRingA,
-    matrix: makeTransform(0, 0.12, 0.0, 0.14, 0, -0.08),
-  });
-
-  const timeRingB = buildWarpedFilament(out, 0.51, 0.072, 2, 1.4, 0.028, 3, 0.008, 20, 4);
-  out.energy.push({
-    geo: timeRingB,
-    matrix: makeTransform(0, 0.18, 0.0, -0.16, 0.4, 0.12),
-    colorRgb: starlightGold,
-  });
-
-  const timeTrim = buildWarpedFilament(out, 0.465, 0.048, 2, 0.7, 0.015, 2, 0.0055, 18, 4);
-  out.trim.push({
-    geo: timeTrim,
-    matrix: makeTransform(0, 0.14, 0.0, 0.08, -0.3, 0.06),
-    colorRgb: warmGold,
-  });
-
-  const starWing = trackGeo(out, createCreatureFin(0.18, 0.42, 0.32, 0.03, 0.012, 6, 3, warmGold, starlightGold));
-  for (const side of [-1, 1] as const) {
-    out.wingParts.push({
-      geo: starWing,
-      matrix: makeTransform(side * 0.18, 1.14, -0.18, 0, side * -0.25, side * 0.25, side, 1, 1),
-      colorRgb: warmGold,
-    });
-  }
-
-  out.crystalHex = 0xfde68a;
-  out.crystalOpacity = 0.42;
-  out.crystalIntensity = 0.62;
-  out.weaponGlowHex = 0xfde047;
-  out.headTopLocalY = 1.76;
-}
-
-function buildS35RetiredAdmiral(out: UnitBlueprintParts): void {
-  const navalNavy: RgbTriple = [0.11, 0.19, 0.35];
-  const navalHighlight: RgbTriple = [0.19, 0.30, 0.50];
-  const capeLining: RgbTriple = [0.36, 0.12, 0.18];
-  const darkCharcoal: RgbTriple = [0.12, 0.15, 0.22];
-  const brassGold: RgbTriple = [0.98, 0.80, 0.36];
-  const agedBronze: RgbTriple = [0.76, 0.56, 0.26];
-  const skinWeathered: RgbTriple = [0.87, 0.73, 0.63];
-  const skinShadow: RgbTriple = [0.68, 0.54, 0.46];
-  const silverBeard: RgbTriple = [0.84, 0.88, 0.94];
-  const capWhite: RgbTriple = [0.92, 0.95, 0.99];
-  const amberGlow: RgbTriple = [1.0, 0.74, 0.20];
-  const holoCyan: RgbTriple = [0.34, 0.88, 1.0];
-
-  const torsoYaw = -0.12;
-  const headYaw = 0.12;
-  const rotT = (x: number, y: number, z: number): THREE.Vector3 => {
-    const c = Math.cos(torsoYaw);
-    const sn = Math.sin(torsoYaw);
-    return new THREE.Vector3(x * c + z * sn, y, -x * sn + z * c);
-  };
-
-  const innerUniform = trackGeo(
-    out,
-    createLathePart(
-      [
-        [0.068, -0.12],
-        [0.126, -0.02],
-        [0.120, 0.08],
-        [0.114, 0.20],
-        [0.150, 0.42],
-        [0.164, 0.52],
-        [0.088, 0.62],
-      ],
-      12,
-    ),
-  );
-  out.matte.push({
-    geo: innerUniform,
-    matrix: makeTransform(0, 0.74, 0, 0.02, torsoYaw, 0, 1.04, 1.0, 0.78),
-    colorRgb: darkCharcoal,
-  });
-
-  const coatBodice = trackGeo(
-    out,
-    createSculptedClothLathe(
-      [
-        [0.124, 0.0],
-        [0.122, 0.11],
-        [0.176, 0.32],
-        [0.186, 0.42],
-        [0.116, 0.50],
-        [0.088, 0.55],
-      ],
-      14,
-      4,
-      0.035,
-      0.34,
-      navalNavy,
-      navalHighlight,
-    ),
-  );
-  out.armor.push({
-    geo: coatBodice,
-    matrix: makeTransform(0, 0.86, -0.004, 0.02, torsoYaw, 0, 1.02, 1.0, 0.78),
-  });
-
-  const admiralCoatSkirt = trackGeo(
-    out,
-    createSplitPleatedCoatSkirt(
-      [
-        [0.244, 0.0],
-        [0.214, 0.18],
-        [0.174, 0.38],
-        [0.136, 0.56],
-        [0.124, 0.68],
-      ],
-      0.56,
-      0.16,
-      8,
-      0.115,
-      0.022,
-      -0.056,
-      0.015,
-      22,
-      navalNavy,
-      navalHighlight,
-      capeLining,
-    ),
-  );
-  out.armor.push({
-    geo: admiralCoatSkirt,
-    matrix: makeTransform(0, 0.28, -0.004, 0.02, torsoYaw, 0, 1.04, 1.0, 0.84),
-  });
-
-  for (const side of [-1, 1] as const) {
-    const hemTrim = trackGeo(
-      out,
-      createTaperedTubePart(
-        [
-          rotT(side * 0.030, 0.96, 0.100),
-          rotT(side * 0.086, 0.64, 0.122),
-          rotT(side * 0.136, 0.29, 0.112),
-        ].map((v) => [v.x, v.y, v.z] as Vec3Tuple),
-        0.0055,
-        0.005,
-        7,
-        4,
-      ),
-    );
-    out.trim.push({ geo: hemTrim, colorRgb: brassGold });
-  }
-
-  const shoulderCapePts: Vec3Tuple[] = [
-    [-0.142, 1.37, 0.055],
-    [-0.228, 1.24, -0.062],
-    [-0.278, 0.94, -0.184],
-    [-0.312, 0.60, -0.252],
-    [-0.338, 0.34, -0.285],
-  ].map(([x, y, z]) => {
-    const v = rotT(x!, y!, z!);
-    return [v.x, v.y, v.z];
-  });
-  const shoulderCape = trackGeo(
-    out,
-    createFlowingRibbonMesh(shoulderCapePts, [0.17, 0.29, 0.36], 0.024, 1.6, 12, 4, 0.009, navalNavy, capeLining),
-  );
-  out.armor.push({ geo: shoulderCape });
-
-  const capeChain = trackGeo(
-    out,
-    createTaperedTubePart(
-      [
-        rotT(-0.115, 1.36, 0.072),
-        rotT(0.0, 1.32, 0.118),
-        rotT(0.115, 1.36, 0.072),
-      ].map((v) => [v.x, v.y, v.z] as Vec3Tuple),
-      0.006,
-      0.006,
-      7,
-      4,
-    ),
-  );
-  out.trim.push({ geo: capeChain, colorRgb: brassGold });
-
-  const wideLapel = trackGeo(
-    out,
-    createBevelExtrudePart(
-      [
-        [0.0, -0.115],
-        [0.074, -0.042],
-        [0.102, 0.082],
-        [0.036, 0.120],
-      ],
-      0.016,
-      0.004,
-      0.004,
-      1,
-      2,
-    ),
-  );
-  for (const side of [-1, 1] as const) {
-    const lp = rotT(side * 0.022, 1.20, 0.122);
-    out.armor.push({
-      geo: wideLapel,
-      matrix: makeTransform(lp.x, lp.y, lp.z, -0.06, torsoYaw + side * 0.15, side * 0.06, side, 1, 1),
-      colorRgb: navalHighlight,
-    });
-  }
-
-  const medalBar = trackGeo(
-    out,
-    createBevelExtrudePart(
-      [
-        [-0.036, -0.012],
-        [0.036, -0.012],
-        [0.036, 0.012],
-        [-0.036, 0.012],
-      ],
-      0.008,
-      0.002,
-      0.002,
-      1,
-      1,
-    ),
-  );
-  const medalPos = rotT(0.076, 1.24, 0.132);
-  out.trim.push({
-    geo: medalBar,
-    matrix: makeTransform(medalPos.x, medalPos.y, medalPos.z, -0.06, torsoYaw + 0.18, 0),
-    colorRgb: brassGold,
-  });
-  const medalStar = trackGeo(out, new THREE.OctahedronGeometry(0.012, 0));
-  out.energy.push({
-    geo: medalStar,
-    matrix: makeTransform(medalPos.x - 0.01, medalPos.y - 0.022, medalPos.z + 0.008),
-    colorRgb: amberGlow,
-  });
-
-  const waistBelt = trackGeo(out, new THREE.TorusGeometry(0.126, 0.014, 4, 14));
-  waistBelt.rotateX(Math.PI * 0.5);
-  out.matte.push({
-    geo: waistBelt,
-    matrix: makeTransform(0, 0.97, 0.004, 0, torsoYaw, 0, 1.02, 1.0, 0.80),
-    colorRgb: darkCharcoal,
-  });
-  const beltBuckle = trackGeo(out, createHexMirrorTilePart(0.032, 0.014, 0.005, 0, brassGold, agedBronze));
-  const bPos = rotT(0, 0.97, 0.108);
-  out.trim.push({
-    geo: beltBuckle,
-    matrix: makeTransform(bPos.x, bPos.y, bPos.z, 0, torsoYaw, 0),
-  });
-
-  const collarStanding = trackGeo(out, new THREE.CylinderGeometry(0.088, 0.100, 0.090, 12, 1, true));
-  out.armor.push({
-    geo: collarStanding,
-    matrix: makeTransform(0, 1.38, 0.006, 0.04, torsoYaw, 0, 1.0, 1.0, 0.88),
-    colorRgb: navalNavy,
-  });
-  const collarTrim = trackGeo(out, new THREE.TorusGeometry(0.088, 0.0065, 4, 14));
-  collarTrim.rotateX(Math.PI * 0.5);
-  out.trim.push({
-    geo: collarTrim,
-    matrix: makeTransform(0, 1.424, 0.008, 0.04, torsoYaw, 0, 1.0, 1.0, 0.88),
-    colorRgb: brassGold,
-  });
-
-  const buttonGeo = trackGeo(out, new THREE.SphereGeometry(0.0095, 5, 4));
-  for (let row = 0; row < 4; row += 1) {
-    for (const side of [-1, 1] as const) {
-      const bp = rotT(side * 0.048, 1.04 + row * 0.070, 0.112 + row * 0.009);
-      out.trim.push({
-        geo: buttonGeo,
-        matrix: makeTransform(bp.x, bp.y, bp.z),
-        colorRgb: brassGold,
-      });
-    }
-  }
-
-  const epBoard = trackGeo(
-    out,
-    createBevelExtrudePart(
-      [
-        [-0.058, -0.025],
-        [0.058, -0.025],
-        [0.066, 0.025],
-        [-0.058, 0.025],
-      ],
-      0.015,
-      0.004,
-      0.004,
-      1,
-      2,
-    ),
-  );
-  const epFringe = trackGeo(out, new THREE.CylinderGeometry(0.0045, 0.0055, 0.054, 5));
-  for (const side of [-1, 1] as const) {
-    const ep = rotT(side * 0.168, 1.345, 0.004);
-    out.trim.push({
-      geo: epBoard,
-      matrix: makeTransform(ep.x, ep.y, ep.z, Math.PI * 0.5, torsoYaw, side * -0.18),
-      colorRgb: brassGold,
-    });
-    for (let f = -2; f <= 2; f += 1) {
-      const fp = rotT(side * 0.216, 1.312, f * 0.012);
-      out.trim.push({
-        geo: epFringe,
-        matrix: makeTransform(fp.x, fp.y, fp.z, 0, torsoYaw, side * -0.16),
-        colorRgb: brassGold,
-      });
-    }
-  }
-
-  const legSpecs: readonly { readonly pts: readonly Vec3Tuple[]; readonly footYaw: number }[] = [
-    {
-      pts: [
-        [-0.084, 0.72, 0.014],
-        [-0.106, 0.39, 0.076],
-        [-0.114, 0.082, 0.068],
-      ],
-      footYaw: 0.16,
-    },
-    {
-      pts: [
-        [0.084, 0.72, -0.012],
-        [0.098, 0.38, -0.028],
-        [0.108, 0.082, -0.072],
-      ],
-      footYaw: -0.22,
-    },
-  ];
-  const bootGeo = trackGeo(out, createTeardropPart(0.188, 0.047, 1.18, 10, 8, 0, darkCharcoal, navalNavy));
-  const bootTrim = trackGeo(out, new THREE.TorusGeometry(0.044, 0.006, 3, 10));
-  bootTrim.rotateX(Math.PI * 0.5);
-  for (const lg of legSpecs) {
-    const legGeo = trackGeo(out, createOrganicLimb(lg.pts, 0.062, 0.050, 0.040, 7, 7, darkCharcoal, darkCharcoal));
-    out.matte.push({ geo: legGeo });
-    const a = lg.pts[2]!;
-    out.matte.push({
-      geo: bootGeo,
-      matrix: makeTransform(a[0], 0.044, a[2] + 0.044, Math.PI * 0.5, lg.footYaw, 0, 0.88, 1.0, 0.72),
-    });
-    out.trim.push({
-      geo: bootTrim,
-      matrix: makeTransform(a[0], 0.096, a[2], 0, lg.footYaw, 0),
-      colorRgb: brassGold,
-    });
-  }
-
-  for (const side of [-1, 1] as const) {
-    const sh = rotT(side * 0.182, 1.29, 0.0);
-    const el = rotT(side * 0.248, 1.08, 0.11);
-    const ha = rotT(side * 0.194, 0.96, 0.285);
-    const armGeo = trackGeo(
-      out,
-      createOrganicLimb(
-        [
-          [sh.x, sh.y, sh.z],
-          [el.x, el.y, el.z],
-          [ha.x, ha.y, ha.z],
-        ],
-        0.050,
-        0.042,
-        0.034,
-        7,
-        7,
-        navalHighlight,
-        navalNavy,
-      ),
-    );
-    out.armor.push({ geo: armGeo });
-
-    for (let b = 0; b < 2; b += 1) {
-      const braid = trackGeo(out, new THREE.TorusGeometry(0.036, 0.0045, 3, 9));
-      const bp = rotT(side * (0.204 - b * 0.006), 0.974 - b * 0.012, 0.264 + b * 0.016);
-      out.trim.push({
-        geo: braid,
-        matrix: makeTransform(bp.x, bp.y, bp.z, 0.42, torsoYaw + side * -0.35, 0),
-        colorRgb: brassGold,
-      });
-    }
-
-    const glove = trackGeo(out, new THREE.SphereGeometry(0.031, 6, 5));
-    const gp = rotT(side * 0.188, 0.956, 0.306);
-    out.matte.push({
-      geo: glove,
-      matrix: makeTransform(gp.x, gp.y, gp.z, 0, torsoYaw, 0, 0.92, 0.85, 1.12),
-      colorRgb: darkCharcoal,
-    });
-  }
-
-  const headMat = makeTransform(0, 1.528, 0.014, 0.04, torsoYaw + headYaw, 0);
-  const headGeo = trackGeo(out, new THREE.SphereGeometry(0.095, 12, 9));
-  out.armor.push({
-    geo: headGeo,
-    matrix: headMat.clone().multiply(makeTransform(0, 0.004, 0, 0, 0, 0, 0.90, 1.06, 0.98)),
-    colorRgb: skinWeathered,
+    geo: cranialCap,
+    matrix: whaleFrame
+      .clone()
+      .multiply(makeTransform(0, 0.072, 0.26, -Math.PI * 0.5 + 0.08, 0, 0, 0.92, 1.0, 0.52)),
   });
 
   const browRidge = trackGeo(
     out,
+    createOrganicLimb(
+      [
+        [0, 0.145, 0.62],
+        [0, 0.186, 0.34],
+        [0, 0.168, 0.02],
+        [0, 0.112, -0.34],
+      ],
+      0.024,
+      0.042,
+      0.022,
+      14,
+      10,
+      paleAlloy,
+      starIndigo,
+    ),
+  );
+  out.armor.push({ geo: browRidge, matrix: whaleFrame });
+
+  const lowerJaw = trackGeo(
+    out,
+    createTeardropPart(0.82, 0.165, 1.25, 16, 12, -0.014, deepSlate, starIndigo),
+  );
+  out.matte.push({
+    geo: lowerJaw,
+    matrix: whaleFrame
+      .clone()
+      .multiply(makeTransform(0, -0.076, 0.25, -Math.PI * 0.5 - 0.07, 0, 0, 0.88, 1.0, 0.46)),
+  });
+
+  for (let i = -2; i <= 2; i += 1) {
+    const xOff = i * 0.044;
+    const yDip = -0.145 + Math.abs(i) * 0.014;
+    const pleatGeo = trackGeo(
+      out,
+      createOrganicLimb(
+        [
+          [xOff * 0.65, yDip + 0.032, 0.56],
+          [xOff, yDip, 0.24],
+          [xOff * 0.82, yDip + 0.024, -0.14],
+        ],
+        0.008,
+        0.014,
+        0.008,
+        10,
+        6,
+        deepSlate,
+        warmBronze,
+      ),
+    );
+    out.matte.push({ geo: pleatGeo, matrix: whaleFrame });
+  }
+
+  const tailStock = trackGeo(
+    out,
+    createOrganicLimb(
+      [
+        [0, -0.01, -0.26],
+        [0, -0.03, -0.50],
+        [0, 0.05, -0.68],
+        [0, 0.16, -0.82],
+      ],
+      0.132,
+      0.086,
+      0.038,
+      14,
+      12,
+      starIndigo,
+      titaniumTeal,
+    ),
+  );
+  out.armor.push({ geo: tailStock, matrix: whaleFrame });
+
+  const keelBand = trackGeo(out, new THREE.TorusGeometry(0.215, 0.014, 8, 24));
+  const ribZOffsets: readonly [number, number, number][] = [
+    [0.34, 0.90, 0.78],
+    [0.06, 1.03, 0.86],
+    [-0.24, 0.80, 0.72],
+  ];
+  for (const [rz, sx, sy] of ribZOffsets) {
+    out.trim.push({
+      geo: keelBand,
+      matrix: whaleFrame.clone().multiply(makeTransform(0, 0.01, rz, 0, 0, 0, sx, sy, 1.0)),
+      colorRgb: warmBronze,
+    });
+  }
+
+  const gearDisc = trackGeo(out, new THREE.CylinderGeometry(0.088, 0.088, 0.022, 14));
+  const gearRim = trackGeo(out, createChamferedHexPart(0.102, 0.018, 0.006, 0.062));
+  const gearHub = trackGeo(out, new THREE.CylinderGeometry(0.030, 0.034, 0.036, 10));
+  for (const side of [-1, 1] as const) {
+    const flankMat = whaleFrame
+      .clone()
+      .multiply(makeTransform(side * 0.212, 0.015, 0.04, 0, 0, Math.PI * 0.5));
+    out.trim.push(
+      { geo: gearDisc, matrix: flankMat, colorRgb: antiqueBronze },
+      { geo: gearHub, matrix: flankMat, colorRgb: warmBronze },
+    );
+    out.trim.push({
+      geo: gearRim,
+      matrix: whaleFrame
+        .clone()
+        .multiply(makeTransform(side * 0.222, 0.015, 0.04, 0, Math.PI * 0.5, 0.26)),
+      colorRgb: warmBronze,
+    });
+  }
+
+  const bridgeShape = trackGeo(
+    out,
     createBevelExtrudePart(
       [
-        [-0.068, -0.010],
-        [0.068, -0.010],
-        [0.060, 0.014],
-        [-0.060, 0.014],
+        [-0.08, 0],
+        [0.08, 0],
+        [0.055, 0.14],
+        [-0.055, 0.14],
       ],
-      0.022,
-      0.005,
-      0.005,
-      1,
+      0.18,
+      0.012,
+      0.012,
       2,
     ),
   );
   out.armor.push({
-    geo: browRidge,
-    matrix: headMat.clone().multiply(makeTransform(0, 0.024, 0.074, 0.12, 0, 0)),
-    colorRgb: skinWeathered,
+    geo: bridgeShape,
+    matrix: whaleFrame.clone().multiply(makeTransform(0, 0.175, 0.34, 0.14, 0, 0)),
+    colorRgb: starIndigo,
   });
-  const noseBridge = trackGeo(out, createTeardropPart(0.040, 0.012, 1.35, 6, 4, 0, skinWeathered, skinShadow));
-  out.armor.push({
-    geo: noseBridge,
-    matrix: headMat.clone().multiply(makeTransform(0, -0.002, 0.088, -0.18, 0, 0)),
-  });
-  const eyeSocketShadow = trackGeo(out, new THREE.SphereGeometry(0.018, 6, 5));
-  out.matte.push({
-    geo: eyeSocketShadow,
-    matrix: headMat.clone().multiply(makeTransform(0.032, 0.008, 0.082, 0, 0, 0, 1.25, 0.55, 0.55)),
-    colorRgb: skinShadow,
+  const bridgeVisor = trackGeo(out, createCurvedVisorPart(0.064, 0.042, 0.056, 1.4, 1.05, 0.56));
+  out.energy.push({
+    geo: bridgeVisor,
+    matrix: whaleFrame.clone().multiply(makeTransform(0, 0.245, 0.40, 0.06, 0, 0)),
+    colorRgb: iceFoam,
   });
 
-  const beardChin = trackGeo(out, createTeardropPart(0.118, 0.058, 1.32, 10, 7, 0.014, silverBeard, silverBeard));
-  out.armor.push({
-    geo: beardChin,
-    matrix: headMat.clone().multiply(makeTransform(0, -0.058, 0.048, Math.PI + 0.18, 0, 0, 1.04, 1.0, 0.78)),
-  });
-  const beardJawCurve = trackGeo(
-    out,
-    createOrganicLimb(
-      [
-        [-0.072, -0.008, 0.046],
-        [-0.056, -0.056, 0.072],
-        [0.0, -0.086, 0.084],
-        [0.056, -0.056, 0.072],
-        [0.072, -0.008, 0.046],
-      ],
-      0.018,
-      0.028,
-      0.018,
-      8,
-      6,
-      silverBeard,
-      silverBeard,
-    ),
-  );
-  out.armor.push({ geo: beardJawCurve, matrix: headMat });
-  const mustache = trackGeo(
-    out,
-    createOrganicLimb(
-      [
-        [-0.048, -0.040, 0.082],
-        [-0.016, -0.028, 0.098],
-        [0.016, -0.028, 0.098],
-        [0.048, -0.040, 0.082],
-      ],
-      0.008,
-      0.013,
-      0.008,
-      6,
-      4,
-      silverBeard,
-      silverBeard,
-    ),
-  );
-  out.armor.push({ geo: mustache, matrix: headMat });
-
-  const ocMat = headMat.clone().multiply(makeTransform(-0.036, 0.010, 0.092, 0, -0.16, 0));
-  const ocBarrelA = trackGeo(out, new THREE.CylinderGeometry(0.024, 0.027, 0.030, 10));
-  ocBarrelA.rotateX(Math.PI * 0.5);
-  const ocBarrelB = trackGeo(out, new THREE.CylinderGeometry(0.018, 0.022, 0.028, 10));
-  ocBarrelB.rotateX(Math.PI * 0.5);
-  const ocFocusRing = trackGeo(out, new THREE.TorusGeometry(0.023, 0.0045, 3, 10));
-  const ocSidePrism = trackGeo(out, new THREE.CylinderGeometry(0.010, 0.010, 0.024, 6));
-  ocSidePrism.rotateX(Math.PI * 0.5);
-  const amberLens = trackGeo(out, new THREE.SphereGeometry(0.017, 7, 5));
-
-  out.trim.push(
-    { geo: ocBarrelA, matrix: ocMat, colorRgb: brassGold },
-    { geo: ocBarrelB, matrix: ocMat.clone().multiply(makeTransform(0, 0, 0.022)), colorRgb: agedBronze },
-    { geo: ocSidePrism, matrix: ocMat.clone().multiply(makeTransform(-0.028, 0.010, 0.006)), colorRgb: brassGold },
-  );
-  out.matte.push({
-    geo: ocFocusRing,
-    matrix: ocMat.clone().multiply(makeTransform(0, 0, 0.014)),
-    colorRgb: darkCharcoal,
-  });
-  out.energy.push(
-    { geo: amberLens, matrix: ocMat.clone().multiply(makeTransform(0, 0, 0.036, 0, 0, 0, 1.0, 1.0, 0.45)), colorRgb: amberGlow },
-    { geo: amberLens, matrix: ocMat.clone().multiply(makeTransform(-0.028, 0.010, 0.018, 0, 0, 0, 0.48, 0.48, 0.35)), colorRgb: holoCyan },
-  );
-
-  const monocleStrap = trackGeo(
-    out,
-    createOrganicLimb(
-      [
-        [-0.056, 0.012, 0.084],
-        [-0.096, 0.020, 0.014],
-        [-0.072, 0.020, -0.084],
-      ],
-      0.0055,
-      0.0055,
-      0.0055,
-      5,
-      4,
-    ),
-  );
-  out.trim.push({ geo: monocleStrap, matrix: headMat, colorRgb: brassGold });
-
-  const capProfile: readonly (readonly [number, number])[] = [
-    [0.098, 0.0],
-    [0.102, 0.044],
-    [0.138, 0.096],
-    [0.128, 0.118],
-    [0.064, 0.128],
-    [0.004, 0.132],
-  ];
-  const capCrown = trackGeo(out, createLathePart(capProfile, 14));
-  const capRoot = headMat.clone().multiply(makeTransform(0, 0.066, -0.002, 0.12, 0, 0));
-  out.armor.push({ geo: capCrown, matrix: capRoot, colorRgb: capWhite });
-
-  const capBand = trackGeo(out, new THREE.TorusGeometry(0.101, 0.007, 4, 14));
-  capBand.rotateX(Math.PI * 0.5);
-  out.trim.push({
-    geo: capBand,
-    matrix: capRoot.clone().multiply(makeTransform(0, 0.018, 0)),
-    colorRgb: brassGold,
-  });
-
-  const capVisor = trackGeo(out, createPetalPart(0.112, 0.168, 0.016, 0.014, 0.9, 5, 4, darkCharcoal, darkCharcoal));
-  out.matte.push({
-    geo: capVisor,
-    matrix: capRoot.clone().multiply(makeTransform(0, 0.010, 0.056, Math.PI * 0.58, 0, 0)),
-  });
-
-  const capBadge = trackGeo(out, createFacetedCrystalPart(0.048, 0.024, 4, 0.5, 0.5, agedBronze, brassGold));
-  out.trim.push({
-    geo: capBadge,
-    matrix: capRoot.clone().multiply(makeTransform(0, 0.068, 0.116, -0.18, 0, 0, 1.0, 1.0, 0.45)),
-  });
-
-  const helmCenter = rotT(0, 0.93, 0.405);
-  const helmMat = makeTransform(helmCenter.x, helmCenter.y, helmCenter.z, -0.64, torsoYaw, 0);
-  const helmOuterHolo = trackGeo(out, new THREE.TorusGeometry(0.242, 0.012, 4, 18));
-  out.crystal.push({ geo: helmOuterHolo, matrix: helmMat, colorRgb: holoCyan });
-
-  const helmBrassRim = trackGeo(out, new THREE.TorusGeometry(0.192, 0.010, 4, 18));
-  const helmInnerGear = trackGeo(out, new THREE.TorusGeometry(0.086, 0.0085, 4, 12));
-  out.trim.push(
-    { geo: helmBrassRim, matrix: helmMat, colorRgb: brassGold },
-    { geo: helmInnerGear, matrix: helmMat.clone().multiply(makeTransform(0, 0, -0.014)), colorRgb: agedBronze },
-  );
-
-  const spokeGeo = trackGeo(out, new THREE.CylinderGeometry(0.008, 0.0055, 0.276, 5));
-  const handleKnob = trackGeo(out, new THREE.SphereGeometry(0.012, 5, 4));
-  for (let i = 0; i < 8; i += 1) {
-    const a = (i / 8) * Math.PI * 2;
-    const sMat = helmMat.clone().multiply(makeTransform(Math.cos(a) * 0.138, Math.sin(a) * 0.138, 0, 0, 0, a - Math.PI * 0.5));
-    out.trim.push({ geo: spokeGeo, matrix: sMat, colorRgb: brassGold });
-    out.trim.push({
-      geo: handleKnob,
-      matrix: helmMat.clone().multiply(makeTransform(Math.cos(a) * 0.275, Math.sin(a) * 0.275, 0)),
-      colorRgb: agedBronze,
-    });
-  }
-
-  const helmHub = trackGeo(out, new THREE.SphereGeometry(0.034, 7, 5));
-  out.energy.push({ geo: helmHub, matrix: helmMat, colorRgb: amberGlow });
-
-  const chartCenter = rotT(0, 1.16, 0.44);
-  const chartMat = makeTransform(chartCenter.x, chartCenter.y, chartCenter.z, -0.34, torsoYaw, 0);
-  const holoArcProfile: readonly (readonly [number, number])[] = [
-    [0.34, -0.05],
-    [0.36, 0.04],
-    [0.31, 0.12],
-  ];
-  const holoChartPlate = trackGeo(out, createLathePart(holoArcProfile, 16));
-  out.crystal.push({
-    geo: holoChartPlate,
-    matrix: chartMat.clone().multiply(makeTransform(0, -0.04, -0.04, Math.PI * 0.48, 0, 0, 1.0, 0.36, 0.60)),
-    colorRgb: holoCyan,
-  });
-
-  const orbitA = trackGeo(out, new THREE.TorusGeometry(0.28, 0.0055, 4, 18));
-  const orbitB = trackGeo(out, new THREE.TorusGeometry(0.20, 0.005, 4, 16));
-  const orbitC = trackGeo(out, new THREE.TorusGeometry(0.35, 0.0045, 3, 20));
-  const orbitMatA = chartMat.clone().multiply(makeTransform(0, 0.04, 0, 0.88, 0.32, 0.18));
-  out.trim.push(
-    { geo: orbitA, matrix: orbitMatA, colorRgb: brassGold },
-    { geo: orbitB, matrix: chartMat.clone().multiply(makeTransform(0, 0.04, 0, -0.76, -0.45, 0.24)), colorRgb: brassGold },
-    { geo: orbitC, matrix: chartMat.clone().multiply(makeTransform(0, 0.02, 0, 1.28, 0.12, -0.22)), colorRgb: agedBronze },
-  );
-
-  const tickGeo = trackGeo(out, new THREE.CylinderGeometry(0.0025, 0.0025, 0.026, 4));
-  for (let tk = 0; tk < 8; tk += 1) {
-    const a = (tk / 8) * Math.PI * 2;
-    out.trim.push({
-      geo: tickGeo,
-      matrix: orbitMatA.clone().multiply(makeTransform(Math.cos(a) * 0.28, Math.sin(a) * 0.28, 0, 0, 0, a - Math.PI * 0.5)),
-      colorRgb: brassGold,
-    });
-  }
-
-  const miniHull = trackGeo(out, createTeardropPart(0.18, 0.026, 1.5, 8, 6, 0, holoCyan, capWhite));
-  const miniWing = trackGeo(out, createCreatureFin(0.06, 0.11, 0.05, 0.008, 0.005, 5, 2, holoCyan, capWhite));
-  const shipMat = chartMat.clone().multiply(makeTransform(0, 0.05, 0.02, 0.22, -0.58, 0.12));
-  out.crystal.push({
-    geo: miniHull,
-    matrix: shipMat.clone().multiply(makeTransform(0, 0, 0, Math.PI * 0.5, 0, 0)),
-    colorRgb: holoCyan,
-  });
-  for (const sgn of [-1, 1] as const) {
+  const eyeOrb = trackGeo(out, new THREE.SphereGeometry(0.026, 10, 8));
+  const eyeBezel = trackGeo(out, new THREE.TorusGeometry(0.032, 0.007, 6, 14));
+  for (const side of [-1, 1] as const) {
     out.energy.push({
-      geo: miniWing,
-      matrix: shipMat.clone().multiply(makeTransform(sgn * 0.018, 0, -0.02, 0, 0, 0, sgn, 1, 1)),
-      colorRgb: holoCyan,
+      geo: eyeOrb,
+      matrix: whaleFrame.clone().multiply(makeTransform(side * 0.158, 0.024, 0.44)),
+      colorRgb: iceFoam,
+    });
+    out.trim.push({
+      geo: eyeBezel,
+      matrix: whaleFrame
+        .clone()
+        .multiply(makeTransform(side * 0.162, 0.024, 0.44, 0, side * 1.18, 0)),
+      colorRgb: warmBronze,
     });
   }
 
-  const blip = trackGeo(out, new THREE.OctahedronGeometry(0.012, 0));
-  const blips: readonly Vec3Tuple[] = [
-    [-0.18, 0.11, 0.04],
-    [0.21, 0.08, 0.06],
-    [0.07, 0.16, 0.02],
-    [-0.11, -0.02, 0.08],
-  ];
-  for (const [bx, by, bz] of blips) {
-    out.energy.push({
-      geo: blip,
-      matrix: chartMat.clone().multiply(makeTransform(bx, by, bz, 0, 0.4, 0, 0.8, 1.4, 0.8)),
-      colorRgb: amberGlow,
-    });
+  const gillSlit = trackGeo(out, createCurvedBladePart(0.145, 0.026, 0.012, 0.018, 0.012, 6));
+  const gillCowl = trackGeo(out, createCurvedBladePart(0.162, 0.038, 0.018, 0.016, 0.010, 6));
+  for (const side of [-1, 1] as const) {
+    for (let g = 0; g < 4; g += 1) {
+      const gz = 0.28 - g * 0.088;
+      const gx = side * (0.205 - g * 0.006);
+      const gy = -0.024 + g * 0.006;
+      const gMat = whaleFrame
+        .clone()
+        .multiply(makeTransform(gx, gy, gz, 0.34, side * 0.24, side * 0.18));
+      out.matte.push({ geo: gillCowl, matrix: gMat, colorRgb: deepSlate });
+      out.energy.push({
+        geo: gillSlit,
+        matrix: whaleFrame
+          .clone()
+          .multiply(makeTransform(gx + side * 0.012, gy + 0.006, gz + 0.004, 0.34, side * 0.24, side * 0.18)),
+        colorRgb: cherenkovCyan,
+      });
+    }
   }
 
-  const admiralArc = trackGeo(out, new THREE.TorusGeometry(0.52, 0.014, 4, 20));
-  out.wingParts.push({
-    geo: admiralArc,
-    matrix: makeTransform(0, 1.22, -0.18, 0.06, 0, 0),
-    colorRgb: brassGold,
+  const turretSaddle = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [-0.14, 0],
+        [0.14, 0],
+        [0.11, 0.16],
+        [0.06, 0.23],
+        [-0.06, 0.23],
+        [-0.11, 0.16],
+      ],
+      0.34,
+      0.014,
+      0.014,
+      2,
+    ),
+  );
+  out.armor.push({
+    geo: turretSaddle,
+    matrix: whaleFrame.clone().multiply(makeTransform(0, 0.155, -0.02, -0.10, 0, 0)),
+    colorRgb: starIndigo,
   });
 
-  out.crystalHex = 0x38bdf8;
-  out.crystalOpacity = 0.36;
-  out.crystalIntensity = 0.56;
-  out.weaponGlowHex = 0xf59e0b;
+  const dorsalFinSpine = trackGeo(
+    out,
+    createCurvedBladePart(0.32, 0.12, 0.032, 0.08, 0.02, 8),
+  );
+  out.trim.push({
+    geo: dorsalFinSpine,
+    matrix: whaleFrame.clone().multiply(makeTransform(0, 0.28, -0.14, -0.52, Math.PI * 0.5, 0)),
+    colorRgb: warmBronze,
+  });
+
+  const barrelGeo = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.026, -0.28],
+        [0.032, -0.22],
+        [0.028, -0.06],
+        [0.022, 0.02],
+        [0.025, 0.16],
+        [0.018, 0.26],
+        [0.022, 0.34],
+        [0.014, 0.38],
+      ],
+      12,
+    ),
+  );
+  const muzzleRing = trackGeo(out, new THREE.TorusGeometry(0.026, 0.0055, 6, 12));
+  const plasmaRail = trackGeo(out, new THREE.CylinderGeometry(0.0085, 0.0085, 0.56, 8));
+  const barrelOffsets: readonly [number, number, number][] = [
+    [-0.082, 0.30, 0.16],
+    [0.082, 0.30, 0.16],
+    [-0.042, 0.365, 0.06],
+    [0.042, 0.365, 0.06],
+  ];
+  for (const [bx, by, bz] of barrelOffsets) {
+    out.trim.push({
+      geo: barrelGeo,
+      matrix: whaleFrame.clone().multiply(makeTransform(bx, by, bz, Math.PI * 0.5 - 0.06, 0, 0)),
+      colorRgb: paleAlloy,
+    });
+    out.trim.push({
+      geo: muzzleRing,
+      matrix: whaleFrame.clone().multiply(makeTransform(bx, by + 0.022, bz + 0.33, 0, 0, 0)),
+      colorRgb: warmBronze,
+    });
+    out.energy.push({
+      geo: plasmaRail,
+      matrix: whaleFrame
+        .clone()
+        .multiply(makeTransform(bx, by + 0.014, bz + 0.05, Math.PI * 0.5 - 0.06, 0, 0)),
+      colorRgb: cherenkovCyan,
+    });
+  }
+
+  const pecArmor = trackGeo(
+    out,
+    createCreatureFin(0.28, 0.58, 0.32, 0.048, 0.034, 16, 8, starIndigo, titaniumTeal),
+  );
+  const pecFoil = trackGeo(
+    out,
+    createCreatureFin(0.20, 0.64, 0.42, 0.032, 0.012, 14, 6, cherenkovCyan, iceFoam),
+  );
+  const tubercleOrb = trackGeo(out, new THREE.SphereGeometry(0.018, 8, 6));
+  for (const side of [-1, 1] as const) {
+    const finMat = whaleFrame
+      .clone()
+      .multiply(makeTransform(side * 0.175, -0.055, 0.16, 0.10, side * 0.16, -side * 0.24, side, 1, 1));
+    out.armor.push({ geo: pecArmor, matrix: finMat });
+    out.crystal.push({
+      geo: pecFoil,
+      matrix: whaleFrame
+        .clone()
+        .multiply(makeTransform(side * 0.18, -0.062, 0.05, 0.12, side * 0.20, -side * 0.28, side, 1, 1)),
+    });
+    for (let k = 0; k < 3; k += 1) {
+      const f = (k + 1) / 4;
+      out.trim.push({
+        geo: tubercleOrb,
+        matrix: finMat.clone().multiply(makeTransform(0.14 + f * 0.34, 0.022, 0.10 - f * 0.20)),
+        colorRgb: warmBronze,
+      });
+    }
+  }
+
+  const flukeArmor = trackGeo(
+    out,
+    createCreatureFin(0.24, 0.44, 0.26, 0.038, 0.024, 14, 8, titaniumTeal, paleAlloy),
+  );
+  const flukeLight = trackGeo(
+    out,
+    createCreatureFin(0.18, 0.50, 0.34, 0.024, 0.010, 12, 6, cherenkovCyan, iceFoam),
+  );
+  for (const side of [-1, 1] as const) {
+    out.armor.push({
+      geo: flukeArmor,
+      matrix: whaleFrame
+        .clone()
+        .multiply(makeTransform(side * 0.02, 0.165, -0.80, -0.22, side * 0.12, side * 0.14, side, 1, 1)),
+    });
+    out.crystal.push({
+      geo: flukeLight,
+      matrix: whaleFrame
+        .clone()
+        .multiply(makeTransform(side * 0.02, 0.165, -0.85, -0.26, side * 0.16, side * 0.18, side, 1, 1)),
+    });
+  }
+
+  const wingArc = trackGeo(out, new THREE.TorusGeometry(0.64, 0.016, 8, 28, Math.PI * 0.85));
+  out.wingParts.push(
+    { geo: wingArc, matrix: makeTransform(-0.08, 1.04, -0.20, 0.22, 0.48, 0.62), colorRgb: warmBronze },
+    { geo: wingArc, matrix: makeTransform(0.08, 1.04, -0.20, 0.22, -0.48, -0.62), colorRgb: warmBronze },
+  );
+
+  out.weaponGlowHex = 0x38bdf8;
+  out.crystalHex = 0x67e8f9;
+  out.crystalOpacity = 0.50;
+  out.crystalIntensity = 0.62;
   out.headTopLocalY = 1.76;
 }
 
-function buildS36AbyssalSingularity(out: UnitBlueprintParts): void {
-  const absoluteVoid: RgbTriple = [0.005, 0.005, 0.010];
-  const obsidianDark: RgbTriple = [0.05, 0.05, 0.09];
-  const obsidianEdge: RgbTriple = [0.18, 0.12, 0.18];
-  const moltenGold: RgbTriple = [1.0, 0.80, 0.30];
-  const whiteGold: RgbTriple = [1.0, 0.94, 0.68];
-  const darkCrimson: RgbTriple = [0.84, 0.10, 0.22];
-  const abyssalCrimson: RgbTriple = [0.56, 0.06, 0.16];
+function buildS30Sirius(out: UnitBlueprintParts): void {
+  const deepNavy: RgbTriple = [0.13, 0.21, 0.38];
+  const steelBlue: RgbTriple = [0.24, 0.36, 0.56];
+  const matteTitanium: RgbTriple = [0.72, 0.78, 0.86];
+  const brightSilver: RgbTriple = [0.88, 0.92, 0.97];
+  const surveyBrass: RgbTriple = [0.80, 0.66, 0.40];
+  const carbonFrame: RgbTriple = [0.10, 0.14, 0.22];
+  const dwarfWhite: RgbTriple = [0.95, 0.98, 1.0];
+  const lensIce: RgbTriple = [0.64, 0.84, 1.0];
 
-  const centerY = 1.04;
-  const centerMat = makeTransform(0, centerY, 0);
+  const centerY = 1.08;
 
-  const voidCore = trackGeo(out, new THREE.SphereGeometry(0.258, 22, 16));
-  out.matte.push({ geo: voidCore, matrix: centerMat, colorRgb: absoluteVoid });
-
-  const photonRim = trackGeo(out, new THREE.TorusGeometry(0.276, 0.010, 6, 30));
+  const baseHex = trackGeo(out, createChamferedHexPart(0.42, 0.048, 0.014, 0.24));
+  out.armor.push({
+    geo: baseHex,
+    matrix: makeTransform(0, 0.15, 0, Math.PI * 0.5, 0, 0),
+    colorRgb: deepNavy,
+  });
+  const baseVernier = trackGeo(out, new THREE.TorusGeometry(0.36, 0.014, 8, 32));
+  out.trim.push({
+    geo: baseVernier,
+    matrix: makeTransform(0, 0.18, 0, Math.PI * 0.5, 0, 0),
+    colorRgb: surveyBrass,
+  });
+  const baseCoreRing = trackGeo(out, new THREE.TorusGeometry(0.18, 0.011, 6, 24));
   out.energy.push({
-    geo: photonRim,
-    matrix: makeTransform(0, centerY, 0, 0.14, 0.30, 0),
-    colorRgb: whiteGold,
+    geo: baseCoreRing,
+    matrix: makeTransform(0, 0.17, 0, Math.PI * 0.5, 0, 0),
+    colorRgb: lensIce,
   });
 
-  const lensingHaloRing = trackGeo(out, new THREE.TorusGeometry(0.320, 0.022, 6, 28));
-  out.crystal.push({
-    geo: lensingHaloRing,
-    matrix: makeTransform(0, centerY, 0, 0.14, 0.30, 0),
-    colorRgb: darkCrimson,
-  });
-
-  const ring1Mat = makeTransform(0, centerY, 0, 0.34, 0.22, -0.20);
-  const ring1Ribbon = buildWarpedAccretionRing(
+  const anchorLeg = trackGeo(
     out,
-    0.465,
-    [0.092, 0.114, 0.092],
-    0.108,
-    2,
-    0.25,
-    0.044,
-    3,
-    30,
-    3,
-    0,
-    moltenGold,
-    darkCrimson,
+    createOrganicLimb(
+      [
+        [0, 0.15, 0.35],
+        [0, 0.11, 0.45],
+        [0, 0.06, 0.52],
+      ],
+      0.032,
+      0.026,
+      0.020,
+      10,
+      8,
+      deepNavy,
+      matteTitanium,
+    ),
   );
-  out.energy.push({ geo: ring1Ribbon, matrix: ring1Mat });
-
-  const ring1Crystal = buildWarpedAccretionRing(
-    out,
-    0.508,
-    [0.096, 0.124, 0.096],
-    0.132,
-    2,
-    0.55,
-    0.054,
-    3,
-    28,
-    3,
-    0,
-    whiteGold,
-    abyssalCrimson,
-  );
-  out.crystal.push({ geo: ring1Crystal, matrix: ring1Mat });
-
-  const ring2Mat = makeTransform(0, centerY, 0, 1.14, -0.48, 0.62);
-  const ring2Ribbon = buildWarpedAccretionRing(
-    out,
-    0.542,
-    [0.058, 0.078, 0.058],
-    0.140,
-    3,
-    1.10,
-    0.050,
-    2,
-    30,
-    3,
-    0,
-    darkCrimson,
-    moltenGold,
-  );
-  out.trim.push({ geo: ring2Ribbon, matrix: ring2Mat });
-
-  const ring2Fil = buildWarpedFilament(out, 0.560, 0.142, 3, 1.10, 0.050, 2, 0.0085, 30, 6);
-  out.energy.push({ geo: ring2Fil, matrix: ring2Mat, colorRgb: moltenGold });
-
-  const ring3Mat = makeTransform(0, centerY, 0, -0.86, 0.72, -1.08);
-  const ring3Ribbon = buildWarpedAccretionRing(
-    out,
-    0.492,
-    [0.054, 0.074, 0.054],
-    0.128,
-    2,
-    2.15,
-    0.040,
-    3,
-    28,
-    3,
-    0,
-    abyssalCrimson,
-    moltenGold,
-  );
-  out.crystal.push({ geo: ring3Ribbon, matrix: ring3Mat });
-
-  const ring3Fil = buildWarpedFilament(out, 0.484, 0.120, 2, 2.15, 0.038, 3, 0.008, 28, 6);
-  out.energy.push({ geo: ring3Fil, matrix: ring3Mat, colorRgb: darkCrimson });
-
-  for (let s = 0; s < 3; s += 1) {
-    const phase = (s / 3) * Math.PI * 2;
-    const pts: Vec3Tuple[] = [];
-    for (let k = 0; k <= 10; k += 1) {
-      const t = k / 10;
-      const a = phase + t * Math.PI * 1.65;
-      const r = 0.57 - t * 0.29;
-      const y = centerY + Math.sin(t * Math.PI * 2 + phase) * 0.28;
-      pts.push([Math.cos(a) * r, y, Math.sin(a) * r]);
-    }
-    const infall = trackGeo(out, createTaperedTubePart(pts, 0.012, 0.0035, 14, 6));
-    out.energy.push({ geo: infall, colorRgb: s === 0 ? whiteGold : moltenGold });
+  const footPad = trackGeo(out, new THREE.CylinderGeometry(0.034, 0.046, 0.036, 8));
+  for (let i = 0; i < 4; i += 1) {
+    const yaw = (i / 4) * Math.PI * 2 + Math.PI * 0.25;
+    out.armor.push({ geo: anchorLeg, matrix: makeTransform(0, 0, 0, 0, yaw, 0) });
+    out.matte.push({
+      geo: footPad,
+      matrix: makeTransform(Math.sin(yaw) * 0.52, 0.056, Math.cos(yaw) * 0.52),
+      colorRgb: carbonFrame,
+    });
   }
 
-  const upVec = new THREE.Vector3(0, 1, 0);
-  const qShard = new THREE.Quaternion();
-  const dirShard = new THREE.Vector3();
-  const shardBand = trackGeo(out, new THREE.TorusGeometry(0.054, 0.007, 6, 14));
-  shardBand.rotateX(Math.PI * 0.5);
-  const shardTip = trackGeo(out, new THREE.SphereGeometry(0.016, 8, 6));
+  const dwarfCore = trackGeo(out, new THREE.IcosahedronGeometry(0.178, 2));
+  out.energy.push({
+    geo: dwarfCore,
+    matrix: makeTransform(0, centerY, 0),
+    colorRgb: dwarfWhite,
+  });
+  const coronaShell = trackGeo(out, new THREE.SphereGeometry(0.228, 20, 16));
+  out.crystal.push({
+    geo: coronaShell,
+    matrix: makeTransform(0, centerY, 0),
+    colorRgb: lensIce,
+  });
 
-  for (let i = 0; i < 8; i += 1) {
-    const ang = (i / 8) * Math.PI * 2 + 0.22;
-    const radius = 0.61 + (i % 3) * 0.055;
-    const yOff = Math.sin(ang * 2 + 0.5) * 0.52 + ((i % 2) * 2 - 1) * 0.18;
-    const sx = Math.cos(ang) * radius;
-    const sy = centerY + yOff;
-    const sz = Math.sin(ang) * radius;
+  const flareLoop = trackGeo(out, new THREE.TorusGeometry(0.242, 0.008, 6, 28));
+  out.energy.push(
+    { geo: flareLoop, matrix: makeTransform(0, centerY, 0, 0.58, 0.34, 0.22), colorRgb: dwarfWhite },
+    { geo: flareLoop, matrix: makeTransform(0, centerY, 0, -0.72, 0.88, -0.44), colorRgb: lensIce },
+  );
 
-    const shardLen = 0.28 + (i % 3) * 0.055;
-    const shardRad = 0.054 + (i % 2) * 0.014;
-    const shardGeo = trackGeo(
-      out,
-      createFacetedCrystalPart(shardLen, shardRad, 5 + (i % 2), 0.64, 0.36, obsidianDark, obsidianEdge),
-    );
+  const polarJet = trackGeo(out, createTeardropPart(0.32, 0.038, 2.2, 12, 10, 0, dwarfWhite, lensIce));
+  out.energy.push(
+    { geo: polarJet, matrix: makeTransform(0, centerY + 0.24, 0, 0.14, 0, -0.12) },
+    { geo: polarJet, matrix: makeTransform(0, centerY - 0.24, 0, Math.PI + 0.14, 0, -0.12) },
+  );
 
-    dirShard.set(-sx, centerY - sy, -sz).normalize();
-    qShard.setFromUnitVectors(upVec, dirShard);
-    const spin = new THREE.Quaternion().setFromAxisAngle(upVec, i * 0.9);
-    qShard.multiply(spin);
+  const cagePylon = trackGeo(
+    out,
+    createOrganicLimb(
+      [
+        [0, 0.17, 0.36],
+        [0, 0.54, 0.54],
+        [0, 1.08, 0.56],
+        [0, 1.56, 0.42],
+        [0, 1.80, 0.12],
+      ],
+      0.036,
+      0.044,
+      0.026,
+      18,
+      10,
+      deepNavy,
+      steelBlue,
+    ),
+  );
+  const cageInnerCoil = trackGeo(
+    out,
+    createOrganicLimb(
+      [
+        [0, 0.28, 0.35],
+        [0, 0.68, 0.48],
+        [0, 1.08, 0.49],
+        [0, 1.48, 0.38],
+        [0, 1.72, 0.14],
+      ],
+      0.015,
+      0.018,
+      0.012,
+      14,
+      8,
+      carbonFrame,
+      matteTitanium,
+    ),
+  );
+  const pinchEmitter = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.042, -0.05],
+        [0.036, 0.0],
+        [0.024, 0.06],
+        [0.014, 0.11],
+      ],
+      10,
+    ),
+  );
+  const emitterTip = trackGeo(out, new THREE.SphereGeometry(0.019, 8, 6));
+  const shroudPlate = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [-0.045, -0.16],
+        [0.045, -0.16],
+        [0.062, 0.04],
+        [0.030, 0.18],
+        [-0.030, 0.18],
+        [-0.062, 0.04],
+      ],
+      0.036,
+      0.009,
+      0.009,
+      1,
+    ),
+  );
 
-    const shardMat = new THREE.Matrix4().compose(
-      new THREE.Vector3(sx, sy, sz),
-      qShard,
-      new THREE.Vector3(1.0, 1.0, 0.84),
-    );
-
-    out.armor.push({ geo: shardGeo, matrix: shardMat });
+  for (let i = 0; i < 4; i += 1) {
+    const yaw = (i / 4) * Math.PI * 2 + Math.PI * 0.25;
+    const rot = makeTransform(0, 0, 0, 0, yaw, 0);
+    out.armor.push({ geo: cagePylon, matrix: rot });
+    out.matte.push({ geo: cageInnerCoil, matrix: rot });
     out.trim.push({
-      geo: shardBand,
-      matrix: shardMat.clone().multiply(makeTransform(0, 0.01, 0, 0, 0, 0, shardRad / 0.054, 1.0, shardRad / 0.054)),
-      colorRgb: i % 2 === 0 ? moltenGold : darkCrimson,
+      geo: shroudPlate,
+      matrix: rot.clone().multiply(makeTransform(0, 1.06, 0.59, 0, 0, 0)),
+      colorRgb: matteTitanium,
+    });
+    out.trim.push({
+      geo: pinchEmitter,
+      matrix: rot.clone().multiply(makeTransform(0, centerY, 0.48, -Math.PI * 0.5, 0, 0)),
+      colorRgb: brightSilver,
     });
     out.energy.push({
-      geo: shardTip,
-      matrix: shardMat.clone().multiply(makeTransform(0, shardLen * 0.62, 0)),
-      colorRgb: i % 2 === 0 ? whiteGold : darkCrimson,
+      geo: emitterTip,
+      matrix: rot.clone().multiply(makeTransform(0, centerY, 0.365)),
+      colorRgb: dwarfWhite,
     });
   }
 
-  const abyssCrown = trackGeo(out, new THREE.TorusGeometry(0.70, 0.014, 6, 28));
+  const crownSpire = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.14, 0.0],
+        [0.11, 0.05],
+        [0.065, 0.10],
+        [0.042, 0.18],
+        [0.018, 0.28],
+        [0.004, 0.34],
+      ],
+      14,
+    ),
+  );
+  out.trim.push({
+    geo: crownSpire,
+    matrix: makeTransform(0, 1.76, 0),
+    colorRgb: brightSilver,
+  });
+  const crownHalo = trackGeo(out, new THREE.TorusGeometry(0.15, 0.012, 6, 20));
+  out.trim.push({
+    geo: crownHalo,
+    matrix: makeTransform(0, 1.82, 0, Math.PI * 0.5, 0, 0),
+    colorRgb: surveyBrass,
+  });
+
+  const innerLensRing = trackGeo(out, new THREE.TorusGeometry(0.45, 0.022, 10, 36));
+  const innerMetalHoop = trackGeo(out, new THREE.TorusGeometry(0.48, 0.009, 6, 36));
+  const innerTilt = makeTransform(0, centerY, 0, 0.62, 0.24, 0.34);
+  out.crystal.push({ geo: innerLensRing, matrix: innerTilt, colorRgb: lensIce });
+  out.trim.push({ geo: innerMetalHoop, matrix: innerTilt, colorRgb: brightSilver });
+
+  const outerSurveyRing = trackGeo(out, new THREE.TorusGeometry(0.66, 0.020, 10, 40));
+  const outerBrassTrack = trackGeo(out, new THREE.TorusGeometry(0.695, 0.009, 6, 40));
+  const outerTilt = makeTransform(0, centerY, 0, -0.52, -0.30, -0.26);
+  out.armor.push({ geo: outerSurveyRing, matrix: outerTilt, colorRgb: deepNavy });
+  out.trim.push({ geo: outerBrassTrack, matrix: outerTilt, colorRgb: surveyBrass });
+
+  const vernierPip = trackGeo(out, new THREE.CylinderGeometry(0.011, 0.011, 0.056, 6));
+  for (let i = 0; i < 8; i += 1) {
+    const a = (i / 8) * Math.PI * 2;
+    out.trim.push({
+      geo: vernierPip,
+      matrix: outerTilt
+        .clone()
+        .multiply(makeTransform(Math.cos(a) * 0.68, Math.sin(a) * 0.68, 0, 0, 0, a - Math.PI * 0.5)),
+      colorRgb: surveyBrass,
+    });
+  }
+
+  const lensMeniscus = trackGeo(out, createCurvedVisorPart(0.38, 0.38, 0.22, 2.2, 0.65, 1.85));
+  out.crystal.push({
+    geo: lensMeniscus,
+    matrix: makeTransform(0, centerY, -0.06, 0, Math.PI, 0),
+    colorRgb: lensIce,
+  });
+
+  const prismCrystal = trackGeo(
+    out,
+    createFacetedCrystalPart(0.24, 0.058, 6, 0.58, 0.42, lensIce, dwarfWhite),
+  );
+  const prismClamp = trackGeo(out, new THREE.TorusGeometry(0.066, 0.010, 6, 12));
+  const prismAngles = [0.46, -0.46, Math.PI - 0.58, -Math.PI + 0.58];
+  for (let i = 0; i < 4; i += 1) {
+    const ang = prismAngles[i]!;
+    const py = centerY + (i < 2 ? 0.14 : -0.10);
+    const pr = 0.68;
+    const px = Math.sin(ang) * pr;
+    const pz = Math.cos(ang) * pr;
+    const pMat = makeTransform(px, py, pz, i < 2 ? 0.28 : -0.22, ang, i % 2 === 0 ? 0.18 : -0.18);
+    out.crystal.push({ geo: prismCrystal, matrix: pMat });
+    out.trim.push({
+      geo: prismClamp,
+      matrix: pMat.clone().multiply(makeTransform(0, 0, 0, Math.PI * 0.5, 0, 0)),
+      colorRgb: matteTitanium,
+    });
+  }
+
+  const forwardApertureOuter = trackGeo(out, new THREE.TorusGeometry(0.22, 0.018, 8, 24));
+  const forwardApertureInner = trackGeo(out, new THREE.TorusGeometry(0.15, 0.010, 6, 20));
+  out.trim.push({
+    geo: forwardApertureOuter,
+    matrix: makeTransform(0, centerY, 0.54, 0, 0, 0),
+    colorRgb: surveyBrass,
+  });
+  out.energy.push({
+    geo: forwardApertureInner,
+    matrix: makeTransform(0, centerY, 0.56, 0, 0, 0),
+    colorRgb: dwarfWhite,
+  });
+
+  const dishGeo = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.016, 0.0],
+        [0.075, 0.018],
+        [0.145, 0.056],
+        [0.195, 0.112],
+        [0.182, 0.116],
+        [0.068, 0.028],
+        [0.012, 0.010],
+      ],
+      18,
+    ),
+  );
+  const feedHorn = trackGeo(out, new THREE.CylinderGeometry(0.010, 0.018, 0.14, 8));
+  out.armor.push({
+    geo: dishGeo,
+    matrix: makeTransform(0, centerY, -0.58, Math.PI * 0.5, 0, 0, 1.15, 1.0, 1.15),
+    colorRgb: steelBlue,
+  });
+  for (const side of [-1, 1] as const) {
+    const dMat = makeTransform(side * 0.62, centerY + 0.24, -0.12, Math.PI * 0.5 - 0.20, side * 0.44, 0, 0.72, 0.72, 0.72);
+    out.trim.push({ geo: dishGeo, matrix: dMat, colorRgb: matteTitanium });
+    out.trim.push({
+      geo: feedHorn,
+      matrix: dMat.clone().multiply(makeTransform(0, 0.09, 0)),
+      colorRgb: surveyBrass,
+    });
+  }
+
+  const wingSurveyArc = trackGeo(out, new THREE.TorusGeometry(0.78, 0.016, 8, 30, Math.PI * 0.75));
   out.wingParts.push(
-    { geo: abyssCrown, matrix: makeTransform(0, centerY, 0, 0.55, 0.32, 0.44), colorRgb: moltenGold },
-    { geo: abyssCrown, matrix: makeTransform(0, centerY, 0, -0.55, -0.32, -0.44), colorRgb: darkCrimson },
+    { geo: wingSurveyArc, matrix: makeTransform(-0.06, centerY, -0.18, 0.18, 0.42, 0.85), colorRgb: surveyBrass },
+    { geo: wingSurveyArc, matrix: makeTransform(0.06, centerY, -0.18, 0.18, -0.42, -0.85), colorRgb: surveyBrass },
   );
 
-  out.crystalHex = 0xe11d48;
-  out.crystalOpacity = 0.38;
+  out.weaponGlowHex = 0xdbeafe;
+  out.crystalHex = 0x7dd3fc;
+  out.crystalOpacity = 0.46;
   out.crystalIntensity = 0.72;
-  out.weaponGlowHex = 0xf59e0b;
-  out.headTopLocalY = 1.92;
+  out.headTopLocalY = 2.18;
+}
+
+function buildS31Siren(out: UnitBlueprintParts): void {
+  const glacierWhite: RgbTriple = [0.84, 0.93, 0.98];
+  const frostBlue: RgbTriple = [0.54, 0.78, 0.92];
+  const abyssalBlue: RgbTriple = [0.22, 0.46, 0.66];
+  const deepSeaSlate: RgbTriple = [0.14, 0.28, 0.42];
+  const frostSilver: RgbTriple = [0.76, 0.86, 0.94];
+  const bioMint: RgbTriple = [0.42, 0.88, 0.76];
+  const bioPearl: RgbTriple = [0.80, 0.98, 0.92];
+
+  const calyxY = 0.58;
+
+  const calyxCup = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.04, -0.22],
+        [0.10, -0.15],
+        [0.19, -0.06],
+        [0.26, 0.02],
+        [0.24, 0.08],
+        [0.16, 0.05],
+        [0.06, 0.02],
+      ],
+      18,
+    ),
+  );
+  out.armor.push({
+    geo: calyxCup,
+    matrix: makeTransform(0, calyxY, 0),
+    colorRgb: glacierWhite,
+  });
+
+  const calyxCore = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.06, -0.25],
+        [0.14, -0.18],
+        [0.18, -0.09],
+        [0.11, -0.05],
+      ],
+      14,
+    ),
+  );
+  out.matte.push({
+    geo: calyxCore,
+    matrix: makeTransform(0, calyxY, 0),
+    colorRgb: deepSeaSlate,
+  });
+  const stabilizerRing = trackGeo(out, new THREE.TorusGeometry(0.28, 0.014, 8, 28));
+  out.trim.push({
+    geo: stabilizerRing,
+    matrix: makeTransform(0, calyxY - 0.04, 0, Math.PI * 0.5, 0, 0),
+    colorRgb: frostSilver,
+  });
+
+  const cryoTile = trackGeo(out, createHexMirrorTilePart(0.085, 0.022, 0.008, 0.008, frostBlue, abyssalBlue));
+  for (let i = 0; i < 6; i += 1) {
+    const a = (i / 6) * Math.PI * 2;
+    out.armor.push({
+      geo: cryoTile,
+      matrix: makeTransform(
+        Math.sin(a) * 0.22,
+        calyxY - 0.10,
+        Math.cos(a) * 0.22,
+        Math.PI * 0.34,
+        a,
+        0,
+      ),
+    });
+  }
+
+  const dropTip = trackGeo(out, new THREE.SphereGeometry(0.020, 8, 6));
+  for (let i = 0; i < 6; i += 1) {
+    const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+    const sa = Math.sin(a);
+    const ca = Math.cos(a);
+    const sway = i % 2 === 0 ? 0.05 : -0.05;
+    const tendrilGeo = trackGeo(
+      out,
+      createTaperedTubePart(
+        [
+          [sa * 0.14, calyxY - 0.14, ca * 0.14],
+          [sa * 0.24 + ca * sway, calyxY - 0.28, ca * 0.24 - sa * sway],
+          [sa * 0.28, 0.14, ca * 0.28],
+        ],
+        0.013,
+        0.004,
+        12,
+        6,
+      ),
+    );
+    out.crystal.push({ geo: tendrilGeo, matrix: makeTransform(0, 0, 0), colorRgb: frostBlue });
+    out.energy.push({
+      geo: dropTip,
+      matrix: makeTransform(sa * 0.28, 0.13, ca * 0.28),
+      colorRgb: bioMint,
+    });
+  }
+
+  const outerPetalCrystal = trackGeo(
+    out,
+    createPetalPart(0.74, 0.34, 0.078, 0.082, 1.32, 14, 8, glacierWhite, frostBlue),
+  );
+  const outerSepalArmor = trackGeo(
+    out,
+    createPetalPart(0.46, 0.22, 0.048, 0.052, 1.40, 10, 6, abyssalBlue, frostBlue),
+  );
+  const outerVein = trackGeo(
+    out,
+    createOrganicLimb(
+      [
+        [0, 0.02, -0.012],
+        [0, 0.36, 0.024],
+        [0, 0.68, 0.006],
+      ],
+      0.013,
+      0.009,
+      0.004,
+      10,
+      6,
+      frostSilver,
+      glacierWhite,
+    ),
+  );
+
+  for (let i = 0; i < 6; i += 1) {
+    const a = (i / 6) * Math.PI * 2;
+    const pMat = makeTransform(
+      Math.sin(a) * 0.16,
+      calyxY + 0.02,
+      Math.cos(a) * 0.16,
+      0,
+      a,
+      0,
+    ).multiply(makeTransform(0, 0, 0, 1.02, 0, 0));
+    out.crystal.push({ geo: outerPetalCrystal, matrix: pMat });
+    out.armor.push({
+      geo: outerSepalArmor,
+      matrix: pMat.clone().multiply(makeTransform(0, -0.01, -0.022, 0.06, 0, 0)),
+    });
+    out.trim.push({ geo: outerVein, matrix: pMat });
+  }
+
+  const innerPetalCrystal = trackGeo(
+    out,
+    createPetalPart(0.84, 0.27, 0.064, 0.064, 1.52, 14, 8, bioPearl, frostBlue),
+  );
+  const innerSpine = trackGeo(
+    out,
+    createTaperedTubePart(
+      [
+        [0, 0.04, -0.008],
+        [0, 0.42, 0.018],
+        [0, 0.80, 0.004],
+      ],
+      0.009,
+      0.003,
+      10,
+      6,
+    ),
+  );
+  for (let i = 0; i < 6; i += 1) {
+    const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+    const pMat = makeTransform(
+      Math.sin(a) * 0.12,
+      calyxY + 0.08,
+      Math.cos(a) * 0.12,
+      0,
+      a,
+      0,
+    ).multiply(makeTransform(0, 0, 0, 0.54, 0, 0));
+    out.crystal.push({ geo: innerPetalCrystal, matrix: pMat });
+    out.trim.push({ geo: innerSpine, matrix: pMat, colorRgb: frostSilver });
+  }
+
+  const seedPod = trackGeo(
+    out,
+    createTeardropPart(0.28, 0.115, 1.25, 16, 12, 0, deepSeaSlate, glacierWhite),
+  );
+  out.armor.push({ geo: seedPod, matrix: makeTransform(0, calyxY + 0.16, 0) });
+  const seedHeart = trackGeo(out, new THREE.SphereGeometry(0.082, 14, 12));
+  out.energy.push({
+    geo: seedHeart,
+    matrix: makeTransform(0, calyxY + 0.18, 0),
+    colorRgb: bioPearl,
+  });
+
+  const helixPtsA: Vec3Tuple[] = [];
+  const helixPtsB: Vec3Tuple[] = [];
+  const helixSteps = 18;
+  const helixBaseY = calyxY + 0.16;
+  const helixHeight = 0.88;
+  for (let i = 0; i <= helixSteps; i += 1) {
+    const t = i / helixSteps;
+    const angle = t * Math.PI * 2.75;
+    const r = 0.115 * (1 - t * 0.52) + Math.sin(t * Math.PI) * 0.024;
+    const y = helixBaseY + t * helixHeight;
+    helixPtsA.push([Math.cos(angle) * r, y, Math.sin(angle) * r]);
+    helixPtsB.push([Math.cos(angle + Math.PI) * r, y, Math.sin(angle + Math.PI) * r]);
+  }
+  const strandA = trackGeo(
+    out,
+    createOrganicLimb(helixPtsA, 0.022, 0.017, 0.011, 24, 10, bioMint, bioPearl),
+  );
+  const strandB = trackGeo(
+    out,
+    createOrganicLimb(helixPtsB, 0.022, 0.017, 0.011, 24, 10, frostSilver, bioMint),
+  );
+  out.energy.push({ geo: strandA, matrix: makeTransform(0, 0, 0) });
+  out.trim.push({ geo: strandB, matrix: makeTransform(0, 0, 0) });
+
+  const rungCyl = trackGeo(out, new THREE.CylinderGeometry(0.0075, 0.0075, 1.0, 6));
+  for (let rIdx = 1; rIdx <= 7; rIdx += 1) {
+    const t = rIdx / 8;
+    const angle = t * Math.PI * 2.75;
+    const rad = 0.115 * (1 - t * 0.52) + Math.sin(t * Math.PI) * 0.024;
+    const y = helixBaseY + t * helixHeight;
+    const pA = new THREE.Vector3(Math.cos(angle) * rad, y, Math.sin(angle) * rad);
+    const pB = new THREE.Vector3(Math.cos(angle + Math.PI) * rad, y, Math.sin(angle + Math.PI) * rad);
+    out.energy.push({
+      geo: rungCyl,
+      matrix: makeSegmentTransform(pA, pB, 1.0, 1.0),
+      colorRgb: rIdx % 2 === 0 ? bioPearl : bioMint,
+    });
+  }
+
+  const canopyLeaf = trackGeo(
+    out,
+    createPetalPart(0.28, 0.13, 0.028, 0.032, 1.45, 10, 6, bioMint, bioPearl),
+  );
+  const canopyY = helixBaseY + helixHeight - 0.04;
+  for (let i = 0; i < 6; i += 1) {
+    const a = (i / 6) * Math.PI * 2;
+    const lMat = makeTransform(0, canopyY, 0, 0, a, 0).multiply(makeTransform(0, 0, 0, 0.62, 0, 0));
+    out.crystal.push({ geo: canopyLeaf, matrix: lMat });
+  }
+
+  const sporeCrystal = trackGeo(out, createFacetedCrystalPart(0.11, 0.034, 6, 0.60, 0.40, bioMint, bioPearl));
+  const sporePositions: readonly Vec3Tuple[] = [
+    [0, canopyY + 0.24, 0],
+    [-0.14, canopyY + 0.16, 0.10],
+    [0.14, canopyY + 0.14, -0.08],
+  ];
+  for (const [sx, sy, sz] of sporePositions) {
+    out.energy.push({ geo: sporeCrystal, matrix: makeTransform(sx, sy, sz) });
+  }
+
+  const frostHalo = trackGeo(out, new THREE.TorusGeometry(0.46, 0.009, 6, 32));
+  out.trim.push({
+    geo: frostHalo,
+    matrix: makeTransform(0, 1.42, -0.04, Math.PI * 0.42, 0.08, 0.12),
+    colorRgb: frostSilver,
+  });
+
+  const starPetal = trackGeo(out, createPetalPart(0.68, 0.22, 0.04, 0.05, 1.5, 10, 6));
+  for (let i = 0; i < 4; i += 1) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI * 0.25;
+    out.wingParts.push({
+      geo: starPetal,
+      matrix: makeTransform(0, 0.92, -0.14, 0, a, 0).multiply(makeTransform(0, 0, 0, 0.86, 0, 0)),
+      colorRgb: frostSilver,
+    });
+  }
+
+  out.weaponGlowHex = 0x5eead4;
+  out.crystalHex = 0x7dd3fc;
+  out.crystalOpacity = 0.56;
+  out.crystalIntensity = 0.64;
+  out.headTopLocalY = 1.98;
+}
+
+function buildS32Entropy(out: UnitBlueprintParts): void {
+  const obsidianVoid: RgbTriple = [0.06, 0.05, 0.09];
+  const darkObsidianViolet: RgbTriple = [0.16, 0.10, 0.19];
+  const emberObsidian: RgbTriple = [0.27, 0.10, 0.16];
+  const liquidCrimson: RgbTriple = [0.58, 0.12, 0.21];
+  const bloodChrome: RgbTriple = [0.78, 0.21, 0.30];
+  const scarletEnergy: RgbTriple = [0.96, 0.27, 0.37];
+  const incandescentHeart: RgbTriple = [1.0, 0.64, 0.58];
+
+  const coreY = 1.06;
+  const coreZ = 0.02;
+  const bodyFrame = makeTransform(0, coreY, coreZ, 0.12, 0.04, -0.025);
+
+  const upperCowl = trackGeo(
+    out,
+    createTeardropPart(0.56, 0.124, 1.85, 20, 14, 0.036, darkObsidianViolet, emberObsidian),
+  );
+  out.armor.push({
+    geo: upperCowl,
+    matrix: bodyFrame.clone().multiply(makeTransform(0, 0.46, 0.01, -0.78, 0, 0, 0.78, 1.06, 1.22)),
+  });
+
+  const cowlCollar = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [0.0, 0.14],
+        [-0.13, 0.03],
+        [-0.085, -0.10],
+        [0.0, -0.15],
+        [0.085, -0.10],
+        [0.13, 0.03],
+      ],
+      0.064,
+      0.014,
+      0.014,
+      2,
+    ),
+  );
+  out.matte.push({
+    geo: cowlCollar,
+    matrix: bodyFrame.clone().multiply(makeTransform(0, 0.32, 0.01, Math.PI * 0.5 - 0.18, 0, 0)),
+    colorRgb: obsidianVoid,
+  });
+
+  const crownCrest = trackGeo(out, createCurvedBladePart(0.46, 0.095, 0.026, 0.0, 0.082, 10));
+  out.trim.push({
+    geo: crownCrest,
+    matrix: bodyFrame.clone().multiply(makeTransform(0, 0.47, -0.03, -0.58, 0, 0)),
+    colorRgb: bloodChrome,
+  });
+
+  const visorSlit = trackGeo(out, createCurvedVisorPart(0.118, 0.034, 0.118, 1.56, 1.18, 0.30, 16, 6));
+  out.energy.push({
+    geo: visorSlit,
+    matrix: bodyFrame.clone().multiply(makeTransform(0, 0.42, 0.115, 0.24, 0, 0)),
+    colorRgb: scarletEnergy,
+  });
+
+  const prowNeedle = trackGeo(
+    out,
+    createFacetedCrystalPart(0.28, 0.036, 4, 0.76, 0.24, obsidianVoid, bloodChrome),
+  );
+  out.trim.push({
+    geo: prowNeedle,
+    matrix: bodyFrame.clone().multiply(makeTransform(0, 0.33, 0.19, 1.24, 0, 0)),
+  });
+
+  const lowerKeel = trackGeo(
+    out,
+    createTeardropPart(0.50, 0.110, 2.05, 18, 14, -0.030, emberObsidian, obsidianVoid),
+  );
+  out.armor.push({
+    geo: lowerKeel,
+    matrix: bodyFrame.clone().multiply(makeTransform(0, -0.44, -0.04, Math.PI + 0.24, 0, 0, 0.84, 1.0, 1.12)),
+  });
+
+  const lowerKeelFin = trackGeo(out, createCurvedBladePart(0.34, 0.068, 0.020, 0.0, -0.046, 8));
+  out.trim.push({
+    geo: lowerKeelFin,
+    matrix: bodyFrame.clone().multiply(makeTransform(0, -0.27, -0.10, Math.PI + 0.20, 0, 0)),
+    colorRgb: liquidCrimson,
+  });
+
+  for (const side of [-1, 1] as const) {
+    const ribArch = trackGeo(
+      out,
+      createFlowingRibbonMesh(
+        [
+          [side * 0.09, 0.35, -0.02],
+          [side * 0.22, 0.18, -0.10],
+          [side * 0.24, -0.02, -0.12],
+          [side * 0.18, -0.21, -0.09],
+          [side * 0.08, -0.35, -0.04],
+        ],
+        [0.050, 0.074, 0.038],
+        0.006,
+        1.0,
+        22,
+        5,
+        0.018,
+        darkObsidianViolet,
+        emberObsidian,
+      ),
+    );
+    out.armor.push({ geo: ribArch, matrix: bodyFrame.clone() });
+
+    const innerConduit = trackGeo(
+      out,
+      createTaperedTubePart(
+        [
+          [side * 0.07, 0.31, -0.01],
+          [side * 0.17, 0.14, -0.07],
+          [side * 0.19, -0.02, -0.08],
+          [side * 0.14, -0.19, -0.06],
+          [side * 0.06, -0.32, -0.02],
+        ],
+        0.018,
+        0.012,
+        14,
+        7,
+      ),
+    );
+    out.matte.push({
+      geo: innerConduit,
+      matrix: bodyFrame.clone(),
+      colorRgb: obsidianVoid,
+    });
+  }
+
+  const innerHeartCore = trackGeo(
+    out,
+    createFacetedCrystalPart(0.28, 0.074, 6, 0.56, 0.44, scarletEnergy, incandescentHeart),
+  );
+  out.energy.push({
+    geo: innerHeartCore,
+    matrix: bodyFrame.clone().multiply(makeTransform(0, 0.01, 0.02, 0.10, 0.35, -0.12)),
+  });
+
+  const outerCrystalHeart = trackGeo(
+    out,
+    createFacetedCrystalPart(0.45, 0.132, 6, 0.58, 0.42, liquidCrimson, scarletEnergy),
+  );
+  out.crystal.push({
+    geo: outerCrystalHeart,
+    matrix: bodyFrame.clone().multiply(makeTransform(0, 0.01, 0.02, 0.10, 0.88, -0.12)),
+  });
+
+  const innerFoldRing = trackGeo(out, createChamferedHexPart(0.30, 0.020, 0.007, 0.252));
+  const innerEnergyArc = trackGeo(out, new THREE.TorusGeometry(0.240, 0.006, 6, 24));
+  const innerRingMat = bodyFrame.clone().multiply(makeTransform(0, 0.01, 0.02, 0.62, 0.48, -0.42));
+  out.trim.push({ geo: innerFoldRing, matrix: innerRingMat, colorRgb: bloodChrome });
+  out.energy.push({ geo: innerEnergyArc, matrix: innerRingMat, colorRgb: scarletEnergy });
+
+  const outerFoldRing = trackGeo(out, createChamferedHexPart(0.37, 0.018, 0.006, 0.324));
+  const outerEnergyArc = trackGeo(out, new THREE.TorusGeometry(0.312, 0.006, 6, 24));
+  const outerRingMat = bodyFrame.clone().multiply(makeTransform(0, 0.01, 0.02, -0.68, -0.44, 0.54));
+  out.trim.push({ geo: outerFoldRing, matrix: outerRingMat, colorRgb: liquidCrimson });
+  out.energy.push({ geo: outerEnergyArc, matrix: outerRingMat, colorRgb: scarletEnergy });
+
+  const lockNode = trackGeo(out, createFacetedCrystalPart(0.11, 0.036, 4, 0.5, 0.5));
+  for (const sign of [-1, 1] as const) {
+    out.matte.push({
+      geo: lockNode,
+      matrix: outerRingMat.clone().multiply(makeTransform(sign * 0.348, 0, 0, 0, 0, sign * 0.35)),
+      colorRgb: obsidianVoid,
+    });
+  }
+
+  const scytheArmorGeo = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [-0.036, 0.0],
+        [0.036, 0.06],
+        [0.125, 0.21],
+        [0.088, 0.32],
+        [0.185, 0.50],
+        [0.258, 0.70],
+        [0.310, 0.90],
+        [0.155, 0.74],
+        [0.044, 0.52],
+        [-0.038, 0.31],
+        [-0.076, 0.14],
+      ],
+      0.016,
+      0.006,
+      0.006,
+      2,
+    ),
+  );
+  const scytheRidgeGeo = trackGeo(out, createCurvedBladePart(0.84, 0.042, 0.042, 0.335, 0.016, 10));
+  const scytheEdgeGeo = trackGeo(out, createCurvedBladePart(0.86, 0.032, 0.016, 0.228, 0.014, 10));
+  const scytheVeilGeo = trackGeo(out, createCurvedBladePart(0.94, 0.128, 0.009, 0.340, -0.026, 10));
+  const star3HaloScytheGeo = trackGeo(out, createCurvedBladePart(0.98, 0.104, 0.018, 0.340, 0.022, 9));
+
+  const wingConfigs: readonly {
+    readonly side: -1 | 1;
+    readonly root: Vec3Tuple;
+    readonly anchor: Vec3Tuple;
+    readonly midOffset: Vec3Tuple;
+    readonly rx: number;
+    readonly ry: number;
+    readonly rz: number;
+    readonly scale: number;
+    readonly hasVeil: boolean;
+    readonly darkTone: RgbTriple;
+    readonly ridgeTone: RgbTriple;
+  }[] = [
+    {
+      side: 1,
+      root: [0.24, 1.32, -0.08],
+      anchor: [0.13, 1.24, -0.04],
+      midOffset: [0.02, 0.07, -0.06],
+      rx: 0.12,
+      ry: -0.06,
+      rz: -0.52,
+      scale: 0.79,
+      hasVeil: true,
+      darkTone: darkObsidianViolet,
+      ridgeTone: bloodChrome,
+    },
+    {
+      side: -1,
+      root: [-0.26, 1.24, -0.16],
+      anchor: [-0.14, 1.19, -0.06],
+      midOffset: [-0.03, 0.06, -0.07],
+      rx: -0.14,
+      ry: -0.34,
+      rz: 0.68,
+      scale: 0.75,
+      hasVeil: true,
+      darkTone: obsidianVoid,
+      ridgeTone: liquidCrimson,
+    },
+    {
+      side: -1,
+      root: [-0.30, 1.04, 0.05],
+      anchor: [-0.16, 1.05, -0.02],
+      midOffset: [-0.04, 0.05, 0.07],
+      rx: 0.22,
+      ry: 0.48,
+      rz: 1.16,
+      scale: 0.84,
+      hasVeil: true,
+      darkTone: emberObsidian,
+      ridgeTone: bloodChrome,
+    },
+    {
+      side: 1,
+      root: [0.31, 0.94, 0.02],
+      anchor: [0.16, 0.99, -0.02],
+      midOffset: [0.04, -0.05, 0.06],
+      rx: 0.14,
+      ry: -0.44,
+      rz: -1.32,
+      scale: 0.81,
+      hasVeil: true,
+      darkTone: darkObsidianViolet,
+      ridgeTone: bloodChrome,
+    },
+    {
+      side: -1,
+      root: [-0.23, 0.78, -0.18],
+      anchor: [-0.12, 0.86, -0.07],
+      midOffset: [-0.03, -0.05, -0.07],
+      rx: -0.28,
+      ry: -0.48,
+      rz: 1.84,
+      scale: 0.62,
+      hasVeil: false,
+      darkTone: obsidianVoid,
+      ridgeTone: liquidCrimson,
+    },
+    {
+      side: 1,
+      root: [0.24, 0.72, -0.20],
+      anchor: [0.12, 0.82, -0.07],
+      midOffset: [0.03, -0.06, -0.07],
+      rx: -0.22,
+      ry: 0.52,
+      rz: -1.94,
+      scale: 0.58,
+      hasVeil: false,
+      darkTone: emberObsidian,
+      ridgeTone: liquidCrimson,
+    },
+  ];
+
+  for (const w of wingConfigs) {
+    const wMat = makeTransform(
+      w.root[0],
+      w.root[1],
+      w.root[2],
+      w.rx,
+      w.ry,
+      w.rz,
+      -w.side * w.scale,
+      w.scale,
+      w.scale,
+    );
+    out.armor.push({ geo: scytheArmorGeo, matrix: wMat, colorRgb: w.darkTone });
+    out.trim.push({
+      geo: scytheRidgeGeo,
+      matrix: wMat.clone().multiply(makeTransform(-0.056, 0.02, 0)),
+      colorRgb: w.ridgeTone,
+    });
+    out.energy.push({
+      geo: scytheEdgeGeo,
+      matrix: wMat.clone().multiply(makeTransform(0.095, 0.02, 0)),
+      colorRgb: scarletEnergy,
+    });
+    if (w.hasVeil) {
+      out.crystal.push({
+        geo: scytheVeilGeo,
+        matrix: wMat.clone().multiply(makeTransform(-0.028, 0.01, -0.036)),
+        colorRgb: scarletEnergy,
+      });
+    }
+
+    const midPt: Vec3Tuple = [
+      (w.anchor[0] + w.root[0]) * 0.5 + w.midOffset[0],
+      (w.anchor[1] + w.root[1]) * 0.5 + w.midOffset[1],
+      (w.anchor[2] + w.root[2]) * 0.5 + w.midOffset[2],
+    ];
+    const tetherRibbon = trackGeo(
+      out,
+      createFlowingRibbonMesh(
+        [w.anchor, midPt, w.root],
+        [0.034, 0.056, 0.024],
+        0.012,
+        1.5,
+        16,
+        4,
+        0.008,
+        obsidianVoid,
+        w.ridgeTone,
+      ),
+    );
+    out.trim.push({ geo: tetherRibbon, matrix: makeTransform(0, 0, 0) });
+
+    out.wingParts.push({
+      geo: star3HaloScytheGeo,
+      matrix: wMat.clone().multiply(makeTransform(-0.04, 0.06, -0.038, 0, 0, 0, 1.08, 1.08, 1.0)),
+      colorRgb: bloodChrome,
+    });
+  }
+
+  const hoverHexFrame = trackGeo(out, createChamferedHexPart(0.31, 0.022, 0.008, 0.242));
+  out.matte.push({
+    geo: hoverHexFrame,
+    matrix: makeTransform(0, 0.23, -0.02, Math.PI * 0.5 - 0.12, 0.12, 0),
+    colorRgb: obsidianVoid,
+  });
+
+  const hoverEnergyRing = trackGeo(out, new THREE.TorusGeometry(0.222, 0.009, 8, 28));
+  out.energy.push({
+    geo: hoverEnergyRing,
+    matrix: makeTransform(0, 0.248, -0.02, Math.PI * 0.5 - 0.12, 0.12, 0),
+    colorRgb: scarletEnergy,
+  });
+
+  const shieldPrismGeo = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [0.0, 0.145],
+        [-0.088, 0.034],
+        [-0.058, -0.072],
+        [0.0, -0.138],
+        [0.058, -0.072],
+        [0.088, 0.034],
+      ],
+      0.012,
+      0.005,
+      0.005,
+      1,
+    ),
+  );
+  const shieldBracketGeo = trackGeo(out, createCurvedBladePart(0.25, 0.032, 0.016, 0.0, 0.024, 7));
+  const shieldSpecs: readonly [number, number, number, number][] = [
+    [0.58, 0.40, 0.42, 0.26],
+    [-0.72, 0.42, 0.36, 0.28],
+    [Math.PI + 0.16, 0.36, 0.46, 0.22],
+  ];
+  for (const [ang, radius, sy, tilt] of shieldSpecs) {
+    const sx = Math.sin(ang) * radius;
+    const sz = Math.cos(ang) * radius;
+    const sMat = makeTransform(sx, sy, sz, tilt, ang, 0);
+    out.crystal.push({
+      geo: shieldPrismGeo,
+      matrix: sMat,
+      colorRgb: scarletEnergy,
+    });
+    out.trim.push({
+      geo: shieldBracketGeo,
+      matrix: sMat.clone().multiply(makeTransform(0, -0.12, 0.016)),
+      colorRgb: bloodChrome,
+    });
+  }
+
+  const zigzagFinGeo = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [0.0, 0.0],
+        [-0.034, -0.090],
+        [-0.004, -0.135],
+        [-0.048, -0.245],
+        [-0.012, -0.340],
+        [0.022, -0.215],
+        [-0.006, -0.165],
+        [0.036, -0.075],
+      ],
+      0.012,
+      0.004,
+      0.004,
+      1,
+    ),
+  );
+  for (const side of [-1, 1] as const) {
+    out.energy.push({
+      geo: zigzagFinGeo,
+      matrix: makeTransform(side * 0.052, 0.56, -0.06, -0.34, side * 0.38, side * 0.16, side, 1, 1),
+      colorRgb: scarletEnergy,
+    });
+
+    const wakeRibbon = trackGeo(
+      out,
+      createFlowingRibbonMesh(
+        [
+          [side * 0.08, 0.54, -0.08],
+          [side * 0.20, 0.39, -0.17],
+          [side * 0.15, 0.26, -0.28],
+          [side * 0.04, 0.18, -0.36],
+        ],
+        [0.032, 0.048, 0.009],
+        0.012,
+        1.8,
+        18,
+        4,
+        0.006,
+        scarletEnergy,
+        liquidCrimson,
+      ),
+    );
+    out.crystal.push({ geo: wakeRibbon, matrix: makeTransform(0, 0, 0) });
+  }
+
+  out.weaponGlowHex = 0xe11d48;
+  out.crystalHex = 0xbe123c;
+  out.crystalOpacity = 0.52;
+  out.crystalIntensity = 0.62;
+  out.headTopLocalY = 2.10;
+}
+
+function buildS34AzureDragon(out: UnitBlueprintParts): void {
+  const jadePrimary: RgbTriple = [0.18, 0.62, 0.50];
+  const jadeBright: RgbTriple = [0.34, 0.78, 0.64];
+  const deepPine: RgbTriple = [0.09, 0.28, 0.26];
+  const antiqueBronze: RgbTriple = [0.74, 0.56, 0.34];
+  const agedBronze: RgbTriple = [0.52, 0.38, 0.21];
+  const warpEmerald: RgbTriple = [0.36, 0.92, 0.72];
+  const pearlJade: RgbTriple = [0.76, 0.98, 0.90];
+
+  const gateCenter = new THREE.Vector3(-0.04, 0.96, -0.10);
+  const gateFrame = makeTransform(gateCenter.x, gateCenter.y, gateCenter.z, -0.10, 0.24, 0.05);
+
+  const gateOuter = trackGeo(out, new THREE.TorusGeometry(0.54, 0.044, 12, 36));
+  const gateInnerTrack = trackGeo(out, new THREE.TorusGeometry(0.47, 0.022, 8, 32));
+  const gateRunes = trackGeo(out, new THREE.TorusGeometry(0.44, 0.009, 6, 32));
+  out.trim.push({ geo: gateOuter, matrix: gateFrame, colorRgb: antiqueBronze });
+  out.matte.push({ geo: gateInnerTrack, matrix: gateFrame, colorRgb: deepPine });
+  out.energy.push({ geo: gateRunes, matrix: gateFrame, colorRgb: warpEmerald });
+
+  const portalDisc = trackGeo(out, new THREE.CylinderGeometry(0.45, 0.45, 0.012, 28));
+  out.crystal.push({
+    geo: portalDisc,
+    matrix: gateFrame.clone().multiply(makeTransform(0, 0, 0, Math.PI * 0.5, 0, 0)),
+    colorRgb: warpEmerald,
+  });
+
+  const chevronClamp = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [-0.056, -0.036],
+        [0.056, -0.036],
+        [0.040, 0.048],
+        [-0.040, 0.048],
+      ],
+      0.095,
+      0.008,
+      0.008,
+      1,
+    ),
+  );
+  const chevronGem = trackGeo(out, createFacetedCrystalPart(0.068, 0.022, 4, 0.55, 0.45, warpEmerald, pearlJade));
+  for (let i = 0; i < 8; i += 1) {
+    const a = (i / 8) * Math.PI * 2;
+    const cMat = gateFrame
+      .clone()
+      .multiply(makeTransform(Math.cos(a) * 0.54, Math.sin(a) * 0.54, 0, 0, 0, a - Math.PI * 0.5));
+    out.trim.push({ geo: chevronClamp, matrix: cMat, colorRgb: agedBronze });
+    out.energy.push({
+      geo: chevronGem,
+      matrix: cMat.clone().multiply(makeTransform(0, -0.01, 0.052, Math.PI * 0.5, 0, 0)),
+    });
+  }
+
+  const cradleBase = trackGeo(out, createChamferedHexPart(0.38, 0.056, 0.014, 0.16));
+  out.armor.push({
+    geo: cradleBase,
+    matrix: makeTransform(-0.04, 0.10, -0.10, Math.PI * 0.5, 0, 0.24),
+    colorRgb: deepPine,
+  });
+  for (const side of [-1, 1] as const) {
+    const strut = trackGeo(
+      out,
+      createOrganicLimb(
+        [
+          [side * 0.28, 0.12, -0.10],
+          [side * 0.42, 0.34, -0.12],
+          [side * 0.46, 0.62, -0.10],
+        ],
+        0.034,
+        0.028,
+        0.022,
+        10,
+        8,
+        agedBronze,
+        antiqueBronze,
+      ),
+    );
+    out.trim.push({ geo: strut, matrix: makeTransform(-0.04, 0, 0) });
+  }
+
+  const dragonCtrlPts: readonly Vec3Tuple[] = [
+    [-0.44, 0.42, -0.58],
+    [-0.36, 0.66, -0.44],
+    [-0.18, 0.94, -0.22],
+    [0.14, 1.12, 0.02],
+    [0.40, 0.96, 0.14],
+    [0.44, 1.24, 0.02],
+    [0.24, 1.54, 0.16],
+    [0.06, 1.56, 0.36],
+  ];
+  const spineCore = trackGeo(
+    out,
+    createOrganicLimb(dragonCtrlPts, 0.032, 0.072, 0.068, 34, 12, deepPine, jadePrimary),
+  );
+  out.matte.push({ geo: spineCore, matrix: makeTransform(0, 0, 0) });
+
+  const dragonCurve = new THREE.CatmullRomCurve3(
+    dragonCtrlPts.map(([x, y, z]) => new THREE.Vector3(x, y, z)),
+  );
+
+  const scaleCollar = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.068, -0.055],
+        [0.092, -0.015],
+        [0.098, 0.025],
+        [0.076, 0.055],
+      ],
+      10,
+    ),
+  );
+  const dorsalBlade = trackGeo(out, createCurvedBladePart(0.16, 0.046, 0.016, 0.048, 0.012, 6));
+  const segCount = 11;
+  for (let i = 1; i <= segCount; i += 1) {
+    const t = i / (segCount + 1);
+    const pos = dragonCurve.getPointAt(t);
+    const tan = dragonCurve.getTangentAt(t);
+    const basis = makeLookAtBasis(pos, tan);
+    const radiusScale = 0.56 + Math.sin(t * Math.PI * 0.85 + 0.18) * 0.58;
+    out.armor.push({
+      geo: scaleCollar,
+      matrix: basis
+        .clone()
+        .multiply(makeTransform(0, 0, 0, Math.PI * 0.5, 0, 0, radiusScale, 1.0, radiusScale * 0.88)),
+      colorRgb: i % 2 === 0 ? jadeBright : jadePrimary,
+    });
+    out.trim.push({
+      geo: dorsalBlade,
+      matrix: basis
+        .clone()
+        .multiply(makeTransform(0, 0.078 * radiusScale, -0.02, -0.56, Math.PI * 0.5, 0, radiusScale, radiusScale, 1.0)),
+      colorRgb: i % 3 === 0 ? warpEmerald : antiqueBronze,
+    });
+  }
+
+  const clawFin = trackGeo(out, createCreatureFin(0.16, 0.24, 0.18, 0.026, 0.016, 10, 6, jadeBright, warpEmerald));
+  const clawAnchors: readonly [number, number][] = [
+    [0.36, 1],
+    [0.36, -1],
+    [0.74, 1],
+    [0.74, -1],
+  ];
+  for (const [t, side] of clawAnchors) {
+    const pos = dragonCurve.getPointAt(t);
+    const tan = dragonCurve.getTangentAt(t);
+    const basis = makeLookAtBasis(pos, tan);
+    out.crystal.push({
+      geo: clawFin,
+      matrix: basis.clone().multiply(makeTransform(side * 0.06, -0.02, 0, 0.12, side * 0.28, -side * 0.34, side, 1, 1)),
+    });
+  }
+
+  const tailTipPos = dragonCurve.getPointAt(0);
+  const tailTipTan = dragonCurve.getTangentAt(0).negate();
+  const tailBasis = makeLookAtBasis(tailTipPos, tailTipTan);
+  const tailPlume = trackGeo(out, createCreatureFin(0.18, 0.32, 0.22, 0.032, 0.014, 12, 6, warpEmerald, pearlJade));
+  for (const side of [-1, 1] as const) {
+    out.crystal.push({
+      geo: tailPlume,
+      matrix: tailBasis.clone().multiply(makeTransform(0, 0, 0, 0.18, side * 0.36, side * 0.22, side, 1, 1)),
+    });
+  }
+
+  const headOrigin = new THREE.Vector3(0.04, 1.56, 0.42);
+  const headFrame = makeTransform(headOrigin.x, headOrigin.y, headOrigin.z, 0.14, 0.04, 0);
+
+  const upperSkull = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [0, 0.12],
+        [0.105, 0.05],
+        [0.088, -0.08],
+        [0, -0.14],
+        [-0.088, -0.08],
+        [-0.105, 0.05],
+      ],
+      0.28,
+      0.016,
+      0.016,
+      2,
+    ),
+  );
+  out.armor.push({
+    geo: upperSkull,
+    matrix: headFrame.clone().multiply(makeTransform(0, 0.045, 0.08, 0, 0, 0)),
+    colorRgb: jadePrimary,
+  });
+
+  const snoutCrest = trackGeo(
+    out,
+    createTeardropPart(0.30, 0.072, 1.45, 14, 10, 0.014, jadeBright, antiqueBronze),
+  );
+  out.armor.push({
+    geo: snoutCrest,
+    matrix: headFrame.clone().multiply(makeTransform(0, 0.076, 0.19, Math.PI * 0.5, 0, 0, 1.0, 1.0, 0.68)),
+  });
+
+  const lowerJaw = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [-0.074, 0],
+        [0.074, 0],
+        [0.052, 0.20],
+        [-0.052, 0.20],
+      ],
+      0.044,
+      0.010,
+      0.010,
+      1,
+    ),
+  );
+  out.armor.push({
+    geo: lowerJaw,
+    matrix: headFrame.clone().multiply(makeTransform(0, -0.072, 0.16, Math.PI * 0.5 + 0.34, 0, 0)),
+    colorRgb: deepPine,
+  });
+
+  const mawCore = trackGeo(out, new THREE.SphereGeometry(0.056, 12, 10));
+  const mawRing = trackGeo(out, new THREE.TorusGeometry(0.082, 0.010, 6, 18));
+  out.energy.push(
+    { geo: mawCore, matrix: headFrame.clone().multiply(makeTransform(0, -0.008, 0.24)), colorRgb: pearlJade },
+    { geo: mawRing, matrix: headFrame.clone().multiply(makeTransform(0, -0.008, 0.30)), colorRgb: warpEmerald },
+  );
+
+  const mawRail = trackGeo(out, new THREE.CylinderGeometry(0.011, 0.015, 0.24, 8));
+  for (const side of [-1, 1] as const) {
+    out.trim.push({
+      geo: mawRail,
+      matrix: headFrame.clone().multiply(makeTransform(side * 0.058, 0.014, 0.22, Math.PI * 0.5, 0, 0)),
+      colorRgb: antiqueBronze,
+    });
+  }
+
+  const eyeOrb = trackGeo(out, new THREE.SphereGeometry(0.024, 10, 8));
+  const browHorn = trackGeo(
+    out,
+    createOrganicLimb(
+      [
+        [0, 0.08, 0.04],
+        [0.08, 0.22, -0.10],
+        [0.14, 0.36, -0.28],
+      ],
+      0.022,
+      0.015,
+      0.006,
+      12,
+      8,
+      antiqueBronze,
+      jadeBright,
+    ),
+  );
+  const hornTine = trackGeo(
+    out,
+    createOrganicLimb(
+      [
+        [0.08, 0.20, -0.08],
+        [0.16, 0.28, -0.08],
+      ],
+      0.012,
+      0.009,
+      0.004,
+      8,
+      6,
+      antiqueBronze,
+      antiqueBronze,
+    ),
+  );
+
+  for (const side of [-1, 1] as const) {
+    out.energy.push({
+      geo: eyeOrb,
+      matrix: headFrame.clone().multiply(makeTransform(side * 0.086, 0.052, 0.14)),
+      colorRgb: pearlJade,
+    });
+    out.trim.push(
+      { geo: browHorn, matrix: headFrame.clone().multiply(makeTransform(0, 0, 0, 0, 0, 0, side, 1, 1)) },
+      { geo: hornTine, matrix: headFrame.clone().multiply(makeTransform(0, 0, 0, 0, 0, 0, side, 1, 1)) },
+    );
+
+    const whisker = trackGeo(
+      out,
+      createFlowingRibbonMesh(
+        [
+          [side * 0.08, 0.01, 0.24],
+          [side * 0.26, 0.06, 0.18],
+          [side * 0.44, -0.04, -0.02],
+          [side * 0.52, -0.18, -0.26],
+        ],
+        [0.016, 0.022, 0.005],
+        0.018,
+        2.2,
+        22,
+        4,
+        0.006,
+        pearlJade,
+        warpEmerald,
+      ),
+    );
+    out.energy.push({ geo: whisker, matrix: headFrame });
+  }
+
+  const starGateHalo = trackGeo(out, new THREE.TorusGeometry(0.76, 0.018, 8, 36));
+  out.wingParts.push({
+    geo: starGateHalo,
+    matrix: gateFrame.clone().multiply(makeTransform(0, 0.04, -0.08)),
+    colorRgb: antiqueBronze,
+  });
+
+  out.weaponGlowHex = 0x34d399;
+  out.crystalHex = 0x5eead4;
+  out.crystalOpacity = 0.44;
+  out.crystalIntensity = 0.68;
+  out.headTopLocalY = 2.08;
+}
+
+function buildS35Cassini(out: UnitBlueprintParts): void {
+  const starIndigo: RgbTriple = [0.15, 0.23, 0.38];
+  const navySteel: RgbTriple = [0.24, 0.34, 0.50];
+  const heavyIron: RgbTriple = [0.16, 0.18, 0.24];
+  const warmBronze: RgbTriple = [0.80, 0.62, 0.34];
+  const darkBronze: RgbTriple = [0.56, 0.40, 0.20];
+  const brassGold: RgbTriple = [0.90, 0.74, 0.42];
+  const navAmber: RgbTriple = [0.98, 0.78, 0.36];
+  const chronoCyan: RgbTriple = [0.46, 0.84, 0.98];
+
+  const underHull = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.34, 0.0],
+        [0.54, 0.08],
+        [0.56, 0.22],
+        [0.48, 0.32],
+        [0.10, 0.34],
+      ],
+      10,
+    ),
+  );
+  out.matte.push({
+    geo: underHull,
+    matrix: makeTransform(0, 0.36, -0.02, 0, Math.PI * 0.1, 0, 1.0, 1.0, 1.14),
+    colorRgb: heavyIron,
+  });
+
+  const bumperRail = trackGeo(out, new THREE.TorusGeometry(0.56, 0.026, 8, 28));
+  out.trim.push({
+    geo: bumperRail,
+    matrix: makeTransform(0, 0.56, -0.02, Math.PI * 0.5, 0, 0, 1.02, 1.15, 1.0),
+    colorRgb: darkBronze,
+  });
+
+  const shoulderDrum = trackGeo(out, new THREE.CylinderGeometry(0.11, 0.11, 0.14, 12));
+  const kneeHex = trackGeo(out, createHexMirrorTilePart(0.115, 0.036, 0.012, 0.010, navySteel, starIndigo));
+  const footBell = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.135, 0.0],
+        [0.125, 0.05],
+        [0.088, 0.12],
+        [0.068, 0.18],
+      ],
+      8,
+    ),
+  );
+  const legCorners: readonly [number, number][] = [
+    [-1, 1],
+    [1, 1],
+    [-1, -1],
+    [1, -1],
+  ];
+  for (const [sx, sz] of legCorners) {
+    const hip = new THREE.Vector3(sx * 0.38, 0.48, sz * 0.34);
+    const knee = new THREE.Vector3(sx * 0.54, 0.38, sz * 0.44);
+    const foot = new THREE.Vector3(sx * 0.58, 0.06, sz * 0.48);
+
+    out.trim.push({
+      geo: shoulderDrum,
+      matrix: makeTransform(hip.x, hip.y, hip.z, 0, 0, Math.PI * 0.5),
+      colorRgb: darkBronze,
+    });
+    const upperLeg = trackGeo(
+      out,
+      createOrganicLimb(
+        [
+          [hip.x, hip.y, hip.z],
+          [knee.x, knee.y + 0.04, knee.z],
+        ],
+        0.072,
+        0.068,
+        0.062,
+        8,
+        8,
+        heavyIron,
+        starIndigo,
+      ),
+    );
+    const lowerLeg = trackGeo(
+      out,
+      createOrganicLimb(
+        [
+          [knee.x, knee.y, knee.z],
+          [foot.x, foot.y + 0.10, foot.z],
+        ],
+        0.066,
+        0.060,
+        0.056,
+        8,
+        8,
+        starIndigo,
+        heavyIron,
+      ),
+    );
+    const pistonRod = trackGeo(out, new THREE.CylinderGeometry(0.018, 0.018, 1.0, 8));
+    out.matte.push({ geo: upperLeg, matrix: makeTransform(0, 0, 0) });
+    out.armor.push({ geo: lowerLeg, matrix: makeTransform(0, 0, 0) });
+    out.trim.push({
+      geo: pistonRod,
+      matrix: makeSegmentTransform(
+        new THREE.Vector3(hip.x, hip.y - 0.04, hip.z),
+        new THREE.Vector3(foot.x * 0.92, foot.y + 0.16, foot.z * 0.92),
+        1,
+        1,
+      ),
+      colorRgb: warmBronze,
+    });
+    out.armor.push({
+      geo: kneeHex,
+      matrix: makeTransform(
+        knee.x + sx * 0.05,
+        knee.y + 0.02,
+        knee.z + sz * 0.05,
+        0,
+        Math.atan2(sx, sz),
+        0,
+      ),
+    });
+    out.matte.push({
+      geo: footBell,
+      matrix: makeTransform(foot.x, foot.y, foot.z),
+      colorRgb: heavyIron,
+    });
+  }
+
+  const carapaceDome = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.56, 0.0],
+        [0.54, 0.12],
+        [0.48, 0.24],
+        [0.38, 0.36],
+        [0.26, 0.42],
+        [0.10, 0.44],
+      ],
+      12,
+    ),
+  );
+  out.armor.push({
+    geo: carapaceDome,
+    matrix: makeTransform(0, 0.56, -0.02, 0, 0, 0, 1.02, 1.0, 1.14),
+    colorRgb: starIndigo,
+  });
+
+  const scutePlate = trackGeo(out, createHexMirrorTilePart(0.18, 0.036, 0.014, 0.014, navySteel, starIndigo));
+  for (let i = 0; i < 6; i += 1) {
+    const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+    out.armor.push({
+      geo: scutePlate,
+      matrix: makeTransform(
+        Math.sin(a) * 0.42,
+        0.74,
+        Math.cos(a) * 0.46 - 0.02,
+        -Math.PI * 0.24,
+        a,
+        0,
+      ),
+    });
+  }
+
+  const exhaustVent = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.068, 0],
+        [0.060, 0.08],
+        [0.076, 0.16],
+      ],
+      10,
+    ),
+  );
+  const exhaustGlow = trackGeo(out, new THREE.CylinderGeometry(0.044, 0.044, 0.024, 10));
+  for (const side of [-1, 1] as const) {
+    out.matte.push({
+      geo: exhaustVent,
+      matrix: makeTransform(side * 0.22, 0.64, -0.58, -Math.PI * 0.5 + 0.16, 0, 0),
+      colorRgb: heavyIron,
+    });
+    out.energy.push({
+      geo: exhaustGlow,
+      matrix: makeTransform(side * 0.22, 0.62, -0.70, Math.PI * 0.5, 0, 0),
+      colorRgb: navAmber,
+    });
+  }
+
+  const prowHood = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [-0.22, -0.08],
+        [0.22, -0.08],
+        [0.16, 0.16],
+        [-0.16, 0.16],
+      ],
+      0.28,
+      0.018,
+      0.018,
+      2,
+    ),
+  );
+  out.armor.push({
+    geo: prowHood,
+    matrix: makeTransform(0, 0.64, 0.58, 0.10, 0, 0),
+    colorRgb: navySteel,
+  });
+  const prowJaw = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [-0.18, 0],
+        [0.18, 0],
+        [0.12, 0.12],
+        [-0.12, 0.12],
+      ],
+      0.16,
+      0.012,
+      0.012,
+      1,
+    ),
+  );
+  out.trim.push({
+    geo: prowJaw,
+    matrix: makeTransform(0, 0.48, 0.64, Math.PI * 0.5, 0, 0),
+    colorRgb: warmBronze,
+  });
+  const bridgeVisor = trackGeo(out, createCurvedVisorPart(0.148, 0.062, 0.095, 1.55, 1.0, 0.56));
+  out.energy.push({
+    geo: bridgeVisor,
+    matrix: makeTransform(0, 0.66, 0.69),
+    colorRgb: navAmber,
+  });
+
+  const mantletHousing = trackGeo(
+    out,
+    createBevelExtrudePart(
+      [
+        [-0.25, 0],
+        [0.25, 0],
+        [0.20, 0.20],
+        [-0.20, 0.20],
+      ],
+      0.34,
+      0.018,
+      0.018,
+      2,
+    ),
+  );
+  out.armor.push({
+    geo: mantletHousing,
+    matrix: makeTransform(0, 0.94, 0.22, -0.10, 0, 0),
+    colorRgb: starIndigo,
+  });
+  const turretGear = trackGeo(out, new THREE.CylinderGeometry(0.105, 0.105, 0.044, 12));
+  for (const side of [-1, 1] as const) {
+    out.trim.push({
+      geo: turretGear,
+      matrix: makeTransform(side * 0.255, 1.02, 0.22, 0, 0, Math.PI * 0.5),
+      colorRgb: warmBronze,
+    });
+  }
+
+  const siegeBarrel = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.048, -0.16],
+        [0.052, -0.02],
+        [0.040, 0.02],
+        [0.040, 0.34],
+        [0.052, 0.38],
+        [0.052, 0.46],
+        [0.036, 0.49],
+      ],
+      12,
+    ),
+  );
+  const muzzleCollar = trackGeo(out, new THREE.TorusGeometry(0.052, 0.010, 6, 12));
+  const breechGlow = trackGeo(out, new THREE.CylinderGeometry(0.018, 0.018, 0.18, 8));
+  for (const bx of [-0.14, 0, 0.14]) {
+    const by = bx === 0 ? 1.09 : 1.04;
+    out.matte.push({
+      geo: siegeBarrel,
+      matrix: makeTransform(bx, by, 0.42, Math.PI * 0.5 - 0.14, 0, 0),
+      colorRgb: heavyIron,
+    });
+    out.trim.push({
+      geo: muzzleCollar,
+      matrix: makeTransform(bx, by + 0.06, 0.84, -0.14, 0, 0),
+      colorRgb: warmBronze,
+    });
+    out.energy.push({
+      geo: breechGlow,
+      matrix: makeTransform(bx, by + 0.042, 0.40, Math.PI * 0.5 - 0.14, 0, 0),
+      colorRgb: navAmber,
+    });
+  }
+
+  const armCenterY = 1.54;
+  const armCenterZ = -0.16;
+  const armPedestal = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.24, 0.0],
+        [0.20, 0.08],
+        [0.13, 0.18],
+        [0.16, 0.24],
+        [0.10, 0.30],
+      ],
+      14,
+    ),
+  );
+  out.trim.push({
+    geo: armPedestal,
+    matrix: makeTransform(0, 0.94, armCenterZ),
+    colorRgb: darkBronze,
+  });
+
+  const ringOuter = trackGeo(out, new THREE.TorusGeometry(0.39, 0.022, 8, 36));
+  const ringMid = trackGeo(out, new THREE.TorusGeometry(0.32, 0.018, 8, 32));
+  const ringInner = trackGeo(out, new THREE.TorusGeometry(0.24, 0.014, 8, 28));
+  out.trim.push(
+    { geo: ringOuter, matrix: makeTransform(0, armCenterY, armCenterZ, 0.28, 0.34, 0.12), colorRgb: warmBronze },
+    { geo: ringOuter, matrix: makeTransform(0, armCenterY, armCenterZ, 0.28, -1.24, -0.18), colorRgb: brassGold },
+    { geo: ringMid, matrix: makeTransform(0, armCenterY, armCenterZ, Math.PI * 0.46, 0.14, 0.38), colorRgb: warmBronze },
+    { geo: ringInner, matrix: makeTransform(0, armCenterY, armCenterZ, -0.64, 0.56, -0.26), colorRgb: brassGold },
+  );
+
+  const axisNeedle = trackGeo(out, new THREE.CylinderGeometry(0.012, 0.020, 0.92, 8));
+  out.trim.push({
+    geo: axisNeedle,
+    matrix: makeTransform(0, armCenterY + 0.02, armCenterZ, 0.22, 0, -0.24),
+    colorRgb: brassGold,
+  });
+
+  const radarCore = trackGeo(out, new THREE.OctahedronGeometry(0.115, 0));
+  out.energy.push({
+    geo: radarCore,
+    matrix: makeTransform(0, armCenterY, armCenterZ, 0.24, 0.42, 0),
+    colorRgb: navAmber,
+  });
+  const radarLens = trackGeo(out, new THREE.SphereGeometry(0.175, 16, 12));
+  out.crystal.push({
+    geo: radarLens,
+    matrix: makeTransform(0, armCenterY, armCenterZ),
+    colorRgb: chronoCyan,
+  });
+
+  const starArmillary = trackGeo(out, new THREE.TorusGeometry(0.68, 0.022, 8, 36));
+  out.wingParts.push(
+    { geo: starArmillary, matrix: makeTransform(0, armCenterY - 0.10, armCenterZ - 0.08, 0.22, 0.18, 0.26), colorRgb: brassGold },
+    { geo: starArmillary, matrix: makeTransform(0, armCenterY - 0.10, armCenterZ - 0.08, -0.22, -0.18, -0.26), colorRgb: warmBronze },
+  );
+
+  out.weaponGlowHex = 0xf5b942;
+  out.crystalHex = 0x38bdf8;
+  out.crystalOpacity = 0.42;
+  out.crystalIntensity = 0.58;
+  out.headTopLocalY = 2.10;
+}
+
+function buildS36AbyssCrown(out: UnitBlueprintParts): void {
+  const voidBlack: RgbTriple = [0.012, 0.010, 0.018];
+  const abyssObsidian: RgbTriple = [0.14, 0.06, 0.09];
+  const tearCrimson: RgbTriple = [0.46, 0.10, 0.16];
+  const bloodSteel: RgbTriple = [0.66, 0.14, 0.22];
+  const accretionRed: RgbTriple = [0.88, 0.18, 0.26];
+  const moltenScarlet: RgbTriple = [0.98, 0.42, 0.36];
+  const eclipseWhiteGold: RgbTriple = [1.0, 0.80, 0.68];
+
+  const centerY = 1.08;
+
+  const sinkBase = trackGeo(
+    out,
+    createLathePart(
+      [
+        [0.42, 0.0],
+        [0.34, 0.04],
+        [0.20, 0.09],
+        [0.10, 0.16],
+      ],
+      20,
+    ),
+  );
+  out.matte.push({
+    geo: sinkBase,
+    matrix: makeTransform(0, 0.09, 0),
+    colorRgb: voidBlack,
+  });
+  const sinkRing = trackGeo(out, new THREE.TorusGeometry(0.36, 0.010, 6, 30));
+  out.energy.push({
+    geo: sinkRing,
+    matrix: makeTransform(0, 0.13, 0, Math.PI * 0.5, 0, 0),
+    colorRgb: accretionRed,
+  });
+
+  const eventHorizon = trackGeo(out, new THREE.SphereGeometry(0.245, 24, 18));
+  out.matte.push({
+    geo: eventHorizon,
+    matrix: makeTransform(0, centerY, 0),
+    colorRgb: voidBlack,
+  });
+
+  const photonRimMain = trackGeo(out, new THREE.TorusGeometry(0.262, 0.012, 8, 36));
+  const photonRimCross = trackGeo(out, new THREE.TorusGeometry(0.282, 0.008, 6, 34));
+  out.energy.push(
+    { geo: photonRimMain, matrix: makeTransform(0, centerY, 0, 0.16, 0.06, 0), colorRgb: eclipseWhiteGold },
+    { geo: photonRimCross, matrix: makeTransform(0, centerY, 0, 1.18, 0.44, -0.32), colorRgb: moltenScarlet },
+  );
+
+  const shearJet = trackGeo(out, createTeardropPart(0.46, 0.028, 2.6, 12, 10, 0, tearCrimson, moltenScarlet));
+  out.energy.push(
+    { geo: shearJet, matrix: makeTransform(0, centerY + 0.36, 0, 0.16, 0, -0.18) },
+    { geo: shearJet, matrix: makeTransform(0, centerY - 0.36, 0, Math.PI + 0.16, 0, -0.18) },
+  );
+
+  const diskTilt = makeTransform(0, centerY, 0, 0.34, 0.12, -0.22);
+
+  const innerAccretion = buildWarpedAccretionRing(
+    out,
+    0.37,
+    [0.095, 0.135, 0.095],
+    0.042,
+    2,
+    0.4,
+    0.026,
+    3,
+    40,
+    5,
+    0.008,
+    eclipseWhiteGold,
+    moltenScarlet,
+  );
+  const midAccretion = buildWarpedAccretionRing(
+    out,
+    0.52,
+    [0.115, 0.165, 0.110],
+    0.072,
+    3,
+    1.1,
+    0.044,
+    2,
+    42,
+    5,
+    0.008,
+    accretionRed,
+    tearCrimson,
+  );
+  const outerAccretion = buildWarpedAccretionRing(
+    out,
+    0.66,
+    [0.075, 0.110, 0.068],
+    0.095,
+    2,
+    2.2,
+    0.058,
+    3,
+    40,
+    4,
+    0.007,
+    tearCrimson,
+    abyssObsidian,
+  );
+
+  out.energy.push({ geo: innerAccretion, matrix: diskTilt });
+  out.crystal.push({ geo: midAccretion, matrix: diskTilt });
+  out.crystal.push({
+    geo: outerAccretion,
+    matrix: diskTilt.clone().multiply(makeTransform(0, 0.02, 0, 0.10, 0.4, 0)),
+  });
+
+  const lensArchTop = trackGeo(
+    out,
+    createFlowingRibbonMesh(
+      [
+        [-0.44, centerY + 0.02, -0.12],
+        [-0.28, centerY + 0.32, -0.18],
+        [0.0, centerY + 0.44, -0.20],
+        [0.28, centerY + 0.32, -0.18],
+        [0.44, centerY + 0.02, -0.12],
+      ],
+      [0.036, 0.092, 0.036],
+      0.012,
+      2.0,
+      24,
+      4,
+      0.007,
+      moltenScarlet,
+      accretionRed,
+    ),
+  );
+  const lensArchBot = trackGeo(
+    out,
+    createFlowingRibbonMesh(
+      [
+        [-0.40, centerY - 0.02, -0.10],
+        [-0.24, centerY - 0.30, -0.16],
+        [0.0, centerY - 0.40, -0.18],
+        [0.24, centerY - 0.30, -0.16],
+        [0.40, centerY - 0.02, -0.10],
+      ],
+      [0.032, 0.078, 0.032],
+      0.010,
+      2.0,
+      22,
+      4,
+      0.007,
+      accretionRed,
+      tearCrimson,
+    ),
+  );
+  out.crystal.push(
+    { geo: lensArchTop, matrix: makeTransform(0, 0, 0) },
+    { geo: lensArchBot, matrix: makeTransform(0, 0, 0) },
+  );
+
+  const tornShard = trackGeo(
+    out,
+    createFacetedCrystalPart(0.24, 0.046, 5, 0.66, 0.34, tearCrimson, moltenScarlet),
+  );
+  for (let i = 0; i < 8; i += 1) {
+    const a = (i / 8) * Math.PI * 2 + 0.22;
+    const r = 0.46 + (i % 3) * 0.11;
+    const sy = Math.sin(a * 2 + 0.6) * 0.11;
+    const shardMat = diskTilt
+      .clone()
+      .multiply(
+        makeTransform(
+          Math.cos(a) * r,
+          sy,
+          Math.sin(a) * r,
+          0.35 + (i % 2) * 0.4,
+          a + 0.6,
+          Math.PI * 0.44,
+          1.0,
+          0.92 + (i % 3) * 0.24,
+          0.42,
+        ),
+      );
+    if (i % 2 === 0) {
+      out.crystal.push({ geo: tornShard, matrix: shardMat });
+    } else {
+      out.energy.push({ geo: tornShard, matrix: shardMat, colorRgb: accretionRed });
+    }
+  }
+
+  const spineArmor = trackGeo(out, createCurvedBladePart(0.62, 0.092, 0.038, -0.12, 0.052, 9));
+  const spineEdge = trackGeo(out, createCurvedBladePart(0.56, 0.036, 0.018, -0.11, 0.048, 8));
+  const spineCoreTip = trackGeo(
+    out,
+    createFacetedCrystalPart(0.18, 0.024, 4, 0.68, 0.32, accretionRed, eclipseWhiteGold),
+  );
+
+  for (let i = 0; i < 12; i += 1) {
+    const angle = (i / 12) * Math.PI * 2;
+    const backWeight = (1 - Math.cos(angle)) * 0.5;
+    const alt = i % 2 === 0 ? 1.0 : 0.78;
+    const heightScale = (0.64 + backWeight * 0.62) * alt;
+    const orbitR = 0.50 + backWeight * 0.12 + (i % 2) * 0.04;
+    const baseY = centerY - 0.12 + backWeight * 0.28 + (i % 2 === 0 ? 0.04 : -0.05);
+    const leanOut = 0.26 - backWeight * 0.12;
+
+    const px = Math.sin(angle) * orbitR;
+    const pz = Math.cos(angle) * orbitR;
+
+    const spineMat = makeTransform(px, baseY, pz, 0, angle, 0).multiply(
+      makeTransform(0, 0, 0, leanOut, 0, 0, 0.92, heightScale, 0.92),
+    );
+    out.armor.push({
+      geo: spineArmor,
+      matrix: spineMat,
+      colorRgb: i % 2 === 0 ? abyssObsidian : tearCrimson,
+    });
+    out.trim.push({
+      geo: spineEdge,
+      matrix: spineMat.clone().multiply(makeTransform(0, 0.04, -0.022)),
+      colorRgb: bloodSteel,
+    });
+    out.energy.push({
+      geo: spineCoreTip,
+      matrix: spineMat.clone().multiply(makeTransform(-0.07, 0.44, 0.02)),
+      colorRgb: i % 3 === 0 ? eclipseWhiteGold : moltenScarlet,
+    });
+  }
+
+  const tearFilA = buildWarpedFilament(out, 0.58, 0.16, 3, 0.5, 0.05, 0.0085, 32);
+  const tearFilB = buildWarpedFilament(out, 0.46, 0.20, 2, 1.9, 0.04, 0.0075, 28);
+  out.energy.push(
+    { geo: tearFilA, matrix: makeTransform(0, centerY + 0.08, 0, 0.42, 0.22, -0.34), colorRgb: accretionRed },
+    { geo: tearFilB, matrix: makeTransform(0, centerY - 0.06, 0, -0.52, -0.28, 0.36), colorRgb: moltenScarlet },
+  );
+
+  const crownHalo = trackGeo(out, new THREE.TorusGeometry(0.76, 0.018, 8, 34));
+  out.wingParts.push(
+    { geo: crownHalo, matrix: makeTransform(0, centerY + 0.04, 0, 0.48, 0.26, 0.38), colorRgb: eclipseWhiteGold },
+    { geo: crownHalo, matrix: makeTransform(0, centerY + 0.04, 0, -0.48, -0.26, -0.38), colorRgb: bloodSteel },
+  );
+
+  out.weaponGlowHex = 0xf43f5e;
+  out.crystalHex = 0xdc2626;
+  out.crystalOpacity = 0.48;
+  out.crystalIntensity = 0.78;
+  out.headTopLocalY = 2.18;
 }
 
 export const UNIT_PACK_4_BUILDERS: Readonly<Record<string, BespokeUnitBuilder>> = {
-  S29: (_ctx, out) => buildS29RelativisticCruiser(out),
-  S30: (_ctx, out) => buildS30WhiteDwarfBeacon(out),
-  S31: (_ctx, out) => buildS31UnuploadedHuman(out),
-  S32: (_ctx, out) => buildS32EntropySingularity(out),
-  S34: (_ctx, out) => buildS34CenturyDelayedPioneer(out),
-  S35: (_ctx, out) => buildS35RetiredAdmiral(out),
-  S36: (_ctx, out) => buildS36AbyssalSingularity(out),
+  S29: (_ctx, out) => buildS29Leviathan(out),
+  S30: (_ctx, out) => buildS30Sirius(out),
+  S31: (_ctx, out) => buildS31Siren(out),
+  S32: (_ctx, out) => buildS32Entropy(out),
+  S34: (_ctx, out) => buildS34AzureDragon(out),
+  S35: (_ctx, out) => buildS35Cassini(out),
+  S36: (_ctx, out) => buildS36AbyssCrown(out),
 };

@@ -40,7 +40,7 @@ describe('@pkg/contracts & canonical content invariants', () => {
     expect(PrepRoomMemberSchema.safeParse({ ...legacyMember, tacticianId: null }).success).toBe(false);
   });
 
-  it('verifies 36 units, 748 card pool, 1-7 char names, and 100% unique (faction, role) bijection', () => {
+  it('verifies 36 units, 748 card pool, and 100% unique (faction, role) bijection', () => {
     expect(SEASON1_UNITS).toHaveLength(36);
     const totalCopies = SEASON1_UNITS.reduce((acc, u) => acc + u.poolCopies, 0);
     expect(totalCopies).toBe(748);
@@ -50,8 +50,23 @@ describe('@pkg/contracts & canonical content invariants', () => {
 
     const fourCostRoles = new Set(SEASON1_UNITS.filter((u) => u.cost === 4).map((u) => u.role));
     expect(fourCostRoles.size).toBe(6);
+  });
 
-    expect(SEASON1_UNITS.every((u) => u.nameLength === u.name.length && u.nameLength >= 1 && u.nameLength <= 4)).toBe(true);
+  it('keeps distinct 1–4 character unit names and vessel silhouettes aligned with lore', () => {
+    const loreById = new Map(SEASON1_LORE.units.map((unit) => [unit.unitId, unit]));
+    expect(SEASON1_LORE.units).toHaveLength(SEASON1_UNITS.length);
+    expect(loreById.size).toBe(SEASON1_UNITS.length);
+    expect(new Set(SEASON1_UNITS.map((unit) => unit.name)).size).toBe(SEASON1_UNITS.length);
+    expect(new Set(SEASON1_UNITS.map((unit) => unit.nameLength))).toEqual(new Set([1, 2, 3, 4]));
+    expect(new Set(SEASON1_UNITS.map((unit) => unit.modelProfile.silhouetteDesc)).size).toBe(SEASON1_UNITS.length);
+
+    for (const { id, name, nameLength, modelProfile, faction, role, cost } of SEASON1_UNITS) {
+      expect(nameLength, id).toBe(name.length);
+      expect(name, id).not.toMatch(/[人兵官长师者]/u);
+      expect(modelProfile.archetype, id).toBe('hard_surface_vessel');
+      expect(modelProfile.silhouetteDesc.trim(), id).not.toBe('');
+      expect(loreById.get(id), id).toMatchObject({ name, faction, role, cost });
+    }
   });
 
   it('classifies fourteen units as pure physical skill damage and lists matching recommendations', () => {
