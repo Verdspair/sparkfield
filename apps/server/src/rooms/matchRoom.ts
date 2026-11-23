@@ -6,10 +6,10 @@ import { CommunicationClientSendSchema, ConfigurableCommunicationPolicy, DEFAULT
   type MatchPhaseKind, type MatchStudyBlueprint, type ModeStandingSummary, type SubjectId, type UserProfile } from '@pkg/contracts';
 import { activateLessonRemediation, buildMatchStudyBlueprint, buildPersonalizedLessonBundle, evaluateLearningBonusDrops, finalizeLearningGoldCarry, roomSlotBonusStage,
   formatCorrectAnswerDisplay, gradeFrozenLearningUnits, gradeQuestionSubmission, locateMatchStudySlot, settleLearningNodeGold,
-  type ArcAttempt, type LearningGoldSettlement, type MatchStudyBlueprintInput, type PersonalizedLessonBundle,
+  type ArcAttempt, type GradedLearningUnit, type LearningGoldSettlement, type MatchStudyBlueprintInput, type PersonalizedLessonBundle,
   type RecentLearningPerformance, type SubmissionInput } from '@pkg/learning-core';
-import { applyGameCommand, applyLearningBonusGrant, applyLearningGoldGrant, BATTLE_REGULAR_MS, beginNextRound, computeActiveTraits, computeRoundBattleDurationMs, createGame,
-  decideBotPrepCommands, finalPlacements, finalizePrepDeadline, longestBattleElapsedMs, resolveRoundBattles, settleRound,
+import { applyGameCommand, applyLearningBonusGrant, applyLearningGoldGrant, BATTLE_REGULAR_MS, beginNextRound, computeActiveTraits, computeRoundBattleDurationMs, createGame, createRng,
+  decideBotPrepCommands, finalPlacements, finalizePrepDeadline, longestBattleElapsedMs, randomInt, resolveRoundBattles, settleRound,
   type GameState, type ResolvedRound, type SeatState } from '@pkg/game-core';
 import type { AuthService, AuthenticatedSession } from '../auth/authService.js';
 import type { AppDatabase } from '../db/client.js';
@@ -55,6 +55,34 @@ const CHOICE_COMMANDS = new Set(['PICK_AUGMENT','REROLL_AUGMENT_SLOT','PICK_ANVI
 const LearningMessage = z.object({requestId:z.string().max(100).optional(), action:z.enum(['advance','submit']),
   questionId:z.string().optional(), submission:z.unknown().optional()}).strict();
 
+interface BotLearningPlan {
+  completionPercent: number;
+  gradedUnits: GradedLearningUnit[];
+  botLearningDone: boolean;
+}
+
+const BOT_LEARNING_RANGES = {
+  novice: { completion: [55, 86], score: [48, 64] },
+  standard: { completion: [45, 76], score: [66, 82] },
+  veteran: { completion: [36, 68], score: [78, 94] },
+} as const;
+
+function createBotLearningPlan(seed: number, nodeIndex: number, seatIndex: number, difficulty: SeatState['botDifficulty']): BotLearningPlan {
+  const rng = createRng(`${seed >>> 0}:bot-learning:${nodeIndex}:${seatIndex}`);
+  const { completion, score } = BOT_LEARNING_RANGES[difficulty];
+  const completionPercent = completion[0] + randomInt(rng, completion[1] - completion[0] + 1);
+  const scorePercent = score[0] + randomInt(rng, score[1] - score[0] + 1);
+  const quality = { numerator: String(scorePercent), denominator: '100' };
+  return {
+    completionPercent,
+    gradedUnits: [
+      { stepRole: 'resource_check', weight: 1, quality },
+      { stepRole: 'verification', weight: 1, quality },
+    ],
+    botLearningDone: false,
+  };
+}
+
 export class MatchRoom extends Room {
   runtime!: MatchRuntime;
   input!: CreateMatchInput;
@@ -72,6 +100,9 @@ export class MatchRoom extends Room {
   private readonly controllers = new Map<string, string>();
   private readonly disconnectedAt = new Map<string, number>();
   private readonly lessons = new Map<string, LearningProgress>();
+  private readonly botLearningPlans = new Map<string, BotLearningPlan>();
+  private readonly botLearningTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private gameSeed = 0;
   private readonly studies = new Map<string, MatchStudyState>();
   private readonly wrong = new Map<string, Set<string>>();
   private readonly settlements = new Map<string, LearningGoldSettlement[]>();
@@ -98,6 +129,7 @@ export class MatchRoom extends Room {
     this.policy = this.runtime.communicationPolicy ?? new ConfigurableCommunicationPolicy();
     const seed=this.runtime.gameSeed ?? parseInt(randomUUID().slice(0,8),16);
     const now=new Date();
+    this.gameSeed = seed;
     this.game = createGame(this.input.durationMode,seed);
     for (let i=0;i<this.game.seats.length;i++) {
       const seat=this.game.seats[i]!; const profile=this.input.humans[i];
@@ -281,6 +313,7 @@ export class MatchRoom extends Room {
       return this.choiceKind()==='augment' ? !seat.augmentOffer : seat.anvils.length===0;
     }
     if (this.phase==='learning') {
+      if (seat.isBot) return this.botLearningPlans.get(seat.id)?.botLearningDone ?? false;
       const human=[...this.humans].find(([,h])=>h.seatId===seat.id);
       return Boolean(human && this.lessons.get(human[0])?.complete);
     }
@@ -303,16 +336,47 @@ export class MatchRoom extends Room {
     }
     progress.complete=progress.step>=progress.bundle.steps.length;
   }
+  private grantLearningSettlement(
+    seat: SeatState, gradedUnits: readonly GradedLearningUnit[], studyBlueprint?: MatchStudyBlueprint,
+  ): LearningGoldSettlement {
+    const gold = settleLearningNodeGold({
+      mode: this.game.mode,
+      blockIndex: this.nodeIndex,
+      gradedUnits,
+      studyBlueprint,
+      carryInCents: seat.learningChargeCents,
+    });
+    const bonus = evaluateLearningBonusDrops(gold.exactScore, roomSlotBonusStage(this.game.mode, this.nodeIndex));
+    const settlement = {
+      ...gold,
+      ...applyLearningBonusGrant(this.game, seat, this.nodeIndex, bonus),
+      performanceTier: bonus.performanceTier,
+    };
+    applyLearningGoldGrant(seat, settlement.grantedIntegerGold, settlement.carryOutCents);
+    seat.learningGoldOrbs = [...settlement.orbSplits];
+    return settlement;
+  }
+
+  private settleBotLearning(seat: SeatState): void {
+    const plan = this.botLearningPlans.get(seat.id);
+    if (!plan || plan.botLearningDone) return;
+    this.grantLearningSettlement(seat, plan.gradedUnits);
+    plan.botLearningDone = true;
+  }
+
+  private clearBotLearningTimers(): void {
+    for (const timer of this.botLearningTimers.values()) clearTimeout(timer);
+    this.botLearningTimers.clear();
+  }
+
   private settleUserLearning(userId:string):void {
     const progress=this.lessons.get(userId);
     if(!progress || progress.settled)return;
     const seat=this.game.seats.find(s=>s.id===this.humans.get(userId)!.seatId)!;
-    const gold=settleLearningNodeGold({mode:this.game.mode,blockIndex:this.nodeIndex,studyBlueprint:progress.bundle.blueprint,
-      gradedUnits:gradeFrozenLearningUnits(progress.bundle.questions,progress.submissions),carryInCents:seat.learningChargeCents});
-    const bonus=evaluateLearningBonusDrops(gold.exactScore,roomSlotBonusStage(this.game.mode,this.nodeIndex));
-    const settlement={...gold,...applyLearningBonusGrant(this.game,seat,this.nodeIndex,bonus),performanceTier:bonus.performanceTier};
-    applyLearningGoldGrant(seat,settlement.grantedIntegerGold,settlement.carryOutCents);
-    seat.learningGoldOrbs=[...settlement.orbSplits]; progress.settled=true;
+    const settlement = this.grantLearningSettlement(
+      seat, gradeFrozenLearningUnits(progress.bundle.questions, progress.submissions), progress.bundle.blueprint,
+    );
+    progress.settled = true;
     this.settlements.get(userId)!.push(settlement);
     for(const question of progress.bundle.questions) {
       if(!gradeQuestionSubmission(question,progress.submissions[question.questionId]).isCorrect)this.wrong.get(userId)!.add(question.questionId);
@@ -336,14 +400,45 @@ export class MatchRoom extends Room {
     this.settleUserLearning(userId);
     this.maybeFinishLearningEarly();
   }
-  private maybeFinishLearningEarly():void {
-    if(this.disposed || this.failure || this.completed || this.phase!=='learning' || this.humans.size===0)return;
-    const allDone=[...this.humans.keys()].every((uid)=>Boolean(this.lessons.get(uid)?.complete));
-    if(!allDone)return;
-    if(this.timeout){clearTimeout(this.timeout);this.timeout=undefined;}
-    this.deadlineEpochMs=Date.now();
-    this.timeout=setTimeout(()=>{void this.enqueue(()=>this.transition()).catch(error=>this.fail(error));},0);
+  private startBotLearning(phaseStartedAtMs: number): void {
+    const phaseIndex = this.phaseIndex;
+    const durationMs = this.deadlineEpochMs - phaseStartedAtMs;
+    this.botLearningPlans.clear();
+    for (const [seatIndex, seat] of this.game.seats.entries()) {
+      if (!seat.isBot) continue;
+      const plan = createBotLearningPlan(this.gameSeed, this.nodeIndex, seatIndex, seat.botDifficulty);
+      this.botLearningPlans.set(seat.id, plan);
+      const completesAtMs = phaseStartedAtMs + durationMs * plan.completionPercent / 100;
+      const timer = setTimeout(() => {
+        void this.enqueue(() => this.completeBotLearning(phaseIndex, seat)).catch(error => this.fail(error));
+      }, Math.max(1, Math.ceil(completesAtMs - Date.now())));
+      this.botLearningTimers.set(seat.id, timer);
+    }
   }
+
+  private completeBotLearning(phaseIndex: number, seat: SeatState): void {
+    if (this.disposed || this.failure || this.completed || this.phaseIndex !== phaseIndex || Date.now() >= this.deadlineEpochMs) return;
+    this.botLearningTimers.delete(seat.id);
+    this.settleBotLearning(seat);
+    if (this.canActInStrategy(seat) && Date.now() < this.deadlineEpochMs) {
+      for (const command of decideBotPrepCommands(this.game, seat.id, seat.botDifficulty)) {
+        if (Date.now() >= this.deadlineEpochMs) break;
+        this.applyCommand(seat.id, command);
+      }
+    }
+    this.maybeFinishLearningEarly();
+    this.broadcastSnapshots();
+  }
+
+  private maybeFinishLearningEarly(): void {
+    if (this.disposed || this.failure || this.completed || this.phase !== 'learning') return;
+    const allHumansDone = [...this.humans.keys()].every(uid => this.lessons.get(uid)?.complete);
+    const allBotsDone = this.game.seats.every(seat => !seat.isBot || this.botLearningPlans.get(seat.id)?.botLearningDone);
+    if (!allHumansDone || !allBotsDone) return;
+    this.deadlineEpochMs = Date.now();
+    this.schedulePhaseTransition(0);
+  }
+
   private learningCommand(userId:string,message:z.infer<typeof LearningMessage>):unknown {
     if(this.failure||this.disposed||this.completed)throw new ServiceError('MATCH_NOT_ACTIVE');
     if (this.phase!=='learning' || Date.now()>=this.deadlineEpochMs) throw new ServiceError('LEARNING_WINDOW_CLOSED');
@@ -422,8 +517,29 @@ export class MatchRoom extends Room {
       for(const command of decideBotPrepCommands(this.game,seat.id,seat.botDifficulty))this.applyCommand(seat.id,command);
     }
   }
+  private schedulePhaseTransition(delayMs: number): void {
+    if (this.timeout) clearTimeout(this.timeout);
+    const phaseIndex = this.phaseIndex;
+    this.timeout = setTimeout(() => {
+      void this.enqueue(() => phaseIndex === this.phaseIndex ? this.transition() : undefined).catch(error => this.fail(error));
+    }, delayMs);
+  }
+
+  private clearPhaseTimers(): void {
+    if (this.timeout) clearTimeout(this.timeout);
+    if (this.guardTimer) clearTimeout(this.guardTimer);
+    this.timeout = undefined;
+    this.guardTimer = undefined;
+    this.clearBotLearningTimers();
+  }
+
   private async transition():Promise<void> {
     if(this.disposed || this.failure)return;
+    this.clearPhaseTimers();
+    if (this.phase === 'learning') {
+      for (const userId of this.lessons.keys()) this.settleUserLearning(userId);
+      for (const seat of this.game.seats) if (seat.isBot) this.settleBotLearning(seat);
+    }
     const timeline=MODE_BUDGETS.modes[this.game.mode].timeline;
     this.phaseIndex++;
     if(this.phaseIndex>=timeline.length) {this.broadcast('match_complete',{matchId:this.start.matchId});
@@ -451,8 +567,6 @@ export class MatchRoom extends Room {
         const progress:LearningProgress={bundle,submissions:{},step:0,complete:false,readyToProceed:false,feedback:{},settled:false};
         this.normalizeStep(progress);this.lessons.set(userId,progress);
       }
-    } else if(this.phase==='resource') {
-      for(const userId of this.lessons.keys()) this.settleUserLearning(userId);
     } else if(this.phase==='strategy' || this.phase==='choice') {
       this.runBots();
     } else if(this.phase==='battle') {
@@ -467,11 +581,18 @@ export class MatchRoom extends Room {
       if(!this.pendingBattle)throw new Error('MISSING_BATTLE');
       settleRound(this.game,this.pendingBattle.outcomes);this.pendingBattle=null;
     } else if(this.phase==='exit') await this.finish();
-    if(this.failure)return;
-    this.deadlineEpochMs=(phaseStartedAtMs??Date.now())+Math.max(1,phaseDurationMs*this.runtime.timeScale);
+    if(this.disposed || this.failure)return;
+    const startedAtMs = phaseStartedAtMs ?? Date.now();
+    this.deadlineEpochMs = startedAtMs + Math.max(1, phaseDurationMs * this.runtime.timeScale);
+    this.schedulePhaseTransition(Math.max(1, Math.ceil(this.deadlineEpochMs - Date.now())));
+    if (this.phase === 'learning') {
+      this.startBotLearning(startedAtMs);
+      for (const [userId, progress] of this.lessons) {
+        if (progress.complete) this.onUserLearningCompleted(userId, progress);
+      }
+    }
     if(this.phase==='battle' && this.pendingBattle)this.broadcast('battle',this.pendingBattle.payload);
     this.broadcastSnapshots();this.scheduleProtectionCheck();
-    this.timeout=setTimeout(()=>{void this.enqueue(()=>this.transition()).catch(error=>this.fail(error));},Math.max(1,Math.ceil(this.deadlineEpochMs-Date.now())));
   }
   private async finish():Promise<void> {
     await Promise.all(this.persistence);if(this.failure)throw new Error(this.failure);
@@ -521,8 +642,9 @@ export class MatchRoom extends Room {
       learning:progress?{nodeIndex:this.nodeIndex,currentStep:current,complete:progress.complete,
         arcMeta:progress.bundle.arcMeta,blueprint:this.studies.get(userId)!.blueprint,
         readyToProceed:progress.readyToProceed,
-        readyHumansCount:[...this.humans.keys()].filter(uid=>{const p=this.lessons.get(uid);return Boolean(p&&p.complete&&p.readyToProceed);}).length,
-        totalHumansCount:this.humans.size,
+        readyHumansCount:[...this.lessons.values()].filter(lesson=>lesson.complete).length +
+          [...this.botLearningPlans.values()].filter(plan=>plan.botLearningDone).length,
+        totalHumansCount:this.game.seats.length,
         correctCount:progress.bundle.questions.filter(q=>{const fb=progress.feedback[q.questionId] as {isCorrect?:boolean}|undefined;return Boolean(fb?.isCorrect);}).length,
         totalQuestionsCount:progress.bundle.questions.length,
         clientQuestions:progress.bundle.clientQuestions.filter(q=>q.stepRole===current),
@@ -540,14 +662,14 @@ export class MatchRoom extends Room {
   }
   private fail(error:unknown):void {
     if(this.failure || this.disposed)return;
-    this.failure=this.errorCode(error);if(this.timeout)clearTimeout(this.timeout);if(this.guardTimer)clearTimeout(this.guardTimer);
+    this.failure=this.errorCode(error);this.clearPhaseTimers();
     this.broadcast('match_error',{reason:this.failure,competitiveResultVoided:!this.completed});this.broadcastSnapshots();
     void this.runtime.db.updateTable('matches').set({status:'completed',completed_at:new Date()})
       .where('id','=',this.start.matchId).where('status','=','active').execute().catch(()=>undefined);
     this.clock.setTimeout(()=>{void this.disconnect();},60_000);
   }
   async onDispose():Promise<void> {
-    this.disposed=true;if(this.timeout)clearTimeout(this.timeout);if(this.guardTimer)clearTimeout(this.guardTimer);
+    this.disposed=true;this.clearPhaseTimers();
     await Promise.all(this.persistence);
     if(!this.completed)await this.runtime.db.updateTable('matches').set({status:'completed',completed_at:new Date()})
       .where('id','=',this.start.matchId).where('status','=','active').execute();

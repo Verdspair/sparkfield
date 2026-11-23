@@ -22,13 +22,14 @@ import {
   computeActiveTraits,
   computeRoundBattleDurationMs,
   createGame,
+  createRng,
   createOnboardingMicroScenario,
   decideBotPrepCommands,
   finalPlacements,
   finalizePrepDeadline,
-  grantGold,
   longestBattleElapsedMs,
   ONBOARDING_SEED,
+  randomInt,
   resolveRoundBattles,
   runCombat,
   settleRound,
@@ -37,6 +38,7 @@ import {
   type OnboardingMicroScenario,
   type OnboardingStage,
   type ResolvedRound,
+  type SeatState,
 } from '@pkg/game-core';
 import {
   activateLessonRemediation,
@@ -53,6 +55,7 @@ import {
   settleLearningNodeGold,
   toClientQuestionView,
   type ArcAttempt,
+  type GradedLearningUnit,
   type LearningGoldSettlement,
   type PersonalizedLessonBundle,
   type QuestionAnswer,
@@ -406,6 +409,34 @@ export interface OfflineMatchListeners {
   onSummary?: (summary: MatchSummaryPayload) => void;
 }
 
+interface BotLearningPlan {
+  completionPercent: number;
+  gradedUnits: GradedLearningUnit[];
+  botLearningDone: boolean;
+}
+
+const BOT_LEARNING_RANGES = {
+  novice: { completion: [55, 86], score: [48, 64] },
+  standard: { completion: [45, 76], score: [66, 82] },
+  veteran: { completion: [36, 68], score: [78, 94] },
+} as const;
+
+function createBotLearningPlan(seed: number, nodeIndex: number, seatIndex: number, difficulty: SeatState['botDifficulty']): BotLearningPlan {
+  const rng = createRng(`${seed >>> 0}:bot-learning:${nodeIndex}:${seatIndex}`);
+  const { completion, score } = BOT_LEARNING_RANGES[difficulty];
+  const completionPercent = completion[0] + randomInt(rng, completion[1] - completion[0] + 1);
+  const scorePercent = score[0] + randomInt(rng, score[1] - score[0] + 1);
+  const quality = { numerator: String(scorePercent), denominator: '100' };
+  return {
+    completionPercent,
+    gradedUnits: [
+      { stepRole: 'resource_check', weight: 1, quality },
+      { stepRole: 'verification', weight: 1, quality },
+    ],
+    botLearningDone: false,
+  };
+}
+
 export class OfflinePracticeMatchController {
   public readonly matchId: string;
   public readonly mode: DurationMode;
@@ -413,7 +444,7 @@ export class OfflinePracticeMatchController {
   private readonly nickname: string;
   private readonly pack: CoursePack;
   private readonly learningStart: string;
-  private readonly studySeed: number;
+  private readonly gameSeed: number;
   private readonly listeners: OfflineMatchListeners;
   private readonly game: GameState;
   private readonly playerSeatId: string;
@@ -424,6 +455,9 @@ export class OfflinePracticeMatchController {
   private deadlineEpochMs = 0;
   private completed = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private readonly botLearningPlans = new Map<string, BotLearningPlan>();
+  private readonly botLearningTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private failure: string | null = null;
   private pendingBattle: {
     payload: BattleBroadcastPayload;
     outcomes: ResolvedRound['outcomes'];
@@ -467,8 +501,8 @@ export class OfflinePracticeMatchController {
     this.learningStart = options.learningStartSelections?.[this.subject] ?? this.pack.manifest.knowledgeGraph[0]!.nodeId;
     this.listeners = options.listeners;
 
-    this.studySeed = options.seed ?? ((Date.now() ^ 0x9e3779b9) >>> 0);
-    this.game = createGame(options.mode, this.studySeed);
+    this.gameSeed = options.seed ?? ((Date.now() ^ 0x9e3779b9) >>> 0);
+    this.game = createGame(options.mode, this.gameSeed);
     this.playerSeatId = this.game.seats[0]!.id;
     for (let i = 0; i < this.game.seats.length; i += 1) {
       const seat = this.game.seats[i]!;
@@ -478,7 +512,10 @@ export class OfflinePracticeMatchController {
   }
 
   public start(): Promise<void> {
-    return this.startPromise ??= this.prepareMatch();
+    return this.startPromise ??= this.prepareMatch().catch(error => {
+      this.fail(error);
+      throw error;
+    });
   }
 
   private async prepareMatch(): Promise<void> {
@@ -492,7 +529,7 @@ export class OfflinePracticeMatchController {
       now,
       cards,
       progress: [{ subject: this.subject, knowledgeNode: this.learningStart }],
-      seed: this.studySeed,
+      seed: this.gameSeed,
     });
     this.studyContext = { blueprint, cards, now };
     await this.transition();
@@ -516,44 +553,155 @@ export class OfflinePracticeMatchController {
     if (!['strategy', 'choice'].includes(this.phase) || this.game.phase !== 'prep') return;
     for (const seat of this.game.seats) {
       if (!seat.isBot) continue;
-      for (const cmd of decideBotPrepCommands(this.game, seat.id, seat.botDifficulty)) {
-        applyGameCommand(this.game, seat.id, cmd);
+      for (const command of decideBotPrepCommands(this.game, seat.id, seat.botDifficulty)) {
+        this.applyCommand(seat.id, command);
       }
     }
   }
 
-  public sendCommand(command: GameCommand): CommandResult {
-    if (this.disposed || this.completed) return { ok: false, reason: 'MATCH_NOT_ACTIVE' };
-    const selfSeat = this.game.seats.find((s) => s.id === this.playerSeatId)!;
+  private choiceKind() {
+    return getMatchChoiceKind(this.phase, MODE_BUDGETS.modes[this.mode].timeline[this.phaseIndex]?.label ?? '');
+  }
+
+  private canActInStrategy(seat: SeatState): boolean {
+    if (this.game.phase !== 'prep') return false;
+    if (['entry', 'resource', 'rest', 'strategy'].includes(this.phase)) return true;
+    if (this.phase === 'choice') {
+      return this.choiceKind() === 'augment' ? !seat.augmentOffer : seat.anvils.length === 0;
+    }
+    if (this.phase === 'learning') {
+      if (seat.isBot) return this.botLearningPlans.get(seat.id)?.botLearningDone ?? false;
+      return this.lessonProgress?.complete ?? false;
+    }
+    return false;
+  }
+
+  private applyCommand(seatId: string, command: GameCommand): CommandResult {
+    if (this.disposed || this.failure || this.completed) return { ok: false, reason: 'MATCH_NOT_ACTIVE' };
+    const seat = this.game.seats.find(s => s.id === seatId)!;
     if (command.type === 'SET_LINEUP_PLAN') {
-      selfSeat.lineupPlan = [...command.unitIds];
-      this.emitSnapshot();
+      seat.lineupPlan = [...command.unitIds];
       return { ok: true };
     }
-    const choiceKind = getMatchChoiceKind(
-      this.phase, MODE_BUDGETS.modes[this.mode].timeline[this.phaseIndex]?.label ?? '',
-    );
     if (CHOICE_COMMANDS.has(command.type)) {
+      const choiceKind = this.choiceKind();
       const allowed = choiceKind === 'augment'
         ? command.type === 'PICK_AUGMENT' || command.type === 'REROLL_AUGMENT_SLOT'
         : choiceKind === 'anvil' && command.type === 'PICK_ANVIL_OPTION';
       if (!allowed) return { ok: false, reason: 'CHOICE_WINDOW_REQUIRED' };
-    } else {
-      const canAct = choiceKind === 'augment' ? !selfSeat.augmentOffer
-        : choiceKind === 'anvil' ? selfSeat.anvils.length === 0
-        : ['entry', 'resource', 'rest', 'strategy'].includes(this.phase);
-      if (!canAct || this.game.phase !== 'prep') return { ok: false, reason: 'STRATEGY_PHASE_REQUIRED' };
-    }
-    const res = applyGameCommand(this.game, this.playerSeatId, command);
+    } else if (!this.canActInStrategy(seat)) return { ok: false, reason: 'STRATEGY_PHASE_REQUIRED' };
+    return applyGameCommand(this.game, seatId, command);
+  }
+
+  public sendCommand(command: GameCommand): CommandResult {
+    if (this.disposed || this.failure || this.completed) return { ok: false, reason: 'MATCH_NOT_ACTIVE' };
+    if (Date.now() >= this.deadlineEpochMs) return { ok: false, reason: 'PHASE_WINDOW_CLOSED' };
+    const res = this.applyCommand(this.playerSeatId, command);
     if (res.ok) this.emitSnapshot();
     return res;
+  }
+
+  private grantLearningSettlement(
+    seat: SeatState, gradedUnits: readonly GradedLearningUnit[], studyBlueprint?: MatchStudyBlueprint,
+  ): LearningGoldSettlement {
+    const gold = settleLearningNodeGold({
+      mode: this.game.mode,
+      blockIndex: this.nodeIndex,
+      gradedUnits,
+      studyBlueprint,
+      carryInCents: seat.learningChargeCents,
+    });
+    const bonus = evaluateLearningBonusDrops(gold.exactScore, roomSlotBonusStage(this.game.mode, this.nodeIndex));
+    const settlement = {
+      ...gold,
+      ...applyLearningBonusGrant(this.game, seat, this.nodeIndex, bonus),
+      performanceTier: bonus.performanceTier,
+    };
+    applyLearningGoldGrant(seat, settlement.grantedIntegerGold, settlement.carryOutCents);
+    seat.learningGoldOrbs = [...settlement.orbSplits];
+    return settlement;
+  }
+
+  private settleBotLearning(seat: SeatState): void {
+    const plan = this.botLearningPlans.get(seat.id);
+    if (!plan || plan.botLearningDone) return;
+    this.grantLearningSettlement(seat, plan.gradedUnits);
+    plan.botLearningDone = true;
+  }
+
+  private clearBotLearningTimers(): void {
+    for (const timer of this.botLearningTimers.values()) clearTimeout(timer);
+    this.botLearningTimers.clear();
+  }
+
+  private settleUserLearning(): void {
+    const progress = this.lessonProgress;
+    if (!progress || progress.settled) return;
+    const seat = this.game.seats.find(s => s.id === this.playerSeatId)!;
+    const settlement = this.grantLearningSettlement(
+      seat, gradeFrozenLearningUnits(progress.bundle.questions, progress.submissions), progress.bundle.blueprint,
+    );
+    progress.settled = true;
+    this.settlements.push(settlement);
+    for (const q of progress.bundle.questions) {
+      if (!gradeQuestionSubmission(q, progress.submissions[q.questionId]).isCorrect) this.wrongIds.add(q.questionId);
+    }
+    void persistOfflineNodeLocally(progress.bundle.questions, progress.submissions, `${this.matchId}-node-${this.nodeIndex}`);
+  }
+
+  private onUserLearningCompleted(): void {
+    this.settleUserLearning();
+    this.maybeFinishLearningEarly();
+  }
+
+  private startBotLearning(phaseStartedAtMs: number): void {
+    const phaseIndex = this.phaseIndex;
+    const durationMs = this.deadlineEpochMs - phaseStartedAtMs;
+    this.botLearningPlans.clear();
+    for (const [seatIndex, seat] of this.game.seats.entries()) {
+      if (!seat.isBot) continue;
+      const plan = createBotLearningPlan(this.gameSeed, this.nodeIndex, seatIndex, seat.botDifficulty);
+      this.botLearningPlans.set(seat.id, plan);
+      const completesAtMs = phaseStartedAtMs + durationMs * plan.completionPercent / 100;
+      const timer = setTimeout(() => {
+        try {
+          this.completeBotLearning(phaseIndex, seat);
+        } catch (error) {
+          this.fail(error);
+        }
+      }, Math.max(1, Math.ceil(completesAtMs - Date.now())));
+      this.botLearningTimers.set(seat.id, timer);
+    }
+  }
+
+  private completeBotLearning(phaseIndex: number, seat: SeatState): void {
+    if (this.disposed || this.failure || this.completed || this.phaseIndex !== phaseIndex || Date.now() >= this.deadlineEpochMs) return;
+    this.botLearningTimers.delete(seat.id);
+    this.settleBotLearning(seat);
+    if (this.canActInStrategy(seat) && Date.now() < this.deadlineEpochMs) {
+      for (const command of decideBotPrepCommands(this.game, seat.id, seat.botDifficulty)) {
+        if (Date.now() >= this.deadlineEpochMs) break;
+        this.applyCommand(seat.id, command);
+      }
+    }
+    this.maybeFinishLearningEarly();
+    this.emitSnapshot();
+  }
+
+  private maybeFinishLearningEarly(): void {
+    if (this.disposed || this.failure || this.completed || this.phase !== 'learning') return;
+    const allHumansDone = this.lessonProgress?.complete ?? false;
+    const allBotsDone = this.game.seats.every(seat => !seat.isBot || this.botLearningPlans.get(seat.id)?.botLearningDone);
+    if (!allHumansDone || !allBotsDone) return;
+    this.deadlineEpochMs = Date.now();
+    this.schedulePhaseTransition(0);
   }
 
   public sendLearningSubmit(
     questionId: string,
     submission: SubmissionInput,
   ): { ok: boolean; feedback?: MatchLearningFeedbackItem } {
-    if (!this.lessonProgress || this.phase !== 'learning') return { ok: false };
+    if (this.disposed || this.failure || !this.lessonProgress || this.phase !== 'learning' || Date.now() >= this.deadlineEpochMs) return { ok: false };
     this.normalizeLessonStep();
     if (this.lessonProgress.complete) return { ok: false };
     const kind = STEPS[this.lessonProgress.step]!;
@@ -591,22 +739,20 @@ export class OfflinePracticeMatchController {
       }
       this.lessonProgress.step += 1;
       this.normalizeLessonStep();
-      if (this.lessonProgress.complete) {
-        void this.skipCurrentPhaseWait();
-        return { ok: true, feedback: fb };
-      }
+      if (this.lessonProgress.complete) this.onUserLearningCompleted();
     }
     this.emitSnapshot();
     return { ok: true, feedback: fb };
   }
 
   public sendLearningAdvance(): { ok: boolean; reason?: string } {
-    if (!this.lessonProgress || this.phase !== 'learning') {
+    if (this.disposed || this.failure || !this.lessonProgress || this.phase !== 'learning' || Date.now() >= this.deadlineEpochMs) {
       return { ok: false, reason: 'LEARNING_WINDOW_CLOSED' };
     }
     this.normalizeLessonStep();
     if (this.lessonProgress.complete) {
-      void this.skipCurrentPhaseWait();
+      this.onUserLearningCompleted();
+      this.emitSnapshot();
       return { ok: true };
     }
     const kind = STEPS[this.lessonProgress.step];
@@ -615,26 +761,38 @@ export class OfflinePracticeMatchController {
     }
     this.lessonProgress.step += 1;
     this.normalizeLessonStep();
-    if (this.lessonProgress.complete) {
-      void this.skipCurrentPhaseWait();
-      return { ok: true };
-    }
+    if (this.lessonProgress.complete) this.onUserLearningCompleted();
     this.emitSnapshot();
     return { ok: true };
   }
 
   public async skipCurrentPhaseWait(): Promise<void> {
-    if (this.disposed || this.completed || this.phase === 'battle') return;
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
-    await this.transition();
+    if (this.disposed || this.failure || this.completed || this.phase === 'battle') return;
+    await this.transition().catch(error => this.fail(error));
+  }
+
+  private schedulePhaseTransition(delayMs: number): void {
+    if (this.timer) clearTimeout(this.timer);
+    const phaseIndex = this.phaseIndex;
+    this.timer = setTimeout(() => {
+      if (phaseIndex === this.phaseIndex) void this.transition().catch(error => this.fail(error));
+    }, delayMs);
+  }
+
+  private clearPhaseTimers(): void {
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    this.clearBotLearningTimers();
   }
 
   private async transition(): Promise<void> {
     const study = this.studyContext;
-    if (this.disposed || !study) return;
+    if (this.disposed || this.failure || !study) return;
+    this.clearPhaseTimers();
+    if (this.phase === 'learning') {
+      this.settleUserLearning();
+      for (const seat of this.game.seats) if (seat.isBot) this.settleBotLearning(seat);
+    }
     const timeline = MODE_BUDGETS.modes[this.mode].timeline;
     this.phaseIndex += 1;
     if (this.phaseIndex >= timeline.length) {
@@ -642,8 +800,8 @@ export class OfflinePracticeMatchController {
     }
     const event = timeline[this.phaseIndex]!;
     this.phase = event.kind as MatchPhaseKind;
-    const plannedSeconds = this.phase === 'entry' ? Math.min(8, event.duration) : event.duration;
-    let phaseDurationMs = Math.max(1000, plannedSeconds * 1000);
+    const plannedSeconds = event.duration;
+    let phaseDurationMs = plannedSeconds * 1000;
     let phaseStartedAtMs: number | undefined;
 
     if (
@@ -686,48 +844,6 @@ export class OfflinePracticeMatchController {
         settled: false,
       };
       this.normalizeLessonStep();
-    } else if (this.phase === 'resource') {
-      if (this.lessonProgress && !this.lessonProgress.settled) {
-        const selfSeat = this.game.seats.find((s) => s.id === this.playerSeatId)!;
-        const gold = settleLearningNodeGold({
-          mode: this.mode,
-          blockIndex: this.nodeIndex,
-          studyBlueprint: this.lessonProgress.bundle.blueprint,
-          gradedUnits: gradeFrozenLearningUnits(
-            this.lessonProgress.bundle.questions,
-            this.lessonProgress.submissions,
-          ),
-          carryInCents: selfSeat.learningChargeCents,
-        });
-        const bonus = evaluateLearningBonusDrops(gold.exactScore, roomSlotBonusStage(this.mode, this.nodeIndex));
-        const settlement = {
-          ...gold,
-          ...applyLearningBonusGrant(this.game, selfSeat, this.nodeIndex, bonus),
-          performanceTier: bonus.performanceTier,
-        };
-        applyLearningGoldGrant(
-          selfSeat,
-          settlement.grantedIntegerGold,
-          settlement.carryOutCents,
-        );
-        selfSeat.learningGoldOrbs = [...settlement.orbSplits];
-        this.lessonProgress.settled = true;
-        this.settlements.push(settlement);
-        for (const q of this.lessonProgress.bundle.questions) {
-          if (!gradeQuestionSubmission(q, this.lessonProgress.submissions[q.questionId]).isCorrect) {
-            this.wrongIds.add(q.questionId);
-          }
-        }
-        void persistOfflineNodeLocally(
-          this.lessonProgress.bundle.questions,
-          this.lessonProgress.submissions,
-          `${this.matchId}-node-${this.nodeIndex}`,
-        );
-
-        for (const botSeat of this.game.seats) {
-          if (botSeat.isBot) grantGold(botSeat, 1, 'learning_bot');
-        }
-      }
     } else if (this.phase === 'strategy' || this.phase === 'choice') {
       this.runBots();
     } else if (this.phase === 'battle') {
@@ -749,15 +865,16 @@ export class OfflinePracticeMatchController {
       this.finishMatch();
     }
 
-    this.deadlineEpochMs = (phaseStartedAtMs ?? Date.now()) + phaseDurationMs;
+    if (this.disposed || this.failure) return;
+    const startedAtMs = phaseStartedAtMs ?? Date.now();
+    this.deadlineEpochMs = startedAtMs + Math.max(1, phaseDurationMs);
+    if (!this.completed) this.schedulePhaseTransition(Math.max(1, Math.ceil(this.deadlineEpochMs - Date.now())));
+    if (this.phase === 'learning') {
+      this.startBotLearning(startedAtMs);
+      if (this.lessonProgress?.complete) this.onUserLearningCompleted();
+    }
     if (this.phase === 'battle' && this.pendingBattle) this.listeners.onBattle?.(this.pendingBattle.payload);
     this.emitSnapshot();
-
-    if (!this.completed) {
-      this.timer = setTimeout(() => {
-        void this.transition();
-      }, Math.max(1, this.deadlineEpochMs - Date.now()));
-    }
   }
 
   private finishMatch(): void {
@@ -850,6 +967,9 @@ export class OfflinePracticeMatchController {
             blueprint: lp.bundle.blueprint,
             currentStep: current,
             complete: lp.complete,
+            readyToProceed: lp.complete,
+            readyHumansCount: Number(lp.complete) + [...this.botLearningPlans.values()].filter(plan => plan.botLearningDone).length,
+            totalHumansCount: this.game.seats.length,
             correctCount: lp.bundle.questions.filter((q) => Boolean(lp.feedback[q.questionId]?.isCorrect)).length,
             totalQuestionsCount: lp.bundle.questions.length,
             clientQuestions: lp.bundle.clientQuestions.filter((q) => q.stepRole === current),
@@ -868,7 +988,7 @@ export class OfflinePracticeMatchController {
       resourceSettlement: this.settlements.at(-1) ?? null,
       summary: this.summary,
       completed: this.completed,
-      failure: null,
+      failure: this.failure,
     };
   }
 
@@ -878,12 +998,16 @@ export class OfflinePracticeMatchController {
     }
   }
 
+  private fail(error: unknown): void {
+    if (this.disposed || this.failure) return;
+    this.failure = error instanceof Error ? error.message : 'INTERNAL_ERROR';
+    this.clearPhaseTimers();
+    this.emitSnapshot();
+  }
+
   public dispose(): void {
     this.disposed = true;
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
+    this.clearPhaseTimers();
   }
 }
 

@@ -9,7 +9,7 @@ import type { RoundBattle, SeatState } from '@pkg/game-core';
 
 interface ActionAck { requestId?: string; ok: boolean; reason?: string }
 interface MatchRoomSnapshot {
-  matchId: string; seatId: string; phase: string; round: number; nodeIndex: number; self: SeatState;
+  matchId: string; seatId: string; phase: string; round: number; nodeIndex: number; deadlineEpochMs: number; self: SeatState;
   battle?: { round: number; battles: RoundBattle[] } | null;
   learning: { currentStep: LessonStepKind | null; complete?: boolean; clientQuestions: ClientQuestionView[]; arcMeta: LearningArcMeta;
     submittedQuestionIds: string[]; steps: { kind: LessonStepKind; corrections: unknown[] }[] } | null;
@@ -304,11 +304,12 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     expect(snapshot.battle?.battles.some((battle) => battle.leftSeatId === snapshot.seatId || battle.rightSeatId === snapshot.seatId)).toBe(true);
   }, 10_000);
 
-  it('auto-exits learning into strategy immediately without confirmation once solo human finishes all questions', async () => {
+  it('keeps the solo room in learning after the human finishes, then opens shared resources', async () => {
     const { token, room } = await startMatch();
     const snapshots = stream<MatchRoomSnapshot>();
     const socket = await connectAuthoritativeMatch(room.roomId, token, { onSnapshot: snapshots.push }); sockets.add(socket);
     let snapshot = await snapshots.wait((s) => s.phase === 'learning' && Boolean(s.learning), 0, 5000);
+    const deadline = room.deadlineEpochMs;
     while (snapshot.phase === 'learning' && snapshot.learning && !snapshot.learning.complete) {
       const lrn = snapshot.learning;
       if (lrn.currentStep === 'material' || lrn.currentStep === 'remediation') {
@@ -320,8 +321,10 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
       }
       snapshot = snapshots.values.at(-1)!;
     }
-    const strategySnap = await snapshots.wait((s) => s.phase === 'strategy', 0, 5000);
-    expect(strategySnap.phase).toBe('strategy');
+    expect(snapshot).toMatchObject({ phase: 'learning', learning: { complete: true } });
+    expect(room.deadlineEpochMs).toBe(deadline);
+    const resourceSnap = await snapshots.wait((s) => s.phase === 'resource' && s.nodeIndex === snapshot.nodeIndex, 0, 5000);
+    expect(resourceSnap.phase).toBe('resource');
   }, 12_000);
 
   it('allows an online player who finished learning to enter strategy actions immediately without waiting for other humans', async () => {
@@ -364,8 +367,17 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     expect(snap1.phase).toBe('learning');
     expect(snap1.learning?.complete).toBe(true);
 
-    const earlyBuy = await sock1.sendCommand({ type: 'BUY_XP' });
-    expect(earlyBuy.ok).toBe(true);
+    const shopIndex = snap1.self.shop.findIndex((unit) => unit !== null);
+    expect(await sock1.sendCommand({ type: 'BUY_CARD', shopIndex })).toMatchObject({ ok: true });
+    const afterBuy = s1.values.at(-1)!;
+    expect(afterBuy.phase).toBe('learning');
+    expect(afterBuy.self.shop[shopIndex]).toBeNull();
+    const instanceId = afterBuy.self.units.find((unit) => unit.location.zone === 'bench')!.instanceId;
+    const to = { zone: 'board', row: 0, col: 0 } as const;
+    expect(await sock1.sendCommand({ type: 'MOVE_UNIT', instanceId, to })).toMatchObject({ ok: true });
+    const afterMove = s1.values.at(-1)!;
+    expect(afterMove.phase).toBe('learning');
+    expect(afterMove.self.units.find((unit) => unit.instanceId === instanceId)?.location).toEqual(to);
     await expect(sock2.sendCommand({ type: 'BUY_XP' })).rejects.toThrow('STRATEGY_PHASE_REQUIRED');
 
     let snap2 = s2.values.at(-1)!;
@@ -380,8 +392,9 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
       }
       snap2 = s2.values.at(-1)!;
     }
-    const bothStrat = await s1.wait((s) => s.phase === 'strategy', 0, 5000);
-    expect(bothStrat.phase).toBe('strategy');
+    const [resource1, resource2] = await Promise.all([s1, s2].map((snapshots) =>
+      snapshots.wait((s) => s.phase === 'resource' && s.nodeIndex === 0, 0, 5000)));
+    expect(resource1!.deadlineEpochMs).toBe(resource2!.deadlineEpochMs);
     const [gold1, gold2] = [u1, u2].map(user => room['settlements'].get(user.profile.userId)?.[0]);
     expect(gold1).toMatchObject({ nodeIndex: 0, centBudget: 700, verificationWeightPercent: 0 });
     expect(gold2).toMatchObject({ nodeIndex: 0, centBudget: 700, verificationWeightPercent: 0 });

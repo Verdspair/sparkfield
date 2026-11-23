@@ -5,21 +5,41 @@ import * as learningCore from '@pkg/learning-core';
 import { ENGLISH_STARTER_PACK } from '../src/content/starterPacks.js';
 import { OfflineDirectLearningSession, OfflinePracticeMatchController } from '../src/offline/offlinePracticeController.js';
 import { offlineDb } from '../src/platform/hostBridge.js';
-import type { MatchLearningView } from '../src/api/matchSocket.js';
+import type { MatchLearningView, MatchRoomSnapshot } from '../src/api/matchSocket.js';
 
 const answerFor = (id: string) => {
   const q = ENGLISH_STARTER_PACK.items.find((item) => item.questionId === id)!;
   return q.questionType === 'short_fill' ? q.answerSpec.split('|')[0]! : q.answerSpec;
 };
 
-async function advanceToLearning(local: OfflinePracticeMatchController, nodeIndex: number): Promise<MatchLearningView> {
+async function advancePastCurrentPhase(local: OfflinePracticeMatchController): Promise<void> {
+  const view = local.getSnapshot();
+  if (view.phase === 'learning' && view.learning?.complete) {
+    for (let tick = 0; tick <= view.seats.length && local.getSnapshot().phaseIndex === view.phaseIndex; tick += 1) {
+      await vi.advanceTimersToNextTimerAsync();
+    }
+  } else {
+    await vi.advanceTimersByTimeAsync(view.deadlineEpochMs - Date.now());
+  }
+  expect(local.getSnapshot().phaseIndex).toBe(view.phaseIndex + 1);
+}
+
+async function advanceToPhase(
+  local: OfflinePracticeMatchController,
+  phase: MatchRoomSnapshot['phase'],
+  at: (view: MatchRoomSnapshot) => boolean = () => true,
+): Promise<MatchRoomSnapshot> {
   for (const _ of MODE_BUDGETS.modes[local.mode].timeline) {
     const view = local.getSnapshot();
-    if (view.phase === 'learning' && view.nodeIndex === nodeIndex && view.learning) return view.learning;
-    if (view.phase === 'battle') await vi.advanceTimersByTimeAsync(view.deadlineEpochMs - Date.now());
-    else await local.skipCurrentPhaseWait();
+    if (view.phase === phase && at(view)) return view;
+    if (view.completed) break;
+    await advancePastCurrentPhase(local);
   }
-  throw new Error(`Learning slot ${nodeIndex} not found`);
+  throw new Error(`Phase ${phase} not found`);
+}
+
+async function advanceToLearning(local: OfflinePracticeMatchController, nodeIndex: number): Promise<MatchLearningView> {
+  return (await advanceToPhase(local, 'learning', (view) => view.nodeIndex === nodeIndex)).learning!;
 }
 
 function advancePastMaterial(local: OfflinePracticeMatchController): MatchLearningView {
@@ -37,6 +57,95 @@ describe('offline learning', () => {
   });
   afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
+  it.each(['quick', 'standard', 'deep'] as const)('keeps the full %s offline entry duration', async (mode) => {
+    vi.spyOn(offlineDb.fsrsCards, 'toArray').mockResolvedValue([]);
+    const local = new OfflinePracticeMatchController({ mode, subject: 'english', seed: 42,
+      listeners: { onSnapshot: () => {} } });
+    try {
+      await local.start();
+      const entry = local.getSnapshot();
+      const entryMs = MODE_BUDGETS.modes[mode].timeline[0]!.duration * 1000;
+      expect(entry).toMatchObject({ phase: 'entry', deadlineEpochMs: Date.now() + entryMs });
+      await vi.advanceTimersByTimeAsync(entryMs - 1);
+      expect(local.getSnapshot()).toMatchObject({ phase: 'entry', deadlineEpochMs: entry.deadlineEpochMs });
+      await vi.advanceTimersByTimeAsync(1);
+      expect(local.getSnapshot().phase).toBe('learning');
+    } finally { local.dispose(); }
+  });
+
+  it('settles the human immediately and lets them buy while the room waits for all seven bot timers', async () => {
+    vi.spyOn(offlineDb.fsrsCards, 'toArray').mockResolvedValue([]);
+    vi.spyOn(offlineDb.fsrsCards, 'put').mockResolvedValue('local-card');
+    vi.spyOn(offlineDb.offlineAttempts, 'add').mockResolvedValue(1);
+    const local = new OfflinePracticeMatchController({ mode: 'quick', subject: 'english', seed: 42,
+      listeners: { onSnapshot: () => {} } });
+    try {
+      await local.start();
+      const before = await advanceToPhase(local, 'learning');
+      const startedAt = Date.now();
+      const learningMs = before.deadlineEpochMs - startedAt;
+      expect(before.learning).toMatchObject({ complete: false, readyHumansCount: 0, totalHumansCount: 8 });
+      for (const _ of before.learning!.steps) {
+        const learning = local.getSnapshot().learning!;
+        if (learning.complete) break;
+        if (learning.currentStep === 'material' || learning.currentStep === 'remediation') {
+          expect(local.sendLearningAdvance()).toEqual({ ok: true });
+        } else {
+          for (const q of learning.clientQuestions) {
+            expect(local.sendLearningSubmit(q.questionId, { status: 'submitted', answer: answerFor(q.questionId) }).ok).toBe(true);
+          }
+        }
+      }
+
+      const settled = local.getSnapshot();
+      expect(Date.now()).toBe(startedAt);
+      expect(settled).toMatchObject({ phase: 'learning', deadlineEpochMs: before.deadlineEpochMs,
+        learning: { complete: true, readyHumansCount: 1, totalHumansCount: 8 } });
+      expect(settled.resourceSettlement).toMatchObject({ nodeIndex: before.nodeIndex, grantedIntegerGold: expect.any(Number) });
+      const granted = settled.resourceSettlement!.grantedIntegerGold;
+      expect(granted).toBeGreaterThan(0);
+      expect(settled.self.gold).toBe(before.self.gold + granted);
+      const shopIndex = settled.self.shop.findIndex((unit) => unit !== null);
+      expect(local.sendCommand({ type: 'BUY_CARD', shopIndex })).toEqual({ ok: true });
+      const purchased = local.getSnapshot().self;
+      expect(purchased.shop[shopIndex]).toBeNull();
+      expect(purchased.gold).toBeLessThan(settled.self.gold);
+
+      await vi.advanceTimersByTimeAsync(Math.floor(learningMs * 0.55) - 1);
+      expect(local.getSnapshot()).toMatchObject({ phase: 'learning', learning: { readyHumansCount: 1 } });
+      await vi.advanceTimersToNextTimerAsync();
+      const partial = local.getSnapshot();
+      expect(partial.phase).toBe('learning');
+      expect(partial.learning!.readyHumansCount).toBeGreaterThan(1);
+      expect(partial.learning!.readyHumansCount).toBeLessThan(8);
+
+      await advancePastCurrentPhase(local);
+      expect(local.getSnapshot()).toMatchObject({ phase: 'resource', learning: { readyHumansCount: 8 },
+        resourceSettlement: settled.resourceSettlement, self: purchased });
+      expect(Date.now()).toBeLessThan(before.deadlineEpochMs);
+    } finally { local.dispose(); }
+  });
+
+  it('settles all unfinished offline seats before an explicit learning fast-forward', async () => {
+    vi.spyOn(offlineDb.fsrsCards, 'toArray').mockResolvedValue([]);
+    vi.spyOn(offlineDb.fsrsCards, 'put').mockResolvedValue('local-card');
+    vi.spyOn(offlineDb.offlineAttempts, 'add').mockResolvedValue(1);
+    const local = new OfflinePracticeMatchController({ mode: 'quick', subject: 'english', seed: 42,
+      listeners: { onSnapshot: () => {} } });
+    try {
+      await local.start();
+      const learning = await advanceToPhase(local, 'learning');
+      expect(learning.learning).toMatchObject({ complete: false, readyHumansCount: 0, totalHumansCount: 8 });
+      await local.skipCurrentPhaseWait();
+      expect(local.getSnapshot()).toMatchObject({ phase: 'resource',
+        learning: { complete: true, readyHumansCount: 8, totalHumansCount: 8 },
+        resourceSettlement: { nodeIndex: learning.nodeIndex } });
+      expect(Date.now()).toBeLessThan(learning.deadlineEpochMs);
+      await advancePastCurrentPhase(local);
+      expect(local.getSnapshot().phase).toBe('strategy');
+    } finally { local.dispose(); }
+  });
+
   it('opens offline preparation during waits and after the current choice is resolved', async () => {
     vi.spyOn(offlineDb.fsrsCards, 'toArray').mockResolvedValue([]);
     vi.spyOn(offlineDb.offlineAttempts, 'add').mockResolvedValue(1);
@@ -44,15 +153,6 @@ describe('offline learning', () => {
       listeners: { onSnapshot: () => {} } });
     const toggleShop = () => local.sendCommand({ type: 'TOGGLE_LOCK_SHOP' });
     const blocked = { ok: false, reason: 'STRATEGY_PHASE_REQUIRED' };
-    const advanceTo = async (phase: 'choice' | 'rest', round: number) => {
-      for (const _ of MODE_BUDGETS.modes.deep.timeline) {
-        const view = local.getSnapshot();
-        if (view.phase === phase && view.round === round) return view;
-        if (view.phase === 'battle') await vi.advanceTimersByTimeAsync(view.deadlineEpochMs - Date.now());
-        else await local.skipCurrentPhaseWait();
-      }
-      throw new Error(`Phase ${phase} not found in round ${round}`);
-    };
     try {
       await local.start();
       const entry = local.getSnapshot();
@@ -60,21 +160,25 @@ describe('offline learning', () => {
       expect(local.sendCommand({ type: 'BUY_CARD', shopIndex: entry.self.shop.findIndex((unit) => unit !== null) })).toEqual({ ok: true });
       const instanceId = local.getSnapshot().self.units.find((unit) => unit.location.zone === 'bench')!.instanceId;
       expect(local.sendCommand({ type: 'MOVE_UNIT', instanceId, to: { zone: 'board', row: 0, col: 0 } })).toEqual({ ok: true });
-      await local.skipCurrentPhaseWait();
-      expect(local.getSnapshot().phase).toBe('learning');
+      await advancePastCurrentPhase(local);
+      const studying = local.getSnapshot();
+      expect(studying.phase).toBe('learning');
       expect(toggleShop()).toEqual(blocked);
-      await local.skipCurrentPhaseWait();
+      await vi.advanceTimersByTimeAsync((studying.deadlineEpochMs - Date.now()) * 0.86);
+      expect(local.getSnapshot()).toMatchObject({ phase: 'learning', learning: { complete: false, readyHumansCount: 7 } });
+      expect(toggleShop()).toEqual(blocked);
+      await advancePastCurrentPhase(local);
       expect(local.getSnapshot().phase).toBe('resource');
       expect(toggleShop()).toEqual({ ok: true });
 
-      const augment = await advanceTo('choice', 2);
+      const augment = await advanceToPhase(local, 'choice', (view) => view.round === 2);
       expect(augment.self.augmentOffer).not.toBeNull();
       expect(toggleShop()).toEqual(blocked);
       expect(local.sendCommand({ type: 'PICK_AUGMENT', slotIndex: 0 })).toEqual({ ok: true });
       expect(local.getSnapshot()).toMatchObject({ phase: 'choice', self: { augmentOffer: null } });
       expect(toggleShop()).toEqual({ ok: true });
 
-      const anvil = await advanceTo('choice', 3);
+      const anvil = await advanceToPhase(local, 'choice', (view) => view.round === 3);
       expect(anvil.self.anvils.length).toBeGreaterThan(0);
       for (const { instanceId: anvilInstanceId } of anvil.self.anvils) {
         expect(toggleShop()).toEqual(blocked);
@@ -82,7 +186,7 @@ describe('offline learning', () => {
       }
       expect(local.getSnapshot()).toMatchObject({ phase: 'choice', self: { anvils: [] } });
       expect(toggleShop()).toEqual({ ok: true });
-      await advanceTo('rest', 4);
+      await advanceToPhase(local, 'rest', (view) => view.round === 4);
       expect(toggleShop()).toEqual({ ok: true });
     } finally { local.dispose(); }
   });
@@ -94,7 +198,7 @@ describe('offline learning', () => {
       listeners: { onSnapshot: () => {}, onBattle } });
     try {
       await local.start();
-      while (local.getSnapshot().phase !== 'strategy') await local.skipCurrentPhaseWait();
+      await advanceToPhase(local, 'strategy');
       const game = local['game'];
       const [tankPair] = getRoundPairings('quick', game.round, game.seatOrder);
       for (const seat of game.seats) {
@@ -102,7 +206,7 @@ describe('offline learning', () => {
           ? [{ ...seat.units[0]!, unitId: 'S01', bonusHp: 10_000, location: { zone: 'board', row: 0, col: 3 } }]
           : [];
       }
-      await local.skipCurrentPhaseWait();
+      await advancePastCurrentPhase(local);
       const { phase, battle, deadlineEpochMs } = local.getSnapshot();
       expect(phase).toBe('battle');
       expect(battle).toMatchObject({ startedAtEpochMs: Date.now(), longestBattleMs: 45_000, overtimeAtMs: 30_000 });
@@ -178,7 +282,9 @@ describe('offline learning', () => {
       for (const q of intro.clientQuestions) {
         expect(local.sendLearningSubmit(q.questionId, { status: 'submitted', answer: 'not the answer' }).ok).toBe(true);
       }
-      await vi.waitFor(() => expect(add).toHaveBeenCalledTimes(intro.clientQuestions.length));
+      await advanceToPhase(local, 'resource');
+      await vi.advanceTimersByTimeAsync(0);
+      expect(add).toHaveBeenCalledTimes(intro.clientQuestions.length);
       add.mockClear();
       const adaptive = await advanceToLearning(local, 1);
       expect(adaptive.arcMeta).toMatchObject({ stageKind: 'remediate', adaptiveBranch: 'remediation_inserted', slotsPerArc: 3 });
@@ -203,14 +309,17 @@ describe('offline learning', () => {
       }
       expect(internal.lessonProgress.bundle.frozenDenominators).toEqual(denominators);
       expect(internal.lessonProgress.submissions[check.questionId]).toEqual(original);
-      await vi.waitFor(() => expect(add).toHaveBeenCalledTimes(assessment.clientQuestions.length + verification.length));
+      await vi.advanceTimersByTimeAsync(0);
       const settlement = view().resourceSettlement;
-      const written = add.mock.calls.length;
-      expect(view().phase).toBe('resource');
+      const written = assessment.clientQuestions.length + verification.length;
+      expect(view()).toMatchObject({ phase: 'learning', learning: { complete: true } });
       expect(settlement).toBeTruthy();
-      expect(written).toBeGreaterThan(0);
-      expect(local.sendLearningAdvance().ok).toBe(false);
+      expect(add).toHaveBeenCalledTimes(written);
       expect(local.sendLearningSubmit(check.questionId, { status: 'submitted', answer: answerFor(check.questionId) }).ok).toBe(false);
+
+      await advancePastCurrentPhase(local);
+      expect(view().phase).toBe('resource');
+      expect(local.sendLearningAdvance().ok).toBe(false);
       expect(view().resourceSettlement).toEqual(settlement);
       expect(add).toHaveBeenCalledTimes(written);
     } finally {
@@ -236,7 +345,7 @@ describe('offline learning', () => {
         expect(local.sendLearningSubmit(q.questionId, { status: 'submitted', answer: answerFor(q.questionId) }).ok).toBe(true);
       }
       const reward = local.getSnapshot();
-      expect(reward.phase).toBe('resource');
+      expect(reward).toMatchObject({ phase: 'learning', learning: { complete: true } });
       expect(reward.resourceSettlement).toMatchObject({ grantedIntegerGold: 15, rawEarnedCents: 1500, performanceTier: 'perfect', bonusRerollVouchers: 2 });
       const items = reward.resourceSettlement!.bonusItemIds!;
       expect(items).toHaveLength(1);
@@ -245,13 +354,13 @@ describe('offline learning', () => {
       expect(reward.self.rerollVouchers).toBe(before.rerollVouchers + 2);
       expect(reward.self.voucherRound).toBe(reward.round);
 
-      local['phaseIndex'] -= 1;
-      await local.skipCurrentPhaseWait();
+      await advancePastCurrentPhase(local);
+      expect(local.getSnapshot().phase).toBe('resource');
       expect(local.getSnapshot().resourceSettlement).toEqual(reward.resourceSettlement);
       expect(local.getSnapshot().self).toEqual(reward.self);
       expect(local['settlements'].filter(result => result.nodeIndex === 3)).toHaveLength(1);
 
-      while (local.getSnapshot().phase !== 'strategy') await local.skipCurrentPhaseWait();
+      await advanceToPhase(local, 'strategy');
       const prep = local.getSnapshot().self;
       expect(prep.rerollVouchers).toBe(reward.self.rerollVouchers);
       expect(local.sendCommand({ type: 'REFRESH_SHOP' })).toEqual({ ok: true });
