@@ -731,6 +731,34 @@ export function MatchHudOverlay(): React.JSX.Element | null {
           !['battle', 'settlement', 'exit'].includes(matchSnapshot.phase))),
   );
 
+  const lastCountdownKeyRef = useRef<string>('');
+  useEffect(() => {
+    if (!matchSnapshot || inLearningFocus) return;
+    if (
+      matchSnapshot.phase !== 'strategy' &&
+      matchSnapshot.phase !== 'choice' &&
+      matchSnapshot.phase !== 'entry'
+    ) {
+      return;
+    }
+    const remainingMs = matchSnapshot.deadlineEpochMs - nowMs;
+    if (remainingMs <= 0 || remainingMs > 5150) return;
+    const secondsLeft = Math.ceil(remainingMs / 1000);
+    if (secondsLeft < 1 || secondsLeft > 5) return;
+    const key = `${matchSnapshot.matchId}:${matchSnapshot.nodeIndex}:${matchSnapshot.phase}:${secondsLeft}`;
+    if (lastCountdownKeyRef.current === key) return;
+    lastCountdownKeyRef.current = key;
+    audioBus.emit('onCountdownTick', { secondsLeft, urgent: secondsLeft <= 2 });
+  }, [
+    audioBus,
+    inLearningFocus,
+    matchSnapshot?.deadlineEpochMs,
+    matchSnapshot?.matchId,
+    matchSnapshot?.nodeIndex,
+    matchSnapshot?.phase,
+    nowMs,
+  ]);
+
   useEffect(() => {
     if (!matchSnapshot || !modeSpecTop) return;
     audioBus.emit('onBgmContext', {

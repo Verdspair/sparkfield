@@ -35,7 +35,9 @@ export type SfxId =
   | 'match_accept'
   | 'phase_chime'
   | 'answer_correct'
-  | 'answer_wrong';
+  | 'answer_wrong'
+  | 'countdown_tick'
+  | 'countdown_urgent';
 
 export interface AudioSettings {
   readonly masterVolume: number;
@@ -95,6 +97,8 @@ export const SFX_PATHS: Readonly<Record<SfxId, string>> = {
   phase_chime: '/audio/sfx/sfx_phase_chime.mp3',
   answer_correct: '/audio/sfx/sfx_answer_correct.mp3',
   answer_wrong: '/audio/sfx/sfx_answer_wrong.mp3',
+  countdown_tick: '/audio/sfx/sfx_countdown_tick.mp3',
+  countdown_urgent: '/audio/sfx/sfx_countdown_urgent.mp3',
 };
 
 const BGM_CROSSFADE_SEC = 1.4;
@@ -488,6 +492,26 @@ export class WebAudioEngine implements Required<AudioAdapter> {
     this.playSfx(payload.damageType === 'physical' ? 'hit_phys' : 'hit_magic');
   }
 
+  public onCountdownTick(payload: AudioEventPayloads['onCountdownTick']): void {
+    const sec = Math.max(1, Math.min(5, Math.round(payload.secondsLeft)));
+    const id: SfxId = payload.urgent || sec <= 2 ? 'countdown_urgent' : 'countdown_tick';
+    const rateBySec: Readonly<Record<number, number>> = {
+      5: 0.96,
+      4: 1.0,
+      3: 1.04,
+      2: 1.02,
+      1: 1.1,
+    };
+    const gainBySec: Readonly<Record<number, number>> = {
+      5: 0.76,
+      4: 0.82,
+      3: 0.88,
+      2: 0.96,
+      1: 1.04,
+    };
+    this.playSfxWithOverrides(id, gainBySec[sec] ?? 0.88, rateBySec[sec] ?? 1.0);
+  }
+
   public onBgmContext(payload: AudioEventPayloads['onBgmContext']): void {
     const nextTrack = resolveAdaptiveBgmTrack(payload);
     const shouldDuck = payload.phase === 'learning' || Boolean(payload.focusDuck);
@@ -729,6 +753,13 @@ export class WebAudioEngine implements Required<AudioAdapter> {
   }
 
   private playSfx(id: SfxId): void {
+    const gainScale = SFX_GAIN_SCALE[id] ?? 1.0;
+    const jitter = SFX_PITCH_JITTER[id] ?? 0;
+    const playbackRate = jitter > 0 ? 1 + (Math.random() * 2 - 1) * jitter : 1;
+    this.playSfxWithOverrides(id, gainScale, playbackRate);
+  }
+
+  private playSfxWithOverrides(id: SfxId, gainScale: number, playbackRate: number): void {
     if (this.disposed) return;
     if (this.settings.muted || this.settings.masterVolume <= 0 || this.settings.sfxVolume <= 0) return;
 
@@ -743,10 +774,6 @@ export class WebAudioEngine implements Required<AudioAdapter> {
     const ctx = this.ensureContext();
     if (!ctx || ctx.state !== 'running') return;
     if (this.activeSfxSources.size >= MAX_CONCURRENT_SFX) return;
-
-    const gainScale = SFX_GAIN_SCALE[id] ?? 1.0;
-    const jitter = SFX_PITCH_JITTER[id] ?? 0;
-    const playbackRate = jitter > 0 ? 1 + (Math.random() * 2 - 1) * jitter : 1;
 
     void this.playAudioUrl(SFX_PATHS[id], gainScale, playbackRate);
   }

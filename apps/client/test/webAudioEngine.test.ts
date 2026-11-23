@@ -32,9 +32,11 @@ describe('WebAudioEngine & adaptive audio contracts', () => {
     vi.unstubAllGlobals();
   });
 
-  it('defines exact paths for all 5 BGM tracks and 33 SFX clips', () => {
+  it('defines exact paths for all 5 BGM tracks and 35 SFX clips', () => {
     expect(Object.keys(BGM_TRACK_PATHS)).toHaveLength(5);
-    expect(Object.keys(SFX_PATHS)).toHaveLength(33);
+    expect(Object.keys(SFX_PATHS)).toHaveLength(35);
+    expect(SFX_PATHS.countdown_tick).toBe('/audio/sfx/sfx_countdown_tick.mp3');
+    expect(SFX_PATHS.countdown_urgent).toBe('/audio/sfx/sfx_countdown_urgent.mp3');
     expect(BGM_TRACK_PATHS.lobby).toBe('/audio/bgm/bgm_lobby.mp3');
     expect(BGM_TRACK_PATHS.overtime).toBe('/audio/bgm/bgm_overtime.mp3');
     expect(SFX_PATHS.star_up_3).toBe('/audio/sfx/sfx_star_up_3.mp3');

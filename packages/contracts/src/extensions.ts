@@ -97,6 +97,7 @@ export interface AudioExtendedEventPayloads {
   };
   onLearningFeedback: { correct: boolean };
   onCombatHit: { damageType: 'physical' | 'magic' | 'true' };
+  onCountdownTick: { secondsLeft: number; urgent: boolean };
   onBgmContext: {
     scene: 'lobby' | 'match' | 'subpage';
     roundIndex?: number;
@@ -131,6 +132,7 @@ export const NullAudioAdapter: Required<AudioAdapter> = {
   onUiFeedback: () => {},
   onLearningFeedback: () => {},
   onCombatHit: () => {},
+  onCountdownTick: () => {},
   onBgmContext: () => {},
 };
 
