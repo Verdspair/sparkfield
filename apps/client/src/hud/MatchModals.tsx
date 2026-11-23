@@ -10,7 +10,7 @@ import {
   type GameCommand,
 } from '@pkg/contracts';
 import { getUnitRecommendedBuilds, type ActiveTrait, type SeatState } from '@pkg/game-core';
-import { GameItemIcon, RichGameText, UnitLoreDrawer } from '@pkg/learning-ui';
+import { DescriptionModeToggle, GameEffectText, GameItemIcon, UnitLoreDrawer } from '@pkg/learning-ui';
 import { EquipmentCodexMatrix } from '../components/EquipmentCodexMatrix.js';
 import { GameUiIcon } from '../components/GameUiIcons.js';
 import { UnitPortrait } from '../components/UnitPortrait.js';
@@ -152,6 +152,7 @@ export function MatchChoiceModal({
                 : '散件补给锻炉'}
           </h2>
           <span className="blc-clock-pill">{formatMMSS(liveRemainingSec)}</span>
+          <DescriptionModeToggle size="sm" />
         </div>
 
         <fieldset
@@ -186,7 +187,7 @@ export function MatchChoiceModal({
                       </span>
                       <h3 className="sf-augment-name">{aug?.name ?? '星海强化'}</h3>
                       <div className="sf-augment-desc-box">
-                        {aug?.desc ? <RichGameText text={aug.desc} /> : ''}
+                        {aug?.desc ? <GameEffectText augmentId={augId} fullText={aug.desc} /> : ''}
                       </div>
                       <button
                         type="button"
@@ -247,7 +248,11 @@ export function MatchChoiceModal({
                     </span>
                     <h3 className="sf-augment-name">{entry?.item.name ?? '装备'}</h3>
                     <div className="sf-augment-desc-box">
-                      {entry?.item.desc ? <RichGameText text={entry.item.desc} /> : ''}
+                      {entry?.item.desc ? (
+                        <GameEffectText itemId={itemId} fullText={entry.item.desc} />
+                      ) : (
+                        ''
+                      )}
                     </div>
                     {matchingUnits.length > 0 ? (
                       <div className="sf-anvil-fits" aria-label="推荐佩戴棋子">

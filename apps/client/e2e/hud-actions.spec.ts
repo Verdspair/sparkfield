@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { QuestionItemSchema } from '@pkg/contracts';
 import { toClientQuestionView } from '@pkg/learning-core';
 import type { MatchLearningView } from '../src/api/matchSocket.js';
-import { exitOfflineMatch } from './support/flowHelpers.js';
+import { closeSettings, exitOfflineMatch, openSettings } from './support/flowHelpers.js';
 import { exerciseShopDock, setShopDock, watchPageErrors } from './support/fullAcceptance.js';
 import { baseSnapshot, home, mountHud, readHudEffects, rejectHudLearningSubmit, updateHud } from './support/hudHarness.js';
 import { english } from './support/mockUi.js';
@@ -92,4 +92,49 @@ test('local settings, codex, damage tab, and quit remain usable while disconnect
   await exitOfflineMatch(page);
   await expect(page.getByTestId('match-hud-overlay')).toHaveCount(0);
   expect(await readHudEffects(page)).toMatchObject({ quitCount: 1, commands: [] });
+});
+
+test('global description mode defaults to compact and syncs choice modal, inspect card, and settings', async ({ page }) => {
+  await mountHud(page, {
+    phase: 'choice',
+    phaseIndex: 8,
+    self: {
+      ...baseSnapshot.self,
+      augmentOffer: {
+        tier: 'gold',
+        options: ['AUG_S05', 'AUG_G03', 'AUG_P01'],
+        rerolls: [true, true, true],
+        node: 1,
+        finalStage: false,
+        eligibleTraits: [],
+      },
+    },
+  });
+  const modal = page.getByTestId('choice-event-modal');
+  await expect(modal).toBeVisible();
+  const toggleBtn = modal.getByTestId('desc-mode-toggle-btn');
+  await expect(toggleBtn).toHaveAttribute('data-desc-mode', 'compact');
+  await expect(toggleBtn).toHaveText('详细');
+  await expect(modal.getByTestId('augment-slot-0')).toContainText('前两排友军开战获得高额护盾');
+  await expect(modal.getByTestId('augment-slot-0')).not.toContainText('16%');
+
+  await toggleBtn.click();
+  await expect(toggleBtn).toHaveAttribute('data-desc-mode', 'detailed');
+  await expect(toggleBtn).toHaveText('简洁');
+  await expect(modal.getByTestId('augment-slot-0')).toContainText('16%');
+  await expect(modal.getByTestId('augment-slot-2')).toContainText('260');
+
+  await updateHud(page, { phase: 'strategy', phaseIndex: 9 }, { inspectedUnitId: home.units[0]!.instanceId });
+  const inspectCard = page.getByTestId('unit-inspect-card');
+  await expect(inspectCard.getByTestId('desc-mode-toggle-btn')).toHaveAttribute('data-desc-mode', 'detailed');
+  await expect(inspectCard.getByTestId('desc-mode-toggle-btn')).toHaveText('简洁');
+
+  const settings = await openSettings(page, 'match', true);
+  await expect(settings.getByTestId('desc-mode-detailed-btn')).toHaveAttribute('aria-pressed', 'true');
+  await settings.getByTestId('desc-mode-compact-btn').click();
+  await expect(settings.getByTestId('desc-mode-compact-btn')).toHaveAttribute('aria-pressed', 'true');
+  await closeSettings(page);
+
+  await expect(inspectCard.getByTestId('desc-mode-toggle-btn')).toHaveAttribute('data-desc-mode', 'compact');
+  await expect(inspectCard.getByTestId('desc-mode-toggle-btn')).toHaveText('详细');
 });

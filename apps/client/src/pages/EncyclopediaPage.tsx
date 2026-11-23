@@ -9,7 +9,7 @@ import {
   type AugmentDef,
   type UnitDef,
 } from '@pkg/contracts';
-import { LoreArchiveReader, RichGameText, UnitLoreDrawer } from '@pkg/learning-ui';
+import { DescriptionModeToggle, GameEffectText, LoreArchiveReader, UnitLoreDrawer } from '@pkg/learning-ui';
 import { EquipmentCodexMatrix } from '../components/EquipmentCodexMatrix.js';
 import { ARENA_THEME_OPTIONS } from '../components/PersistentStageCanvas.js';
 import { SubpageShell } from '../components/SubpageShell.js';
@@ -325,6 +325,7 @@ export function EncyclopediaPage(): React.JSX.Element {
 
   const searchActions = (
     <div className="sf-enc-search-wrap">
+      <DescriptionModeToggle size="sm" />
       <input
         type="search"
         className="sf-enc-search-input"
@@ -571,7 +572,7 @@ export function EncyclopediaPage(): React.JSX.Element {
                         </div>
                       </div>
                       <p className="sf-enc-unit-tile__summary">
-                        <RichGameText text={u.skillSummary} />
+                        <GameEffectText fullText={u.skillSummary} />
                       </p>
                     </button>
                   ))}
@@ -604,7 +605,7 @@ export function EncyclopediaPage(): React.JSX.Element {
                         </div>
                       </div>
                       <p className="blc-enc-entry-card__desc">
-                        <RichGameText text={tr.desc} />
+                        <GameEffectText traitName={tr.name} fullText={tr.desc} />
                       </p>
                     </button>
                   ))}
@@ -652,7 +653,7 @@ export function EncyclopediaPage(): React.JSX.Element {
                         </div>
                       </div>
                       <p className="blc-enc-entry-card__desc">
-                        <RichGameText text={aug.desc} />
+                        <GameEffectText augmentId={aug.id} fullText={aug.desc} />
                       </p>
                     </button>
                   ))}
@@ -692,16 +693,19 @@ export function EncyclopediaPage(): React.JSX.Element {
                       <span className="blc-chip blc-chip--gold">{selectedTrait.kindLabel}</span>
                       <h3 style={{ margin: '6px 0 0' }}>{selectedTrait.name}</h3>
                     </div>
-                    <button
-                      type="button"
-                      className="blc-btn blc-btn--ghost blc-btn--xs"
-                      onClick={closeAllDrawers}
-                    >
-                      ✕
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <DescriptionModeToggle size="xs" />
+                      <button
+                        type="button"
+                        className="blc-btn blc-btn--ghost blc-btn--xs"
+                        onClick={closeAllDrawers}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                   <p style={{ lineHeight: 1.65, color: 'var(--text-primary)' }}>
-                    <RichGameText text={selectedTrait.desc} />
+                    <GameEffectText traitName={selectedTrait.name} fullText={selectedTrait.desc} />
                   </p>
                   <div className="blc-chip" style={{ alignSelf: 'flex-start' }}>
                     档位 {selectedTrait.thresholds.join(' / ')}
@@ -746,16 +750,19 @@ export function EncyclopediaPage(): React.JSX.Element {
                       </span>
                       <h3 style={{ margin: '6px 0 0' }}>{selectedAugment.name}</h3>
                     </div>
-                    <button
-                      type="button"
-                      className="blc-btn blc-btn--ghost blc-btn--xs"
-                      onClick={closeAllDrawers}
-                    >
-                      ✕
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <DescriptionModeToggle size="xs" />
+                      <button
+                        type="button"
+                        className="blc-btn blc-btn--ghost blc-btn--xs"
+                        onClick={closeAllDrawers}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                   <p style={{ lineHeight: 1.65 }}>
-                    <RichGameText text={selectedAugment.desc} />
+                    <GameEffectText augmentId={selectedAugment.id} fullText={selectedAugment.desc} />
                   </p>
                   {selectedAugment.tailorTraits.length > 0 ? (
                     <div className="blc-chip">

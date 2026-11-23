@@ -5,7 +5,7 @@ import {
   lookupCraftRecipe,
   type UnitDef,
 } from '@pkg/contracts';
-import { GameItemIcon, RichGameText } from '@pkg/learning-ui';
+import { DescriptionModeToggle, GameEffectText, GameItemIcon } from '@pkg/learning-ui';
 import { UnitPortrait } from './UnitPortrait.js';
 import './equipmentCodex.css';
 
@@ -642,9 +642,22 @@ export function EquipmentCodexMatrix({
           ) : null}
 
           <div>
-            <div className="sf-equip-section-label">装备效果</div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                marginBottom: 6,
+              }}
+            >
+              <div className="sf-equip-section-label" style={{ marginBottom: 0 }}>
+                装备效果
+              </div>
+              <DescriptionModeToggle size="xs" />
+            </div>
             <div className="sf-equip-desc-box">
-              <RichGameText text={activeItem.desc} />
+              <GameEffectText itemId={activeItem.id} fullText={activeItem.desc} />
             </div>
           </div>
 

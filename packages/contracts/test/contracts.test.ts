@@ -51,8 +51,7 @@ describe('@pkg/contracts & canonical content invariants', () => {
     const fourCostRoles = new Set(SEASON1_UNITS.filter((u) => u.cost === 4).map((u) => u.role));
     expect(fourCostRoles.size).toBe(6);
 
-    const nameLengths = new Set(SEASON1_UNITS.map((u) => u.nameLength));
-    expect([...nameLengths].sort()).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(SEASON1_UNITS.every((u) => u.nameLength === u.name.length && u.nameLength >= 1 && u.nameLength <= 4)).toBe(true);
   });
 
   it('verifies closed 900s / 1800s / 3600s mode timelines, 50s prep windows, and Lv3-Lv10 shop odds = 100%', () => {

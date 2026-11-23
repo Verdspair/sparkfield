@@ -50,3 +50,27 @@ export {
   type RichGameTextSegment,
   type StatTokenKind,
 } from './GameRichIcons.js';
+
+export {
+  COMPACT_AUGMENT_DESCRIPTIONS,
+  COMPACT_ITEM_DESCRIPTIONS,
+  COMPACT_TRAIT_DESCRIPTIONS,
+  DESCRIPTION_DETAIL_MODE_STORAGE_KEY,
+  DescriptionModeProvider,
+  DescriptionModeToggle,
+  GameEffectText,
+  getGlobalDescriptionMode,
+  readStoredDescriptionMode,
+  resetDescriptionModeForTests,
+  resolveGameEffectText,
+  setGlobalDescriptionMode,
+  summarizeCompactGameText,
+  useDescriptionMode,
+  writeStoredDescriptionMode,
+  type DescriptionDetailMode,
+  type DescriptionModeContextValue,
+  type DescriptionModeProviderProps,
+  type DescriptionModeToggleProps,
+  type GameEffectTextProps,
+  type ResolveGameEffectTextInput,
+} from './GameDescriptionMode.js';

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useRef } from 'react';
-import { ensureLearningUiStyles } from '@pkg/learning-ui';
+import { DescriptionModeProvider, ensureLearningUiStyles } from '@pkg/learning-ui';
 import { GlobalMatchAcceptModal } from './components/GlobalMatchAcceptModal.js';
 import { PersistentStageCanvas } from './components/PersistentStageCanvas.js';
 import { SettingsModal } from './components/SettingsModal.js';
@@ -178,8 +178,10 @@ function AppViewportRouter(): React.JSX.Element {
 
 export function App(): React.JSX.Element {
   return (
-    <AppStoreProvider>
-      <AppViewportRouter />
-    </AppStoreProvider>
+    <DescriptionModeProvider>
+      <AppStoreProvider>
+        <AppViewportRouter />
+      </AppStoreProvider>
+    </DescriptionModeProvider>
   );
 }

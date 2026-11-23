@@ -4,7 +4,7 @@
     {
       "id": "AUG_S01",
       "tier": "silver",
-      "name": "《戴森帆配额调度》",
+      "name": "戴森配额",
       "category": "economy",
       "tailorTraits": [],
       "forbidFinalStage": false,
@@ -27,7 +27,7 @@
     {
       "id": "AUG_S02",
       "tier": "silver",
-      "name": "《低温休眠舱扩容》",
+      "name": "休眠扩容",
       "category": "economy",
       "tailorTraits": [
         "维生"
@@ -52,7 +52,7 @@
     {
       "id": "AUG_S03",
       "tier": "silver",
-      "name": "《轨道残骸重熔》",
+      "name": "残骸重熔",
       "category": "equipment",
       "tailorTraits": [],
       "forbidFinalStage": false,
@@ -75,7 +75,7 @@
     {
       "id": "AUG_S04",
       "tier": "silver",
-      "name": "《窄带信标校准》",
+      "name": "信标校准",
       "category": "positioning",
       "tailorTraits": [
         "磁轨",
@@ -98,7 +98,7 @@
     {
       "id": "AUG_S05",
       "tier": "silver",
-      "name": "《近地偏导盾加固》",
+      "name": "偏导护盾",
       "category": "positioning",
       "tailorTraits": [
         "重装",
@@ -121,7 +121,7 @@
     {
       "id": "AUG_S06",
       "tier": "silver",
-      "name": "《孤岛守望哨》",
+      "name": "孤岛守望",
       "category": "positioning",
       "tailorTraits": [],
       "forbidFinalStage": false,
@@ -144,7 +144,7 @@
     {
       "id": "AUG_S07",
       "tier": "silver",
-      "name": "《基础物理补丁》",
+      "name": "物理补丁",
       "category": "combat",
       "tailorTraits": [],
       "forbidFinalStage": false,
@@ -167,7 +167,7 @@
     {
       "id": "AUG_S08",
       "tier": "silver",
-      "name": "《紧急医疗复苏》",
+      "name": "紧急复苏",
       "category": "combat",
       "tailorTraits": [],
       "forbidFinalStage": false,
@@ -187,7 +187,7 @@
     {
       "id": "AUG_G01",
       "tier": "gold",
-      "name": "《跃迁先遣计划》",
+      "name": "跃迁先遣",
       "category": "economy",
       "tailorTraits": [],
       "forbidFinalStage": false,
@@ -210,7 +210,7 @@
     {
       "id": "AUG_G02",
       "tier": "gold",
-      "name": "《深空整备储备》",
+      "name": "深空储备",
       "category": "economy",
       "tailorTraits": [],
       "forbidFinalStage": true,
@@ -233,7 +233,7 @@
     {
       "id": "AUG_G03",
       "tier": "gold",
-      "name": "《光子逻辑冗余》",
+      "name": "光子冗余",
       "category": "trait",
       "tailorTraits": [
         "云端星环"
@@ -261,7 +261,7 @@
     {
       "id": "AUG_G04",
       "tier": "gold",
-      "name": "《水星质量投射链》",
+      "name": "质量投射",
       "category": "trait",
       "tailorTraits": [
         "戴森工团"
@@ -286,7 +286,7 @@
     {
       "id": "AUG_G05",
       "tier": "gold",
-      "name": "《相对论蓝移锁定》",
+      "name": "蓝移锁定",
       "category": "trait",
       "tailorTraits": [
         "钟慢远征"
@@ -311,7 +311,7 @@
     {
       "id": "AUG_G06",
       "tier": "gold",
-      "name": "《冰下暗海公约》",
+      "name": "暗海公约",
       "category": "trait",
       "tailorTraits": [
         "木卫冰海"
@@ -339,7 +339,7 @@
     {
       "id": "AUG_G07",
       "tier": "gold",
-      "name": "《引力透镜阵列联网》",
+      "name": "透镜联网",
       "category": "trait",
       "tailorTraits": [
         "深空阵列"
@@ -367,7 +367,7 @@
     {
       "id": "AUG_G08",
       "tier": "gold",
-      "name": "《潘宁磁阱解限》",
+      "name": "磁阱解限",
       "category": "trait",
       "tailorTraits": [
         "反物质院"
@@ -395,7 +395,7 @@
     {
       "id": "AUG_G09",
       "tier": "gold",
-      "name": "《单舰跨光锥侦察》",
+      "name": "单舰侦察",
       "category": "positioning",
       "tailorTraits": [
         "重装"
@@ -420,7 +420,7 @@
     {
       "id": "AUG_G10",
       "tier": "gold",
-      "name": "《精密铁砧工坊》",
+      "name": "铁砧工坊",
       "category": "equipment",
       "tailorTraits": [],
       "forbidFinalStage": false,
@@ -443,7 +443,7 @@
     {
       "id": "AUG_P01",
       "tier": "prismatic",
-      "name": "《彭罗斯超辐射爆发》",
+      "name": "超辐射爆",
       "category": "endgame",
       "tailorTraits": [],
       "forbidFinalStage": false,
@@ -466,7 +466,7 @@
     {
       "id": "AUG_P02",
       "tier": "prismatic",
-      "name": "《突破光锥障壁》",
+      "name": "突破光锥",
       "category": "economy",
       "tailorTraits": [],
       "forbidFinalStage": true,
@@ -489,7 +489,7 @@
     {
       "id": "AUG_P03",
       "tier": "prismatic",
-      "name": "《拆星工程遗产》",
+      "name": "拆星遗产",
       "category": "equipment",
       "tailorTraits": [],
       "forbidFinalStage": false,
@@ -512,7 +512,7 @@
     {
       "id": "AUG_P04",
       "tier": "prismatic",
-      "name": "《三大星际学派之冕》",
+      "name": "学派之冕",
       "category": "trait",
       "tailorTraits": [
         "戴森工团",
@@ -596,7 +596,7 @@
     {
       "id": "AUG_P05",
       "tier": "prismatic",
-      "name": "《零点静滞力场》",
+      "name": "静滞力场",
       "category": "positioning",
       "tailorTraits": [],
       "forbidFinalStage": false,
@@ -622,7 +622,7 @@
     {
       "id": "AUG_P06",
       "tier": "prismatic",
-      "name": "《光锥记忆永存》",
+      "name": "光锥永存",
       "category": "combat",
       "tailorTraits": [],
       "forbidFinalStage": false,

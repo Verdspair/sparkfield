@@ -432,9 +432,9 @@ export class MatchRoom extends Room {
     let phaseDurationMs=event.duration*1000;
     let phaseStartedAtMs: number | undefined;
     if(this.game.phase!=='finished' && this.game.settledRounds.includes(this.game.round) &&
-      ['learning','strategy','choice'].includes(this.phase)) {
-      const postBattleChoice=this.phase==='choice' && /战后|PVE.*补给|PVE.*选择/u.test(event.label);
-      if(!postBattleChoice)beginNextRound(this.game);
+      ['learning','strategy','choice','rest'].includes(this.phase)) {
+      const keepRoundPrep=this.phase==='rest' || (this.phase==='choice' && /战后|PVE.*补给|PVE.*选择/u.test(event.label));
+      if(!keepRoundPrep)beginNextRound(this.game);
       else this.game.phase='prep';
     }
     if(this.phase==='learning') {

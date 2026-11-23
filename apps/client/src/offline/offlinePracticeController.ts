@@ -646,11 +646,12 @@ export class OfflinePracticeMatchController {
     if (
       this.game.phase !== 'finished' &&
       this.game.settledRounds.includes(this.game.round) &&
-      ['learning', 'strategy', 'choice'].includes(this.phase)
+      ['learning', 'strategy', 'choice', 'rest'].includes(this.phase)
     ) {
-      const postBattleChoice =
-        this.phase === 'choice' && /战后|PVE.*补给|PVE.*选择/u.test(event.label);
-      if (!postBattleChoice) beginNextRound(this.game);
+      const keepRoundPrep =
+        this.phase === 'rest' ||
+        (this.phase === 'choice' && /战后|PVE.*补给|PVE.*选择/u.test(event.label));
+      if (!keepRoundPrep) beginNextRound(this.game);
       else this.game.phase = 'prep';
     }
 

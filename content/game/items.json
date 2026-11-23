@@ -4,7 +4,7 @@
     {
       "id": "C_SWORD",
       "short": "剑",
-      "name": "高周波钨芯刃",
+      "name": "钨芯刃",
       "stat": "atk",
       "value": 10,
       "desc": "攻击力 +10"
@@ -12,7 +12,7 @@
     {
       "id": "C_BOW",
       "short": "弓",
-      "name": "洛伦兹加速轨",
+      "name": "加速轨",
       "stat": "atkSpeedPct",
       "value": 10,
       "desc": "攻速 +10%"
@@ -20,7 +20,7 @@
     {
       "id": "C_ROD",
       "short": "杖",
-      "name": "超导谐振腔",
+      "name": "谐振腔",
       "stat": "abilityPowerPct",
       "value": 10,
       "desc": "技能效能 +10%"
@@ -28,7 +28,7 @@
     {
       "id": "C_TEAR",
       "short": "泪",
-      "name": "重水聚变芯",
+      "name": "聚变芯",
       "stat": "initialMana",
       "value": 10,
       "desc": "初始法力 +10"
@@ -36,7 +36,7 @@
     {
       "id": "C_VEST",
       "short": "甲",
-      "name": "简并态镀层",
+      "name": "重镀甲",
       "stat": "armor",
       "value": 15,
       "desc": "护甲 +15"
@@ -44,7 +44,7 @@
     {
       "id": "C_CLOAK",
       "short": "披",
-      "name": "慢雾偏折膜",
+      "name": "偏折膜",
       "stat": "mr",
       "value": 15,
       "desc": "魔抗 +15"
@@ -52,7 +52,7 @@
     {
       "id": "C_BELT",
       "short": "带",
-      "name": "低温维生舱",
+      "name": "维生环",
       "stat": "hp",
       "value": 150,
       "desc": "最大生命 +150"
@@ -60,7 +60,7 @@
     {
       "id": "C_GLOVE",
       "short": "套",
-      "name": "相位干涉仪",
+      "name": "相位套",
       "stat": "critPct",
       "value": 15,
       "desc": "暴击率 +15%"
@@ -69,7 +69,7 @@
   "completedItems": [
     {
       "id": "I_FUSION_BLADE",
-      "name": "聚变重型钨刃",
+      "name": "聚变重刃",
       "formula": "剑+剑",
       "components": [
         "C_SWORD",
@@ -83,7 +83,7 @@
     },
     {
       "id": "I_LORENTZ_RAIL",
-      "name": "洛伦兹连发轨",
+      "name": "连发磁轨",
       "formula": "剑+弓",
       "components": [
         "C_SWORD",
@@ -98,7 +98,7 @@
     },
     {
       "id": "I_MASS_CONVERTER",
-      "name": "质能回流转换器",
+      "name": "质能转换",
       "formula": "剑+杖",
       "components": [
         "C_SWORD",
@@ -112,7 +112,7 @@
     },
     {
       "id": "I_FUSION_IGNITER",
-      "name": "聚变点火起爆器",
+      "name": "聚变点火",
       "formula": "剑+泪",
       "components": [
         "C_SWORD",
@@ -126,7 +126,7 @@
     },
     {
       "id": "I_KEEL_FIELD",
-      "name": "龙骨应急力场",
+      "name": "龙骨力场",
       "formula": "剑+甲",
       "components": [
         "C_SWORD",
@@ -143,7 +143,7 @@
     },
     {
       "id": "I_HULL_BREAKER",
-      "name": "巨舰破拆重刃",
+      "name": "破舰重刃",
       "formula": "剑+披",
       "components": [
         "C_SWORD",
@@ -157,7 +157,7 @@
     },
     {
       "id": "I_LIFE_AXE",
-      "name": "循环维生战斧",
+      "name": "维生战斧",
       "formula": "剑+带",
       "components": [
         "C_SWORD",
@@ -172,7 +172,7 @@
     },
     {
       "id": "I_STRONG_CRIT_EDGE",
-      "name": "强核力会心刺",
+      "name": "会心刺",
       "formula": "剑+套",
       "components": [
         "C_SWORD",
@@ -187,7 +187,7 @@
     },
     {
       "id": "I_HYPER_SWARM",
-      "name": "超高速电磁蜂群",
+      "name": "电磁蜂群",
       "formula": "弓+弓",
       "components": [
         "C_BOW",
@@ -203,7 +203,7 @@
     },
     {
       "id": "I_PLASMA_SUBCANNON",
-      "name": "等离子电弧副炮",
+      "name": "电弧副炮",
       "formula": "弓+杖",
       "components": [
         "C_BOW",
@@ -217,7 +217,7 @@
     },
     {
       "id": "I_PULSE_ACCELERATOR",
-      "name": "脉冲回能加速器",
+      "name": "脉冲回能",
       "formula": "弓+泪",
       "components": [
         "C_BOW",
@@ -231,7 +231,7 @@
     },
     {
       "id": "I_ARMOR_PIERCER",
-      "name": "强核力穿甲锥",
+      "name": "穿甲锥",
       "formula": "弓+甲",
       "components": [
         "C_BOW",
@@ -246,7 +246,7 @@
     },
     {
       "id": "I_SPECTRUM_MAG",
-      "name": "频谱撕裂弹仓",
+      "name": "裂谱弹仓",
       "formula": "弓+披",
       "components": [
         "C_BOW",
@@ -261,7 +261,7 @@
     },
     {
       "id": "I_TACTICAL_EXO",
-      "name": "战术机动外骨骼",
+      "name": "机动外骨",
       "formula": "弓+带",
       "components": [
         "C_BOW",
@@ -275,7 +275,7 @@
     },
     {
       "id": "I_LASER_SIGHT",
-      "name": "激光标定瞄具",
+      "name": "激光瞄具",
       "formula": "弓+套",
       "components": [
         "C_BOW",
@@ -290,7 +290,7 @@
     },
     {
       "id": "I_STELLAR_CROWN",
-      "name": "恒星级倍增谐振冠",
+      "name": "恒星冠",
       "formula": "杖+杖",
       "components": [
         "C_ROD",
@@ -304,7 +304,7 @@
     },
     {
       "id": "I_SUPERCOMP_ARRAY",
-      "name": "智库超算阵列",
+      "name": "超算阵列",
       "formula": "杖+泪",
       "components": [
         "C_ROD",
@@ -318,7 +318,7 @@
     },
     {
       "id": "I_FARADAY_COAT",
-      "name": "法拉第反震电衣",
+      "name": "反震电衣",
       "formula": "杖+甲",
       "components": [
         "C_ROD",
@@ -333,7 +333,7 @@
     },
     {
       "id": "I_IONOSPHERE_RING",
-      "name": "电离层击穿环",
+      "name": "电离穿环",
       "formula": "杖+披",
       "components": [
         "C_ROD",
@@ -349,7 +349,7 @@
     },
     {
       "id": "I_FALLOUT_BRAND",
-      "name": "辐射尘烙印仪",
+      "name": "辐射烙印",
       "formula": "杖+带",
       "components": [
         "C_ROD",
@@ -365,7 +365,7 @@
     },
     {
       "id": "I_NON_EUCLID_LENS",
-      "name": "非欧几何聚焦镜",
+      "name": "非欧棱镜",
       "formula": "杖+套",
       "components": [
         "C_ROD",
@@ -380,7 +380,7 @@
     },
     {
       "id": "I_ZERO_POINT_SPRING",
-      "name": "零点能永动泉",
+      "name": "零点永泉",
       "formula": "泪+泪",
       "components": [
         "C_TEAR",
@@ -396,7 +396,7 @@
     },
     {
       "id": "I_POLAR_SHIELD_ARMOR",
-      "name": "极地铅封护盾甲",
+      "name": "铅封盾甲",
       "formula": "泪+甲",
       "components": [
         "C_TEAR",
@@ -411,7 +411,7 @@
     },
     {
       "id": "I_ZERO_STASIS_FILM",
-      "name": "绝对零度静滞膜",
+      "name": "零度静膜",
       "formula": "泪+披",
       "components": [
         "C_TEAR",
@@ -426,7 +426,7 @@
     },
     {
       "id": "I_REVIVAL_PUMP",
-      "name": "跨代复苏营养泵",
+      "name": "复苏血泵",
       "formula": "泪+带",
       "components": [
         "C_TEAR",
@@ -441,7 +441,7 @@
     },
     {
       "id": "I_QUANTUM_TRIGGER",
-      "name": "量子坍缩触发器",
+      "name": "量子触发",
       "formula": "泪+套",
       "components": [
         "C_TEAR",
@@ -456,7 +456,7 @@
     },
     {
       "id": "I_NEUTRON_PLATE",
-      "name": "中子简并态重甲",
+      "name": "中子重甲",
       "formula": "甲+甲",
       "components": [
         "C_VEST",
@@ -471,7 +471,7 @@
     },
     {
       "id": "I_MAGNETOSPHERE_GARB",
-      "name": "行星磁层石甲",
+      "name": "磁层石甲",
       "formula": "甲+披",
       "components": [
         "C_VEST",
@@ -486,7 +486,7 @@
     },
     {
       "id": "I_RED_GIANT_MAIL",
-      "name": "红巨星日冕甲",
+      "name": "日冕重甲",
       "formula": "甲+带",
       "components": [
         "C_VEST",
@@ -503,7 +503,7 @@
     },
     {
       "id": "I_INERTIA_GAUNTLET",
-      "name": "惯性阻尼拳套",
+      "name": "阻尼拳套",
       "formula": "甲+套",
       "components": [
         "C_VEST",
@@ -519,7 +519,7 @@
     },
     {
       "id": "I_SLOW_FOG_CLOAK",
-      "name": "低光速慢雾披风",
+      "name": "慢雾披风",
       "formula": "披+披",
       "components": [
         "C_CLOAK",
@@ -534,7 +534,7 @@
     },
     {
       "id": "I_ECOSPHERE_FILM",
-      "name": "生态球自愈膜",
+      "name": "自愈生态",
       "formula": "披+带",
       "components": [
         "C_CLOAK",
@@ -549,7 +549,7 @@
     },
     {
       "id": "I_PHASE_TALISMAN",
-      "name": "相位偏折护符",
+      "name": "相位护符",
       "formula": "披+套",
       "components": [
         "C_CLOAK",
@@ -564,7 +564,7 @@
     },
     {
       "id": "I_ONEILL_ARMOR",
-      "name": "奥尼尔环城装甲",
+      "name": "环城装甲",
       "formula": "带+带",
       "components": [
         "C_BELT",
@@ -579,7 +579,7 @@
     },
     {
       "id": "I_DEADHAND_BELT",
-      "name": "绝境死手束带",
+      "name": "死手束带",
       "formula": "带+套",
       "components": [
         "C_BELT",
@@ -596,7 +596,7 @@
     },
     {
       "id": "I_BLINDSPOT_LENS",
-      "name": "盲斑概率透镜",
+      "name": "盲斑透镜",
       "formula": "套+套",
       "components": [
         "C_GLOVE",
@@ -613,7 +613,7 @@
   "emblems": [
     {
       "id": "E_DYSON",
-      "name": "戴森工团纹章",
+      "name": "戴森纹章",
       "components": [
         "C_RUBBING",
         "C_VEST"
@@ -623,7 +623,7 @@
     },
     {
       "id": "E_CLOUD",
-      "name": "云端星环纹章",
+      "name": "星环纹章",
       "components": [
         "C_RUBBING",
         "C_TEAR"
@@ -633,7 +633,7 @@
     },
     {
       "id": "E_DILATION",
-      "name": "钟慢远征纹章",
+      "name": "钟慢纹章",
       "components": [
         "C_RUBBING",
         "C_BOW"
@@ -643,7 +643,7 @@
     },
     {
       "id": "E_EUROPA",
-      "name": "木卫冰海纹章",
+      "name": "冰海纹章",
       "components": [
         "C_RUBBING",
         "C_BELT"
@@ -653,7 +653,7 @@
     },
     {
       "id": "E_ARRAY",
-      "name": "深空阵列纹章",
+      "name": "阵列纹章",
       "components": [
         "C_RUBBING",
         "C_ROD"
@@ -663,7 +663,7 @@
     },
     {
       "id": "E_ANTIMATTER",
-      "name": "反物质院纹章",
+      "name": "反物纹章",
       "components": [
         "C_RUBBING",
         "C_SWORD"
@@ -673,7 +673,7 @@
     },
     {
       "id": "E_STARGATE",
-      "name": "星门摆渡纹章",
+      "name": "星门纹章",
       "components": [
         "C_RUBBING",
         "C_CLOAK"
@@ -683,7 +683,7 @@
     },
     {
       "id": "E_SWARM",
-      "name": "失控蜂群纹章",
+      "name": "蜂群纹章",
       "components": [
         "C_RUBBING",
         "C_GLOVE"
@@ -697,11 +697,11 @@
       "id": "C_RUBBING",
       "short": "拓",
       "name": "星环拓片",
-      "desc": "与8类基础散件合成八大派系纹章；两枚拓片合成【深空远征母舰旗】。"
+      "desc": "与8类基础散件合成八大派系纹章；两枚拓片合成【远征战旗】。"
     },
     "mothershipFlag": {
       "id": "I_MOTHERSHIP_FLAG",
-      "name": "深空远征母舰旗",
+      "name": "远征战旗",
       "components": [
         "C_RUBBING",
         "C_RUBBING"
@@ -713,7 +713,7 @@
     "consumables": [
       {
         "id": "TOOL_MAGNETIC_REMOVER",
-        "name": "磁约束拆卸器",
+        "name": "磁力拆装",
         "maxCharges": 1,
         "rechargeRounds": {
           "standard": [
@@ -733,21 +733,21 @@
       },
       {
         "id": "TOOL_REFORGER",
-        "name": "散件重铸器",
+        "name": "星核重铸",
         "desc": "将目标棋子身上的散件/成装随机重铸为同品阶其他装备并退回装备舱（不重铸母舰旗）。"
       }
     ],
     "anvils": [
       {
         "id": "ANVIL_COMPONENT_3",
-        "name": "3选1工程散件铁砧",
+        "name": "散件铁砧",
         "choiceCount": 3,
         "budgetCostComponents": 1,
         "tailorGuaranteeMin": 1
       },
       {
         "id": "ANVIL_COMPLETED_4",
-        "name": "4选1成装铁砧",
+        "name": "成装铁砧",
         "choiceCount": 4,
         "budgetCostComponents": 2,
         "tailorGuaranteeMin": 1

@@ -1,8 +1,22 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { ClientQuestionView, LearningArcMeta } from '@pkg/contracts';
 import {
+  SEASON1_AUGMENTS,
+  SEASON1_ITEMS,
+  SEASON1_TRAITS,
+  SEASON1_UNITS,
+  type ClientQuestionView,
+  type LearningArcMeta,
+} from '@pkg/contracts';
+import {
+  COMPACT_AUGMENT_DESCRIPTIONS,
+  COMPACT_ITEM_DESCRIPTIONS,
+  COMPACT_TRAIT_DESCRIPTIONS,
+  DESCRIPTION_DETAIL_MODE_STORAGE_KEY,
+  DescriptionModeProvider,
+  DescriptionModeToggle,
+  GameEffectText,
   LEARNING_READING_THEME_STORAGE_KEY,
   LEARNING_UI_CSS,
   LoreArchiveReader,
@@ -10,8 +24,14 @@ import {
   QuestionStepCard,
   RecommendedItemsTree,
   UnitLoreDrawer,
+  getGlobalDescriptionMode,
+  readStoredDescriptionMode,
   readStoredReadingTheme,
   renderMarkdownWithKatexToHtml,
+  resetDescriptionModeForTests,
+  setGlobalDescriptionMode,
+  summarizeCompactGameText,
+  writeStoredDescriptionMode,
   writeStoredReadingTheme,
 } from '../src/index.js';
 
@@ -45,6 +65,7 @@ function makeBaseQuestion(overrides: Partial<ClientQuestionView>): ClientQuestio
 }
 
 afterEach(() => {
+  resetDescriptionModeForTests();
   if ('window' in globalThis) {
     delete (globalThis as { window?: unknown }).window;
   }
@@ -232,7 +253,7 @@ describe('@pkg/learning-ui', () => {
       />,
     );
     expect(treeHtml).toContain('lui-recipe-tree');
-    expect(treeHtml).toContain('聚变重型钨刃');
+    expect(treeHtml).toContain('聚变重刃');
     expect(treeHtml).toContain('lui-recipe-glyph');
     expect(treeHtml).toContain('背包已有');
   });
@@ -291,5 +312,101 @@ describe('@pkg/learning-ui', () => {
     );
     expect(stretchHtml).toContain('高正确率 · 进阶挑战');
     expect(stretchHtml).toContain('进阶');
+  });
+
+  it('defaults to compact game descriptions and syncs global mode toggles across all views', () => {
+    expect(readStoredDescriptionMode()).toBe('compact');
+    expect(getGlobalDescriptionMode()).toBe('compact');
+
+    for (const c of SEASON1_ITEMS.components) {
+      expect(COMPACT_ITEM_DESCRIPTIONS[c.id]).toBeTruthy();
+      expect(COMPACT_ITEM_DESCRIPTIONS[c.id]).not.toMatch(/\d/);
+    }
+    for (const it of SEASON1_ITEMS.completedItems) {
+      expect(COMPACT_ITEM_DESCRIPTIONS[it.id]).toBeTruthy();
+      expect(COMPACT_ITEM_DESCRIPTIONS[it.id]).not.toMatch(/\d/);
+    }
+    for (const em of SEASON1_ITEMS.emblems) {
+      expect(COMPACT_ITEM_DESCRIPTIONS[em.id]).toBeTruthy();
+    }
+    expect(COMPACT_ITEM_DESCRIPTIONS[SEASON1_ITEMS.special.spatulaComponent.id]).toBeTruthy();
+    expect(COMPACT_ITEM_DESCRIPTIONS[SEASON1_ITEMS.special.mothershipFlag.id]).toBeTruthy();
+    for (const tool of SEASON1_ITEMS.special.consumables) {
+      expect(COMPACT_ITEM_DESCRIPTIONS[tool.id]).toBeTruthy();
+    }
+    for (const aug of SEASON1_AUGMENTS) {
+      expect(COMPACT_AUGMENT_DESCRIPTIONS[aug.id]).toBeTruthy();
+      expect(COMPACT_AUGMENT_DESCRIPTIONS[aug.id]).not.toMatch(/\d/);
+    }
+    for (const tr of [
+      ...SEASON1_TRAITS.factions,
+      ...SEASON1_TRAITS.roles,
+      ...SEASON1_TRAITS.uniques,
+    ]) {
+      expect(COMPACT_TRAIT_DESCRIPTIONS[tr.name]).toBeTruthy();
+      expect(COMPACT_TRAIT_DESCRIPTIONS[tr.name]).not.toMatch(/\d/);
+    }
+    for (const u of SEASON1_UNITS) {
+      const compactSkill = summarizeCompactGameText(u.skillSummary);
+      expect(compactSkill.length).toBeGreaterThan(4);
+      expect(compactSkill).not.toMatch(/\d/);
+    }
+
+    const storageMap = new Map<string, string>();
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      writable: true,
+      value: {
+        localStorage: {
+          getItem: (k: string) => storageMap.get(k) ?? null,
+          setItem: (k: string, v: string) => {
+            storageMap.set(k, v);
+          },
+        },
+      },
+    });
+
+    const compactHtml = renderToStaticMarkup(
+      <DescriptionModeProvider>
+        <div>
+          <DescriptionModeToggle />
+          <GameEffectText itemId="I_FUSION_BLADE" fullText="额外提高 25% 攻击力（纯物理基座）。" />
+          <GameEffectText augmentId="AUG_S05" fullText="前两排友军开战获得 16% 最大生命护盾5秒。" />
+          <GameEffectText traitName="戴森工团" fullText="阵亡触发【质量投射回收】：最近存活工团友军获亡者最大生命 12%/18%/25%/35% 等离子盾(4秒)与12法力。" />
+          <GameEffectText fullText="架起六角等离子磁盾获1.35P护盾4秒，期间受普攻伤害降低12%。" />
+        </div>
+      </DescriptionModeProvider>,
+    );
+    const compactText = compactHtml.replace(/<[^>]+>/g, '');
+    expect(compactHtml).toContain('data-desc-mode="compact"');
+    expect(compactHtml).toContain('详细');
+    expect(compactText).toContain('纯物理基座，大幅提升攻击力');
+    expect(compactText).toContain('前两排友军开战获得高额护盾');
+    expect(compactText).not.toContain('25%');
+    expect(compactText).not.toContain('1.35P');
+
+    setGlobalDescriptionMode('detailed');
+    expect(storageMap.get(DESCRIPTION_DETAIL_MODE_STORAGE_KEY)).toBe('detailed');
+    expect(readStoredDescriptionMode()).toBe('detailed');
+
+    const detailedHtml = renderToStaticMarkup(
+      <DescriptionModeProvider>
+        <div>
+          <DescriptionModeToggle />
+          <GameEffectText itemId="I_FUSION_BLADE" fullText="额外提高 25% 攻击力（纯物理基座）。" />
+          <GameEffectText augmentId="AUG_S05" fullText="前两排友军开战获得 16% 最大生命护盾5秒。" />
+          <GameEffectText fullText="架起六角等离子磁盾获1.35P护盾4秒，期间受普攻伤害降低12%。" />
+        </div>
+      </DescriptionModeProvider>,
+    );
+    const detailedText = detailedHtml.replace(/<[^>]+>/g, '');
+    expect(detailedHtml).toContain('data-desc-mode="detailed"');
+    expect(detailedHtml).toContain('简洁');
+    expect(detailedText).toContain('25%');
+    expect(detailedText).toContain('16%');
+    expect(detailedText).toContain('1.35P');
+
+    writeStoredDescriptionMode('compact');
+    expect(readStoredDescriptionMode()).toBe('compact');
   });
 });

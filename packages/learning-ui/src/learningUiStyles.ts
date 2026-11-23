@@ -2143,6 +2143,69 @@ export const LEARNING_UI_CSS = `
 .lui-arc-node--upcoming .lui-arc-node-dot {
   background: rgba(141, 162, 192, 0.5);
 }
+.lui-desc-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 5px;
+  border: 1px solid rgba(242, 201, 125, 0.44);
+  background: rgba(15, 26, 48, 0.86);
+  color: #f2c97d;
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+.lui-desc-toggle:hover {
+  background: rgba(30, 48, 82, 0.96);
+  border-color: rgba(242, 201, 125, 0.78);
+  color: #fff0c4;
+}
+.lui-desc-toggle--xs {
+  height: 22px;
+  padding: 0 7px;
+  font-size: 11px;
+}
+.lui-desc-toggle--sm {
+  height: 27px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.lui-desc-toggle--detailed {
+  background: linear-gradient(135deg, rgba(242, 201, 125, 0.22) 0%, rgba(168, 121, 50, 0.16) 100%);
+  border-color: rgba(242, 201, 125, 0.82);
+  color: #fff0c4;
+  box-shadow: 0 0 10px rgba(242, 201, 125, 0.16);
+}
+.lui-desc-toggle__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.lui-unit-skill-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.lui-unit-skill-head .lui-unit-skill-label {
+  margin-bottom: 0;
+}
+.lui-recipe-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.lui-recipe-head-row .lui-recipe-head {
+  margin-bottom: 0;
+}
 `;
 
 export function ensureLearningUiStyles(targetDoc?: Document | null): void {

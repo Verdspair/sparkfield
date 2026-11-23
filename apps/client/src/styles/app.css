@@ -1416,6 +1416,12 @@
   color: var(--gold-light);
 }
 
+.sf-settings-radio-card__desc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
 .sf-settings-pill {
   padding: 2px 7px;
   border-radius: var(--sf-radius-pill, 5px);

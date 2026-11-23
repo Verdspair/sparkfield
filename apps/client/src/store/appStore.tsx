@@ -546,11 +546,25 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
   const scoutedSeatIdRef = useRef<string | null>(null);
   scoutedSeatIdRef.current = scoutedSeatId;
 
+  const formatCommandReason = useCallback((raw: string): string => {
+    const map: Record<string, string> = {
+      STRATEGY_PHASE_REQUIRED: '当前阶段暂不可操作，请先完成待选项或等待战斗结束',
+      CHOICE_WINDOW_REQUIRED: '当前不在强化或铁砧选择阶段',
+      PHASE_WINDOW_CLOSED: '阶段刚刚切换，请稍后再试',
+      INSUFFICIENT_GOLD: '金币不足',
+      BENCH_FULL: '备战席已满',
+      BOARD_CAP_REACHED: '场上人口已达上限',
+      MATCH_NOT_ACTIVE: '当前对局未处于进行状态',
+      MATCH_ACTION_PENDING: '上一条操作正在同步，请稍候',
+    };
+    return map[raw] ?? raw;
+  }, []);
+
   const sendMatchCommand = useCallback((command: GameCommand) => {
     if (offlineMatchRef.current) {
       const res = offlineMatchRef.current.sendCommand(command);
       if (!res.ok && res.reason) {
-        pushToast(`无法执行：${res.reason}`, 'warning');
+        pushToast(formatCommandReason(res.reason), 'warning');
       }
       return;
     }
@@ -560,9 +574,12 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     }
     const action = captureSessionAction();
     void socketRef.current.sendCommand(command).catch((err: unknown) => {
-      if (isCurrentSessionAction(action)) pushToast(err instanceof Error ? err.message : '对局指令未发送', 'warning');
+      if (isCurrentSessionAction(action)) {
+        const raw = err instanceof Error ? err.message : '对局指令未发送';
+        pushToast(formatCommandReason(raw), 'warning');
+      }
     });
-  }, [captureSessionAction, isCurrentSessionAction, pushToast]);
+  }, [captureSessionAction, formatCommandReason, isCurrentSessionAction, pushToast]);
 
   const sendMatchLearningSubmit = useCallback(
     (

@@ -21,9 +21,10 @@ import {
   type UnitInstance,
 } from '@pkg/game-core';
 import {
+  DescriptionModeToggle,
+  GameEffectText,
   GameItemIcon,
   QuestionStepCard,
-  RichGameText,
   type LessonStepProgressItem,
   type QuestionAnswerSubmission,
   type QuestionFeedbackView,
@@ -1102,9 +1103,20 @@ export function MatchHudOverlay(): React.JSX.Element | null {
 
                       {isOpen && rawDef ? (
                         <div className="ui-frosted-panel blc-trait-pop">
-                          <p style={{ margin: '0 0 6px', fontSize: 11.5 }}>
-                            <RichGameText text={rawDef.desc} />
-                          </p>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              justifyContent: 'space-between',
+                              gap: 6,
+                              marginBottom: 6,
+                            }}
+                          >
+                            <p style={{ margin: 0, fontSize: 11.5, flex: 1 }}>
+                              <GameEffectText traitName={tr.traitName} fullText={rawDef.desc} />
+                            </p>
+                            <DescriptionModeToggle size="xs" />
+                          </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                             {SEASON1_UNITS.filter(
                               (u) =>
@@ -1428,13 +1440,17 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                       {activeBagEntry.kind === 'spatula' ? (
                         <span>纹章 · 母舰旗合成核</span>
                       ) : (
-                        <RichGameText text={activeBagEntry.item.desc} />
+                        <GameEffectText
+                          itemId={activeBagItemId}
+                          fullText={activeBagEntry.item.desc}
+                        />
                       )}
                     </div>
                   ) : null}
                 </div>
               </div>
               <div className="sf-craft-sheet__head-actions">
+                <DescriptionModeToggle size="xs" />
                 <button
                   type="button"
                   className="sf-craft-sheet__mini-btn"
@@ -1556,7 +1572,10 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                             </strong>
                           </div>
                           <div className="sf-craft-preview-bar__effect">
-                            <RichGameText text={previewResult.desc} />
+                            <GameEffectText
+                              itemId={previewResult.id}
+                              fullText={previewResult.desc}
+                            />
                           </div>
                         </>
                       ) : (
@@ -1585,7 +1604,10 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                 ) : null}
                 <div className="sf-craft-preview-bar">
                   <div className="sf-craft-preview-bar__effect">
-                    <RichGameText text={activeBagEntry.item.desc} />
+                    <GameEffectText
+                      itemId={activeBagItemId}
+                      fullText={activeBagEntry.item.desc}
+                    />
                   </div>
                 </div>
               </>
@@ -1795,17 +1817,20 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                 </div>
               </div>
             </div>
-            <button
-              type="button"
-              className="blc-btn blc-btn--ghost blc-btn--xs"
-              onClick={clearInspectedUnit}
-            >
-              ✕
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <DescriptionModeToggle size="xs" />
+              <button
+                type="button"
+                className="blc-btn blc-btn--ghost blc-btn--xs"
+                onClick={clearInspectedUnit}
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           <p className="sf-inspect-skill-text">
-            <RichGameText text={inspectedDef.skillSummary} />
+            <GameEffectText fullText={inspectedDef.skillSummary} />
           </p>
 
           <div className="sf-inspect-stats-row">
@@ -1946,7 +1971,10 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                       </span>
                     </div>
                     <div className="sf-inspect-item-detail__desc">
-                      <RichGameText text={hoveredEntry.item.desc} />
+                      <GameEffectText
+                        itemId={hoveredInspectItemId}
+                        fullText={hoveredEntry.item.desc}
+                      />
                     </div>
                   </div>
                 </div>
@@ -2562,7 +2590,10 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                           </span>
                         </div>
                         <div className="sf-drag-equip-preview__stats">
-                          <RichGameText text={craftedEntry.item.desc} />
+                          <GameEffectText
+                            itemId={craftedEntry.item.id}
+                            fullText={craftedEntry.item.desc}
+                          />
                         </div>
                       </>
                     ) : itemDrag.payload.kind === 'equip' && equipPreview?.ok ? (

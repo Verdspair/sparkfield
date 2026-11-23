@@ -6,7 +6,8 @@ import {
   type AudioEventBus,
   type UnitDef,
 } from '@pkg/contracts';
-import { GameItemIcon, RichGameText } from './GameRichIcons.js';
+import { DescriptionModeToggle, GameEffectText } from './GameDescriptionMode.js';
+import { GameItemIcon } from './GameRichIcons.js';
 import { MarkdownKatexBlock } from './MarkdownKatexBlock.js';
 import { ensureLearningUiStyles } from './learningUiStyles.js';
 
@@ -118,9 +119,12 @@ export function RecommendedItemsTree({
       className={`lui-recipe-tree ${className}`.trim()}
       data-testid="recommended-items-tree"
     >
-      <div className="lui-recipe-head">
-        <span className="lui-briefing-diamond" aria-hidden="true" />
-        <span>推荐成装</span>
+      <div className="lui-recipe-head-row">
+        <div className="lui-recipe-head">
+          <span className="lui-briefing-diamond" aria-hidden="true" />
+          <span>推荐成装</span>
+        </div>
+        <DescriptionModeToggle size="xs" />
       </div>
       <div className="lui-recipe-row">
         {recommendedItemIds.map((itemId) => {
@@ -160,7 +164,7 @@ export function RecommendedItemsTree({
             ) : null}
           </div>
           <div className="lui-recipe-formula-desc">
-            <RichGameText text={activeCompleted.desc} />
+            <GameEffectText itemId={activeCompleted.id} fullText={activeCompleted.desc} />
           </div>
           <div className="lui-recipe-chain">
             {(() => {
@@ -322,12 +326,15 @@ export function UnitLoreDrawer({
                   <div className="lui-unit-silhouette">
                     {resolvedUnitDef.modelProfile.silhouetteDesc}
                   </div>
-                  <div className="lui-unit-skill-label">
-                    <span className="lui-briefing-diamond" aria-hidden="true" />
-                    <span>技能</span>
+                  <div className="lui-unit-skill-head">
+                    <div className="lui-unit-skill-label">
+                      <span className="lui-briefing-diamond" aria-hidden="true" />
+                      <span>技能</span>
+                    </div>
+                    <DescriptionModeToggle size="xs" />
                   </div>
                   <div className="lui-unit-skill-desc">
-                    <RichGameText text={resolvedUnitDef.skillSummary} />
+                    <GameEffectText fullText={resolvedUnitDef.skillSummary} />
                   </div>
                   <hr className="lui-metal-divider" style={{ marginTop: 12 }} />
                   <div className="lui-stat-grid">

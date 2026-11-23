@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { ArenaThemeId, CoursePackManifest, TacticianId } from '@pkg/contracts';
+import { useDescriptionMode } from '@pkg/learning-ui';
 import { httpClient } from '../api/httpClient.js';
 import { STARTER_COURSE_PACKS } from '../content/starterPacks.js';
 import {
@@ -262,6 +263,7 @@ export function SettingsModal(): React.JSX.Element | null {
   const [nicknameDraft, setNicknameDraft] = useState<string>(profile?.nickname ?? '');
   const [savingNickname, setSavingNickname] = useState<boolean>(false);
   const [arenaPreviews, setArenaPreviews] = useState<Record<ArenaThemeId, string>>(readInitialArenaPreviews);
+  const { mode: descMode, isDetailed: descDetailed, setMode: setDescMode } = useDescriptionMode();
 
   const isOffline = authMode === 'offline_practice';
   const isStaff = profile?.role === 'admin' || profile?.role === 'editor';
@@ -543,6 +545,46 @@ export function SettingsModal(): React.JSX.Element | null {
                   </div>
 
                   <ShopLayoutDiagramSvg position={shopDockPosition} />
+                </div>
+
+                <div className="sf-settings-card" data-testid="desc-mode-settings-card">
+                  <div className="sf-settings-card__head">
+                    <h3>描述展示模式</h3>
+                    <span className="blc-chip">{descDetailed ? '详细数值' : '简洁缩略'}</span>
+                  </div>
+
+                  <div className="sf-settings-radio-grid" role="group" aria-label="描述展示模式">
+                    <button
+                      type="button"
+                      aria-pressed={descMode === 'compact'}
+                      className={`sf-settings-radio-card ${descMode === 'compact' ? 'sf-settings-radio-card--active' : ''}`.trim()}
+                      onClick={() => setDescMode('compact')}
+                      data-testid="desc-mode-compact-btn"
+                    >
+                      <div className="sf-settings-radio-card__top">
+                        <strong>简洁缩略（默认）</strong>
+                        <span className="sf-settings-pill sf-settings-pill--gold">推荐</span>
+                      </div>
+                      <span className="sf-settings-radio-card__desc">
+                        隐藏复杂数值，聚焦核心效果与机制
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-pressed={descMode === 'detailed'}
+                      className={`sf-settings-radio-card ${descMode === 'detailed' ? 'sf-settings-radio-card--active' : ''}`.trim()}
+                      onClick={() => setDescMode('detailed')}
+                      data-testid="desc-mode-detailed-btn"
+                    >
+                      <div className="sf-settings-radio-card__top">
+                        <strong>详细数值</strong>
+                      </div>
+                      <span className="sf-settings-radio-card__desc">
+                        展开完整百分比、秒数与技能系数
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
                 {inActiveMatch && isOfflineSandboxMatch ? (
