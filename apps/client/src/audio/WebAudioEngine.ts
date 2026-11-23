@@ -51,9 +51,9 @@ export interface AudioSettings {
 export const AUDIO_PREFS_STORAGE_KEY = 'sparkfield_audio_prefs_v1';
 
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
-  masterVolume: 0.76,
+  masterVolume: 0.78,
   bgmVolume: 0.56,
-  sfxVolume: 0.52,
+  sfxVolume: 0.68,
   muted: false,
 };
 
@@ -126,22 +126,22 @@ const SFX_COOLDOWN_MS: Partial<Readonly<Record<SfxId, number>>> = {
 };
 
 const SFX_GAIN_SCALE: Partial<Readonly<Record<SfxId, number>>> = {
-  ui_hover: 0.25,
-  ui_click: 0.55,
-  ui_open: 0.55,
-  ui_close: 0.52,
-  ui_toggle: 0.55,
-  hit_phys: 0.40,
-  hit_magic: 0.42,
-  skill_cast: 0.48,
-  unit_death: 0.44,
-  orb_drop: 0.58,
-  orb_collect: 0.65,
-  phase_chime: 0.55,
-  star_up_2: 0.78,
-  star_up_3: 0.85,
-  battle_horn: 0.76,
-  victory_fanfare: 0.82,
+  ui_hover: 0.35,
+  ui_click: 0.78,
+  ui_open: 0.76,
+  ui_close: 0.72,
+  ui_toggle: 0.76,
+  hit_phys: 0.60,
+  hit_magic: 0.62,
+  skill_cast: 0.68,
+  unit_death: 0.64,
+  orb_drop: 0.78,
+  orb_collect: 0.82,
+  phase_chime: 0.75,
+  star_up_2: 0.90,
+  star_up_3: 0.96,
+  battle_horn: 0.90,
+  victory_fanfare: 0.94,
 };
 
 const SFX_PITCH_JITTER: Partial<Readonly<Record<SfxId, number>>> = {
@@ -548,11 +548,11 @@ export class WebAudioEngine implements Required<AudioAdapter> {
       1: 1.06,
     };
     const gainBySec: Readonly<Record<number, number>> = {
-      5: 0.62,
-      4: 0.68,
-      3: 0.74,
-      2: 0.82,
-      1: 0.90,
+      5: 0.86,
+      4: 0.90,
+      3: 0.95,
+      2: 1.00,
+      1: 1.08,
     };
     this.playSfxWithOverrides(id, gainBySec[sec] ?? 0.88, rateBySec[sec] ?? 1.0);
   }
