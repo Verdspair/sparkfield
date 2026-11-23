@@ -541,11 +541,11 @@ export class WebAudioEngine implements Required<AudioAdapter> {
     const sec = Math.max(1, Math.min(5, Math.round(payload.secondsLeft)));
     const id: SfxId = payload.urgent || sec <= 2 ? 'countdown_urgent' : 'countdown_tick';
     const rateBySec: Readonly<Record<number, number>> = {
-      5: 0.96,
+      5: 1.0,
       4: 1.0,
-      3: 1.04,
-      2: 1.02,
-      1: 1.1,
+      3: 1.0,
+      2: 1.0,
+      1: 1.06,
     };
     const gainBySec: Readonly<Record<number, number>> = {
       5: 0.62,
