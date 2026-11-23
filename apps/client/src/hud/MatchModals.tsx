@@ -12,6 +12,7 @@ import {
 import { getUnitRecommendedBuilds, type ActiveTrait, type SeatState } from '@pkg/game-core';
 import { GameItemIcon, RichGameText, UnitLoreDrawer } from '@pkg/learning-ui';
 import { EquipmentCodexMatrix } from '../components/EquipmentCodexMatrix.js';
+import { GameUiIcon } from '../components/GameUiIcons.js';
 import { UnitPortrait } from '../components/UnitPortrait.js';
 
 function formatMMSS(sec: number): string {
@@ -287,7 +288,8 @@ export function MatchChoiceModal({
           onClick={onPeekBattlefield}
           data-testid="peek-battlefield-btn"
         >
-          👁 查看战场
+          <GameUiIcon name="eye" size={15} />
+          <span>查看战场</span>
         </button>
       </div>
     </div>

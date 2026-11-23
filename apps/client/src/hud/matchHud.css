@@ -2546,3 +2546,110 @@
     animation: none !important;
   }
 }
+
+.sf-ui-svg-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.sf-wallet-pill {
+  gap: 8px;
+  padding: 4px 11px 4px 9px;
+}
+
+.sf-wallet-coin-icon {
+  filter: drop-shadow(0 0 6px rgba(246, 201, 106, 0.45));
+}
+
+.sf-interest-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(242, 201, 125, 0.24);
+}
+
+.sf-interest-pips {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.sf-interest-pip {
+  width: 6px;
+  height: 12px;
+  border-radius: 2px;
+  background: rgba(148, 179, 224, 0.16);
+  border: 1px solid rgba(148, 179, 224, 0.3);
+  transition: background 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.sf-interest-pip--lit {
+  background: linear-gradient(180deg, #fff4cc 0%, #f5b942 100%);
+  border-color: #ffe9a8;
+  box-shadow: 0 0 8px rgba(246, 201, 106, 0.72);
+}
+
+.sf-interest-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(182, 198, 226, 0.7);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sf-interest-label--lit {
+  color: #fde68a;
+  text-shadow: 0 0 8px rgba(246, 201, 106, 0.35);
+}
+
+.sf-charge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+}
+
+.sf-charge-icon {
+  filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.45));
+}
+
+.sf-charge-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7dd3fc;
+  white-space: nowrap;
+}
+
+.sf-charge-bar {
+  width: 36px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(148, 179, 224, 0.18);
+  border: 1px solid rgba(103, 232, 249, 0.25);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sf-charge-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #a5f3fc);
+  transition: width 220ms ease;
+}
+
+.sf-charge-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: #e0f2fe;
+  font-variant-numeric: tabular-nums;
+}
+
+.sf-shop-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}

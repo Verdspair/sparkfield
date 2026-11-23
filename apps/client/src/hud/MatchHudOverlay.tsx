@@ -36,6 +36,7 @@ import {
   QUEUE_TYPE_LABELS,
   formatQuarterPoints,
 } from '../utils/antiFakeZero.js';
+import { GameUiIcon } from '../components/GameUiIcons.js';
 import { LearningRewardBanner } from './LearningRewardBanner.js';
 import {
   MatchChoiceModal,
@@ -533,10 +534,17 @@ export function MatchHudOverlay(): React.JSX.Element | null {
     sendMatchCommand({ type: 'SET_LINEUP_PLAN', unitIds: next });
   };
 
+  const interestCap = modeSpec.economy.interest_cap;
+  const nextInterestAt = Math.min(interestCap * 10, (interestPreview + 1) * 10);
+
   const renderWalletAndCharge = () => (
     <>
-      <div className="sf-wallet-pill" data-testid="hud-integer-gold">
-        <span className="sf-gold-dot" aria-hidden="true" />
+      <div
+        className="sf-wallet-pill"
+        data-testid="hud-integer-gold"
+        title={`当前利息 +${interestPreview}G（每满 10G +1，上限 +${interestCap}G；下回合基础收入 +${modeSpec.economy.base_income}G${interestPreview < interestCap ? `；再存 ${Math.max(0, nextInterestAt - self.gold)}G 可达下一档` : '；已达满额利息'}）`}
+      >
+        <GameUiIcon name="coin" size={16} className="sf-wallet-coin-icon" />
         <span
           className="gold-roller"
           style={{
@@ -546,23 +554,32 @@ export function MatchHudOverlay(): React.JSX.Element | null {
         >
           {self.gold}G
         </span>
-        <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>+{interestPreview}</span>
+        <span className="sf-interest-group" data-testid="hud-interest-pips">
+          <span className="sf-interest-pips" aria-hidden="true">
+            {Array.from({ length: interestCap }, (_, idx) => (
+              <span
+                key={idx}
+                className={`sf-interest-pip ${idx < interestPreview ? 'sf-interest-pip--lit' : ''}`.trim()}
+              />
+            ))}
+          </span>
+          <span className={`sf-interest-label ${interestPreview > 0 ? 'sf-interest-label--lit' : ''}`.trim()}>
+            利息 +{interestPreview}
+          </span>
+        </span>
       </div>
 
       <div
         className="sf-charge-pill"
-        title="科研充能满 100 在学习结算时换为 1 枚整数金币"
+        title={`学习金币充能 ${self.learningChargeCents}/100：每次答题不足 1G 的余数将自动结转累计，满 100 时在下一次学习结算额外掉落 +1G 战利品法球`}
         data-testid="hud-science-charge-ring"
       >
-        <div
-          className="science-charge-ring"
-          style={{ '--charge-pct': `${self.learningChargeCents}%` } as React.CSSProperties}
-        >
-          {self.learningChargeCents}
-        </div>
-        <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
-          {self.learningChargeCents}/100
+        <GameUiIcon name="spark" size={14} className="sf-charge-icon" />
+        <span className="sf-charge-label">充能</span>
+        <span className="sf-charge-bar" aria-hidden="true">
+          <i style={{ width: `${Math.max(0, Math.min(100, self.learningChargeCents))}%` }} />
         </span>
+        <span className="sf-charge-value">{self.learningChargeCents}/100</span>
       </div>
     </>
   );
@@ -707,7 +724,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             aria-label="打开设置"
             data-testid="open-inmatch-settings-btn"
           >
-            <span aria-hidden="true">⚙</span>
+            <GameUiIcon name="gear" size={14} />
             <span>设置</span>
           </button>
         </div>
@@ -1690,7 +1707,8 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                 title="锁定当前商店保留至下一准备期，跨轮后自动解锁"
                 data-testid="toggle-lock-shop-btn"
               >
-                {self.shopLocked ? '🔒 已锁' : '🔓 锁店'}
+                <GameUiIcon name={self.shopLocked ? 'lock' : 'unlock'} size={14} />
+                <span>{self.shopLocked ? '已锁' : '锁店'}</span>
               </button>
 
               <button
@@ -1700,7 +1718,8 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                 title="收起商店 (Space)"
                 data-testid="toggle-shop-collapse-btn"
               >
-                {shopDockPosition === 'top' ? '▲ 收起' : '▼ 收起'}
+                <GameUiIcon name={shopDockPosition === 'top' ? 'chevronUp' : 'chevronDown'} size={14} />
+                <span>收起</span>
               </button>
             </div>
           </div>

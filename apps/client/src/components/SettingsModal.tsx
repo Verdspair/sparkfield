@@ -12,6 +12,7 @@ import {
   type SettingsTab,
   type ShopDockPosition,
 } from '../store/appStore.js';
+import { GameUiIcon } from './GameUiIcons.js';
 import { ARENA_THEME_OPTIONS } from './PersistentStageCanvas.js';
 import { TacticianPortrait } from './UnitPortrait.js';
 
@@ -463,7 +464,7 @@ export function SettingsModal(): React.JSX.Element | null {
       >
         <header className="sf-settings-header">
           <div className="sf-settings-header__title">
-            <span className="sf-settings-header__icon" aria-hidden="true">⚙</span>
+            <span className="sf-settings-header__icon" aria-hidden="true"><GameUiIcon name="gear" size={18} /></span>
             <h2>设置</h2>
           </div>
           <button

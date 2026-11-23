@@ -11,6 +11,7 @@ import { httpClient } from '../api/httpClient.js';
 import { TacticianPortrait } from '../components/UnitPortrait.js';
 import { STARTER_COURSE_PACKS } from '../content/starterPacks.js';
 import { TACTICIAN_CATALOG } from '../stage/index.js';
+import { GameUiIcon } from '../components/GameUiIcons.js';
 import { useAppStore } from '../store/appStore.js';
 import {
   DURATION_MODE_SHORT_LABELS,
@@ -498,8 +499,8 @@ export function PrepRoomPage(): React.JSX.Element | null {
             <span className="sf-prep-chapter-chip__text">
               第 {selectedNodeIndex + 1} 节 · {resolvedNodeTitle}
             </span>
-            <span style={{ color: 'var(--accent-azure-bright)' }} aria-hidden="true">
-              ✎
+            <span style={{ color: 'var(--accent-azure-bright)', display: 'inline-flex', alignItems: 'center' }} aria-hidden="true">
+              <GameUiIcon name="edit" size={14} />
             </span>
           </button>
         </div>

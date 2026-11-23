@@ -6,6 +6,7 @@ import {
 } from '@pkg/contracts';
 import { httpClient, type MatchHistoryItem } from '../api/httpClient.js';
 import { StatusValueText } from '../components/StatusValueText.js';
+import { GameUiIcon } from '../components/GameUiIcons.js';
 import { SubpageShell } from '../components/SubpageShell.js';
 import { TacticianPortrait, UnitPortrait } from '../components/UnitPortrait.js';
 import { TACTICIAN_CATALOG } from '../stage/index.js';
@@ -260,7 +261,8 @@ export function ProfilePage(): React.JSX.Element {
               onClick={handleOpenCollection}
               data-testid="profile-open-collection-btn"
             >
-              ✨ 前往藏品换装
+              <GameUiIcon name="wardrobe" size={14} />
+              <span>前往藏品换装</span>
             </button>
             <button
               type="button"
@@ -269,7 +271,8 @@ export function ProfilePage(): React.JSX.Element {
               onClick={() => openSettings('display')}
               data-testid="profile-open-settings-btn"
             >
-              ⚙ 打开全部设置
+              <GameUiIcon name="gear" size={14} />
+              <span>打开全部设置</span>
             </button>
           </div>
 

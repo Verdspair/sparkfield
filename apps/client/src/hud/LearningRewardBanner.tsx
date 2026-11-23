@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { MatchRoomSnapshot } from '../api/matchSocket.js';
+import { GameUiIcon } from '../components/GameUiIcons.js';
 
 interface RewardToastState {
   readonly key: string;
@@ -328,7 +329,12 @@ export function LearningRewardBanner({
                 ? `答对 ${banner.correctCount} / ${banner.totalCount} 题`
                 : '本节学习已完成'}
             </span>
-            {perfect ? <span className="sf-reward-perfect">★ 满分全对</span> : null}
+            {perfect ? (
+              <span className="sf-reward-perfect" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <GameUiIcon name="star" size={12} />
+                <span>满分全对</span>
+              </span>
+            ) : null}
           </div>
           <div className="sf-reward-loot-row">
             <span className="sf-reward-pill--gold">

@@ -1,4 +1,5 @@
 import React from 'react';
+import { GameUiIcon } from './GameUiIcons.js';
 import { useAppStore } from '../store/appStore.js';
 import { formatPointsBalanceDisplay } from '../utils/antiFakeZero.js';
 import { StatusValueText } from './StatusValueText.js';
@@ -91,7 +92,7 @@ export function SubpageShell({
             aria-label="打开设置"
             data-testid="open-settings-btn"
           >
-            ⚙
+            <GameUiIcon name="gear" size={16} />
           </button>
         </div>
       </header>
