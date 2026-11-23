@@ -51,6 +51,9 @@ export interface MatchLearningView {
   nodeIndex: number;
   currentStep: LessonStepKind | null;
   complete: boolean;
+  readyToProceed?: boolean;
+  readyHumansCount?: number;
+  totalHumansCount?: number;
   clientQuestions: ClientQuestionView[];
   steps: MatchLearningStepView[];
   submittedQuestionIds: string[];

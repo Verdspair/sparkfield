@@ -88,6 +88,8 @@ export interface QuestionStepCardProps {
   readonly sharedRemainingSeconds?: number | null;
   readonly sharedTotalSeconds?: number | null;
   readonly isWaitingForRoomDeadline?: boolean;
+  readonly waitingMessage?: string;
+  readonly canProceedEarly?: boolean;
   readonly variant?: 'overlay' | 'standalone' | 'sandbox' | 'compact';
   readonly audioBus?: AudioEventBus | null;
   readonly readOnly?: boolean;
@@ -235,6 +237,8 @@ export function QuestionStepCard({
   sharedRemainingSeconds,
   sharedTotalSeconds,
   isWaitingForRoomDeadline = false,
+  waitingMessage,
+  canProceedEarly = false,
   variant = 'standalone',
   audioBus = null,
   readOnly = false,
@@ -643,7 +647,7 @@ export function QuestionStepCard({
         {isWaitingForRoomDeadline ? (
           <div className="lui-wait-banner" data-testid="early-finish-wait-banner">
             <span>已完成</span>
-            <span>全房统一截止后进入下一策略期</span>
+            <span>{waitingMessage ?? '全房统一截止后进入下一策略期'}</span>
           </div>
         ) : null}
 
@@ -1128,7 +1132,7 @@ export function QuestionStepCard({
             </button>
           ) : null}
 
-          {(!question || Boolean(feedback)) && onAdvanceStep && !isWaitingForRoomDeadline ? (
+          {(((!question || Boolean(feedback)) && !isWaitingForRoomDeadline) || canProceedEarly) && onAdvanceStep ? (
             <button
               type="button"
               className="lui-btn lui-btn--primary"

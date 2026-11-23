@@ -543,12 +543,21 @@ export class OfflinePracticeMatchController {
     if (!this.lessonProgress || this.phase !== 'learning') {
       return { ok: false, reason: 'LEARNING_WINDOW_CLOSED' };
     }
+    this.normalizeLessonStep();
+    if (this.lessonProgress.complete) {
+      void this.skipCurrentPhaseWait();
+      return { ok: true };
+    }
     const kind = STEPS[this.lessonProgress.step];
     if (kind !== 'material' && kind !== 'remediation') {
       return { ok: false, reason: 'STEP_REQUIRES_SUBMISSIONS' };
     }
     this.lessonProgress.step += 1;
     this.normalizeLessonStep();
+    if (this.lessonProgress.complete) {
+      void this.skipCurrentPhaseWait();
+      return { ok: true };
+    }
     this.emitSnapshot();
     return { ok: true };
   }

@@ -11,7 +11,7 @@ interface ActionAck { requestId?: string; ok: boolean; reason?: string }
 interface MatchRoomSnapshot {
   matchId: string; seatId: string; phase: string; round: number; self: SeatState;
   battle?: { round: number; battles: RoundBattle[] } | null;
-  learning: { currentStep: LessonStepKind | null; clientQuestions: ClientQuestionView[];
+  learning: { currentStep: LessonStepKind | null; complete?: boolean; clientQuestions: ClientQuestionView[];
     submittedQuestionIds: string[]; steps: { kind: LessonStepKind; corrections: unknown[] }[] } | null;
 }
 interface ConnectedMatchSocket {
@@ -269,4 +269,32 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     expect(snapshot.battle?.round).toBe(snapshot.round);
     expect(snapshot.battle?.battles.some((battle) => battle.leftSeatId === snapshot.seatId || battle.rightSeatId === snapshot.seatId)).toBe(true);
   }, 10_000);
+
+  it('transitions out of learning early into resource and strategy once all humans finish and confirm', async () => {
+    const { token, room } = await startMatch();
+    const snapshots = stream<MatchRoomSnapshot>();
+    const socket = await connectAuthoritativeMatch(room.roomId, token, { onSnapshot: snapshots.push }); sockets.add(socket);
+    let snapshot = await snapshots.wait((s) => s.phase === 'learning' && Boolean(s.learning), 0, 5000);
+    while (snapshot.phase === 'learning' && snapshot.learning && !snapshot.learning.complete) {
+      const lrn = snapshot.learning;
+      if (lrn.currentStep === 'material' || lrn.currentStep === 'remediation') {
+        await socket.sendLearningAdvance();
+      } else {
+        for (const q of lrn.clientQuestions.filter((item) => !lrn.submittedQuestionIds.includes(item.questionId))) {
+          await socket.sendLearningSubmit(q.questionId, { answer: null, status: 'skipped', questionId: q.questionId });
+        }
+      }
+      snapshot = snapshots.values.at(-1)!;
+    }
+    expect(snapshot.phase).toBe('learning');
+    expect(snapshot.learning?.complete).toBe(true);
+    const beforeCount = snapshots.values.length;
+    await socket.sendLearningAdvance();
+    const afterConfirm = await snapshots.wait((s) => s.phase === 'resource' || s.phase === 'strategy', beforeCount, 2000);
+    expect(['resource', 'strategy']).toContain(afterConfirm.phase);
+    const strategySnap = afterConfirm.phase === 'strategy'
+      ? afterConfirm
+      : await snapshots.wait((s) => s.phase === 'strategy', snapshots.values.length, 4000);
+    expect(strategySnap.phase).toBe('strategy');
+  }, 12_000);
 });

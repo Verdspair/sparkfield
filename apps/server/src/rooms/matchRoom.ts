@@ -34,7 +34,7 @@ export interface MatchRoomOptions {
 }
 interface LearningProgress {
   bundle: PersonalizedLessonBundle; submissions: Record<string, SubmissionInput>;
-  step: number; complete: boolean; feedback: Record<string, unknown>; settled: boolean;
+  step: number; complete: boolean; readyToProceed: boolean; feedback: Record<string, unknown>; settled: boolean;
 }
 interface Binding { token: string; userId: string; epoch: number; seatId: string }
 const STEPS: LessonStepKind[] = ['material','practice','resource_check','remediation','verification'];
@@ -237,15 +237,39 @@ export class MatchRoom extends Room {
     }
     progress.complete=progress.step>=STEPS.length;
   }
+  private maybeFinishLearningEarly():void {
+    if(this.disposed || this.failure || this.completed || this.phase!=='learning' || this.humans.size===0)return;
+    const allReady=[...this.humans.keys()].every((uid)=>{
+      const p=this.lessons.get(uid);
+      return Boolean(p && p.complete && p.readyToProceed);
+    });
+    if(!allReady)return;
+    if(this.timeout){clearTimeout(this.timeout);this.timeout=undefined;}
+    this.deadlineEpochMs=Date.now();
+    this.timeout=setTimeout(()=>{void this.enqueue(()=>this.transition()).catch(error=>this.fail(error));},0);
+  }
   private learningCommand(userId:string,message:z.infer<typeof LearningMessage>):unknown {
     if(this.failure||this.disposed||this.completed)throw new ServiceError('MATCH_NOT_ACTIVE');
     if (this.phase!=='learning' || Date.now()>=this.deadlineEpochMs) throw new ServiceError('LEARNING_WINDOW_CLOSED');
     const progress=this.lessons.get(userId); if (!progress) throw new ServiceError('LESSON_NOT_FOUND');
-    this.normalizeStep(progress); if (progress.complete) throw new ServiceError('LEARNING_ALREADY_COMPLETE');
+    this.normalizeStep(progress);
+    if (progress.complete) {
+      if (message.action==='advance') {
+        progress.readyToProceed=true;
+        this.maybeFinishLearningEarly();
+        return {ok:true,complete:true,readyToProceed:true};
+      }
+      throw new ServiceError('LEARNING_ALREADY_COMPLETE');
+    }
     const kind=STEPS[progress.step]!; const step=progress.bundle.steps[progress.step]!;
     if (message.action==='advance') {
       if (kind!=='material' && kind!=='remediation') throw new ServiceError('STEP_REQUIRES_SUBMISSIONS');
-      progress.step++; this.normalizeStep(progress); return {ok:true,complete:progress.complete};
+      progress.step++; this.normalizeStep(progress);
+      if (progress.complete) {
+        progress.readyToProceed=true;
+        this.maybeFinishLearningEarly();
+      }
+      return {ok:true,complete:progress.complete,readyToProceed:progress.readyToProceed};
     }
     if (!message.questionId || !step.questionIds.includes(message.questionId)) throw new ServiceError('QUESTION_NOT_IN_CURRENT_STEP');
     if (Object.hasOwn(progress.submissions,message.questionId)) throw new ServiceError('SUBMISSION_LOCKED');
@@ -324,7 +348,7 @@ export class MatchRoom extends Room {
           queueType:this.input.queueType,selectedSubjects:[subject],rankedSubject:this.input.sharedSubject,now:new Date(),
           cards:await getPrivateFsrsCards(this.runtime.db,userId),
           progress:Object.entries(human.profile.learningStartSelections).map(([subject,knowledgeNode])=>({subject:subject as 'english'|'math',knowledgeNode:knowledgeNode!}))});
-        const progress:LearningProgress={bundle,submissions:{},step:0,complete:false,feedback:{},settled:false};
+        const progress:LearningProgress={bundle,submissions:{},step:0,complete:false,readyToProceed:false,feedback:{},settled:false};
         this.normalizeStep(progress);this.lessons.set(userId,progress);
       }
     } else if(this.phase==='resource') {
@@ -413,6 +437,9 @@ export class MatchRoom extends Room {
           ...(this.input.queueType==='solo'?{isBot:seat.isBot}:{}),chosenAugments:seat.chosenAugments};}),
       battle:this.phase==='battle' && this.pendingBattle?{round:this.game.round,battles:this.pendingBattle.battles}:null,
       learning:progress?{nodeIndex:this.nodeIndex,currentStep:current,complete:progress.complete,
+        readyToProceed:progress.readyToProceed,
+        readyHumansCount:[...this.humans.keys()].filter(uid=>{const p=this.lessons.get(uid);return Boolean(p&&p.complete&&p.readyToProceed);}).length,
+        totalHumansCount:this.humans.size,
         clientQuestions:progress.bundle.clientQuestions.filter(q=>q.stepRole===current),
         steps:progress.bundle.steps.map((step,index)=>({kind:step.kind,active:step.active,plannedSeconds:step.plannedSeconds,
           questionIds:step.questionIds,materials:index===progress.step?step.materials:[],

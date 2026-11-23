@@ -1610,14 +1610,26 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                     sharedRemainingSeconds={Math.ceil(liveRemainingSec)}
                     sharedTotalSeconds={totalPhaseSec}
                     isWaitingForRoomDeadline={lrn.complete && !review}
+                    canProceedEarly={lrn.complete && !review && !lrn.readyToProceed}
+                    waitingMessage={
+                      lrn.readyToProceed && (lrn.totalHumansCount ?? 1) > 1
+                        ? `等待其他玩家完成（${lrn.readyHumansCount ?? 1}/${lrn.totalHumansCount ?? 1}）`
+                        : lrn.readyToProceed
+                          ? '正在结算奖励并进入策略阶段…'
+                          : '本节学习已完成，点击下方按钮立即进入策略阶段'
+                    }
+                    nextStepLabel={lrn.complete ? '进入策略阶段' : '下一步'}
                     readOnly={Boolean(review)}
                     variant="overlay"
                     audioBus={audioBus}
                     onSubmitAnswer={submitLearningAnswer}
                     onSkipQuestion={submitLearningAnswer}
                     onAdvanceStep={() => {
-                      if (review) setLearningReview(null);
-                      else if (
+                      if (review) {
+                        setLearningReview(null);
+                        if (lrn.complete) advanceLearningStep();
+                      } else if (
+                        lrn.complete ||
                         currentStepKind === 'material' ||
                         currentStepKind === 'remediation'
                       ) {

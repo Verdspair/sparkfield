@@ -1669,7 +1669,7 @@
   "learning_phase_policy": {
     "scope": "online_rooms_including_one_real_player",
     "fixed_window": true,
-    "finish_early_if_all_humans_complete": false,
+    "finish_early_if_all_humans_complete": true,
     "early_completion_extra_reward": false,
     "early_completion_extra_strategy_time": false,
     "early_finisher_options": [
