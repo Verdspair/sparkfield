@@ -19,6 +19,7 @@ import {
 } from '@pkg/contracts';
 import { PbrMaterialLibrary, buildProceduralStudioEnvMap } from './pbrMaterials.js';
 import {
+  OUTLINE_LEVEL_PIXELS,
   OUTLINE_LEVEL_STRENGTH,
   QUALITY_MAX_PIXEL_RATIO,
   readStoredGraphicsSettings,
@@ -327,6 +328,7 @@ export class BoardStageEngine {
 
     this.materials = new PbrMaterialLibrary();
     this.materials.setUnitOutlineStrength(OUTLINE_LEVEL_STRENGTH[this.graphicsSettings.outlineLevel]);
+    this.materials.setUnitOutlinePixels(OUTLINE_LEVEL_PIXELS[this.graphicsSettings.outlineLevel]);
     this.arena = new ArenaStageAssembly(this.materials, initialTheme);
     this.lobbyStage = new LobbyStageAssembly(this.materials, this.currentTacticianId);
     this.lobbyStage.setMode(this.sceneMode, true);
@@ -368,6 +370,7 @@ export class BoardStageEngine {
   public applyGraphicsSettings(next: GraphicsSettings): void {
     this.graphicsSettings = next;
     this.materials.setUnitOutlineStrength(OUTLINE_LEVEL_STRENGTH[next.outlineLevel]);
+    this.materials.setUnitOutlinePixels(OUTLINE_LEVEL_PIXELS[next.outlineLevel]);
     if (this.selectiveBloom) {
       this.selectiveBloom.intensity = next.bloomEnabled ? BASE_BLOOM_INTENSITY : 0;
     }
@@ -842,6 +845,7 @@ export class BoardStageEngine {
     const width = Math.max(1, this.container?.clientWidth || 1280);
     const height = Math.max(1, this.container?.clientHeight || 720);
     const aspect = width / height;
+    this.materials.setViewportSize(width, height);
     const dpr = this.computeEffectiveDpr();
 
     this.viewportAspect = aspect;

@@ -30,10 +30,49 @@ const ALL_BESPOKE_UNIT_BUILDERS: Readonly<Record<string, BespokeUnitBuilder>> = 
   ...UNIT_PACK_4_BUILDERS,
 };
 
+function buildSmoothOutlineGeometry(specs: readonly GeometryPartSpec[]): THREE.BufferGeometry {
+  const merged = mergePartsWithVertexColor(specs);
+  const pos = merged.getAttribute('position') as THREE.BufferAttribute | undefined;
+  if (!pos || pos.count === 0) return merged;
+  merged.computeVertexNormals();
+  const norm = merged.getAttribute('normal') as THREE.BufferAttribute | undefined;
+  if (!norm) return merged;
+
+  const accum = new Map<string, [number, number, number]>();
+  for (let i = 0; i < pos.count; i += 1) {
+    const key = `${Math.round(pos.getX(i) * 500)},${Math.round(pos.getY(i) * 500)},${Math.round(pos.getZ(i) * 500)}`;
+    const prev = accum.get(key);
+    const nx = norm.getX(i);
+    const ny = norm.getY(i);
+    const nz = norm.getZ(i);
+    if (prev) {
+      prev[0] += nx;
+      prev[1] += ny;
+      prev[2] += nz;
+    } else {
+      accum.set(key, [nx, ny, nz]);
+    }
+  }
+  for (let i = 0; i < pos.count; i += 1) {
+    const key = `${Math.round(pos.getX(i) * 500)},${Math.round(pos.getY(i) * 500)},${Math.round(pos.getZ(i) * 500)}`;
+    const sum = accum.get(key);
+    if (!sum) continue;
+    const len = Math.hypot(sum[0], sum[1], sum[2]);
+    if (len > 1e-5) {
+      norm.setXYZ(i, sum[0] / len, sum[1] / len, sum[2] / len);
+    }
+  }
+  norm.needsUpdate = true;
+  if (merged.getAttribute('uv')) merged.deleteAttribute('uv');
+  if (merged.getAttribute('color')) merged.deleteAttribute('color');
+  return merged;
+}
+
 interface CachedUnitBlueprint {
   readonly armorGeo: THREE.BufferGeometry;
   readonly matteGeo: THREE.BufferGeometry;
   readonly trimGeo: THREE.BufferGeometry;
+  readonly outlineGeo: THREE.BufferGeometry;
   readonly energyGeo: THREE.BufferGeometry;
   readonly crystalGeo: THREE.BufferGeometry;
   readonly star3WingsGeo: THREE.BufferGeometry;
@@ -256,10 +295,12 @@ export class UnitMeshFactory {
     const armorCombined = out.bodyParts.length > 0 ? [...out.armor, ...out.bodyParts] : out.armor;
     const energyCombined = out.weaponParts.length > 0 ? [...out.energy, ...out.weaponParts] : out.energy;
 
+    const outlineParts = [...armorCombined, ...out.matte, ...out.trim];
     const blueprint: CachedUnitBlueprint = {
       armorGeo: mergePartsWithVertexColor(armorCombined),
       matteGeo: mergePartsWithVertexColor(out.matte),
       trimGeo: mergePartsWithVertexColor(out.trim),
+      outlineGeo: buildSmoothOutlineGeometry(outlineParts),
       energyGeo: mergePartsWithVertexColor(energyCombined),
       crystalGeo: mergePartsWithVertexColor(out.crystal),
       star3WingsGeo: mergePartsWithVertexColor(out.wingParts),
@@ -340,6 +381,10 @@ export class UnitMeshFactory {
 
     const animatedCore = new THREE.Group();
     bodyTiltGroup.add(animatedCore);
+
+    const outlineMesh = new THREE.Mesh(blueprint.outlineGeo, this.materials.unitOutlineMat);
+    outlineMesh.frustumCulled = false;
+    animatedCore.add(outlineMesh);
 
     const armorMesh = new THREE.Mesh(blueprint.armorGeo, this.materials.unitArmorMat);
     animatedCore.add(armorMesh);
@@ -557,6 +602,7 @@ export class UnitMeshFactory {
       bp.armorGeo.dispose();
       bp.matteGeo.dispose();
       bp.trimGeo.dispose();
+      bp.outlineGeo.dispose();
       bp.energyGeo.dispose();
       bp.crystalGeo.dispose();
       bp.star3WingsGeo.dispose();

@@ -17,9 +17,16 @@ export const DEFAULT_GRAPHICS_SETTINGS: GraphicsSettings = {
 
 export const OUTLINE_LEVEL_STRENGTH: Readonly<Record<UnitOutlineLevel, number>> = {
   off: 0,
-  subtle: 0.34,
-  standard: 0.58,
-  strong: 0.84,
+  subtle: 0.22,
+  standard: 0.42,
+  strong: 0.68,
+};
+
+export const OUTLINE_LEVEL_PIXELS: Readonly<Record<UnitOutlineLevel, number>> = {
+  off: 0,
+  subtle: 2.2,
+  standard: 4.5,
+  strong: 7.8,
 };
 
 export const QUALITY_MAX_PIXEL_RATIO: Readonly<Record<GraphicsQualityPreset, number>> = {

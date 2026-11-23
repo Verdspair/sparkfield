@@ -1587,7 +1587,10 @@ export class PbrMaterialLibrary {
   public readonly unitArmorMat: THREE.MeshPhysicalMaterial;
   public readonly unitMatteMat: THREE.MeshPhysicalMaterial;
   public readonly unitTrimMat: THREE.MeshPhysicalMaterial;
-  private readonly unitOutlineUniform: UnitOutlineUniform = { value: 0.34 };
+  public readonly unitOutlineMat: THREE.ShaderMaterial;
+  private readonly unitOutlineUniform: UnitOutlineUniform = { value: 0.22 };
+  private readonly unitOutlinePxUniform = { value: 2.2 };
+  private readonly unitOutlineViewportUniform = { value: new THREE.Vector2(1440, 900) };
 
   public readonly starPedestal1Mat: THREE.MeshStandardMaterial;
   public readonly starPedestal2Mat: THREE.MeshStandardMaterial;
@@ -1829,6 +1832,39 @@ export class PbrMaterialLibrary {
     });
     applyUnitVertexColorVibrancy(this.unitTrimMat, 0.82, this.unitOutlineUniform);
 
+    this.unitOutlineMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: true,
+      depthTest: true,
+      toneMapped: false,
+      uniforms: {
+        uOutlinePx: this.unitOutlinePxUniform,
+        uViewport: this.unitOutlineViewportUniform,
+        uColor: { value: new THREE.Color(0x050810) },
+      },
+      vertexShader: `
+        uniform float uOutlinePx;
+        uniform vec2 uViewport;
+        void main() {
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vec4 clipPosition = projectionMatrix * mvPosition;
+          vec3 clipNormal = mat3(projectionMatrix) * (normalMatrix * normal);
+          vec2 screenDir = normalize(clipNormal.xy + vec2(1e-5, 1e-5));
+          vec2 offsetNdc = screenDir * (uOutlinePx * 2.0 / max(uViewport, vec2(1.0)));
+          clipPosition.xy += offsetNdc * clipPosition.w;
+          clipPosition.z += 0.00045 * clipPosition.w;
+          gl_Position = clipPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uColor;
+        void main() {
+          gl_FragColor = vec4(uColor, 1.0);
+        }
+      `,
+    });
+    this.unitOutlineMat.visible = this.unitOutlinePxUniform.value > 0.05;
+
     this.contactShadowMat = new THREE.MeshBasicMaterial({
       map: this.contactShadowTex,
       transparent: true,
@@ -1889,6 +1925,16 @@ export class PbrMaterialLibrary {
 
   public setUnitOutlineStrength(strength: number): void {
     this.unitOutlineUniform.value = Math.max(0, Math.min(1, Number.isFinite(strength) ? strength : 0));
+  }
+
+  public setUnitOutlinePixels(px: number): void {
+    const safePx = Math.max(0, Math.min(16, Number.isFinite(px) ? px : 0));
+    this.unitOutlinePxUniform.value = safePx;
+    this.unitOutlineMat.visible = safePx > 0.05;
+  }
+
+  public setViewportSize(width: number, height: number): void {
+    this.unitOutlineViewportUniform.value.set(Math.max(1, width), Math.max(1, height));
   }
 
   public getUnitOutlineStrength(): number {
@@ -1981,6 +2027,7 @@ export class PbrMaterialLibrary {
       this.unitArmorMat,
       this.unitMatteMat,
       this.unitTrimMat,
+      this.unitOutlineMat,
       this.starPedestal1Mat,
       this.starPedestal2Mat,
       this.starPedestal3Mat,
