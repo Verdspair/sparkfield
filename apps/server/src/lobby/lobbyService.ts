@@ -38,6 +38,7 @@ export interface MatchingWindow {
 }
 export interface LobbyServiceOptions {
   createMatch: (input: CreateMatchInput) => MatchCreationResult | Promise<MatchCreationResult>;
+  isMatchAlive?: (roomId: string, userId: string) => boolean;
   matchWaitMs?: number;
   acceptWaitMs?: number;
   matchingWindow?: MatchingWindow;
@@ -136,7 +137,28 @@ export class LobbyService {
   private requireHost(room: PrepRoom, userId: string): void {
     if (room.hostUserId !== userId) throw new ServiceError('HOST_ONLY');
   }
-  private hasMatch(room: PrepRoom): boolean { return [...room.members.keys()].some((id) => this.matches.has(id)); }
+  private pruneDeadMatch(userId: string): void {
+    const entry = this.matches.get(userId);
+    if (!entry || !this.options.isMatchAlive) return;
+    if (!this.options.isMatchAlive(entry.roomId, userId)) {
+      this.matches.delete(userId);
+    }
+  }
+  clearMatchForUsers(roomId: string, userIds: readonly string[]): void {
+    for (const userId of userIds) {
+      const current = this.matches.get(userId);
+      if (current && current.roomId === roomId) {
+        this.matches.delete(userId);
+      }
+    }
+  }
+  private hasMatch(room: PrepRoom): boolean {
+    for (const id of room.members.keys()) {
+      this.pruneDeadMatch(id);
+      if (this.matches.has(id)) return true;
+    }
+    return false;
+  }
   private requireIdle(room: PrepRoom): void {
     if (room.starting || room.queuedAt !== null || room.ticketId || this.hasMatch(room)) throw new ServiceError('PREP_ROOM_BUSY');
   }
@@ -162,6 +184,7 @@ export class LobbyService {
     return room;
   }
   private snapshot(userId: string): LobbyState {
+    this.pruneDeadMatch(userId);
     const room = this.findRoom(userId);
     const self = room?.members.get(userId);
     const match = this.matches.get(userId);
@@ -204,6 +227,7 @@ export class LobbyService {
     this.ensureOpen(); const data = EnterModeSchema.parse(input); const user = UserProfileSchema.parse(profile);
     const current = this.findRoom(user.userId);
     if (current) { current.members.get(user.userId)!.profile = clone(user); return this.snapshot(user.userId); }
+    this.pruneDeadMatch(user.userId);
     if (this.matches.has(user.userId)) throw new ServiceError('MATCH_IN_PROGRESS');
     const last = this.lastEntries.get(user.userId);
     this.makeRoom(user, { durationMode: data.durationMode, queueType: data.queueType ?? last?.queueType ?? 'ranked',
@@ -220,6 +244,7 @@ export class LobbyService {
       room.members.get(user.userId)!.profile = clone(user); return this.snapshot(user.userId);
     }
     if (this.userRooms.has(user.userId)) throw new ServiceError('LEAVE_ROOM_FIRST');
+    this.pruneDeadMatch(user.userId);
     if (this.matches.has(user.userId)) throw new ServiceError('MATCH_IN_PROGRESS');
     this.requireIdle(room);
     if (room.queueType === 'solo') throw new ServiceError('SOLO_INVITES_DISABLED');

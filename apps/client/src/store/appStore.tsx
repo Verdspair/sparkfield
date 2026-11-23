@@ -505,8 +505,24 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
         socketRef.current = connected;
       } catch (err) {
         if (!isCurrentConnection()) return;
-        const msg = err instanceof Error ? err.message : '连接权威对局房间失败';
-        pushToast(msg, 'error');
+        const rawMsg = err instanceof Error ? err.message : '连接权威对局房间失败';
+        if (/room\s+["']?[^"'\s]+["']?\s+not\s+found|MATCH_NOT_FOUND/i.test(rawMsg)) {
+          setMatchConnectionState('disconnected');
+          setMatchSnapshot(null);
+          setMatchSummary(null);
+          setMatchError(null);
+          pushToast('原对局房间已结束或关闭，已自动恢复大厅状态。', 'info');
+          void httpClient
+            .returnToPrep()
+            .catch(() => httpClient.getLobbyState())
+            .then((nextLobby) => {
+              if (!isCurrentSessionAction(action)) return;
+              setLobbyState(nextLobby);
+            })
+            .catch(() => undefined);
+        } else {
+          pushToast(rawMsg, 'error');
+        }
       } finally {
         if (version === matchConnectionVersionRef.current) connectingRoomIdRef.current = null;
       }

@@ -24,11 +24,15 @@ export async function createAppServer(options:AppServerOptions={}) {
   await bootstrapDatabase(db,options);
   const communicationPolicy=options.communicationPolicy??new ConfigurableCommunicationPolicy();
   let matches:MatchCoordinator;
+  let lobby:LobbyService;
   const auth=new AuthService(db,userId=>matches?.resolveActiveSeat(userId)??null);
   const ranking=new RankingService(db);const learning=new LearningService(db,{pointsPerTask:Number(process.env.REWARD_POINTS_PER_TASK??30)});
   matches=new MatchCoordinator({db,auth,ranking,learning,timeScale:options.timeScale??1,gameSeed:options.gameSeed,
-    reconnectProtectionMs:options.reconnectProtectionMs??15_000,communicationPolicy,matchmakingScore:options.matchmakingScore});
-  const lobby=new LobbyService({createMatch:input=>matches.createMatch(input),matchWaitMs:options.matchWaitMs,
+    reconnectProtectionMs:options.reconnectProtectionMs??15_000,communicationPolicy,matchmakingScore:options.matchmakingScore,
+    onMatchEnded:(roomId,userIds)=>lobby?.clearMatchForUsers(roomId,userIds)});
+  lobby=new LobbyService({createMatch:input=>matches.createMatch(input),
+    isMatchAlive:(roomId,userId)=>matches.isMatchAlive(roomId,userId),
+    matchWaitMs:options.matchWaitMs,
     acceptWaitMs:options.acceptWaitMs,communicationPolicy,matchingWindow:options.matchingWindow??{initialScoreGap:200,widenPerSecond:50,maxScoreGap:1000},
     scoreCandidate:(profile,mode)=>matches.scoreCandidate(profile,mode)});
   const app=await createHttpServer({db,auth,ranking,rewards,learning,lobby,matches,contentRoot:options.contentRoot},options);

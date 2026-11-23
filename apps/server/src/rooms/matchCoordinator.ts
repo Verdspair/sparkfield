@@ -7,7 +7,11 @@ import type { CreateMatchInput, MatchCreationResult } from '../lobby/lobbyServic
 import { MatchRoom, type MatchRoomOptions, type MatchRuntime } from './matchRoom.js';
 
 export interface MatchmakingScoreOptions { recentAttemptLimit?:number;lookbackDays?:number;learningWeight?:number;rankingWeight?:number }
-export interface MatchCoordinatorOptions extends Omit<MatchRuntime,'register'|'unregister'> { roomType?:string; matchmakingScore?:MatchmakingScoreOptions }
+export interface MatchCoordinatorOptions extends Omit<MatchRuntime,'register'|'unregister'> {
+  roomType?:string;
+  matchmakingScore?:MatchmakingScoreOptions;
+  onMatchEnded?:(roomId:string,userIds:readonly string[])=>void;
+}
 export class MatchCoordinator {
   private readonly rooms=new Map<string,MatchRoom>();
   private readonly users=new Map<string,MatchRoom>();
@@ -21,8 +25,15 @@ export class MatchCoordinator {
     this.roomType=options.roomType??'authoritative_match';
     this.runtime={...options,register:room=>{
       this.rooms.set(room.roomId,room);for(const human of room.input.humans)this.users.set(human.userId,room);
-    },unregister:room=>{this.rooms.delete(room.roomId);for(const human of room.input.humans)
-      if(this.users.get(human.userId)===room)this.users.delete(human.userId);}};
+    },unregister:room=>{
+      this.rooms.delete(room.roomId);
+      const userIds:string[]=[];
+      for(const human of room.input.humans) {
+        userIds.push(human.userId);
+        if(this.users.get(human.userId)===room)this.users.delete(human.userId);
+      }
+      this.options.onMatchEnded?.(room.roomId,userIds);
+    }};
   }
   async createMatch(input:CreateMatchInput):Promise<MatchCreationResult> {
     if(!input.humans.length||input.humans.length>8)throw new ServiceError('INVALID_HUMAN_COUNT');
@@ -75,5 +86,9 @@ export class MatchCoordinator {
   getActiveSeat(userId:string):unknown|null { return this.users.get(userId)?.activeSeat(userId)??null; }
   async resolveActiveSeat(userId:string):Promise<unknown|null> {const room=this.users.get(userId);await room?.supersede(userId);return this.getActiveSeat(userId);}
   canReturn(userId:string):boolean {const room=this.users.get(userId);return !this.pending.has(userId)&&(!room||room.completed||!!room.failure);}
+  isMatchAlive(roomId:string,userId:string):boolean {
+    const room=this.rooms.get(roomId);
+    return Boolean(room&&!room.completed&&!room.failure&&room.seatFor(userId));
+  }
   getRoom(roomId:string):MatchRoom|undefined {return this.rooms.get(roomId);}
 }

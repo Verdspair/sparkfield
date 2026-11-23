@@ -349,4 +349,25 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     const bothStrat = await s1.wait((s) => s.phase === 'strategy', 0, 5000);
     expect(bothStrat.phase).toBe('strategy');
   }, 15_000);
+
+  it('clears stale lobby match state and unlocks prep room after a match room disposes', async () => {
+    const { profile, room } = await startMatch();
+    const busy = await server.lobby.getState(profile.userId);
+    expect(busy.match?.roomId).toBe(room.roomId);
+    expect(busy.prepRoom?.status).toBe('in_match');
+
+    await room.disconnect();
+
+    const recovered = await server.lobby.getState(profile.userId);
+    expect(recovered.match).toBeNull();
+    expect(recovered.prepRoom?.status).toBe('idle');
+
+    const updated = await server.lobby.updateSettings(profile.userId, {
+      durationMode: 'standard',
+      queueType: 'solo',
+      sharedSubject: 'english',
+    });
+    expect(updated.prepRoom?.durationMode).toBe('standard');
+    expect(updated.prepRoom?.status).toBe('idle');
+  });
 });
