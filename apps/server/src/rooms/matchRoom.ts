@@ -357,11 +357,12 @@ export class MatchRoom extends Room {
     return settlement;
   }
 
-  private settleBotLearning(seat: SeatState): void {
+  private settleBotLearning(seat: SeatState): boolean {
     const plan = this.botLearningPlans.get(seat.id);
-    if (!plan || plan.botLearningDone) return;
+    if (!plan || plan.botLearningDone) return false;
     this.grantLearningSettlement(seat, plan.gradedUnits);
     plan.botLearningDone = true;
+    return true;
   }
 
   private clearBotLearningTimers(): void {
@@ -396,9 +397,11 @@ export class MatchRoom extends Room {
     this.persistence.add(pending);
   }
   private onUserLearningCompleted(userId:string,progress:LearningProgress):void {
-    progress.readyToProceed=true;
+    const alreadyReady = progress.readyToProceed;
+    progress.readyToProceed = true;
     this.settleUserLearning(userId);
     this.maybeFinishLearningEarly();
+    if (!alreadyReady) this.broadcastSnapshots(userId);
   }
   private startBotLearning(phaseStartedAtMs: number): void {
     const phaseIndex = this.phaseIndex;
@@ -419,7 +422,7 @@ export class MatchRoom extends Room {
   private completeBotLearning(phaseIndex: number, seat: SeatState): void {
     if (this.disposed || this.failure || this.completed || this.phaseIndex !== phaseIndex || Date.now() >= this.deadlineEpochMs) return;
     this.botLearningTimers.delete(seat.id);
-    this.settleBotLearning(seat);
+    if (!this.settleBotLearning(seat)) return;
     if (this.canActInStrategy(seat) && Date.now() < this.deadlineEpochMs) {
       for (const command of decideBotPrepCommands(this.game, seat.id, seat.botDifficulty)) {
         if (Date.now() >= this.deadlineEpochMs) break;
@@ -596,6 +599,9 @@ export class MatchRoom extends Room {
   }
   private async finish():Promise<void> {
     await Promise.all(this.persistence);if(this.failure)throw new Error(this.failure);
+    for (const seat of this.game.seats) {
+      if (seat.isBot) seat.learningChargeCents = finalizeLearningGoldCarry(seat.learningChargeCents).carryOutCents;
+    }
     const placements=finalPlacements(this.game.seats);
     const participants=this.game.seats.map(seat=>{
       const human=[...this.humans].find(([,h])=>h.seatId===seat.id);
@@ -656,9 +662,9 @@ export class MatchRoom extends Room {
       completed:this.completed,failure:this.failure};
   }
   private sendSnapshot(client:Client,userId:string):void {client.send('snapshot',this.snapshot(userId));}
-  private broadcastSnapshots():void {
+  private broadcastSnapshots(exceptUserId?: string):void {
     for(const client of this.clients) {const binding=this.bindings.get(client.sessionId);
-      if(binding && this.controllers.get(binding.userId)===client.sessionId)this.sendSnapshot(client,binding.userId);}
+      if(binding && binding.userId!==exceptUserId && this.controllers.get(binding.userId)===client.sessionId)this.sendSnapshot(client,binding.userId);}
   }
   private fail(error:unknown):void {
     if(this.failure || this.disposed)return;

@@ -12,6 +12,7 @@ interface MatchRoomSnapshot {
   matchId: string; seatId: string; phase: string; round: number; nodeIndex: number; deadlineEpochMs: number; self: SeatState;
   battle?: { round: number; battles: RoundBattle[] } | null;
   learning: { currentStep: LessonStepKind | null; complete?: boolean; clientQuestions: ClientQuestionView[]; arcMeta: LearningArcMeta;
+    readyHumansCount: number; totalHumansCount: number;
     submittedQuestionIds: string[]; steps: { kind: LessonStepKind; corrections: unknown[] }[] } | null;
 }
 interface ConnectedMatchSocket {
@@ -351,7 +352,8 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     const sock2 = await connectAuthoritativeMatch(room.roomId, u2.token, { onSnapshot: s2.push }); sockets.add(sock2);
 
     let snap1 = await s1.wait((s) => s.phase === 'learning' && Boolean(s.learning), 0, 5000);
-    await s2.wait((s) => s.phase === 'learning' && Boolean(s.learning), 0, 5000);
+    const otherAtStart = await s2.wait((s) => s.phase === 'learning' && Boolean(s.learning), 0, 5000);
+    const afterStart = s2.values.length;
 
     while (snap1.phase === 'learning' && snap1.learning && !snap1.learning.complete) {
       const lrn = snap1.learning;
@@ -366,6 +368,9 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     }
     expect(snap1.phase).toBe('learning');
     expect(snap1.learning?.complete).toBe(true);
+    const otherWaiting = await s2.wait((s) => s.phase === 'learning' && s.learning?.readyHumansCount === 1, afterStart);
+    expect(otherWaiting).toMatchObject({ deadlineEpochMs: otherAtStart.deadlineEpochMs,
+      learning: { complete: false, readyHumansCount: 1, totalHumansCount: 8 } });
 
     const shopIndex = snap1.self.shop.findIndex((unit) => unit !== null);
     expect(await sock1.sendCommand({ type: 'BUY_CARD', shopIndex })).toMatchObject({ ok: true });

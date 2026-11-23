@@ -622,11 +622,12 @@ export class OfflinePracticeMatchController {
     return settlement;
   }
 
-  private settleBotLearning(seat: SeatState): void {
+  private settleBotLearning(seat: SeatState): boolean {
     const plan = this.botLearningPlans.get(seat.id);
-    if (!plan || plan.botLearningDone) return;
+    if (!plan || plan.botLearningDone) return false;
     this.grantLearningSettlement(seat, plan.gradedUnits);
     plan.botLearningDone = true;
+    return true;
   }
 
   private clearBotLearningTimers(): void {
@@ -677,7 +678,7 @@ export class OfflinePracticeMatchController {
   private completeBotLearning(phaseIndex: number, seat: SeatState): void {
     if (this.disposed || this.failure || this.completed || this.phaseIndex !== phaseIndex || Date.now() >= this.deadlineEpochMs) return;
     this.botLearningTimers.delete(seat.id);
-    this.settleBotLearning(seat);
+    if (!this.settleBotLearning(seat)) return;
     if (this.canActInStrategy(seat) && Date.now() < this.deadlineEpochMs) {
       for (const command of decideBotPrepCommands(this.game, seat.id, seat.botDifficulty)) {
         if (Date.now() >= this.deadlineEpochMs) break;
@@ -878,6 +879,9 @@ export class OfflinePracticeMatchController {
   }
 
   private finishMatch(): void {
+    for (const seat of this.game.seats) {
+      if (seat.isBot) seat.learningChargeCents = finalizeLearningGoldCarry(seat.learningChargeCents).carryOutCents;
+    }
     const placements = finalPlacements(this.game.seats);
     const selfSeat = this.game.seats.find((s) => s.id === this.playerSeatId)!;
     const carry = finalizeLearningGoldCarry(selfSeat.learningChargeCents);
