@@ -51,9 +51,9 @@ export interface AudioSettings {
 export const AUDIO_PREFS_STORAGE_KEY = 'sparkfield_audio_prefs_v1';
 
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
-  masterVolume: 0.78,
-  bgmVolume: 0.58,
-  sfxVolume: 0.82,
+  masterVolume: 0.76,
+  bgmVolume: 0.56,
+  sfxVolume: 0.52,
   muted: false,
 };
 
@@ -107,31 +107,41 @@ export const SFX_PATHS: Readonly<Record<SfxId, string>> = {
 
 const BGM_CROSSFADE_SEC = 1.4;
 const BGM_OVERTIME_CROSSFADE_SEC = 0.6;
-const FOCUS_LOWPASS_HZ = 1100;
+const FOCUS_LOWPASS_HZ = 2400;
 const NORMAL_LOWPASS_HZ = 20000;
-const FOCUS_BGM_DUCK_GAIN = 0.42;
-const MAX_CONCURRENT_SFX = 12;
+const FOCUS_BGM_DUCK_GAIN = 0.48;
+const MAX_CONCURRENT_SFX = 5;
 const MAX_CACHED_BGM_BUFFERS = 2;
 
 const SFX_COOLDOWN_MS: Partial<Readonly<Record<SfxId, number>>> = {
-  hit_phys: 85,
-  hit_magic: 85,
-  skill_cast: 110,
-  unit_death: 90,
-  ui_hover: 70,
-  orb_drop: 60,
-  orb_collect: 60,
-  phase_chime: 200,
+  hit_phys: 210,
+  hit_magic: 210,
+  skill_cast: 280,
+  unit_death: 260,
+  ui_hover: 120,
+  ui_click: 55,
+  orb_drop: 140,
+  orb_collect: 110,
+  phase_chime: 350,
 };
 
 const SFX_GAIN_SCALE: Partial<Readonly<Record<SfxId, number>>> = {
-  ui_hover: 0.45,
-  hit_phys: 0.72,
-  hit_magic: 0.74,
-  skill_cast: 0.85,
-  unit_death: 0.82,
-  star_up_3: 1.0,
-  battle_horn: 0.95,
+  ui_hover: 0.25,
+  ui_click: 0.55,
+  ui_open: 0.55,
+  ui_close: 0.52,
+  ui_toggle: 0.55,
+  hit_phys: 0.40,
+  hit_magic: 0.42,
+  skill_cast: 0.48,
+  unit_death: 0.44,
+  orb_drop: 0.58,
+  orb_collect: 0.65,
+  phase_chime: 0.55,
+  star_up_2: 0.78,
+  star_up_3: 0.85,
+  battle_horn: 0.76,
+  victory_fanfare: 0.82,
 };
 
 const SFX_PITCH_JITTER: Partial<Readonly<Record<SfxId, number>>> = {
@@ -538,11 +548,11 @@ export class WebAudioEngine implements Required<AudioAdapter> {
       1: 1.1,
     };
     const gainBySec: Readonly<Record<number, number>> = {
-      5: 1.02,
-      4: 1.08,
-      3: 1.15,
-      2: 1.24,
-      1: 1.34,
+      5: 0.62,
+      4: 0.68,
+      3: 0.74,
+      2: 0.82,
+      1: 0.90,
     };
     this.playSfxWithOverrides(id, gainBySec[sec] ?? 0.88, rateBySec[sec] ?? 1.0);
   }

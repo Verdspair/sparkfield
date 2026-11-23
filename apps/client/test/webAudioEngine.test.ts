@@ -196,8 +196,8 @@ describe('WebAudioEngine & adaptive audio contracts', () => {
     expect(createdFilters[0]!.frequency.value).toBe(20000);
 
     engine.onBgmContext({ scene: 'match', roundIndex: 1, totalRounds: 8, phase: 'learning' });
-    expect(createdFilters[0]!.frequency.value).toBe(1100);
-    expect(createdGains[2]!.gain.value).toBeCloseTo(0.42, 4);
+    expect(createdFilters[0]!.frequency.value).toBe(2400);
+    expect(createdGains[2]!.gain.value).toBeCloseTo(0.48, 4);
 
     engine.onBgmContext({ scene: 'match', roundIndex: 7, totalRounds: 8, phase: 'battle', isOvertime: true });
     expect(createdFilters[0]!.frequency.value).toBe(20000);
