@@ -55,12 +55,16 @@ export function LearningRewardBanner({
       orbSplits: settlement.orbSplits,
       carryOutCents: settlement.carryOutCents,
     });
-
-    const timer = window.setTimeout(() => {
-      setBanner((current) => (current?.key === key ? null : current));
-    }, 3000);
-    return () => window.clearTimeout(timer);
   }, [snapshot]);
+
+  useEffect(() => {
+    if (!banner) return;
+    const activeKey = banner.key;
+    const timer = window.setTimeout(() => {
+      setBanner((current) => (current?.key === activeKey ? null : current));
+    }, 3200);
+    return () => window.clearTimeout(timer);
+  }, [banner?.key]);
 
   if (!banner) return null;
 
@@ -90,7 +94,7 @@ export function LearningRewardBanner({
           left: 50%;
           z-index: 46;
           pointer-events: none;
-          animation: sfRewardDropIn 3000ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: sfRewardDropIn 3200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
         .sf-reward-toast {
           display: flex;
