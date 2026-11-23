@@ -4,11 +4,11 @@ import { z } from 'zod';
 import { CommunicationClientSendSchema, ConfigurableCommunicationPolicy, DEFAULT_TACTICIAN_ID, FinalBoardSnapshotSchema, GameCommandSchema, getMatchChoiceKind, MODE_BUDGETS,
   type CommunicationGovernancePolicy, type CoursePack, type GameCommand,
   type MatchPhaseKind, type MatchStudyBlueprint, type ModeStandingSummary, type SubjectId, type UserProfile } from '@pkg/contracts';
-import { activateLessonRemediation, buildMatchStudyBlueprint, buildPersonalizedLessonBundle, finalizeLearningGoldCarry,
+import { activateLessonRemediation, buildMatchStudyBlueprint, buildPersonalizedLessonBundle, evaluateLearningBonusDrops, finalizeLearningGoldCarry,
   gradeFrozenLearningUnits, gradeQuestionSubmission, locateMatchStudySlot, settleLearningNodeGold,
   type ArcAttempt, type LearningGoldSettlement, type MatchStudyBlueprintInput, type PersonalizedLessonBundle,
   type RecentLearningPerformance, type SubmissionInput } from '@pkg/learning-core';
-import { applyGameCommand, applyLearningGoldGrant, BATTLE_REGULAR_MS, beginNextRound, computeActiveTraits, computeRoundBattleDurationMs, createGame,
+import { applyGameCommand, applyLearningBonusGrant, applyLearningGoldGrant, BATTLE_REGULAR_MS, beginNextRound, computeActiveTraits, computeRoundBattleDurationMs, createGame,
   decideBotPrepCommands, finalPlacements, finalizePrepDeadline, longestBattleElapsedMs, resolveRoundBattles, settleRound,
   type GameState, type ResolvedRound, type SeatState } from '@pkg/game-core';
 import type { AuthService, AuthenticatedSession } from '../auth/authService.js';
@@ -301,8 +301,10 @@ export class MatchRoom extends Room {
     const progress=this.lessons.get(userId);
     if(!progress || progress.settled)return;
     const seat=this.game.seats.find(s=>s.id===this.humans.get(userId)!.seatId)!;
-    const settlement=settleLearningNodeGold({mode:this.game.mode,blockIndex:this.nodeIndex,studyBlueprint:progress.bundle.blueprint,
+    const gold=settleLearningNodeGold({mode:this.game.mode,blockIndex:this.nodeIndex,studyBlueprint:progress.bundle.blueprint,
       gradedUnits:gradeFrozenLearningUnits(progress.bundle.questions,progress.submissions),carryInCents:seat.learningChargeCents});
+    const bonus=evaluateLearningBonusDrops(gold.exactScore,progress.bundle.arcMeta.stageKind);
+    const settlement={...gold,...applyLearningBonusGrant(this.game,seat,this.nodeIndex,bonus),performanceTier:bonus.performanceTier};
     applyLearningGoldGrant(seat,settlement.grantedIntegerGold,settlement.carryOutCents);
     seat.learningGoldOrbs=[...settlement.orbSplits]; progress.settled=true;
     this.settlements.get(userId)!.push(settlement);

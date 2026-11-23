@@ -1,4 +1,4 @@
-import { MODE_BUDGETS, type DivmodGoldSettlement, type DurationMode, type LessonStepKind, type MatchStudyBlueprint, type QuestionItem } from '@pkg/contracts';
+import { MODE_BUDGETS, type ArcStageKind, type DivmodGoldSettlement, type DurationMode, type LessonStepKind, type MatchStudyBlueprint, type QuestionItem } from '@pkg/contracts';
 import { phasePolicyForStudySlot, studySlotGoldBudget } from './study-layout.js';
 import { gradeQuestionSubmission, type SubmissionInput } from './grading.js';
 import { add, compare, divide, integer, multiply, ONE, rational, safeInteger, serialize, wireInteger, ZERO, type Rational, type RationalScore } from './rational.js';
@@ -104,6 +104,26 @@ export function settleLearningNodeGold(input: LearningNodeGoldInput | QuestionNo
     grantedIntegerGold: safeInteger(gold), orbSplits, carryOutCents: safeInteger(carryOut),
   };
 }
+export interface LearningBonusDrops {
+  performanceTier: NonNullable<DivmodGoldSettlement['performanceTier']>;
+  bonusComponents: number;
+  bonusRerollVouchers: number;
+}
+
+export function evaluateLearningBonusDrops(exactScore: Rational | RationalScore, stageKind: ArcStageKind): LearningBonusDrops {
+  const score = 'n' in exactScore ? exactScore : { n: BigInt(exactScore.numerator), d: BigInt(exactScore.denominator) };
+  if (score.d <= 0n) throw new RangeError('Score denominator must be positive');
+  const percentNumerator = score.n * 100n;
+  const performanceTier = score.n > 0n && score.n === score.d ? 'perfect'
+    : percentNumerator >= 90n * score.d ? 'excellent'
+      : percentNumerator >= 65n * score.d ? 'good' : 'base';
+  if (performanceTier === 'base') return { performanceTier, bonusComponents: 0, bonusRerollVouchers: 0 };
+  if (performanceTier === 'good') {
+    return { performanceTier, bonusComponents: stageKind === 'mastery' ? 1 : 0, bonusRerollVouchers: stageKind === 'mastery' ? 0 : 1 };
+  }
+  return { performanceTier, bonusComponents: stageKind === 'intro' ? 0 : 1, bonusRerollVouchers: stageKind === 'mastery' ? 2 : 1 };
+}
+
 export function finalizeLearningGoldCarry(carryInCents: number): {
   discardedCarryCents: number; carryOutCents: 0; grantedIntegerGold: 0;
 } {

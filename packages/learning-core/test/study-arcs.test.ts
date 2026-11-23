@@ -77,7 +77,7 @@ describe('adaptive match study arcs', () => {
       expect(lesson.questions.every(q => studyBlueprint === weak ? q.difficulty <= 2 : q.difficulty >= 3 && q.difficulty <= 4)).toBe(true);
       expect(settleLearningNodeGold({ mode: 'quick', nodeIndex: 3, questions: lesson.questions,
         submissions: Object.fromEntries(lesson.questions.map(q => [q.questionId, 'A'])),
-      }).rawEarnedCents).toBe(1300);
+      }).rawEarnedCents).toBe(1500);
     }
   });
 
@@ -165,9 +165,9 @@ describe('adaptive match study arcs', () => {
     expect(challenge.verificationWeightPercent).toBe(30);
     expect(settleLearningNodeGold({ mode: 'standard', nodeIndex: 6, questions: challenge.questions, studyBlueprint,
       submissions: Object.fromEntries(challenge.questions.map(q => [q.questionId, 'A'])),
-    }).rawEarnedCents).toBe(575);
+    }).rawEarnedCents).toBe(667);
     expect(Array.from({ length: 8 }, (_, index) => learningNodePolicy('standard', index, studyBlueprint).centBudget))
-      .toEqual([500, 825, 1175, 250, 400, 475, 575, 800]);
+      .toEqual([580, 957, 1363, 290, 464, 551, 667, 928]);
     expect(activeKinds(build(7))).toEqual(['verification']);
   });
 

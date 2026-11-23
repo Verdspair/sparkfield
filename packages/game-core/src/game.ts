@@ -5,7 +5,7 @@ import { addExperience, buyExperience, economyFor, grantGold, settleSeatEconomy 
 import { buyCard, combineUnits, makeUnit, moveUnit, sellUnit } from './board-ops.js';
 import { beginCryoPrep, computeActiveTraits, toggleCryoPod } from './traits.js';
 import { createAnvil, equipItem, itemComponentValue, pickAnvilOption, useMagneticRemover, useReforger } from './items.js';
-import { beginAugmentPrep, createRoomAugmentOffers, pickAugment, rerollAugmentSlot } from './augments.js';
+import { beginAugmentPrep, createRoomAugmentOffers, grantVouchers, pickAugment, rerollAugmentSlot } from './augments.js';
 import { isPveRound, victoryPointsFor } from './schedule.js';
 import type { CommandResult, GameState, SeatState } from './types.js';
 export function createSeat(id: string, mode: DurationMode): SeatState {
@@ -39,6 +39,25 @@ function grantRoundResources(game: GameState): void {
   const index = augmentEvents.findIndex(e => e.round === game.round);
   if (index >= 0) createRoomAugmentOffers(game, index + 1);
 }
+const LEARNING_BONUS_INVENTORY_CAP = 12;
+
+export function applyLearningBonusGrant(
+  game: GameState,
+  seat: SeatState,
+  nodeIndex: number,
+  { bonusComponents, bonusRerollVouchers }: { bonusComponents: number; bonusRerollVouchers: number },
+): { bonusItemIds: string[]; bonusRerollVouchers: number } {
+  const components = SEASON1_ITEMS.components;
+  const openSlots = Math.max(0, LEARNING_BONUS_INVENTORY_CAP - seat.inventoryItems.length);
+  const count = Math.min(bonusComponents, openSlots);
+  const offset = nodeIndex + game.seats.indexOf(seat);
+  const bonusItemIds = Array.from({ length: count }, (_, i) => components[(offset + i) % components.length]!.id);
+  seat.inventoryItems.push(...bonusItemIds);
+  game.itemComponentsGranted += bonusItemIds.length;
+  grantVouchers(seat, bonusRerollVouchers, game.round);
+  return { bonusItemIds, bonusRerollVouchers };
+}
+
 export function itemComponentShares(game: GameState): number {
   return game.seats.reduce((n, seat) => n + [...seat.inventoryItems, ...seat.units.flatMap(u => u.items)].reduce((a, id) => a + itemComponentValue(id), 0) + seat.anvils.reduce((a, anvil) => a + (anvil.kind === 'completed' ? 2 : 1), 0), 0);
 }

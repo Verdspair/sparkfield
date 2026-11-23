@@ -13,6 +13,9 @@ interface LearningCardData {
   readonly grantedGold: number;
   readonly orbSplits: readonly number[];
   readonly carryOutCents: number;
+  readonly bonusItemIds: readonly string[];
+  readonly bonusRerollVouchers: number;
+  readonly performanceTier: string | null;
 }
 
 interface PhaseLootCardData {
@@ -65,6 +68,24 @@ function diffAddedItems(
   return added;
 }
 
+function subtractClaimedItems(
+  gainedIds: readonly string[],
+  claimedIds: readonly string[],
+): string[] {
+  if (claimedIds.length === 0) return [...gainedIds];
+  const remainingClaim = countById(claimedIds);
+  const out: string[] = [];
+  for (const id of gainedIds) {
+    const count = remainingClaim[id] ?? 0;
+    if (count > 0) {
+      remainingClaim[id] = count - 1;
+    } else {
+      out.push(id);
+    }
+  }
+  return out;
+}
+
 export function LearningRewardBanner({
   snapshot,
 }: {
@@ -84,6 +105,8 @@ export function LearningRewardBanner({
     }
 
     const toEnqueue: RewardShowcaseCard[] = [];
+    let claimedItemsThisFrame: string[] = [];
+    let claimedVouchersThisFrame = 0;
 
     const settlement = snapshot.resourceSettlement;
     if (settlement) {
@@ -102,6 +125,25 @@ export function LearningRewardBanner({
             (lrn && lrn.submittedQuestionIds.length > 0 ? lrn.submittedQuestionIds.length : feedbackValues.length);
           const correctCount =
             lrn?.correctCount ?? feedbackValues.filter((item) => Boolean(item?.isCorrect)).length;
+          const extra = settlement as {
+            bonusItemIds?: readonly string[];
+            bonusRerollVouchers?: number;
+            performanceTier?: string;
+          };
+          const bonusItemIds = Array.isArray(extra.bonusItemIds)
+            ? extra.bonusItemIds.filter((id): id is string => typeof id === 'string' && id.length > 0)
+            : [];
+          const bonusRerollVouchers =
+            typeof extra.bonusRerollVouchers === 'number' && extra.bonusRerollVouchers > 0
+              ? Math.floor(extra.bonusRerollVouchers)
+              : 0;
+          const performanceTier =
+            typeof extra.performanceTier === 'string' && extra.performanceTier.length > 0
+              ? extra.performanceTier
+              : null;
+
+          claimedItemsThisFrame = bonusItemIds;
+          claimedVouchersThisFrame = bonusRerollVouchers;
 
           toEnqueue.push({
             kind: 'learning',
@@ -112,6 +154,9 @@ export function LearningRewardBanner({
             grantedGold: settlement.grantedIntegerGold,
             orbSplits: settlement.orbSplits,
             carryOutCents: settlement.carryOutCents,
+            bonusItemIds,
+            bonusRerollVouchers,
+            performanceTier,
           });
         }
       }
@@ -155,8 +200,14 @@ export function LearningRewardBanner({
         !boughtXp && (self.xp > prev.xp || leveledUp !== null)
           ? Math.max(0, leveledUp !== null ? self.xp : self.xp - prev.xp)
           : 0;
-      const vouchersGained = Math.max(0, self.rerollVouchers - prev.vouchers);
-      const gainedItemIds = diffAddedItems(prev.itemCounts, self.inventoryItems);
+      const vouchersGained = Math.max(
+        0,
+        self.rerollVouchers - prev.vouchers - claimedVouchersThisFrame,
+      );
+      const gainedItemIds = subtractClaimedItems(
+        diffAddedItems(prev.itemCounts, self.inventoryItems),
+        claimedItemsThisFrame,
+      );
 
       const prevAugSet = new Set(prev.augmentIds);
       const newAugId = self.chosenAugments.find((id) => !prevAugSet.has(id)) ?? null;
@@ -407,6 +458,18 @@ export function LearningRewardBanner({
           align-items: center;
           gap: 4px;
         }
+        .sf-reward-excellent {
+          padding: 3px 10px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #e0f7ff 0%, #38bdf8 48%, #f6c96a 100%);
+          color: #0b1628;
+          font-size: 12px;
+          font-weight: 900;
+          box-shadow: 0 0 16px rgba(56, 189, 248, 0.55);
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
         .sf-reward-loot-row {
           display: flex;
           align-items: center;
@@ -482,6 +545,7 @@ export function LearningRewardBanner({
         {active.kind === 'learning' ? (() => {
           const pct = active.totalCount > 0 ? Math.round((active.correctCount / active.totalCount) * 100) : 100;
           const perfect = active.totalCount > 0 && active.correctCount === active.totalCount;
+          const excellent = !perfect && active.performanceTier === 'excellent';
           const ringR = 28;
           const ringC = 2 * Math.PI * ringR;
           const ringOffset = ringC * (1 - Math.max(0, Math.min(1, pct / 100)));
@@ -534,6 +598,11 @@ export function LearningRewardBanner({
                       <GameUiIcon name="star" size={12} />
                       <span>满分全对</span>
                     </span>
+                  ) : excellent ? (
+                    <span className="sf-reward-excellent" data-testid="reward-performance-excellent">
+                      <GameUiIcon name="star" size={12} />
+                      <span>表现优异</span>
+                    </span>
                   ) : null}
                 </div>
                 <div className="sf-reward-loot-row">
@@ -549,6 +618,25 @@ export function LearningRewardBanner({
                       <i style={{ width: `${Math.max(4, Math.min(100, active.carryOutCents))}%` }} />
                     </span>
                   </span>
+                  {active.bonusRerollVouchers > 0 ? (
+                    <span className="sf-reward-pill--charge" data-testid="learning-bonus-vouchers">
+                      <GameUiIcon name="star" size={13} />
+                      <span>免费刷新券 +{active.bonusRerollVouchers}</span>
+                    </span>
+                  ) : null}
+                  {active.bonusItemIds.map((itemId, idx) => {
+                    const info = lookupItemById(itemId);
+                    return (
+                      <span
+                        key={`${itemId}-${idx}`}
+                        className="sf-reward-pill--item"
+                        data-testid={`learning-bonus-item-${idx}`}
+                      >
+                        <GameItemIcon itemId={itemId} size="xs" />
+                        <span>{info?.item.name ?? itemId}</span>
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             </>

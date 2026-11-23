@@ -155,6 +155,49 @@ describe('offline learning', () => {
     }
   });
 
+  it('awards perfect mastery drops once and keeps vouchers usable in the strategy window', async () => {
+    vi.spyOn(offlineDb.fsrsCards, 'toArray').mockResolvedValue([]);
+    vi.spyOn(offlineDb.fsrsCards, 'put').mockResolvedValue('local-card');
+    vi.spyOn(offlineDb.offlineAttempts, 'add').mockResolvedValue(1);
+    const local = new OfflinePracticeMatchController({ mode: 'quick', subject: 'english', seed: 42,
+      listeners: { onSnapshot: () => {} } });
+    try {
+      await local.start();
+      const mastery = await advanceToLearning(local, 3);
+      const before = local.getSnapshot().self;
+      expect(mastery.arcMeta?.stageKind).toBe('mastery');
+      const assessment = advancePastMaterial(local);
+      expect(assessment.currentStep).toBe('verification');
+      expect(assessment.clientQuestions.length).toBeGreaterThan(0);
+      for (const q of assessment.clientQuestions) {
+        expect(local.sendLearningSubmit(q.questionId, { status: 'submitted', answer: answerFor(q.questionId) }).ok).toBe(true);
+      }
+      const reward = local.getSnapshot();
+      expect(reward.phase).toBe('resource');
+      expect(reward.resourceSettlement).toMatchObject({ grantedIntegerGold: 15, performanceTier: 'perfect', bonusRerollVouchers: 2 });
+      const items = reward.resourceSettlement!.bonusItemIds!;
+      expect(items).toHaveLength(1);
+      expect(reward.self.inventoryItems).toEqual([...before.inventoryItems, ...items]);
+      expect(reward.self.gold).toBe(before.gold + 15);
+      expect(reward.self.rerollVouchers).toBe(before.rerollVouchers + 2);
+      expect(reward.self.voucherRound).toBe(reward.round);
+
+      local['phaseIndex'] -= 1;
+      await local.skipCurrentPhaseWait();
+      expect(local.getSnapshot().resourceSettlement).toEqual(reward.resourceSettlement);
+      expect(local.getSnapshot().self).toEqual(reward.self);
+      expect(local['settlements'].filter(result => result.nodeIndex === 3)).toHaveLength(1);
+
+      while (local.getSnapshot().phase !== 'strategy') await local.skipCurrentPhaseWait();
+      const prep = local.getSnapshot().self;
+      expect(prep.rerollVouchers).toBe(reward.self.rerollVouchers);
+      expect(local.sendCommand({ type: 'REFRESH_SHOP' })).toEqual({ ok: true });
+      expect(local.getSnapshot().self).toMatchObject({ gold: prep.gold, rerollVouchers: prep.rerollVouchers - 1 });
+    } finally {
+      local.dispose();
+    }
+  });
+
   it('keeps the opening study inputs and limits attempts to the current arc', async () => {
     const startNode = ENGLISH_STARTER_PACK.manifest.knowledgeGraph[1]!.nodeId;
     const family = ENGLISH_STARTER_PACK.items.find((q) => q.knowledgeNode === startNode)!;

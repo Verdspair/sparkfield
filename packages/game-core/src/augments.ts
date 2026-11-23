@@ -48,7 +48,7 @@ export function rerollAugmentSlot(seat: SeatState, slot: number, rng: RngState):
   return { ok: true };
 }
 
-function grantVouchers(seat: SeatState, count: number, round: number): void {
+export function grantVouchers(seat: SeatState, count: number, round: number): void {
   if (!count) return;
   if (seat.voucherRound !== round) seat.rerollVouchers = 0;
   seat.rerollVouchers += count; seat.voucherRound = round;

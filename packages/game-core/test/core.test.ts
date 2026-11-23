@@ -152,9 +152,9 @@ describe('integer economy and public schedule',()=>{
     expect(finalPlacements([{id:'a',victoryPoints:12},{id:'b',victoryPoints:8},{id:'c',victoryPoints:8},{id:'d',victoryPoints:0}]).map(x=>x.place)).toEqual([1,2,2,4]);
   });
   const modeCases = [
-    { mode: 'quick', total: 900, rounds: 6, pvp: 6, startingGold: 16, baseIncome: 35, learningGold: 3600, earnedShare: 51, arcCaps: [[600, 800, 900, 1300]] },
-    { mode: 'standard', total: 1800, rounds: 8, pvp: 7, startingGold: 14, baseIncome: 42, learningGold: 5000, earnedShare: 54, arcCaps: [[400, 600, 650, 850], [400, 600, 650, 850]] },
-    { mode: 'deep', total: 3600, rounds: 12, pvp: 10, startingGold: 12, baseIncome: 55, learningGold: 6900, earnedShare: 56, arcCaps: [[350, 550, 600, 800], [450, 750, 1100], [450, 750, 1100]] },
+    { mode: 'quick', total: 900, rounds: 6, pvp: 6, startingGold: 16, baseIncome: 35, learningGold: 4200, earnedShare: 55, arcCaps: [[700, 950, 1050, 1500]] },
+    { mode: 'standard', total: 1800, rounds: 8, pvp: 7, startingGold: 14, baseIncome: 42, learningGold: 5800, earnedShare: 58, arcCaps: [[450, 700, 750, 1000], [450, 700, 750, 1000]] },
+    { mode: 'deep', total: 3600, rounds: 12, pvp: 10, startingGold: 12, baseIncome: 55, learningGold: 7800, earnedShare: 59, arcCaps: [[400, 650, 700, 950], [500, 850, 1200], [500, 850, 1200]] },
   ] as const;
   it.each(modeCases)('$mode schedules complete arcs and legal battle windows', ({ mode, total, arcCaps, rounds, pvp }) => {
     const budget = MODE_BUDGETS.modes[mode];

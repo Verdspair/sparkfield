@@ -15,6 +15,7 @@ import {
 } from '@pkg/contracts';
 import {
   applyGameCommand,
+  applyLearningBonusGrant,
   applyLearningGoldGrant,
   BATTLE_REGULAR_MS,
   beginNextRound,
@@ -41,6 +42,7 @@ import {
   activateLessonRemediation,
   buildMatchStudyBlueprint,
   buildPersonalizedLessonBundle,
+  evaluateLearningBonusDrops,
   finalizeLearningGoldCarry,
   gradeFrozenLearningUnits,
   gradeQuestionSubmission,
@@ -679,7 +681,7 @@ export class OfflinePracticeMatchController {
     } else if (this.phase === 'resource') {
       if (this.lessonProgress && !this.lessonProgress.settled) {
         const selfSeat = this.game.seats.find((s) => s.id === this.playerSeatId)!;
-        const settlement = settleLearningNodeGold({
+        const gold = settleLearningNodeGold({
           mode: this.mode,
           blockIndex: this.nodeIndex,
           studyBlueprint: this.lessonProgress.bundle.blueprint,
@@ -689,6 +691,12 @@ export class OfflinePracticeMatchController {
           ),
           carryInCents: selfSeat.learningChargeCents,
         });
+        const bonus = evaluateLearningBonusDrops(gold.exactScore, this.lessonProgress.bundle.arcMeta.stageKind);
+        const settlement = {
+          ...gold,
+          ...applyLearningBonusGrant(this.game, selfSeat, this.nodeIndex, bonus),
+          performanceTier: bonus.performanceTier,
+        };
         applyLearningGoldGrant(
           selfSeat,
           settlement.grantedIntegerGold,

@@ -214,6 +214,9 @@ export const DivmodGoldSettlementSchema = z.object({
   grantedIntegerGold: z.number().int().nonnegative(),
   orbSplits: z.array(z.number().int().positive()),
   carryOutCents: z.number().int().min(0).max(99),
+  bonusItemIds: z.array(z.string().min(1)).optional(),
+  bonusRerollVouchers: z.number().int().nonnegative().optional(),
+  performanceTier: z.enum(['perfect', 'excellent', 'good', 'base']).optional(),
 });
 export type DivmodGoldSettlement = z.infer<typeof DivmodGoldSettlementSchema>;
 

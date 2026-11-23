@@ -407,7 +407,7 @@ export function QuestionStepCard({
   const resolvedSubmitLabel =
     submitLabel === '确认提交' ? '提交' : submitLabel;
   const resolvedNextLabel =
-    nextStepLabel === '继续下一步' || nextStepLabel === '继续下一步 →'
+    nextStepLabel === '继续下一步'
       ? '下一步'
       : nextStepLabel;
 
@@ -665,41 +665,47 @@ export function QuestionStepCard({
       ) : null}
 
       <header className="lui-header">
-        <ol className="lui-step-rail" aria-label="学习进度">
-          {computedProgress.map((item, idx) => {
-            const label = resolveStepLabel(item.kind, item.label);
-            const prevStatus = idx > 0 ? computedProgress[idx - 1]?.status : undefined;
-            const lineStateClass =
-              prevStatus === 'done' && item.status === 'active'
-                ? 'lui-step-line--active'
-                : prevStatus === 'done'
-                  ? 'lui-step-line--done'
-                  : '';
-            return (
-              <li key={item.kind} className="lui-step-item">
-                {idx > 0 ? (
+        {arcMeta ? (
+          <span className="lui-subtle-pill" data-testid="arc-current-stage-label">
+            {arcMeta.stageLabel || resolveStepLabel(effectiveStepKind)}
+          </span>
+        ) : (
+          <ol className="lui-step-rail" aria-label="学习进度">
+            {computedProgress.map((item, idx) => {
+              const label = resolveStepLabel(item.kind, item.label);
+              const prevStatus = idx > 0 ? computedProgress[idx - 1]?.status : undefined;
+              const lineStateClass =
+                prevStatus === 'done' && item.status === 'active'
+                  ? 'lui-step-line--active'
+                  : prevStatus === 'done'
+                    ? 'lui-step-line--done'
+                    : '';
+              return (
+                <li key={item.kind} className="lui-step-item">
+                  {idx > 0 ? (
+                    <span
+                      className={`lui-step-line ${lineStateClass}`.trim()}
+                      aria-hidden="true"
+                    />
+                  ) : null}
                   <span
-                    className={`lui-step-line ${lineStateClass}`.trim()}
-                    aria-hidden="true"
-                  />
-                ) : null}
-                <span
-                  className={`lui-step-pill ${
-                    item.status === 'active'
-                      ? 'lui-step-pill--active'
-                      : item.status === 'done'
-                        ? 'lui-step-pill--done'
-                        : ''
-                  }`.trim()}
-                  aria-current={item.status === 'active' ? 'step' : undefined}
-                >
-                  <span className="lui-step-dot" aria-hidden="true" />
-                  <span>{label}</span>
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+                    className={`lui-step-pill ${
+                      item.status === 'active'
+                        ? 'lui-step-pill--active'
+                        : item.status === 'done'
+                          ? 'lui-step-pill--done'
+                          : ''
+                    }`.trim()}
+                    aria-current={item.status === 'active' ? 'step' : undefined}
+                  >
+                    <span className="lui-step-dot" aria-hidden="true" />
+                    <span>{label}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        )}
 
         <div className="lui-header-actions">
           {hasClock ? (
@@ -981,7 +987,15 @@ export function QuestionStepCard({
                       >
                         <span className="lui-option-diamond" aria-hidden="true">
                           <span className="lui-option-diamond-frame" />
-                          <span className="lui-option-key">{selected ? '✓' : opt.key}</span>
+                          <span className="lui-option-key">
+                            {selected ? (
+                              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                                <path d="M2.2 6.3L4.9 9L9.8 3.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            ) : (
+                              opt.key
+                            )}
+                          </span>
                         </span>
                         <MarkdownKatexBlock content={opt.text} inline />
                       </button>
@@ -1135,9 +1149,19 @@ export function QuestionStepCard({
                       <div key={step.stepId} className="lui-multistep-row">
                         <div className="lui-multistep-header">
                           <MarkdownKatexBlock content={step.prompt} inline />
-                          <span className="lui-subtle-pill">
-                            {Math.round(step.weightShare * 100)}%
-                            {stepFeedback ? (stepFeedback.isCorrect ? ' ✓' : ' ✕') : ''}
+                          <span className="lui-subtle-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <span>{Math.round(step.weightShare * 100)}%</span>
+                            {stepFeedback ? (
+                              stepFeedback.isCorrect ? (
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                                  <path d="M2.2 6.3L4.9 9L9.8 3.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              ) : (
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                                  <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                </svg>
+                              )
+                            ) : null}
                           </span>
                         </div>
                         <input

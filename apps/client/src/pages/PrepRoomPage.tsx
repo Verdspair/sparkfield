@@ -247,7 +247,9 @@ export function PrepRoomPage(): React.JSX.Element | null {
             onClick={() => setViewingPrepRoom(false)}
             data-testid="prep-back-to-lobby-view-btn"
           >
-            <span aria-hidden="true">←</span>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M9.2 3.2L5.4 7L9.2 10.8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
             <span>返回大厅</span>
           </button>
 
@@ -392,7 +394,15 @@ export function PrepRoomPage(): React.JSX.Element | null {
                       }`.trim()}
                       title={member.isHost ? '房主已就绪' : member.ready ? '已就绪' : '未准备'}
                     >
-                      {isReady ? '✓' : '·'}
+                      {isReady ? (
+                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                          <path d="M2.2 6.3L4.9 9L9.8 3.3" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      ) : (
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                          <circle cx="4" cy="4" r="1.5" fill="currentColor" />
+                        </svg>
+                      )}
                     </span>
                   </div>
                   <span className="sf-seat-name">{member.nickname}</span>
@@ -550,10 +560,7 @@ export function PrepRoomPage(): React.JSX.Element | null {
 
         <div className="sf-prep-action-cluster">
           <div className="sf-prep-eta" data-testid="estimated-end-time-box">
-            <strong>预计 {estimatedEndHHMM} 结束</strong>
-            <span>
-              {blueprint.arcCount} 个学习大轮次（约 {plannedMinutes} 分钟） · {modeSpec.rounds} 场战斗
-            </span>
+            <strong>约 {plannedMinutes} 分钟 · 预计 {estimatedEndHHMM} 结束</strong>
           </div>
 
           <button

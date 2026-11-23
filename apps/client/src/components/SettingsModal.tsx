@@ -12,19 +12,19 @@ import {
   type SettingsTab,
   type ShopDockPosition,
 } from '../store/appStore.js';
-import { GameUiIcon } from './GameUiIcons.js';
+import { GameUiIcon, type GameUiIconName } from './GameUiIcons.js';
 import { ARENA_THEME_OPTIONS } from './PersistentStageCanvas.js';
 import { TacticianPortrait } from './UnitPortrait.js';
 
 const SETTINGS_TABS: readonly {
   id: SettingsTab;
   label: string;
-  glyph: string;
+  icon: GameUiIconName;
 }[] = [
-  { id: 'match', label: '对局与商店', glyph: '◈' },
-  { id: 'display', label: '画面与舞台', glyph: '✦' },
-  { id: 'learning', label: '学习与引导', glyph: '❖' },
-  { id: 'account', label: '账号与系统', glyph: '◎' },
+  { id: 'match', label: '对局与商店', icon: 'coin' },
+  { id: 'display', label: '画面与舞台', icon: 'wardrobe' },
+  { id: 'learning', label: '学习与引导', icon: 'spark' },
+  { id: 'account', label: '账号与系统', icon: 'gear' },
 ];
 
 const ARENA_ACCENT_BY_ID: Readonly<Record<ArenaThemeId, string>> = {
@@ -474,7 +474,9 @@ export function SettingsModal(): React.JSX.Element | null {
             onClick={closeSettings}
             data-testid="settings-close-btn"
           >
-            ✕
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
           </button>
         </header>
 
@@ -490,8 +492,12 @@ export function SettingsModal(): React.JSX.Element | null {
                   onClick={() => setTab(item.id)}
                   data-testid={`settings-tab-${item.id}`}
                 >
-                  <span className="sf-settings-nav__glyph" aria-hidden="true">
-                    {item.glyph}
+                  <span
+                    className="sf-settings-nav__glyph"
+                    aria-hidden="true"
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <GameUiIcon name={item.icon} size={14} />
                   </span>
                   <span>{item.label}</span>
                 </button>
