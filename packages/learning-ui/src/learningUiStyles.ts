@@ -1588,6 +1588,142 @@ export const LEARNING_UI_CSS = `
   border: 1px solid rgba(52, 211, 153, 0.42);
   color: #6ee7b7;
 }
+.lui-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+  vertical-align: middle;
+  filter: drop-shadow(0 2px 4px rgba(2, 6, 23, 0.55));
+}
+.lui-item-icon--xs {
+  width: 20px;
+  height: 20px;
+}
+.lui-item-icon--sm {
+  width: 26px;
+  height: 26px;
+}
+.lui-item-icon--md {
+  width: 38px;
+  height: 38px;
+}
+.lui-item-icon--lg {
+  width: 44px;
+  height: 44px;
+}
+.lui-item-icon__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.lui-item-icon.lui-recipe-glyph {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.lui-unit-skill-desc {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: inherit;
+}
+.lui-rich-game-text {
+  line-height: inherit;
+  word-break: break-word;
+}
+.lui-stat-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+  vertical-align: baseline;
+  font-weight: 600;
+  padding: 0 2px;
+  border-radius: 4px;
+  line-height: 1.35;
+}
+.lui-stat-icon {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  vertical-align: -2px;
+  transform: translateY(0.5px);
+}
+.lui-stat-num {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.lui-stat-token--phys {
+  color: #fb923c;
+}
+.lui-stat-token--magic {
+  color: #38bdf8;
+}
+.lui-stat-token--true {
+  color: #f8fafc;
+  text-shadow: 0 0 8px rgba(248, 250, 252, 0.42);
+}
+.lui-stat-token--shield {
+  color: #93c5fd;
+}
+.lui-stat-token--hp {
+  color: #34d399;
+}
+.lui-stat-token--as {
+  color: #fde047;
+}
+.lui-stat-token--crit {
+  color: #fb7185;
+}
+.lui-stat-token--armor {
+  color: #f59e0b;
+}
+.lui-stat-token--mr {
+  color: #c084fc;
+}
+.lui-stat-token--mana {
+  color: #60a5fa;
+}
+.lui-stat-token--gold {
+  color: #f2c97d;
+}
+.lui-paper-shell--parchment .lui-stat-token--phys {
+  color: #c2410c;
+}
+.lui-paper-shell--parchment .lui-stat-token--magic {
+  color: #0369a1;
+}
+.lui-paper-shell--parchment .lui-stat-token--true {
+  color: #1e293b;
+  text-shadow: none;
+}
+.lui-paper-shell--parchment .lui-stat-token--shield {
+  color: #1d4ed8;
+}
+.lui-paper-shell--parchment .lui-stat-token--hp {
+  color: #047857;
+}
+.lui-paper-shell--parchment .lui-stat-token--as {
+  color: #a16207;
+}
+.lui-paper-shell--parchment .lui-stat-token--crit {
+  color: #be123c;
+}
+.lui-paper-shell--parchment .lui-stat-token--armor {
+  color: #b45309;
+}
+.lui-paper-shell--parchment .lui-stat-token--mr {
+  color: #7e22ce;
+}
+.lui-paper-shell--parchment .lui-stat-token--mana {
+  color: #1d4ed8;
+}
+.lui-paper-shell--parchment .lui-stat-token--gold {
+  color: #92400e;
+}
 `;
 
 export function ensureLearningUiStyles(targetDoc?: Document | null): void {

@@ -83,7 +83,10 @@ export function PersistentStageCanvas({
             : 'subpage');
 
   const resolvedTacticianId: TacticianId = tacticianId ?? preferredTacticianId ?? DEFAULT_TACTICIAN_ID;
-  const isStrategyPhase = !inActiveMatch || matchSnapshot?.phase === 'strategy';
+  const isStrategyPhase =
+    !inActiveMatch ||
+    matchSnapshot?.phase === 'strategy' ||
+    (matchSnapshot?.phase === 'learning' && Boolean(matchSnapshot.learning?.complete));
   const derivedShopLayout: ShopCameraLayout =
     shopCameraLayout ??
     (isStrategyPhase && shopDockPosition === 'bottom' && !shopCollapsed

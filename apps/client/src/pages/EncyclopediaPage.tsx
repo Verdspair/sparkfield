@@ -5,12 +5,12 @@ import {
   SEASON1_LORE,
   SEASON1_TRAITS,
   SEASON1_UNITS,
-  lookupItemById,
   type ArenaThemeId,
   type AugmentDef,
   type UnitDef,
 } from '@pkg/contracts';
-import { LoreArchiveReader, UnitLoreDrawer } from '@pkg/learning-ui';
+import { LoreArchiveReader, RichGameText, UnitLoreDrawer } from '@pkg/learning-ui';
+import { EquipmentCodexMatrix } from '../components/EquipmentCodexMatrix.js';
 import { ARENA_THEME_OPTIONS } from '../components/PersistentStageCanvas.js';
 import { SubpageShell } from '../components/SubpageShell.js';
 import { TacticianPortrait, UnitPortrait } from '../components/UnitPortrait.js';
@@ -41,14 +41,7 @@ interface NormalizedTraitEntry {
   emblemId?: string;
 }
 
-interface NormalizedItemEntry {
-  id: string;
-  name: string;
-  categoryLabel: string;
-  desc: string;
-  formula?: string;
-  components?: string[];
-}
+
 
 const ARENA_LORE_DESCRIPTIONS: Readonly<Record<ArenaThemeId, string>> = {
   orbital_elevator_port: '晨曦天青穹顶与近地轨道天梯，适合清晰辨识棋子站位与法球动线。',
@@ -94,7 +87,6 @@ export function EncyclopediaPage(): React.JSX.Element {
 
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [selectedTrait, setSelectedTrait] = useState<NormalizedTraitEntry | null>(null);
-  const [selectedItem, setSelectedItem] = useState<NormalizedItemEntry | null>(null);
   const [selectedAugment, setSelectedAugment] = useState<AugmentDef | null>(null);
 
   useEffect(() => {
@@ -173,51 +165,13 @@ export function EncyclopediaPage(): React.JSX.Element {
     [],
   );
 
-  const allItems: NormalizedItemEntry[] = useMemo(
-    () => [
-      ...SEASON1_ITEMS.components.map((c) => ({
-        id: c.id,
-        name: c.name,
-        categoryLabel: '基础散件',
-        desc: c.desc,
-      })),
-      {
-        id: SEASON1_ITEMS.special.spatulaComponent.id,
-        name: SEASON1_ITEMS.special.spatulaComponent.name,
-        categoryLabel: '特殊散件',
-        desc: SEASON1_ITEMS.special.spatulaComponent.desc,
-      },
-      ...SEASON1_ITEMS.completedItems.map((it) => ({
-        id: it.id,
-        name: it.name,
-        categoryLabel: '成装',
-        desc: it.desc,
-        formula: it.formula,
-        components: [...it.components],
-      })),
-      ...SEASON1_ITEMS.emblems.map((em) => ({
-        id: em.id,
-        name: em.name,
-        categoryLabel: `纹章 · ${em.faction}`,
-        desc: em.desc,
-        components: [...em.components],
-      })),
-      {
-        id: SEASON1_ITEMS.special.mothershipFlag.id,
-        name: SEASON1_ITEMS.special.mothershipFlag.name,
-        categoryLabel: '母舰奇物',
-        desc: SEASON1_ITEMS.special.mothershipFlag.desc,
-        components: [...SEASON1_ITEMS.special.mothershipFlag.components],
-      },
-      ...SEASON1_ITEMS.special.consumables.map((tl) => ({
-        id: tl.id,
-        name: tl.name,
-        categoryLabel: '消耗工具',
-        desc: tl.desc,
-      })),
-    ],
-    [],
-  );
+  const totalItemCount =
+    SEASON1_ITEMS.components.length +
+    1 +
+    SEASON1_ITEMS.completedItems.length +
+    SEASON1_ITEMS.emblems.length +
+    1 +
+    SEASON1_ITEMS.special.consumables.length;
 
   const filteredUnits = useMemo(() => {
     return SEASON1_UNITS.filter((u) => {
@@ -244,16 +198,7 @@ export function EncyclopediaPage(): React.JSX.Element {
     );
   }, [allTraits, q]);
 
-  const filteredItems = useMemo(() => {
-    if (!q) return allItems;
-    return allItems.filter(
-      (it) =>
-        it.name.toLowerCase().includes(q) ||
-        it.categoryLabel.toLowerCase().includes(q) ||
-        it.desc.toLowerCase().includes(q) ||
-        (it.formula && it.formula.toLowerCase().includes(q)),
-    );
-  }, [allItems, q]);
+
 
   const filteredAugments = useMemo(() => {
     if (!q) return SEASON1_AUGMENTS;
@@ -269,7 +214,6 @@ export function EncyclopediaPage(): React.JSX.Element {
   const closeAllDrawers = () => {
     setSelectedUnitId(null);
     setSelectedTrait(null);
-    setSelectedItem(null);
     setSelectedAugment(null);
   };
 
@@ -358,7 +302,7 @@ export function EncyclopediaPage(): React.JSX.Element {
         onClick={() => setActiveCategory('items')}
         data-testid="enc-tab-items"
       >
-        <span>装备 ({allItems.length})</span>
+        <span>装备 ({totalItemCount})</span>
       </button>
       <button
         type="button"
@@ -405,7 +349,8 @@ export function EncyclopediaPage(): React.JSX.Element {
     activeCategory !== 'lore' &&
     activeCategory !== 'tacticians' &&
     activeCategory !== 'arenas' &&
-    Boolean(selectedUnitId || selectedTrait || selectedItem || selectedAugment);
+    activeCategory !== 'items' &&
+    Boolean(selectedUnitId || selectedTrait || selectedAugment);
 
   return (
     <SubpageShell
@@ -625,7 +570,9 @@ export function EncyclopediaPage(): React.JSX.Element {
                           </div>
                         </div>
                       </div>
-                      <p className="sf-enc-unit-tile__summary">{u.skillSummary}</p>
+                      <p className="sf-enc-unit-tile__summary">
+                        <RichGameText text={u.skillSummary} />
+                      </p>
                     </button>
                   ))}
                 </div>
@@ -656,40 +603,19 @@ export function EncyclopediaPage(): React.JSX.Element {
                           </div>
                         </div>
                       </div>
-                      <p className="blc-enc-entry-card__desc">{tr.desc}</p>
+                      <p className="blc-enc-entry-card__desc">
+                        <RichGameText text={tr.desc} />
+                      </p>
                     </button>
                   ))}
                 </div>
               ) : null}
 
               {activeCategory === 'items' ? (
-                <div className="blc-card-grid">
-                  {filteredItems.map((it) => (
-                    <button
-                      key={it.id}
-                      type="button"
-                      className="ui-frosted-panel blc-enc-entry-card"
-                      style={{ border: '1px solid rgba(240, 220, 170, 0.22)' }}
-                      onClick={() => {
-                        closeAllDrawers();
-                        setSelectedItem(it);
-                      }}
-                      data-testid={`enc-item-${it.id}`}
-                    >
-                      <div className="blc-enc-entry-card__head">
-                        <span className="blc-item-glyph">◆</span>
-                        <div>
-                          <strong>{it.name}</strong>
-                          <div style={{ fontSize: 12, color: 'var(--gold-light)' }}>
-                            {it.categoryLabel}
-                            {it.formula ? ` · ${it.formula}` : ''}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="blc-enc-entry-card__desc">{it.desc}</p>
-                    </button>
-                  ))}
-                </div>
+                <EquipmentCodexMatrix
+                  searchQuery={searchQuery}
+                  onSelectUnit={(uid) => openUnit(uid)}
+                />
               ) : null}
 
               {activeCategory === 'augments' ? (
@@ -725,7 +651,9 @@ export function EncyclopediaPage(): React.JSX.Element {
                           </div>
                         </div>
                       </div>
-                      <p className="blc-enc-entry-card__desc">{aug.desc}</p>
+                      <p className="blc-enc-entry-card__desc">
+                        <RichGameText text={aug.desc} />
+                      </p>
                     </button>
                   ))}
                 </div>
@@ -772,7 +700,9 @@ export function EncyclopediaPage(): React.JSX.Element {
                       ✕
                     </button>
                   </div>
-                  <p style={{ lineHeight: 1.65, color: 'var(--text-primary)' }}>{selectedTrait.desc}</p>
+                  <p style={{ lineHeight: 1.65, color: 'var(--text-primary)' }}>
+                    <RichGameText text={selectedTrait.desc} />
+                  </p>
                   <div className="blc-chip" style={{ alignSelf: 'flex-start' }}>
                     档位 {selectedTrait.thresholds.join(' / ')}
                   </div>
@@ -802,67 +732,7 @@ export function EncyclopediaPage(): React.JSX.Element {
                 </div>
               ) : null}
 
-              {selectedItem ? (
-                <div
-                  className="ui-frosted-panel blc-drawer-dark"
-                  style={{ border: '1px solid rgba(240, 220, 170, 0.26)' }}
-                >
-                  <div className="blc-col-head">
-                    <div>
-                      <span className="blc-chip blc-chip--gold">{selectedItem.categoryLabel}</span>
-                      <h3 style={{ margin: '6px 0 0' }}>{selectedItem.name}</h3>
-                    </div>
-                    <button
-                      type="button"
-                      className="blc-btn blc-btn--ghost blc-btn--xs"
-                      onClick={closeAllDrawers}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <p style={{ lineHeight: 1.65 }}>{selectedItem.desc}</p>
-                  {selectedItem.components && selectedItem.components.length > 0 ? (
-                    <div className="ui-frosted-panel" style={{ padding: 12 }}>
-                      <div className="blc-field__label" style={{ marginBottom: 8 }}>
-                        合成配方
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {selectedItem.components.map((cid, idx) => {
-                          const c = lookupItemById(cid);
-                          return (
-                            <React.Fragment key={`${cid}-${idx}`}>
-                              {idx > 0 ? <span>＋</span> : null}
-                              <span className="item-recipe-node item-recipe-node--owned">
-                                {c?.item.name ?? cid}
-                              </span>
-                            </React.Fragment>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
 
-                  <div style={{ marginTop: 10 }}>
-                    <div className="blc-field__label" style={{ marginBottom: 8 }}>
-                      适配棋子
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {SEASON1_UNITS.filter((u) =>
-                        u.recommendedItems.includes(selectedItem.id),
-                      ).map((u) => (
-                        <button
-                          key={u.id}
-                          type="button"
-                          className="blc-btn blc-btn--metal blc-btn--xs"
-                          onClick={() => openUnit(u)}
-                        >
-                          {u.cost}费 · {u.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : null}
 
               {selectedAugment ? (
                 <div
@@ -884,7 +754,9 @@ export function EncyclopediaPage(): React.JSX.Element {
                       ✕
                     </button>
                   </div>
-                  <p style={{ lineHeight: 1.65 }}>{selectedAugment.desc}</p>
+                  <p style={{ lineHeight: 1.65 }}>
+                    <RichGameText text={selectedAugment.desc} />
+                  </p>
                   {selectedAugment.tailorTraits.length > 0 ? (
                     <div className="blc-chip">
                       关联羁绊：{selectedAugment.tailorTraits.join(' / ')}

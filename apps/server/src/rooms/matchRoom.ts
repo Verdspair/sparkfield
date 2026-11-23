@@ -220,13 +220,21 @@ export class MatchRoom extends Room {
     return kind==='augment' ? ['PICK_AUGMENT','REROLL_AUGMENT_SLOT'].includes(command.type)
       : kind==='anvil' && command.type==='PICK_ANVIL_OPTION';
   }
+  private canActInStrategy(seatId:string):boolean {
+    if (this.phase==='strategy') return true;
+    if (this.phase==='learning') {
+      const human=[...this.humans].find(([,h])=>h.seatId===seatId);
+      return Boolean(human && this.lessons.get(human[0])?.complete);
+    }
+    return false;
+  }
   private applyCommand(seatId:string,command:GameCommand):{ok:boolean;reason?:string} {
     if(this.failure||this.disposed||this.completed)return {ok:false,reason:'MATCH_NOT_ACTIVE'};
     const seat=this.game.seats.find(s=>s.id===seatId)!;
     if (command.type==='SET_LINEUP_PLAN') {seat.lineupPlan=[...command.unitIds]; return {ok:true};}
     if (CHOICE_COMMANDS.has(command.type)) {
       if (!this.allowedChoice(command)) return {ok:false,reason:'CHOICE_WINDOW_REQUIRED'};
-    } else if (this.phase!=='strategy') return {ok:false,reason:'STRATEGY_PHASE_REQUIRED'};
+    } else if (!this.canActInStrategy(seatId)) return {ok:false,reason:'STRATEGY_PHASE_REQUIRED'};
     return applyGameCommand(this.game,seatId,command);
   }
   private normalizeStep(progress:LearningProgress):void {
@@ -237,13 +245,41 @@ export class MatchRoom extends Room {
     }
     progress.complete=progress.step>=STEPS.length;
   }
+  private settleUserLearning(userId:string):void {
+    const progress=this.lessons.get(userId);
+    if(!progress || progress.settled)return;
+    const seat=this.game.seats.find(s=>s.id===this.humans.get(userId)!.seatId)!;
+    const settlement=settleLearningNodeGold({mode:this.game.mode,blockIndex:this.nodeIndex,
+      gradedUnits:gradeFrozenLearningUnits(progress.bundle.questions,progress.submissions),carryInCents:seat.learningChargeCents});
+    applyLearningGoldGrant(seat,settlement.grantedIntegerGold,settlement.carryOutCents);
+    seat.learningGoldOrbs=[...settlement.orbSplits]; progress.settled=true;
+    this.settlements.get(userId)!.push(settlement);
+    for(const question of progress.bundle.questions) {
+      if(!gradeQuestionSubmission(question,progress.submissions[question.questionId]).isCorrect)this.wrong.get(userId)!.add(question.questionId);
+    }
+    const persistedNodeIndex=this.nodeIndex;
+    let pending:Promise<void>;
+    pending=this.runtime.learning.persistNode(userId,progress.bundle,progress.submissions,{
+      source:'match_learning',coursePackVersion:this.start.coursePackVersion,
+      questionVersions:Object.fromEntries(this.packs.flatMap(p=>p.items.map(q=>[q.questionId,p.manifest.coursePackVersion]))),
+      idempotencyKey:`match:${this.start.matchId}:${userId}:node:${this.nodeIndex}`}).then(persisted=>{
+        const total=this.learningTotals.get(userId)!;total.rewardPointsGranted+=persisted.rewardPointsGranted;
+        total.attemptIds.push(...persisted.attemptIds);
+        const controller=this.controllers.get(userId);
+        if(controller)this.clients.find(client=>client.sessionId===controller)?.send('learning_persisted',{
+          nodeIndex:persistedNodeIndex,rewardPointsGranted:persisted.rewardPointsGranted,attemptIds:persisted.attemptIds});
+      }).catch(error=>{this.fail(error);}).finally(()=>{this.persistence.delete(pending);});
+    this.persistence.add(pending);
+  }
+  private onUserLearningCompleted(userId:string,progress:LearningProgress):void {
+    progress.readyToProceed=true;
+    this.settleUserLearning(userId);
+    this.maybeFinishLearningEarly();
+  }
   private maybeFinishLearningEarly():void {
     if(this.disposed || this.failure || this.completed || this.phase!=='learning' || this.humans.size===0)return;
-    const allReady=[...this.humans.keys()].every((uid)=>{
-      const p=this.lessons.get(uid);
-      return Boolean(p && p.complete && p.readyToProceed);
-    });
-    if(!allReady)return;
+    const allDone=[...this.humans.keys()].every((uid)=>Boolean(this.lessons.get(uid)?.complete));
+    if(!allDone)return;
     if(this.timeout){clearTimeout(this.timeout);this.timeout=undefined;}
     this.deadlineEpochMs=Date.now();
     this.timeout=setTimeout(()=>{void this.enqueue(()=>this.transition()).catch(error=>this.fail(error));},0);
@@ -255,8 +291,7 @@ export class MatchRoom extends Room {
     this.normalizeStep(progress);
     if (progress.complete) {
       if (message.action==='advance') {
-        progress.readyToProceed=true;
-        this.maybeFinishLearningEarly();
+        this.onUserLearningCompleted(userId,progress);
         return {ok:true,complete:true,readyToProceed:true};
       }
       throw new ServiceError('LEARNING_ALREADY_COMPLETE');
@@ -265,10 +300,7 @@ export class MatchRoom extends Room {
     if (message.action==='advance') {
       if (kind!=='material' && kind!=='remediation') throw new ServiceError('STEP_REQUIRES_SUBMISSIONS');
       progress.step++; this.normalizeStep(progress);
-      if (progress.complete) {
-        progress.readyToProceed=true;
-        this.maybeFinishLearningEarly();
-      }
+      if (progress.complete) this.onUserLearningCompleted(userId,progress);
       return {ok:true,complete:progress.complete,readyToProceed:progress.readyToProceed};
     }
     if (!message.questionId || !step.questionIds.includes(message.questionId)) throw new ServiceError('QUESTION_NOT_IN_CURRENT_STEP');
@@ -291,8 +323,9 @@ export class MatchRoom extends Room {
     if (step.questionIds.every(id=>Object.hasOwn(progress.submissions,id))) {
       if (kind==='resource_check') progress.bundle=activateLessonRemediation(progress.bundle,progress.submissions,true);
       progress.step++; this.normalizeStep(progress);
+      if (progress.complete) this.onUserLearningCompleted(userId,progress);
     }
-    return {ok:true,feedback,complete:progress.complete};
+    return {ok:true,feedback,complete:progress.complete,readyToProceed:progress.readyToProceed};
   }
   private communicate(session:AuthenticatedSession,raw:unknown):unknown {
     const message=CommunicationClientSendSchema.parse(raw);
@@ -352,31 +385,7 @@ export class MatchRoom extends Room {
         this.normalizeStep(progress);this.lessons.set(userId,progress);
       }
     } else if(this.phase==='resource') {
-      for(const [userId,progress] of this.lessons) {
-        if(progress.settled)continue;
-        const seat=this.game.seats.find(s=>s.id===this.humans.get(userId)!.seatId)!;
-        const settlement=settleLearningNodeGold({mode:this.game.mode,blockIndex:this.nodeIndex,
-          gradedUnits:gradeFrozenLearningUnits(progress.bundle.questions,progress.submissions),carryInCents:seat.learningChargeCents});
-        applyLearningGoldGrant(seat,settlement.grantedIntegerGold,settlement.carryOutCents);
-        seat.learningGoldOrbs=[...settlement.orbSplits]; progress.settled=true;
-        this.settlements.get(userId)!.push(settlement);
-        for(const question of progress.bundle.questions) {
-          if(!gradeQuestionSubmission(question,progress.submissions[question.questionId]).isCorrect)this.wrong.get(userId)!.add(question.questionId);
-        }
-        const persistedNodeIndex=this.nodeIndex;
-        let pending:Promise<void>;
-        pending=this.runtime.learning.persistNode(userId,progress.bundle,progress.submissions,{
-          source:'match_learning',coursePackVersion:this.start.coursePackVersion,
-          questionVersions:Object.fromEntries(this.packs.flatMap(p=>p.items.map(q=>[q.questionId,p.manifest.coursePackVersion]))),
-          idempotencyKey:`match:${this.start.matchId}:${userId}:node:${this.nodeIndex}`}).then(persisted=>{
-            const total=this.learningTotals.get(userId)!;total.rewardPointsGranted+=persisted.rewardPointsGranted;
-            total.attemptIds.push(...persisted.attemptIds);
-            const controller=this.controllers.get(userId);
-            if(controller)this.clients.find(client=>client.sessionId===controller)?.send('learning_persisted',{
-              nodeIndex:persistedNodeIndex,rewardPointsGranted:persisted.rewardPointsGranted,attemptIds:persisted.attemptIds});
-          }).catch(error=>{this.fail(error);}).finally(()=>{this.persistence.delete(pending);});
-        this.persistence.add(pending);
-      }
+      for(const userId of this.lessons.keys()) this.settleUserLearning(userId);
     } else if(this.phase==='strategy' || this.phase==='choice') {
       this.runBots();
     } else if(this.phase==='battle') {
@@ -440,6 +449,8 @@ export class MatchRoom extends Room {
         readyToProceed:progress.readyToProceed,
         readyHumansCount:[...this.humans.keys()].filter(uid=>{const p=this.lessons.get(uid);return Boolean(p&&p.complete&&p.readyToProceed);}).length,
         totalHumansCount:this.humans.size,
+        correctCount:progress.bundle.questions.filter(q=>{const fb=progress.feedback[q.questionId] as {isCorrect?:boolean}|undefined;return Boolean(fb?.isCorrect);}).length,
+        totalQuestionsCount:progress.bundle.questions.length,
         clientQuestions:progress.bundle.clientQuestions.filter(q=>q.stepRole===current),
         steps:progress.bundle.steps.map((step,index)=>({kind:step.kind,active:step.active,plannedSeconds:step.plannedSeconds,
           questionIds:step.questionIds,materials:index===progress.step?step.materials:[],

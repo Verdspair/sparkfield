@@ -54,6 +54,8 @@ export interface MatchLearningView {
   readyToProceed?: boolean;
   readyHumansCount?: number;
   totalHumansCount?: number;
+  correctCount?: number;
+  totalQuestionsCount?: number;
   clientQuestions: ClientQuestionView[];
   steps: MatchLearningStepView[];
   submittedQuestionIds: string[];

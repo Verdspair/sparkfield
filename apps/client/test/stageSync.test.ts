@@ -278,4 +278,72 @@ describe('dual-scene starport showcase, 3 tacticians, zero-occlusion camera, 36 
       expect(url.startsWith('data:image/svg+xml;charset=utf-8,')).toBe(true);
     }
   });
+
+  it('walks the tactician to clicked loot orbs, auto-collects along empty-hex walks, and auto-sweeps on battle transition', () => {
+    const collected: { id: string; gold: number }[] = [];
+    const stage = new BoardStageEngine(undefined, {
+      initialSceneMode: 'match',
+      callbacks: {
+        onCollectLootOrb: (id, gold) => collected.push({ id, gold }),
+      },
+    });
+    try {
+      stage['container'] = {
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 1280, height: 720 }),
+      } as unknown as HTMLElement;
+
+      stage.syncLootOrbs([
+        { orbId: 'orb-a', goldAmount: 2, row: 5, col: 2 },
+        { orbId: 'orb-b', goldAmount: 3, row: 5, col: 4 },
+        { orbId: 'orb-c', goldAmount: 2, row: 6, col: 5 },
+      ]);
+      for (let i = 0; i < 30; i += 1) {
+        stage.stepManual(0.05);
+      }
+
+      const startPos = stage.getTacticianWorldPos();
+      const orbAPos = stage.getLootOrbWorldPos('orb-a')!;
+      expect(orbAPos).not.toBeNull();
+
+      const orbANdc = new Vector3(orbAPos.x, 0.44, orbAPos.z).project(stage.camera);
+      stage['handlePointerDown']({
+        button: 0,
+        clientX: (orbANdc.x + 1) * 640,
+        clientY: (1 - orbANdc.y) * 360,
+      } as PointerEvent);
+
+      expect(collected.length).toBe(0);
+
+      for (let i = 0; i < 45; i += 1) {
+        stage.stepManual(0.04);
+      }
+
+      const afterOrbAPos = stage.getTacticianWorldPos();
+      expect(Math.hypot(afterOrbAPos.x - startPos.x, afterOrbAPos.z - startPos.z)).toBeGreaterThan(2.0);
+      expect(Math.hypot(afterOrbAPos.x - orbAPos.x, afterOrbAPos.z - orbAPos.z)).toBeLessThan(1.2);
+      expect(collected).toContainEqual({ id: 'orb-a', gold: 2 });
+
+      const destHex = hexToStageXZ(5, 5);
+      const destPt = projectedPoint(stage, 0, destHex);
+      stage['handlePointerDown']({
+        button: 0,
+        clientX: destPt.clientX,
+        clientY: destPt.clientY,
+      } as PointerEvent);
+
+      for (let i = 0; i < 45; i += 1) {
+        stage.stepManual(0.04);
+      }
+      expect(collected).toContainEqual({ id: 'orb-b', gold: 3 });
+
+      stage.setPhase('battle');
+      for (let i = 0; i < 20; i += 1) {
+        stage.stepManual(0.04);
+      }
+      expect(collected).toContainEqual({ id: 'orb-c', gold: 2 });
+    } finally {
+      stage['container'] = null;
+      stage.dispose();
+    }
+  });
 });

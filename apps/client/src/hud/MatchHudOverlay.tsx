@@ -21,8 +21,9 @@ import {
   type UnitInstance,
 } from '@pkg/game-core';
 import {
+  GameItemIcon,
   QuestionStepCard,
-  RecommendedItemsTree,
+  RichGameText,
   type LessonStepProgressItem,
   type QuestionAnswerSubmission,
   type QuestionFeedbackView,
@@ -35,12 +36,42 @@ import {
   QUEUE_TYPE_LABELS,
   formatQuarterPoints,
 } from '../utils/antiFakeZero.js';
+import { LearningRewardBanner } from './LearningRewardBanner.js';
 import {
   MatchChoiceModal,
   MatchCodexModal,
   MatchLineupPlannerModal,
 } from './MatchModals.js';
 import './matchHud.css';
+
+const ALL_CRAFT_COMPONENT_IDS: readonly string[] = [
+  ...SEASON1_ITEMS.components.map((c) => c.id),
+  SEASON1_ITEMS.special.spatulaComponent.id,
+];
+
+const COMPONENT_ACCENT_COLORS: Readonly<Record<string, string>> = {
+  C_SWORD: '#f59e0b',
+  C_BOW: '#facc15',
+  C_ROD: '#38bdf8',
+  C_TEAR: '#60a5fa',
+  C_VEST: '#fb923c',
+  C_CLOAK: '#c084fc',
+  C_BELT: '#34d399',
+  C_GLOVE: '#fb7185',
+  C_RUBBING: '#fde047',
+};
+
+const ITEM_KIND_LABELS: Readonly<Record<string, string>> = {
+  component: '散件',
+  spatula: '星环拓片',
+  completed: '成装',
+  emblem: '纹章',
+  flag: '母舰旗',
+};
+
+function isCraftComponentKind(kind: string | undefined): boolean {
+  return kind === 'component' || kind === 'spatula';
+}
 
 const PHASE_LABELS = {
   entry: '入场',
@@ -150,11 +181,18 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   const [plannerOpen, setPlannerOpen] = useState<boolean>(false);
   const [codexOpen, setCodexOpen] = useState<boolean>(false);
   const [codexUnitId, setCodexUnitId] = useState<string>('S01');
+  const [codexInitialTab, setCodexInitialTab] = useState<'items' | 'units'>('units');
+  const [codexInitialItemId, setCodexInitialItemId] = useState<string | null>(null);
+  const [hoveredBagIndex, setHoveredBagIndex] = useState<number | null>(null);
+  const [hoveredInspectItemId, setHoveredInspectItemId] = useState<string | null>(null);
   const [expandedTraitName, setExpandedTraitName] = useState<string | null>(null);
 
   const [targetAction, setTargetAction] = useState<TargetAction | null>(null);
+  const isEarlyStrategyActive =
+    matchSnapshot?.phase === 'learning' && Boolean(matchSnapshot.learning?.complete);
   const activeTargetAction =
-    matchSnapshot?.phase === 'strategy' && targetAction?.phaseIndex === matchSnapshot.phaseIndex
+    (matchSnapshot?.phase === 'strategy' || isEarlyStrategyActive) &&
+    targetAction?.phaseIndex === matchSnapshot.phaseIndex
       ? targetAction
       : null;
   const pendingEquipIndex =
@@ -197,11 +235,22 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   useEffect(() => {
     setPeekingBattlefield(false);
     setTargetAction(null);
+    setHoveredBagIndex(null);
     setLearningReview(null);
     if (matchSnapshot?.phase === 'battle') {
       setRightTab('score');
     }
   }, [matchSnapshot?.phase, matchSnapshot?.phaseIndex]);
+
+  useEffect(() => {
+    if (leftTab !== 'items') {
+      setHoveredBagIndex(null);
+    }
+  }, [leftTab]);
+
+  useEffect(() => {
+    setHoveredInspectItemId(null);
+  }, [inspectedUnitId]);
 
   useEffect(() => {
     if (!matchSnapshot || matchSnapshot.phase !== 'resource') return;
@@ -275,8 +324,11 @@ export function MatchHudOverlay(): React.JSX.Element | null {
     const modeSpecForKey = MODE_BUDGETS.modes[matchSnapshot.mode];
     const timelineForKey = modeSpecForKey.timeline[matchSnapshot.phaseIndex];
     const choiceKindForKey = getMatchChoiceKind(matchSnapshot.phase, timelineForKey?.label ?? '');
+    const inStrategyWindow =
+      matchSnapshot.phase === 'strategy' ||
+      (matchSnapshot.phase === 'learning' && Boolean(matchSnapshot.learning?.complete));
     const modalBlocking =
-      matchSnapshot.phase === 'learning' ||
+      (matchSnapshot.phase === 'learning' && !matchSnapshot.learning?.complete) ||
       (choiceKindForKey === 'augment' && Boolean(matchSnapshot.self.augmentOffer)) ||
       (choiceKindForKey === 'anvil' && matchSnapshot.self.anvils.length > 0);
     const xpCapReached = matchSnapshot.self.level >= modeSpecForKey.economy.base_level_cap;
@@ -285,7 +337,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
       if (isEditableEventTarget(event.target)) return;
 
-      if (event.code === 'Space' && matchSnapshot.phase === 'strategy' && !modalBlocking && !plannerOpen && !codexOpen) {
+      if (event.code === 'Space' && inStrategyWindow && !modalBlocking && !plannerOpen && !codexOpen) {
         event.preventDefault();
         setShopCollapsed?.(!shopCollapsed);
         return;
@@ -311,7 +363,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
       }
 
       if (
-        matchSnapshot.phase === 'strategy' &&
+        inStrategyWindow &&
         !shopCollapsed &&
         !serverCommandsLocked &&
         !modalBlocking &&
@@ -358,7 +410,9 @@ export function MatchHudOverlay(): React.JSX.Element | null {
       ? Math.max(0, Math.min(100, ((totalPhaseSec - liveRemainingSec) / totalPhaseSec) * 100))
       : 0;
 
-  const isStrategy = matchSnapshot.phase === 'strategy';
+  const isStrategy =
+    matchSnapshot.phase === 'strategy' ||
+    (matchSnapshot.phase === 'learning' && Boolean(matchSnapshot.learning?.complete));
   const isShopExpanded = isStrategy && !shopCollapsed;
   const isBottomOpen = isShopExpanded && shopDockPosition === 'bottom';
   const isUrgentCountdown = isStrategy && liveRemainingSec > 0 && liveRemainingSec <= 5;
@@ -410,6 +464,12 @@ export function MatchHudOverlay(): React.JSX.Element | null {
   const activeAnvil = self.anvils[0] ?? null;
   const showAnvilChoice = choiceKind === 'anvil' && Boolean(activeAnvil);
   const hasChoiceModal = showAugmentChoice || showAnvilChoice;
+
+  const openCodex = (tab: 'items' | 'units', itemId: string | null = null) => {
+    setCodexInitialTab(tab);
+    setCodexInitialItemId(itemId);
+    setCodexOpen(true);
+  };
 
   const armTargetAction = (action: TargetAction) => {
     clearInspectedUnit();
@@ -520,6 +580,43 @@ export function MatchHudOverlay(): React.JSX.Element | null {
     </div>
   );
 
+  const activeBagIndex =
+    leftTab === 'items'
+      ? hoveredBagIndex !== null && hoveredBagIndex < self.inventoryItems.length
+        ? hoveredBagIndex
+        : pendingEquipIndex !== null && pendingEquipIndex < self.inventoryItems.length
+          ? pendingEquipIndex
+          : null
+      : null;
+  const activeBagItemId =
+    activeBagIndex !== null ? self.inventoryItems[activeBagIndex] ?? null : null;
+  const activeBagEntry = activeBagItemId ? lookupItemById(activeBagItemId) : null;
+  const armedItemId =
+    pendingEquipIndex !== null ? self.inventoryItems[pendingEquipIndex] ?? null : null;
+  const armedItemEntry = armedItemId ? lookupItemById(armedItemId) : null;
+
+  const otherBagIds =
+    activeBagIndex !== null
+      ? self.inventoryItems.filter((_, index) => index !== activeBagIndex)
+      : [];
+  const otherBagIdSet = new Set(otherBagIds);
+  const craftableNow =
+    activeBagItemId && isCraftComponentKind(activeBagEntry?.kind)
+      ? Array.from(otherBagIdSet)
+          .map((partnerId) => {
+            const result = lookupCraftRecipe(activeBagItemId, partnerId);
+            return result ? { partnerId, result } : null;
+          })
+          .filter(
+            (
+              row,
+            ): row is {
+              partnerId: string;
+              result: NonNullable<ReturnType<typeof lookupCraftRecipe>>;
+            } => row !== null,
+          )
+      : [];
+
   return (
     <div
       className="blc-match-hud"
@@ -597,7 +694,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
           <button
             type="button"
             className="ui-metal-frame blc-btn blc-btn--metal blc-btn--sm"
-            onClick={() => setCodexOpen(true)}
+            onClick={() => openCodex(leftTab === 'items' ? 'items' : 'units', null)}
             data-testid="open-inmatch-codex-btn"
           >
             图鉴
@@ -616,6 +713,8 @@ export function MatchHudOverlay(): React.JSX.Element | null {
         </div>
       </header>
 
+      <LearningRewardBanner snapshot={matchSnapshot} />
+
       {hasChoiceModal && peekingBattlefield ? (
         <div className="blc-peek-banner" data-testid="choice-peek-return-bar">
           <span>正在查看战场</span>
@@ -633,6 +732,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
       <aside
         className={`ui-metal-frame blc-hud-left ${!isBottomOpen ? 'blc-hud-left--tall' : ''}`.trim()}
         data-testid="hud-left-rail"
+        onMouseLeave={() => setHoveredBagIndex(null)}
       >
         <div className="blc-seg-tabs">
           <button
@@ -729,7 +829,9 @@ export function MatchHudOverlay(): React.JSX.Element | null {
 
                       {isOpen && rawDef ? (
                         <div className="ui-frosted-panel blc-trait-pop">
-                          <p style={{ margin: '0 0 6px', fontSize: 11.5 }}>{rawDef.desc}</p>
+                          <p style={{ margin: '0 0 6px', fontSize: 11.5 }}>
+                            <RichGameText text={rawDef.desc} />
+                          </p>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                             {SEASON1_UNITS.filter(
                               (u) =>
@@ -765,7 +867,20 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             )}
           </div>
         ) : (
-          <div className="blc-hud-scroll">
+          <div className="blc-hud-scroll sf-items-scroll">
+            <div className="sf-bag-toolbar">
+              <span className="sf-bag-toolbar__label">装备舱 · {self.inventoryItems.length}</span>
+              <button
+                type="button"
+                className="sf-bag-codex-btn"
+                onClick={() => openCodex('items', activeBagItemId)}
+                data-testid="hud-equip-codex-btn"
+                title="打开局内装备合成图鉴"
+              >
+                合成图鉴
+              </button>
+            </div>
+
             <fieldset
               disabled={serverCommandsLocked}
               style={{ display: 'contents', border: 0, padding: 0, margin: 0 }}
@@ -804,37 +919,88 @@ export function MatchHudOverlay(): React.JSX.Element | null {
 
               {(pendingEquipIndex !== null || pendingTool !== null) && isStrategy ? (
                 <div className="ui-frosted-panel blc-quick-target-box">
-                  <div style={{ fontSize: 11.5, color: 'var(--gold-light)', marginBottom: 6 }}>
-                    {pendingEquipIndex !== null
-                      ? '选择要装备的棋子'
-                      : pendingTool === 'remover'
-                        ? '选择要卸装的棋子'
-                        : '选择要重铸的棋子'}
+                  <div className="sf-quick-target-head">
+                    <span className="sf-quick-target-head__title">
+                      {pendingEquipIndex !== null
+                        ? '点选棋子穿戴'
+                        : pendingTool === 'remover'
+                          ? '选择卸装棋子'
+                          : '选择重铸棋子'}
+                    </span>
+                    {pendingEquipIndex !== null && armedItemId && armedItemEntry ? (
+                      <span className="sf-quick-target-armed">
+                        <GameItemIcon itemId={armedItemId} size="xs" />
+                        <span>{armedItemEntry.item.name}</span>
+                      </span>
+                    ) : null}
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  <div className="sf-quick-target-list">
                     {self.units.map((u) => {
                       const def = SEASON1_UNITS_BY_ID.get(u.unitId);
                       const preview =
-                        pendingEquipIndex !== null && self.inventoryItems[pendingEquipIndex]
-                          ? previewItemEquip(u, self.inventoryItems[pendingEquipIndex]!)
+                        pendingEquipIndex !== null && armedItemId
+                          ? previewItemEquip(u, armedItemId)
                           : null;
                       const crafted = preview?.craftedItemId
                         ? lookupItemById(preview.craftedItemId)
                         : null;
+                      const matchedExistingId =
+                        crafted && armedItemId
+                          ? u.items.find(
+                              (iid) => lookupCraftRecipe(iid, armedItemId)?.id === crafted.item.id,
+                            ) ?? null
+                          : null;
+                      const isBlocked = preview !== null && !preview.ok;
                       return (
                         <button
                           key={u.instanceId}
                           type="button"
-                          className="blc-btn blc-btn--metal blc-btn--xs"
+                          className={`sf-quick-target-btn ${
+                            crafted ? 'sf-quick-target-btn--craft' : ''
+                          } ${isBlocked ? 'sf-quick-target-btn--blocked' : ''}`.trim()}
                           onClick={() => {
                             if (!activeTargetAction) return;
                             sendMatchCommand(targetCommand(activeTargetAction, u.instanceId));
                             setTargetAction(null);
                           }}
                         >
-                          {'★'.repeat(u.star)}
-                          {def?.name ?? '棋子'}
-                          {crafted ? ` → ${crafted.item.name}` : ''}
+                          <span className="sf-quick-target-btn__top">
+                            <span className="sf-quick-target-btn__unit">
+                              <span className="sf-quick-target-btn__stars">
+                                {'★'.repeat(u.star)}
+                              </span>
+                              <span className="sf-quick-target-btn__name">
+                                {def?.name ?? '棋子'}
+                              </span>
+                            </span>
+                            {!crafted ? (
+                              <span className="sf-quick-target-btn__items">
+                                {u.items.length > 0 ? (
+                                  u.items.map((iid, itemIdx) => (
+                                    <GameItemIcon
+                                      key={`${iid}-${itemIdx}`}
+                                      itemId={iid}
+                                      size="xs"
+                                    />
+                                  ))
+                                ) : (
+                                  <span className="sf-quick-target-btn__empty">空槽</span>
+                                )}
+                              </span>
+                            ) : null}
+                          </span>
+                          {crafted && matchedExistingId && armedItemId ? (
+                            <span className="sf-quick-craft-preview">
+                              <span className="sf-quick-craft-formula">
+                                <GameItemIcon itemId={matchedExistingId} size="xs" />
+                                <span className="sf-craft-op">+</span>
+                                <GameItemIcon itemId={armedItemId} size="xs" />
+                                <span className="sf-craft-arrow">→</span>
+                                <GameItemIcon itemId={crafted.item.id} size="xs" />
+                              </span>
+                              <span className="sf-quick-craft-name">{crafted.item.name}</span>
+                            </span>
+                          ) : null}
                         </button>
                       );
                     })}
@@ -845,18 +1011,45 @@ export function MatchHudOverlay(): React.JSX.Element | null {
               {self.inventoryItems.length === 0 ? (
                 <div className="blc-muted-hint">暂无装备</div>
               ) : (
-                <div className="blc-item-list">
+                <div className="sf-bag-grid" data-testid="hud-inventory-grid">
                   {self.inventoryItems.map((itemId, idx) => {
                     const entry = lookupItemById(itemId);
-                    const isComponent = entry?.kind === 'component' || entry?.kind === 'spatula';
+                    const isComponent = isCraftComponentKind(entry?.kind);
+                    const isEmblemOrFlag = entry?.kind === 'emblem' || entry?.kind === 'flag';
                     const isArmed = pendingEquipIndex === idx;
+                    const isHovered = hoveredBagIndex === idx;
+                    const canCraftNow =
+                      isComponent &&
+                      self.inventoryItems.some(
+                        (otherId, otherIdx) =>
+                          otherIdx !== idx && Boolean(lookupCraftRecipe(itemId, otherId)),
+                      );
+                    const accentColor = COMPONENT_ACCENT_COLORS[itemId] ?? '#f2c97d';
 
                     return (
-                      <div key={`${itemId}-${idx}`} className="item-recipe-trigger blc-item-slot-row">
+                      <div
+                        key={`${itemId}-${idx}`}
+                        className="sf-bag-slot-cell"
+                        onMouseEnter={() => setHoveredBagIndex(idx)}
+                      >
                         <button
                           type="button"
                           disabled={!isStrategy}
-                          className={`blc-item-btn ${isArmed ? 'blc-item-btn--armed' : ''}`}
+                          className={`sf-bag-slot ${
+                            isComponent
+                              ? 'sf-bag-slot--component'
+                              : isEmblemOrFlag
+                                ? 'sf-bag-slot--emblem'
+                                : 'sf-bag-slot--completed'
+                          } ${isArmed ? 'sf-bag-slot--armed blc-item-btn--armed' : ''} ${
+                            isHovered ? 'sf-bag-slot--hovered' : ''
+                          }`.trim()}
+                          style={
+                            isComponent
+                              ? ({ '--slot-accent': accentColor } as React.CSSProperties)
+                              : undefined
+                          }
+                          onFocus={() => setHoveredBagIndex(idx)}
                           onClick={() => {
                             armTargetAction({
                               kind: 'equip',
@@ -864,48 +1057,15 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                               phaseIndex: matchSnapshot.phaseIndex,
                             });
                           }}
+                          aria-label={entry?.item.name ?? '装备'}
                           data-testid={`inventory-item-${idx}`}
                           data-item-id={itemId}
                         >
-                          <span className="blc-item-glyph">◆</span>
-                          <span className="blc-item-btn__name">
-                            {entry?.item.name ?? '装备'}
-                          </span>
+                          <GameItemIcon itemId={itemId} size="md" />
+                          {canCraftNow ? (
+                            <span className="sf-bag-slot__craft-dot" aria-hidden="true" />
+                          ) : null}
                         </button>
-
-                        {isComponent ? (
-                          <div className="item-recipe-popover">
-                            <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}>
-                              {entry?.item.name} · 合成
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              {[
-                                ...SEASON1_ITEMS.components.map((c) => c.id),
-                                SEASON1_ITEMS.special.spatulaComponent.id,
-                              ]
-                                .slice(0, 6)
-                                .map((partnerId) => {
-                                  const res = lookupCraftRecipe(itemId, partnerId);
-                                  if (!res) return null;
-                                  const partnerEntry = lookupItemById(partnerId);
-                                  const ownedCount = self.inventoryItems.filter(
-                                    (x, i) => i !== idx && x === partnerId,
-                                  ).length;
-                                  return (
-                                    <div
-                                      key={partnerId}
-                                      className={`item-recipe-node ${
-                                        ownedCount > 0 ? 'item-recipe-node--owned' : ''
-                                      }`.trim()}
-                                    >
-                                      <span>+ {partnerEntry?.item.name ?? '散件'}</span>
-                                      <span>→ {res.name}</span>
-                                    </div>
-                                  );
-                                })}
-                            </div>
-                          </div>
-                        ) : null}
                       </div>
                     );
                   })}
@@ -914,6 +1074,129 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             </fieldset>
           </div>
         )}
+
+        {leftTab === 'items' && activeBagItemId && activeBagEntry ? (
+          <div
+            className="ui-metal-frame sf-craft-sheet"
+            data-testid="hud-item-craft-sheet"
+            role="region"
+            aria-label="实时装备合成速查"
+          >
+            <div className="sf-craft-sheet__head">
+              <div className="sf-craft-sheet__title-wrap">
+                <GameItemIcon itemId={activeBagItemId} size="md" />
+                <div className="sf-craft-sheet__meta">
+                  <div className="sf-craft-sheet__name-row">
+                    <strong>{activeBagEntry.item.name}</strong>
+                    <span className="sf-craft-sheet__kind">
+                      {ITEM_KIND_LABELS[activeBagEntry.kind] ?? '装备'}
+                    </span>
+                  </div>
+                  <div className="sf-craft-sheet__desc">
+                    <RichGameText text={activeBagEntry.item.desc} />
+                  </div>
+                </div>
+              </div>
+              <div className="sf-craft-sheet__head-actions">
+                <button
+                  type="button"
+                  className="sf-craft-sheet__mini-btn"
+                  onClick={() => openCodex('items', activeBagItemId)}
+                  title="在完整合成图鉴中查看"
+                >
+                  图鉴
+                </button>
+                {pendingEquipIndex !== null && hoveredBagIndex === null ? (
+                  <button
+                    type="button"
+                    className="sf-craft-sheet__mini-btn sf-craft-sheet__mini-btn--close"
+                    onClick={() => setTargetAction(null)}
+                    aria-label="取消选中装备"
+                  >
+                    ✕
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            {isCraftComponentKind(activeBagEntry.kind) ? (
+              <>
+                {craftableNow.length > 0 ? (
+                  <div
+                    className="sf-craft-ready-section"
+                    data-testid="hud-craft-ready-section"
+                  >
+                    <div className="sf-craft-section-head">
+                      <span className="sf-craft-section-head__title">背包可立即合成</span>
+                      <span className="sf-craft-section-head__badge">
+                        {craftableNow.length} 件可用
+                      </span>
+                    </div>
+                    <div className="sf-craft-ready-list">
+                      {craftableNow.map(({ partnerId, result }) => (
+                        <div key={partnerId} className="sf-craft-ready-row">
+                          <div className="sf-craft-ready-row__top">
+                            <span className="sf-craft-ready-icons">
+                              <GameItemIcon itemId={activeBagItemId} size="xs" />
+                              <span className="sf-craft-op">+</span>
+                              <GameItemIcon itemId={partnerId} size="xs" />
+                              <span className="sf-craft-arrow">→</span>
+                              <GameItemIcon itemId={result.id} size="sm" />
+                            </span>
+                            <strong className="sf-craft-ready-name">{result.name}</strong>
+                          </div>
+                          <div className="sf-craft-ready-desc">
+                            <RichGameText text={result.desc} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="sf-craft-all-section">
+                  <div className="sf-craft-section-head">
+                    <span className="sf-craft-section-head__title">全部合成路线</span>
+                    <span className="sf-craft-section-head__sub">9 配方</span>
+                  </div>
+                  <div className="sf-craft-all-grid" data-testid="hud-craft-all-grid">
+                    {ALL_CRAFT_COMPONENT_IDS.map((partnerId) => {
+                      const res = lookupCraftRecipe(activeBagItemId, partnerId);
+                      if (!res) return null;
+                      const owned = otherBagIdSet.has(partnerId);
+                      return (
+                        <button
+                          key={partnerId}
+                          type="button"
+                          className={`sf-craft-chip ${owned ? 'sf-craft-chip--owned' : ''}`.trim()}
+                          onClick={() => openCodex('items', res.id)}
+                          title={`${res.name}：${res.desc}`}
+                        >
+                          <GameItemIcon itemId={partnerId} size="xs" />
+                          <span className="sf-craft-arrow">→</span>
+                          <GameItemIcon itemId={res.id} size="xs" />
+                          <span className="sf-craft-chip__name">{res.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            ) : 'components' in activeBagEntry.item &&
+              activeBagEntry.item.components.length === 2 ? (
+              <div className="sf-craft-formula-strip">
+                <span className="sf-craft-formula-strip__label">合成配方</span>
+                <span className="sf-craft-ready-icons">
+                  <GameItemIcon itemId={activeBagEntry.item.components[0]!} size="xs" />
+                  <span className="sf-craft-op">+</span>
+                  <GameItemIcon itemId={activeBagEntry.item.components[1]!} size="xs" />
+                  <span className="sf-craft-arrow">→</span>
+                  <GameItemIcon itemId={activeBagItemId} size="xs" />
+                </span>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </aside>
 
       <aside
@@ -1126,27 +1409,154 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             </button>
           </div>
 
-          <p style={{ margin: '8px 0 6px', fontSize: 12.5, color: 'var(--text-secondary)' }}>
-            {inspectedDef.skillSummary}
+          <p className="sf-inspect-skill-text">
+            <RichGameText text={inspectedDef.skillSummary} />
           </p>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 11.5, marginBottom: 8 }}>
+          <div className="sf-inspect-stats-row">
             <span className="blc-chip">射程 {inspectedDef.stats.range} 格</span>
             <span className="blc-chip">
               法力 {inspectedDef.stats.initialMana}/{inspectedDef.stats.maxMana}
             </span>
-            {inspectedUnit.items.map((iid, i) => (
-              <span key={`${iid}-${i}`} className="blc-chip blc-chip--gold">
-                ◆ {lookupItemById(iid)?.item.name ?? '装备'}
-              </span>
-            ))}
+            <span className="blc-chip">攻速 {inspectedDef.stats.atkSpeed.toFixed(2)}</span>
           </div>
 
-          <div className="blc-inspect-paper-box">
-            <RecommendedItemsTree
-              recommendedItemIds={inspectedDef.recommendedItems}
-              ownedComponentIds={self.inventoryItems}
-            />
+          <div
+            className="sf-inspect-equip-section"
+            onMouseLeave={() => setHoveredInspectItemId(null)}
+          >
+            <div className="sf-inspect-section-head">
+              <span>已穿戴装备</span>
+              <span className="sf-inspect-section-count">{inspectedUnit.items.length}/3</span>
+            </div>
+            <div className="sf-inspect-equip-row" data-testid="unit-inspect-equip-slots">
+              {[0, 1, 2].map((slotIdx) => {
+                const iid = inspectedUnit.items[slotIdx] ?? null;
+                if (!iid) {
+                  return (
+                    <div
+                      key={`empty-${slotIdx}`}
+                      className="sf-inspect-equip-slot sf-inspect-equip-slot--empty"
+                      aria-label="空装备槽"
+                    >
+                      <span className="sf-inspect-equip-slot__empty-mark" aria-hidden="true" />
+                    </div>
+                  );
+                }
+                const itemEntry = lookupItemById(iid);
+                const isComp = isCraftComponentKind(itemEntry?.kind);
+                const isActiveHover = hoveredInspectItemId === iid;
+                return (
+                  <button
+                    key={`${iid}-${slotIdx}`}
+                    type="button"
+                    className={`sf-inspect-equip-slot sf-inspect-equip-slot--filled ${
+                      isComp ? 'sf-inspect-equip-slot--comp' : 'sf-inspect-equip-slot--completed'
+                    } ${isActiveHover ? 'sf-inspect-equip-slot--active' : ''}`.trim()}
+                    onMouseEnter={() => setHoveredInspectItemId(iid)}
+                    onFocus={() => setHoveredInspectItemId(iid)}
+                    onClick={() => openCodex('items', iid)}
+                    aria-label={itemEntry?.item.name ?? '已穿戴装备'}
+                  >
+                    <GameItemIcon itemId={iid} size="sm" />
+                  </button>
+                );
+              })}
+            </div>
+
+            {inspectedDef.recommendedItems.length > 0 ? (
+              <div className="sf-inspect-rec-section" data-testid="unit-inspect-recommended">
+                <div className="sf-inspect-section-head">
+                  <span>推荐出装</span>
+                  <span className="sf-inspect-rec-legend">
+                    <span className="sf-inspect-rec-legend__dot" aria-hidden="true" />
+                    背包已有散件
+                  </span>
+                </div>
+                <div className="sf-rec-build-row">
+                  {inspectedDef.recommendedItems.slice(0, 3).map((recId) => {
+                    const recEntry = lookupItemById(recId);
+                    if (!recEntry) return null;
+                    const compIds =
+                      'components' in recEntry.item ? recEntry.item.components : [];
+                    const remainingBag = [...self.inventoryItems];
+                    const compStates = compIds.map((cid) => {
+                      const foundIdx = remainingBag.indexOf(cid);
+                      const owned = foundIdx >= 0;
+                      if (owned) remainingBag.splice(foundIdx, 1);
+                      return { id: cid, owned };
+                    });
+                    const allOwned =
+                      compStates.length === 2 && compStates.every((c) => c.owned);
+                    const isHoveringRec = hoveredInspectItemId === recId;
+                    return (
+                      <button
+                        key={recId}
+                        type="button"
+                        className={`sf-rec-build-card ${
+                          allOwned ? 'sf-rec-build-card--ready' : ''
+                        } ${isHoveringRec ? 'sf-rec-build-card--active' : ''}`.trim()}
+                        onMouseEnter={() => setHoveredInspectItemId(recId)}
+                        onFocus={() => setHoveredInspectItemId(recId)}
+                        onClick={() => openCodex('items', recId)}
+                        aria-label={`推荐装备：${recEntry.item.name}`}
+                      >
+                        {allOwned ? <span className="sf-rec-ready-tag">可合</span> : null}
+                        <span className="sf-rec-build-icon">
+                          <GameItemIcon itemId={recId} size="md" />
+                        </span>
+                        <span className="sf-rec-build-name">{recEntry.item.name}</span>
+                        {compStates.length === 2 ? (
+                          <span className="sf-rec-build-recipe">
+                            <span
+                              className={`sf-rec-comp ${
+                                compStates[0]!.owned ? 'sf-rec-comp--owned' : ''
+                              }`.trim()}
+                            >
+                              <GameItemIcon itemId={compStates[0]!.id} size="xs" />
+                            </span>
+                            <span className="sf-craft-op">+</span>
+                            <span
+                              className={`sf-rec-comp ${
+                                compStates[1]!.owned ? 'sf-rec-comp--owned' : ''
+                              }`.trim()}
+                            >
+                              <GameItemIcon itemId={compStates[1]!.id} size="xs" />
+                            </span>
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {(() => {
+              const hoveredEntry = hoveredInspectItemId
+                ? lookupItemById(hoveredInspectItemId)
+                : null;
+              if (!hoveredInspectItemId || !hoveredEntry) return null;
+              return (
+                <div
+                  className="sf-inspect-item-detail"
+                  data-testid="unit-inspect-item-tooltip"
+                >
+                  <GameItemIcon itemId={hoveredInspectItemId} size="sm" />
+                  <div className="sf-inspect-item-detail__body">
+                    <div className="sf-inspect-item-detail__title">
+                      <strong>{hoveredEntry.item.name}</strong>
+                      <span className="sf-craft-sheet__kind">
+                        {ITEM_KIND_LABELS[hoveredEntry.kind] ?? '装备'}
+                      </span>
+                    </div>
+                    <div className="sf-inspect-item-detail__desc">
+                      <RichGameText text={hoveredEntry.item.desc} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {inspectedAllyUnit && isStrategy ? (
@@ -1534,7 +1944,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
         />
       ) : null}
 
-      {matchSnapshot.phase === 'learning' && matchSnapshot.learning ? (
+      {matchSnapshot.phase === 'learning' && matchSnapshot.learning && !matchSnapshot.learning.complete ? (
         <div className="learning-briefing-backdrop" data-testid="inmatch-learning-overlay">
           <div className="sf-learning-overlay-shell">
             <div className="sf-learning-card-host">
@@ -1651,6 +2061,8 @@ export function MatchHudOverlay(): React.JSX.Element | null {
           codexUnitId={codexUnitId}
           ownedComponentIds={self.inventoryItems}
           audioBus={audioBus}
+          initialTab={codexInitialTab}
+          initialItemId={codexInitialItemId}
           onSelectUnit={setCodexUnitId}
           onClose={() => setCodexOpen(false)}
         />

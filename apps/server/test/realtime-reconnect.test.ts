@@ -270,7 +270,7 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
     expect(snapshot.battle?.battles.some((battle) => battle.leftSeatId === snapshot.seatId || battle.rightSeatId === snapshot.seatId)).toBe(true);
   }, 10_000);
 
-  it('transitions out of learning early into resource and strategy once all humans finish and confirm', async () => {
+  it('auto-exits learning into strategy immediately without confirmation once solo human finishes all questions', async () => {
     const { token, room } = await startMatch();
     const snapshots = stream<MatchRoomSnapshot>();
     const socket = await connectAuthoritativeMatch(room.roomId, token, { onSnapshot: snapshots.push }); sockets.add(socket);
@@ -286,15 +286,67 @@ describe('authoritative transport recovery on the real Colyseus listener', () =>
       }
       snapshot = snapshots.values.at(-1)!;
     }
-    expect(snapshot.phase).toBe('learning');
-    expect(snapshot.learning?.complete).toBe(true);
-    const beforeCount = snapshots.values.length;
-    await socket.sendLearningAdvance();
-    const afterConfirm = await snapshots.wait((s) => s.phase === 'resource' || s.phase === 'strategy', beforeCount, 2000);
-    expect(['resource', 'strategy']).toContain(afterConfirm.phase);
-    const strategySnap = afterConfirm.phase === 'strategy'
-      ? afterConfirm
-      : await snapshots.wait((s) => s.phase === 'strategy', snapshots.values.length, 4000);
+    const strategySnap = await snapshots.wait((s) => s.phase === 'strategy', 0, 5000);
     expect(strategySnap.phase).toBe('strategy');
   }, 12_000);
+
+  it('allows an online player who finished learning to enter strategy actions immediately without waiting for other humans', async () => {
+    const p1 = await server.auth.register({ username: `early_a_${randomUUID().replaceAll('-', '').slice(0, 12)}`, password: 'early-test-password', nickname: '甲' });
+    const p2 = await server.auth.register({ username: `early_b_${randomUUID().replaceAll('-', '').slice(0, 12)}`, password: 'early-test-password', nickname: '乙' });
+    const t1 = (await server.auth.login({ username: p1.username, password: 'early-test-password' })).token;
+    const t2 = (await server.auth.login({ username: p2.username, password: 'early-test-password' })).token;
+    const u1 = { profile: p1, token: t1 };
+    const u2 = { profile: p2, token: t2 };
+    const basePref = { subject: 'english' as const, learningStartSelections: {}, preferredArena: 'orbital_elevator_port' as const, displaySettings: { fullscreen: false, orientation: 'landscape' as const } };
+    const created = await server.matches.createMatch({
+      ticketId: randomUUID(),
+      prepRoomCodes: [],
+      durationMode: 'quick',
+      queueType: 'casual',
+      sharedSubject: 'english',
+      humans: [u1.profile, u2.profile],
+      humanPrefs: { [u1.profile.userId]: basePref, [u2.profile.userId]: basePref },
+    });
+    const room = server.matches.getRoom(created.roomId)!;
+    const s1 = stream<MatchRoomSnapshot>();
+    const s2 = stream<MatchRoomSnapshot>();
+    const sock1 = await connectAuthoritativeMatch(room.roomId, u1.token, { onSnapshot: s1.push }); sockets.add(sock1);
+    const sock2 = await connectAuthoritativeMatch(room.roomId, u2.token, { onSnapshot: s2.push }); sockets.add(sock2);
+
+    let snap1 = await s1.wait((s) => s.phase === 'learning' && Boolean(s.learning), 0, 5000);
+    await s2.wait((s) => s.phase === 'learning' && Boolean(s.learning), 0, 5000);
+
+    while (snap1.phase === 'learning' && snap1.learning && !snap1.learning.complete) {
+      const lrn = snap1.learning;
+      if (lrn.currentStep === 'material' || lrn.currentStep === 'remediation') {
+        await sock1.sendLearningAdvance();
+      } else {
+        for (const q of lrn.clientQuestions.filter((item) => !lrn.submittedQuestionIds.includes(item.questionId))) {
+          await sock1.sendLearningSubmit(q.questionId, { answer: null, status: 'skipped', questionId: q.questionId });
+        }
+      }
+      snap1 = s1.values.at(-1)!;
+    }
+    expect(snap1.phase).toBe('learning');
+    expect(snap1.learning?.complete).toBe(true);
+
+    const earlyBuy = await sock1.sendCommand({ type: 'BUY_XP' });
+    expect(earlyBuy.ok).toBe(true);
+    await expect(sock2.sendCommand({ type: 'BUY_XP' })).rejects.toThrow('STRATEGY_PHASE_REQUIRED');
+
+    let snap2 = s2.values.at(-1)!;
+    while (snap2.phase === 'learning' && snap2.learning && !snap2.learning.complete) {
+      const lrn = snap2.learning;
+      if (lrn.currentStep === 'material' || lrn.currentStep === 'remediation') {
+        await sock2.sendLearningAdvance();
+      } else {
+        for (const q of lrn.clientQuestions.filter((item) => !lrn.submittedQuestionIds.includes(item.questionId))) {
+          await sock2.sendLearningSubmit(q.questionId, { answer: null, status: 'skipped', questionId: q.questionId });
+        }
+      }
+      snap2 = s2.values.at(-1)!;
+    }
+    const bothStrat = await s1.wait((s) => s.phase === 'strategy', 0, 5000);
+    expect(bothStrat.phase).toBe('strategy');
+  }, 15_000);
 });

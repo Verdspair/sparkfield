@@ -73,6 +73,11 @@ const BASE_EXPOSURE = 0.98;
 const SUBPAGE_EXPOSURE = 0.66;
 const SUBPAGE_FRAME_INTERVAL_MS = 50;
 const MATCH_TACTICIAN_HOME = { x: -5.85, y: 0.08, z: 5.35 } as const;
+const TACTICIAN_RUN_SPEED = 7.4;
+const TACTICIAN_ORB_MAGNET_RADIUS = 0.95;
+const TACTICIAN_DECK_X_LIMIT = 6.95;
+const TACTICIAN_DECK_Z_MIN = -5.75;
+const TACTICIAN_DECK_Z_MAX = 6.95;
 
 function computeMatchCameraMetrics(
   layout: ShopCameraLayout,
@@ -129,7 +134,12 @@ export class BoardStageEngine {
     18,
     0.76,
   );
-  private matchTacticianReturnTimerSec = 0;
+  private readonly tacticianOrbQueue: string[] = [];
+  private tacticianMoveTarget: { x: number; z: number } | null = null;
+  private tacticianVelX = 0;
+  private tacticianVelZ = 0;
+  private tacticianYaw = Math.PI * 0.28;
+  private tacticianTrailTimerSec = 0;
 
   private readonly unitStates = new Map<string, StageUnitState>();
   private readonly unitRigs = new Map<string, UnitActorRig>();
@@ -339,7 +349,7 @@ export class BoardStageEngine {
     this.selectiveBloom.selection.clear();
     if (this.sceneMode === 'match') {
       for (const obj of this.arena.getActiveBloomTargets()) this.selectiveBloom.selection.add(obj);
-      for (const obj of this.vfx.bloomTargets) this.selectiveBloom.selection.add(obj);
+      for (const obj of this.vfx.getActiveBloomTargets()) this.selectiveBloom.selection.add(obj);
       for (const obj of this.matchTacticianRig.bloomTargets) this.selectiveBloom.selection.add(obj);
       this.selectiveBloom.selection.add(this.lightGuidePulseRing);
       for (const rig of this.unitRigs.values()) {
@@ -876,6 +886,11 @@ export class BoardStageEngine {
     if (phase !== 'strategy') {
       this.cancelActiveInteraction();
     }
+    if (phase === 'battle') {
+      this.tacticianOrbQueue.length = 0;
+      this.tacticianMoveTarget = { x: MATCH_TACTICIAN_HOME.x, z: MATCH_TACTICIAN_HOME.z };
+      this.collectAllLootOrbs();
+    }
     if (phase === 'learning') {
       this.setLearningOverlayActive(true);
     } else if (this.learningOverlayActive && phase === 'strategy') {
@@ -1013,58 +1028,106 @@ export class BoardStageEngine {
   }
 
   public syncLootOrbs(orbs: readonly StageLootOrbState[]): void {
-    const newBloom = this.vfx.syncLootOrbs(orbs);
-    if (this.selectiveBloom && this.sceneMode === 'match') {
-      for (const m of newBloom) this.selectiveBloom.selection.add(m);
+    const { addedBloom, removedBloom } = this.vfx.syncLootOrbs(orbs);
+    if (this.selectiveBloom) {
+      for (const m of removedBloom) this.selectiveBloom.selection.delete(m);
+      if (this.sceneMode === 'match') {
+        for (const m of addedBloom) this.selectiveBloom.selection.add(m);
+      }
+    }
+    for (let i = this.tacticianOrbQueue.length - 1; i >= 0; i -= 1) {
+      if (!this.vfx.getLootOrbTargetPos(this.tacticianOrbQueue[i]!)) {
+        this.tacticianOrbQueue.splice(i, 1);
+      }
     }
   }
 
-  private dashMatchTacticianToward(worldX: number, worldZ: number): void {
-    this.matchTacticianPosSpring.setTarget(worldX, 0.24, worldZ);
-    const dx = worldX - this.matchTacticianRig.root.position.x;
-    const dz = worldZ - this.matchTacticianRig.root.position.z;
-    if (Math.hypot(dx, dz) > 0.05) {
-      this.matchTacticianRig.root.rotation.y = Math.atan2(dx, dz);
+  public getTacticianWorldPos(): { x: number; y: number; z: number } {
+    return {
+      x: this.matchTacticianRig.root.position.x,
+      y: this.matchTacticianRig.root.position.y,
+      z: this.matchTacticianRig.root.position.z,
+    };
+  }
+
+  public getLootOrbWorldPos(orbId: string): { x: number; z: number } | null {
+    return this.vfx.getLootOrbWorldPos(orbId);
+  }
+
+  public getActiveGoldFloatCount(): number {
+    return this.hudOverlay?.getActiveGoldFloatCount() ?? 0;
+  }
+
+  private getTacticianChestPos(): { x: number; y: number; z: number } {
+    return {
+      x: this.matchTacticianRig.root.position.x,
+      y: this.matchTacticianRig.root.position.y + 0.56,
+      z: this.matchTacticianRig.root.position.z,
+    };
+  }
+
+  public moveTacticianTo(worldX: number, worldZ: number): void {
+    const clampedX = Math.max(-TACTICIAN_DECK_X_LIMIT, Math.min(TACTICIAN_DECK_X_LIMIT, worldX));
+    const clampedZ = Math.max(TACTICIAN_DECK_Z_MIN, Math.min(TACTICIAN_DECK_Z_MAX, worldZ));
+    this.tacticianOrbQueue.length = 0;
+    this.tacticianMoveTarget = { x: clampedX, z: clampedZ };
+  }
+
+  public enqueueLootOrbPickup(orbId: string): boolean {
+    const target = this.vfx.getLootOrbTargetPos(orbId);
+    if (!target) return false;
+    this.tacticianMoveTarget = null;
+    if (!this.tacticianOrbQueue.includes(orbId)) {
+      this.tacticianOrbQueue.push(orbId);
     }
-    this.matchTacticianRig.triggerEmote('collect_orb');
-    this.matchTacticianReturnTimerSec = 0.65;
+    this.vfx.spawnGroundClickRipple(target.x, target.z, true);
+    return true;
   }
 
   public collectLootOrb(orbId: string): boolean {
-    const orbPos = this.vfx.getLootOrbWorldPos(orbId);
-    if (orbPos) {
-      this.dashMatchTacticianToward(orbPos.x, orbPos.z);
+    return this.enqueueLootOrbPickup(orbId);
+  }
+
+  private handleLootOrbBurst(
+    orbId: string,
+    goldAmount: number,
+    burstPos: { readonly x: number; readonly y: number; readonly z: number },
+    removedBloomMesh?: THREE.Object3D,
+  ): void {
+    if (removedBloomMesh) {
+      this.selectiveBloom?.selection.delete(removedBloomMesh);
     }
-    const targetWorld = orbPos
-      ? { x: orbPos.x, y: 0.65, z: orbPos.z }
-      : {
-          x: this.matchTacticianRig.root.position.x,
-          y: 0.65,
-          z: this.matchTacticianRig.root.position.z,
-        };
-    return this.vfx.collectLootOrb(
+    this.hudOverlay?.spawnGoldFloat(
+      { x: burstPos.x, y: burstPos.y + 0.36, z: burstPos.z },
+      goldAmount,
+    );
+    this.matchTacticianRig.triggerEmote('collect_orb');
+    this.callbacks.onCollectLootOrb?.(orbId, goldAmount);
+  }
+
+  private triggerOrbMagnetCollect(orbId: string): boolean {
+    return this.vfx.magnetCollectLootOrb(
       orbId,
-      (id, gold) => {
-        this.matchTacticianRig.triggerEmote('cheer');
-        this.callbacks.onCollectLootOrb?.(id, gold);
+      () => this.getTacticianChestPos(),
+      0.14,
+      (id, gold, burstPos, removedBloom) => {
+        this.handleLootOrbBurst(id, gold, burstPos, removedBloom);
       },
-      targetWorld,
+      0,
     );
   }
 
   public collectAllLootOrbs(): void {
-    this.matchTacticianRig.triggerEmote('collect_orb');
-    this.vfx.collectAllLootOrbs(
-      (id, gold) => {
-        this.matchTacticianRig.triggerEmote('cheer');
-        this.callbacks.onCollectLootOrb?.(id, gold);
-      },
-      {
-        x: this.matchTacticianRig.root.position.x,
-        y: 0.65,
-        z: this.matchTacticianRig.root.position.z,
+    this.tacticianOrbQueue.length = 0;
+    const count = this.vfx.collectAllLootOrbs(
+      () => this.getTacticianChestPos(),
+      (id, gold, burstPos, removedBloom) => {
+        this.handleLootOrbBurst(id, gold, burstPos, removedBloom);
       },
     );
+    if (count > 0) {
+      this.matchTacticianRig.triggerEmote('collect_orb');
+    }
   }
 
   public playStarUpConvergence(instanceId: string, newStar: 2 | 3): void {
@@ -1182,15 +1245,19 @@ export class BoardStageEngine {
     const wx = hit ? hit.x : 0;
     const wz = hit ? hit.z : 0;
 
-    const orb = this.vfx.findLootOrbNear(wx, wz);
-    if (orb) {
-      return {
-        kind: 'loot_orb',
-        orbId: orb.orbId,
-        goldAmount: orb.goldAmount,
-        worldX: wx,
-        worldZ: wz,
-      };
+    if (this.activeSeatIndex === 0) {
+      const orb =
+        this.vfx.findLootOrbByRay(this.raycaster.ray) ??
+        this.vfx.findLootOrbNear(wx, wz, 0.78);
+      if (orb) {
+        return {
+          kind: 'loot_orb',
+          orbId: orb.orbId,
+          goldAmount: orb.goldAmount,
+          worldX: orb.targetX,
+          worldZ: orb.targetZ,
+        };
+      }
     }
 
     const origin = getSeatWorldOrigin(this.activeSeatIndex);
@@ -1294,7 +1361,9 @@ export class BoardStageEngine {
     this.pointerDownClient = { x: e.clientX, y: e.clientY };
 
     if (pick.kind === 'loot_orb') {
-      this.collectLootOrb(pick.orbId);
+      this.clearSelectionAndHelpers();
+      this.callbacks.onInspectUnit?.(null);
+      this.enqueueLootOrbPickup(pick.orbId);
       return;
     }
 
@@ -1335,6 +1404,14 @@ export class BoardStageEngine {
     this.clearSelectionAndHelpers();
     this.callbacks.onInspectUnit?.(null);
     this.vfx.spawnGroundClickRipple(pick.worldX, pick.worldZ);
+    if (
+      this.activeSeatIndex === 0 &&
+      !this.learningOverlayActive &&
+      (this.currentPhase === 'strategy' || this.currentPhase === 'resource') &&
+      pick.kind !== 'sell_zone'
+    ) {
+      this.moveTacticianTo(pick.worldX, pick.worldZ);
+    }
   }
 
   private startDraggingUnit(instanceId: string): void {
@@ -1551,24 +1628,116 @@ export class BoardStageEngine {
       }
       this.unitFactory.syncGroundBatches(this.unitRigs.values());
       this.vfx.update(dt);
-
-      if (this.matchTacticianReturnTimerSec > 0) {
-        this.matchTacticianReturnTimerSec = Math.max(0, this.matchTacticianReturnTimerSec - dt);
-        if (this.matchTacticianReturnTimerSec === 0) {
-          this.matchTacticianPosSpring.setTarget(
-            MATCH_TACTICIAN_HOME.x,
-            MATCH_TACTICIAN_HOME.y,
-            MATCH_TACTICIAN_HOME.z,
-          );
-          this.matchTacticianRig.root.rotation.y = Math.PI * 0.28;
-        }
-      }
-      const tp = this.matchTacticianPosSpring.step(dt);
-      this.matchTacticianRig.root.position.set(tp.x, tp.y, tp.z);
-      this.matchTacticianRig.update(dt, this.elapsedSec);
+      this.stepMatchTactician(dt);
     } else {
       this.lobbyStage.update(dt);
     }
+  }
+
+  private stepMatchTactician(dt: number): void {
+    let curX = this.matchTacticianPosSpring.x.value;
+    let curZ = this.matchTacticianPosSpring.z.value;
+
+    while (this.tacticianOrbQueue.length > 0) {
+      if (this.vfx.getLootOrbTargetPos(this.tacticianOrbQueue[0]!)) break;
+      this.tacticianOrbQueue.shift();
+    }
+
+    const headOrbId = this.tacticianOrbQueue[0] ?? null;
+    const orbTarget = headOrbId ? this.vfx.getLootOrbTargetPos(headOrbId) : null;
+    const activeTarget = orbTarget ?? this.tacticianMoveTarget;
+    const hasFollowUp = this.tacticianOrbQueue.length > 1;
+
+    if (activeTarget) {
+      const dx = activeTarget.x - curX;
+      const dz = activeTarget.z - curZ;
+      const dist = Math.hypot(dx, dz);
+      if (dist > 0.05) {
+        const desiredSpeed = hasFollowUp
+          ? TACTICIAN_RUN_SPEED
+          : Math.min(TACTICIAN_RUN_SPEED, dist * 10.5);
+        const dvx = (dx / dist) * desiredSpeed;
+        const dvz = (dz / dist) * desiredSpeed;
+        const blend = 1 - Math.exp(-16 * dt);
+        this.tacticianVelX += (dvx - this.tacticianVelX) * blend;
+        this.tacticianVelZ += (dvz - this.tacticianVelZ) * blend;
+      } else {
+        if (!headOrbId) {
+          this.tacticianMoveTarget = null;
+        }
+        const decay = Math.exp(-18 * dt);
+        this.tacticianVelX *= decay;
+        this.tacticianVelZ *= decay;
+      }
+    } else {
+      const decay = Math.exp(-18 * dt);
+      this.tacticianVelX *= decay;
+      this.tacticianVelZ *= decay;
+    }
+
+    curX += this.tacticianVelX * dt;
+    curZ += this.tacticianVelZ * dt;
+
+    if (
+      activeTarget &&
+      !headOrbId &&
+      Math.hypot(activeTarget.x - curX, activeTarget.z - curZ) < 0.08
+    ) {
+      curX = activeTarget.x;
+      curZ = activeTarget.z;
+      this.tacticianVelX = 0;
+      this.tacticianVelZ = 0;
+      this.tacticianMoveTarget = null;
+    }
+
+    const speed = Math.hypot(this.tacticianVelX, this.tacticianVelZ);
+    const speedRatio = Math.min(1, speed / TACTICIAN_RUN_SPEED);
+
+    if (speed > 0.18) {
+      const desiredYaw = Math.atan2(this.tacticianVelX, this.tacticianVelZ);
+      const yawDiff = Math.atan2(
+        Math.sin(desiredYaw - this.tacticianYaw),
+        Math.cos(desiredYaw - this.tacticianYaw),
+      );
+      this.tacticianYaw += yawDiff * (1 - Math.exp(-15 * dt));
+    }
+
+    const runHopY = Math.abs(Math.sin(this.elapsedSec * 14.5)) * 0.16 * speedRatio;
+    const curY = MATCH_TACTICIAN_HOME.y + runHopY;
+
+    this.matchTacticianPosSpring.snap(curX, curY, curZ);
+    this.matchTacticianRig.root.position.set(curX, curY, curZ);
+    this.matchTacticianRig.root.rotation.y = this.tacticianYaw;
+    const leanBlend = 1 - Math.exp(-14 * dt);
+    this.matchTacticianRig.root.rotation.x +=
+      (speedRatio * 0.11 - this.matchTacticianRig.root.rotation.x) * leanBlend;
+
+    if (speed > 1.2) {
+      this.tacticianTrailTimerSec += dt;
+      if (this.tacticianTrailTimerSec >= 0.042) {
+        this.tacticianTrailTimerSec = 0;
+        this.vfx.spawnTacticianTrailSpark(curX, curY + 0.12, curZ);
+      }
+    } else {
+      this.tacticianTrailTimerSec = 0;
+    }
+
+    if (this.activeSeatIndex === 0 && !this.learningOverlayActive) {
+      const nearby = this.vfx.findCollectibleLootOrbsNear(
+        curX,
+        curZ,
+        TACTICIAN_ORB_MAGNET_RADIUS,
+      );
+      for (const orb of nearby) {
+        const qIdx = this.tacticianOrbQueue.indexOf(orb.orbId);
+        if (qIdx >= 0) {
+          this.tacticianOrbQueue.splice(qIdx, 1);
+        }
+        this.triggerOrbMagnetCollect(orb.orbId);
+      }
+    }
+
+    this.matchTacticianRig.update(dt, this.elapsedSec);
   }
 
   private renderFrameInternal(dt: number): void {

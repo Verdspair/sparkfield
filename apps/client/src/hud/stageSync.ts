@@ -339,6 +339,17 @@ export class LiveBattleChoreographer {
   }
 }
 
+const LOOT_ORB_HEX_SLOTS: readonly { readonly row: number; readonly col: number }[] = [
+  { row: 5, col: 2 },
+  { row: 5, col: 4 },
+  { row: 6, col: 3 },
+  { row: 6, col: 1 },
+  { row: 6, col: 5 },
+  { row: 4, col: 3 },
+  { row: 5, col: 1 },
+  { row: 5, col: 5 },
+];
+
 export class SnapshotStageSynchronizer {
   private prevStarByInstance = new Map<string, 1 | 2 | 3>();
   private collectedOrbKeys = new Set<string>();
@@ -357,7 +368,9 @@ export class SnapshotStageSynchronizer {
       this.lastOrbEmoteKey = '';
     }
 
-    stage.setPhase(snapshot.phase);
+    const effectivePhase =
+      snapshot.phase === 'learning' && snapshot.learning?.complete ? 'strategy' : snapshot.phase;
+    stage.setPhase(effectivePhase);
     stage.setGoldAndCharge(snapshot.self.gold);
     stage.setCryoPodEnabled(snapshot.self.cryoPodEnabled);
 
@@ -383,23 +396,28 @@ export class SnapshotStageSynchronizer {
       this.prevStarByInstance.set(u.instanceId, u.star);
     }
 
-    if (snapshot.phase === 'resource' || snapshot.phase === 'strategy') {
+    if (snapshot.phase === 'resource' || snapshot.phase === 'strategy' || effectivePhase === 'strategy') {
       const orbs: StageLootOrbState[] = (snapshot.self.learningGoldOrbs ?? [])
-        .map((goldAmount, idx) => ({
-          orbId: `orb:${snapshot.matchId}:n${snapshot.nodeIndex}:${idx}`,
-          goldAmount,
-          row: 5 + (idx % 2),
-          col: 2 + ((idx * 2) % 4),
-        }))
+        .map((goldAmount, idx) => {
+          const slot = LOOT_ORB_HEX_SLOTS[idx % LOOT_ORB_HEX_SLOTS.length]!;
+          return {
+            orbId: `orb:${snapshot.matchId}:n${snapshot.nodeIndex}:${idx}`,
+            goldAmount,
+            row: slot.row,
+            col: slot.col,
+          };
+        })
         .filter((orb) => !this.collectedOrbKeys.has(orb.orbId));
       stage.syncLootOrbs(orbs);
-      if (snapshot.phase === 'resource' && orbs.length > 0) {
-        const orbKey = `${snapshot.matchId}:n${snapshot.nodeIndex}:p${snapshot.phaseIndex}`;
+      if (orbs.length > 0) {
+        const orbKey = `${snapshot.matchId}:n${snapshot.nodeIndex}`;
         if (this.lastOrbEmoteKey !== orbKey) {
           this.lastOrbEmoteKey = orbKey;
           stage.triggerTacticianEmote('collect_orb');
         }
       }
+    } else if (effectivePhase === 'battle') {
+      stage.collectAllLootOrbs();
     } else {
       stage.syncLootOrbs([]);
     }

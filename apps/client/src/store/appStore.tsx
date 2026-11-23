@@ -699,8 +699,10 @@ export function AppStoreProvider({ children }: { readonly children: React.ReactN
     stage.setArenaTheme(arenaTheme);
   }, [arenaTheme]);
 
+  const isEarlyStrategyUnlocked =
+    matchSnapshot?.phase === 'learning' && Boolean(matchSnapshot.learning?.complete);
   const shouldSuspendGpuForLearning =
-    overlayCount > 0 || matchSnapshot?.phase === 'learning';
+    overlayCount > 0 || (matchSnapshot?.phase === 'learning' && !isEarlyStrategyUnlocked);
 
   useEffect(() => {
     const stage = stageRef.current;

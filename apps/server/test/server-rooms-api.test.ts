@@ -576,12 +576,15 @@ describe.each([
     }
     let current = lesson;
     const firstNodeQuestionIds = new Set<string>();
-    for (let step = 0; step < 8 && current.learning && !current.learning.complete; step++) {
+    for (let step = 0; step < 8 && current.phase === 'learning' && current.learning && !current.learning.complete; step++) {
       safeQuestions(current.learning.clientQuestions);
       expect(current.learning.clientQuestions.every((q) => q.subject === 'english')).toBe(true);
       if (current.learning.currentStep === 'material' || current.learning.currentStep === 'remediation') {
         expect((await requestLearning(studyInbox, 'advance')).ok).toBe(true);
       } else {
+        if (queueType === 'ranked' && firstNodeQuestionIds.size === 0) {
+          expect(await studyInbox.command({ type: 'BUY_CARD', shopIndex: 0 })).toMatchObject({ ok: false, reason: 'STRATEGY_PHASE_REQUIRED' });
+        }
         for (const q of current.learning.clientQuestions) {
           if (queueType === 'ranked') {
             const poison = await requestLearning(studyInbox, 'submit', q.questionId, { questionId: 'wrong-question-id', answer: 'x' });
@@ -593,17 +596,10 @@ describe.each([
       }
       current = await studyInbox.snapshot();
     }
-    expect(current.learning!.complete).toBe(true);
     if (queueType === 'ranked') {
-      expect(current.phase).toBe('learning'); expect(current.phaseIndex).toBe(lesson.phaseIndex);
-      expect(current.deadlineEpochMs).toBe(lesson.deadlineEpochMs);
-      expect(current.self.gold).toBe(lesson.self.gold); expect(current.self.shop).toEqual(lesson.self.shop);
-      expect(current.self.goldLedger.filter((entry) => entry.reason === 'learning')).toEqual([]);
-      expect(await studyInbox.command({ type: 'BUY_CARD', shopIndex: 0 })).toMatchObject({ ok: false, reason: 'STRATEGY_PHASE_REQUIRED' });
-      const stillLearning = await studyInbox.snapshot();
-      expect(stillLearning.phase).toBe('learning'); expect(stillLearning.deadlineEpochMs).toBe(lesson.deadlineEpochMs);
-      expect(stillLearning.self.gold).toBe(lesson.self.gold); expect(stillLearning.self.shop).toEqual(lesson.self.shop);
-      const resource = await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'resource' && s.nodeIndex === 0);
+      const resource = current.phase === 'resource' && current.nodeIndex === 0
+        ? current
+        : await studyInbox.wait<Snapshot>('snapshot', (s) => s.phase === 'resource' && s.nodeIndex === 0);
       expect(resource.resourceSettlement).toMatchObject({ nodeIndex: 0, rawEarnedCents: 180, carryInCents: 0,
         grantedIntegerGold: 1, carryOutCents: 80, orbSplits: [1] });
       expect(resource.self.gold).toBe(lesson.self.gold + 1);

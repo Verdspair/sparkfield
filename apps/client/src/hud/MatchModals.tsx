@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   LINEUP_PLANNER_MAX_SLOTS,
   SEASON1_AUGMENTS,
@@ -10,7 +10,8 @@ import {
   type GameCommand,
 } from '@pkg/contracts';
 import { getUnitRecommendedBuilds, type ActiveTrait, type SeatState } from '@pkg/game-core';
-import { UnitLoreDrawer } from '@pkg/learning-ui';
+import { GameItemIcon, RichGameText, UnitLoreDrawer } from '@pkg/learning-ui';
+import { EquipmentCodexMatrix } from '../components/EquipmentCodexMatrix.js';
 import { UnitPortrait } from '../components/UnitPortrait.js';
 
 function formatMMSS(sec: number): string {
@@ -23,9 +24,11 @@ function formatMMSS(sec: number): string {
 function ThreeRingEnergyEmblem({
   tier,
   variant = 'augment',
+  itemId,
 }: {
   readonly tier: 'silver' | 'gold' | 'prismatic';
   readonly variant?: 'augment' | 'anvil';
+  readonly itemId?: string;
 }): React.JSX.Element {
   const strokePrimary =
     tier === 'prismatic' ? '#e879f9' : tier === 'gold' ? '#f2c97d' : '#cbd5e1';
@@ -66,7 +69,9 @@ function ThreeRingEnergyEmblem({
         />
       </svg>
       <div className="sf-tri-ring-emblem__core">
-        {variant === 'anvil' ? (
+        {variant === 'anvil' && itemId ? (
+          <GameItemIcon itemId={itemId} size="lg" />
+        ) : variant === 'anvil' ? (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path
               d="M4 9h16l-2 4h-3l2 6H7l2-6H6L4 9Z"
@@ -179,7 +184,9 @@ export function MatchChoiceModal({
                             : '白银阶强化'}
                       </span>
                       <h3 className="sf-augment-name">{aug?.name ?? '星海强化'}</h3>
-                      <div className="sf-augment-desc-box">{aug?.desc ?? ''}</div>
+                      <div className="sf-augment-desc-box">
+                        {aug?.desc ? <RichGameText text={aug.desc} /> : ''}
+                      </div>
                       <button
                         type="button"
                         className="sf-augment-pick-btn"
@@ -233,12 +240,14 @@ export function MatchChoiceModal({
                     data-testid={`anvil-option-${optIdx}`}
                     data-item-id={itemId}
                   >
-                    <ThreeRingEnergyEmblem tier={tier} variant="anvil" />
+                    <ThreeRingEnergyEmblem tier={tier} variant="anvil" itemId={itemId} />
                     <span className={`sf-augment-tier-tag sf-augment-tier-tag--${tier}`}>
                       {activeAnvil.kind === 'completed' ? '成装补给' : '散件补给'}
                     </span>
                     <h3 className="sf-augment-name">{entry?.item.name ?? '装备'}</h3>
-                    <div className="sf-augment-desc-box">{entry?.item.desc ?? ''}</div>
+                    <div className="sf-augment-desc-box">
+                      {entry?.item.desc ? <RichGameText text={entry.item.desc} /> : ''}
+                    </div>
                     {matchingUnits.length > 0 ? (
                       <div className="sf-anvil-fits" aria-label="推荐佩戴棋子">
                         {matchingUnits.map((u) => (
@@ -432,13 +441,24 @@ export function MatchCodexModal({
   audioBus,
   onSelectUnit,
   onClose,
+  initialTab = 'units',
+  initialItemId = null,
 }: {
   readonly codexUnitId: string;
   readonly ownedComponentIds: readonly string[];
   readonly audioBus: AudioEventBus;
   readonly onSelectUnit: (unitId: string) => void;
   readonly onClose: () => void;
+  readonly initialTab?: 'items' | 'units';
+  readonly initialItemId?: string | null;
 }): React.JSX.Element {
+  const [activeTab, setActiveTab] = useState<'items' | 'units'>(initialTab);
+  const [itemSearch, setItemSearch] = useState<string>('');
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   return (
     <div
       className="blc-modal-backdrop sf-hud-modal"
@@ -449,21 +469,55 @@ export function MatchCodexModal({
     >
       <div className="ui-metal-frame ui-corner-ornaments blc-workbench-modal">
         <div className="blc-col-head">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <UnitPortrait unitId={codexUnitId} size="sm" />
-            <strong>棋子图鉴</strong>
-            <select
-              className="blc-select"
-              style={{ width: 220 }}
-              value={codexUnitId}
-              onChange={(e) => onSelectUnit(e.target.value)}
-            >
-              {SEASON1_UNITS.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.cost}费 · {u.name} ({u.faction}/{u.role})
-                </option>
-              ))}
-            </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div className="sf-equip-view-switch" role="tablist" aria-label="局内图鉴切换">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'items'}
+                className={`sf-equip-view-btn ${activeTab === 'items' ? 'sf-equip-view-btn--active' : ''}`.trim()}
+                onClick={() => setActiveTab('items')}
+                data-testid="codex-tab-items"
+              >
+                装备合成图鉴
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'units'}
+                className={`sf-equip-view-btn ${activeTab === 'units' ? 'sf-equip-view-btn--active' : ''}`.trim()}
+                onClick={() => setActiveTab('units')}
+                data-testid="codex-tab-units"
+              >
+                棋子图鉴
+              </button>
+            </div>
+            {activeTab === 'units' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <UnitPortrait unitId={codexUnitId} size="sm" />
+                <select
+                  className="blc-select"
+                  style={{ width: 220 }}
+                  value={codexUnitId}
+                  onChange={(e) => onSelectUnit(e.target.value)}
+                >
+                  {SEASON1_UNITS.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.cost}费 · {u.name} ({u.faction}/{u.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <input
+                type="search"
+                className="sf-equip-search-input"
+                placeholder="搜装备、散件、效果…"
+                value={itemSearch}
+                onChange={(e) => setItemSearch(e.target.value)}
+                data-testid="codex-item-search"
+              />
+            )}
           </div>
           <button
             type="button"
@@ -474,15 +528,30 @@ export function MatchCodexModal({
           </button>
         </div>
         <div className="blc-workbench-scroll">
-          <UnitLoreDrawer
-            unitId={codexUnitId}
-            loreData={SEASON1_LORE}
-            initialTab="overview"
-            ownedComponentIds={ownedComponentIds}
-            audioBus={audioBus}
-          />
+          {activeTab === 'items' ? (
+            <EquipmentCodexMatrix
+              compact
+              searchQuery={itemSearch}
+              ownedComponentIds={ownedComponentIds}
+              initialItemId={initialItemId}
+              onSelectUnit={(uid) => {
+                onSelectUnit(uid);
+                setActiveTab('units');
+              }}
+            />
+          ) : (
+            <UnitLoreDrawer
+              unitId={codexUnitId}
+              loreData={SEASON1_LORE}
+              initialTab="overview"
+              ownedComponentIds={ownedComponentIds}
+              audioBus={audioBus}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+export const InMatchCodexModal = MatchCodexModal;

@@ -6,6 +6,7 @@ import {
   type AudioEventBus,
   type UnitDef,
 } from '@pkg/contracts';
+import { GameItemIcon, RichGameText } from './GameRichIcons.js';
 import { MarkdownKatexBlock } from './MarkdownKatexBlock.js';
 import { ensureLearningUiStyles } from './learningUiStyles.js';
 
@@ -136,7 +137,7 @@ export function RecommendedItemsTree({
               onClick={() => setExpandedItemId(itemId)}
               data-testid={`rec-item-${itemId}`}
             >
-              <span className="lui-recipe-gem" aria-hidden="true">◆</span>
+              <GameItemIcon itemId={itemId} size="xs" />
               <span>{itemName}</span>
             </button>
           );
@@ -150,22 +151,23 @@ export function RecommendedItemsTree({
           data-testid="active-recipe-formula"
         >
           <div className="lui-recipe-formula-top">
-            <strong className="lui-recipe-formula-name">{activeCompleted.name}</strong>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <GameItemIcon itemId={activeCompleted.id} size="sm" />
+              <strong className="lui-recipe-formula-name">{activeCompleted.name}</strong>
+            </span>
             {activeCompleted.formula ? (
               <span className="lui-subtle-pill">{activeCompleted.formula}</span>
             ) : null}
           </div>
-          <div className="lui-recipe-formula-desc">{activeCompleted.desc}</div>
+          <div className="lui-recipe-formula-desc">
+            <RichGameText text={activeCompleted.desc} />
+          </div>
           <div className="lui-recipe-chain">
             {(() => {
               const remaining = new Map(ownedCounts);
               return activeCompleted.components.map((compId, idx) => {
                 const compEntry = lookupItemById(compId);
                 const compLabel = compEntry ? compEntry.item.name : compId;
-                const compGlyph =
-                  compEntry && compEntry.kind === 'component'
-                    ? compEntry.item.short
-                    : '◆';
                 const compTitle =
                   compEntry && 'desc' in compEntry.item ? compEntry.item.desc : undefined;
                 const avail = remaining.get(compId) ?? 0;
@@ -179,9 +181,7 @@ export function RecommendedItemsTree({
                       data-owned={isOwned ? 'true' : 'false'}
                       title={compTitle}
                     >
-                      <span className="lui-recipe-glyph" aria-hidden="true">
-                        {compGlyph}
-                      </span>
+                      <GameItemIcon itemId={compId} size="xs" className="lui-recipe-glyph" />
                       <span>{compLabel}</span>
                       {isOwned ? <span className="lui-owned-tag">背包已有</span> : null}
                     </span>
@@ -326,7 +326,9 @@ export function UnitLoreDrawer({
                     <span className="lui-briefing-diamond" aria-hidden="true" />
                     <span>技能</span>
                   </div>
-                  <MarkdownKatexBlock content={resolvedUnitDef.skillSummary} />
+                  <div className="lui-unit-skill-desc">
+                    <RichGameText text={resolvedUnitDef.skillSummary} />
+                  </div>
                   <hr className="lui-metal-divider" style={{ marginTop: 12 }} />
                   <div className="lui-stat-grid">
                     <div className="lui-stat-cell">

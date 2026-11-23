@@ -95,7 +95,11 @@ describe('offline direct remediation preserves frozen scored evidence', () => {
       }
       expect(internal.lessonProgress.bundle.frozenDenominators).toEqual(denominators);
       expect(internal.lessonProgress.submissions[check.questionId]).toEqual(original);
-      await local.skipCurrentPhaseWait();
+      if (view().phase === 'learning') {
+        await local.skipCurrentPhaseWait();
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
       const settlement = view().resourceSettlement;
       const written = add.mock.calls.length;
       expect(view().phase).toBe('resource');

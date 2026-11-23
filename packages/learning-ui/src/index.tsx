@@ -36,3 +36,15 @@ export {
   type UnitDrawerTab,
   type UnitLoreDrawerProps,
 } from './LoreArchiveReader.js';
+
+export {
+  GameItemIcon,
+  RichGameText,
+  StatInlineIcon,
+  tokenizeRichGameText,
+  type GameItemIconProps,
+  type GameItemIconSize,
+  type RichGameTextProps,
+  type RichGameTextSegment,
+  type StatTokenKind,
+} from './GameRichIcons.js';

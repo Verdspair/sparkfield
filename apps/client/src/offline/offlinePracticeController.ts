@@ -534,6 +534,10 @@ export class OfflinePracticeMatchController {
       }
       this.lessonProgress.step += 1;
       this.normalizeLessonStep();
+      if (this.lessonProgress.complete) {
+        void this.skipCurrentPhaseWait();
+        return { ok: true, feedback: fb };
+      }
     }
     this.emitSnapshot();
     return { ok: true, feedback: fb };
@@ -771,6 +775,8 @@ export class OfflinePracticeMatchController {
             nodeIndex: this.nodeIndex,
             currentStep: current,
             complete: lp.complete,
+            correctCount: lp.bundle.questions.filter((q) => Boolean(lp.feedback[q.questionId]?.isCorrect)).length,
+            totalQuestionsCount: lp.bundle.questions.length,
             clientQuestions: lp.bundle.clientQuestions.filter((q) => q.stepRole === current),
             steps: lp.bundle.steps.map((step, index) => ({
               kind: step.kind,
