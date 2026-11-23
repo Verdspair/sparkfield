@@ -55,14 +55,14 @@ function ModeEmblemSvg({ mode, size = 46 }: { readonly mode: DurationMode; reado
       <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
         <path
           d="M27 6L12 26H23L20 42L36 21H25L27 6Z"
-          fill="rgba(79,209,255,0.22)"
-          stroke="#4fd1ff"
+          fill="rgba(123,185,232,0.24)"
+          stroke="#93c8f0"
           strokeWidth="2"
           strokeLinejoin="round"
         />
         <path
           d="M9 17L16 14M39 31L32 34"
-          stroke="#a5f3fc"
+          stroke="#b4dcf7"
           strokeWidth="1.6"
           strokeLinecap="round"
         />
@@ -74,18 +74,18 @@ function ModeEmblemSvg({ mode, size = 46 }: { readonly mode: DurationMode; reado
       <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
         <polygon
           points="24,5 39,14 39,34 24,43 9,34 9,14"
-          fill="rgba(242,201,125,0.16)"
-          stroke="#f2c97d"
+          fill="rgba(222,197,146,0.20)"
+          stroke="#dec592"
           strokeWidth="2"
         />
         <path
           d="M17 31L31 17M25 17H31V23M31 31L17 17"
-          stroke="#fff0c4"
+          stroke="#f2e1bc"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <circle cx="24" cy="24" r="3" fill="#4fd1ff" />
+        <circle cx="24" cy="24" r="3" fill="#93c8f0" />
       </svg>
     );
   }
@@ -93,13 +93,13 @@ function ModeEmblemSvg({ mode, size = 46 }: { readonly mode: DurationMode; reado
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
       <path
         d="M9 32L13 15L20 22L24 10L28 22L35 15L39 32H9Z"
-        fill="rgba(192,132,252,0.22)"
-        stroke="#c084fc"
+        fill="rgba(194,168,240,0.24)"
+        stroke="#c2a8f0"
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <rect x="11" y="34" width="26" height="4" rx="2" fill="#f2c97d" />
-      <circle cx="24" cy="24" r="2.6" fill="#fff0c4" />
+      <rect x="11" y="34" width="26" height="4" rx="2" fill="#dec592" />
+      <circle cx="24" cy="24" r="2.6" fill="#f2e1bc" />
     </svg>
   );
 }
@@ -114,7 +114,7 @@ function NavIconLearning(): React.JSX.Element {
       />
       <path
         d="M20 6.5C20 5.67 19.33 5 18.5 5H13C12.45 5 12 5.45 12 6V19C12 18.45 12.45 18 13 18H18.5C19.33 18 20 17.33 20 16.5V6.5Z"
-        stroke="#4fd1ff"
+        stroke="#93c8f0"
         strokeWidth="1.7"
       />
     </svg>
@@ -129,7 +129,7 @@ function NavIconCollection(): React.JSX.Element {
         stroke="currentColor"
         strokeWidth="1.7"
       />
-      <polygon points="12,7.5 16,12 12,16.5 8,12" stroke="#4fd1ff" strokeWidth="1.5" />
+      <polygon points="12,7.5 16,12 12,16.5 8,12" stroke="#93c8f0" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -142,7 +142,7 @@ function NavIconRanking(): React.JSX.Element {
         stroke="currentColor"
         strokeWidth="1.7"
       />
-      <path d="M8 7H5V9.5C5 10.88 6.12 12 7.5 12H8M16 7H19V9.5C19 10.88 17.88 12 16.5 12H16" stroke="#4fd1ff" strokeWidth="1.5" />
+      <path d="M8 7H5V9.5C5 10.88 6.12 12 7.5 12H8M16 7H19V9.5C19 10.88 17.88 12 16.5 12H16" stroke="#93c8f0" strokeWidth="1.5" />
       <path d="M12 14V18M8.5 19H15.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
@@ -152,7 +152,7 @@ function NavIconMall(): React.JSX.Element {
   return (
     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect x="4" y="9" width="16" height="11" rx="2" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M12 9V20M4 13H20" stroke="#4fd1ff" strokeWidth="1.5" />
+      <path d="M12 9V20M4 13H20" stroke="#93c8f0" strokeWidth="1.5" />
       <path d="M12 9C12 6.5 9.5 5 8 6.5C6.5 8 9.5 9 12 9ZM12 9C12 6.5 14.5 5 16 6.5C17.5 8 14.5 9 12 9Z" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
@@ -162,7 +162,7 @@ function NavIconProfile(): React.JSX.Element {
   return (
     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="8.5" r="3.6" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M5.5 19.5C6.4 16.2 8.9 14.5 12 14.5C15.1 14.5 17.6 16.2 18.5 19.5" stroke="#4fd1ff" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M5.5 19.5C6.4 16.2 8.9 14.5 12 14.5C15.1 14.5 17.6 16.2 18.5 19.5" stroke="#93c8f0" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
 }
@@ -282,15 +282,13 @@ export function LobbyPage(): React.JSX.Element {
 
   return (
     <div className="sf-lobby-viewport" data-testid="lobby-page">
-      <div className="sf-lobby-vignette-left" aria-hidden="true" />
-      <div className="sf-lobby-vignette-bottom" aria-hidden="true" />
 
       <header className="sf-lobby-topbar">
         <div className="sf-season-crest" data-testid="lobby-season-crest">
           <span className="sf-season-crest__emblem" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-              <polygon points="10,2 17,6 17,14 10,18 3,14 3,6" stroke="#fff0c4" strokeWidth="1.6" />
-              <circle cx="10" cy="10" r="2.8" fill="#4fd1ff" />
+              <polygon points="10,2 17,6 17,14 10,18 3,14 3,6" stroke="#f2e1bc" strokeWidth="1.6" />
+              <circle cx="10" cy="10" r="2.8" fill="#93c8f0" />
             </svg>
           </span>
           <div className="sf-season-crest__meta">
@@ -459,39 +457,25 @@ export function LobbyPage(): React.JSX.Element {
           {hasActivePrepRoom ? (
             <button
               type="button"
-              className="sf-start-orb-btn sf-start-orb-btn--resume"
+              className="sf-start-action-btn sf-start-action-btn--resume"
               onClick={() => setViewingPrepRoom(true)}
               data-testid="lobby-resume-prep-btn"
             >
-              <svg className="sf-start-orb__ring-outer" viewBox="0 0 130 130" fill="none" aria-hidden="true">
-                <circle cx="65" cy="65" r="61" stroke="rgba(165,243,252,0.52)" strokeWidth="1.5" strokeDasharray="16 10 4 10" />
-              </svg>
-              <svg className="sf-start-orb__ring-inner" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-                <circle cx="60" cy="60" r="56" stroke="rgba(255,240,196,0.44)" strokeWidth="1" strokeDasharray="6 8" />
-              </svg>
-              <span className="sf-start-orb__sheen" aria-hidden="true" />
-              <span className="sf-start-orb__label">回到房间</span>
-              <span className="sf-start-orb__sub">{lobbyState.prepRoom?.roomCode}</span>
+              <span className="sf-start-action__label">回到房间</span>
+              <span className="sf-start-action__sub">{lobbyState.prepRoom?.roomCode}</span>
             </button>
           ) : (
             <button
               type="button"
-              className="sf-start-orb-btn"
+              className="sf-start-action-btn"
               disabled={enteringMode !== null}
               onClick={() => void handleEnterPrepRoom(selectedMode)}
               data-testid="lobby-start-game-btn"
             >
-              <svg className="sf-start-orb__ring-outer" viewBox="0 0 130 130" fill="none" aria-hidden="true">
-                <circle cx="65" cy="65" r="61" stroke="rgba(255,240,196,0.68)" strokeWidth="1.6" strokeDasharray="20 9 5 9" />
-              </svg>
-              <svg className="sf-start-orb__ring-inner" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-                <circle cx="60" cy="60" r="56" stroke="rgba(79,209,255,0.52)" strokeWidth="1.1" strokeDasharray="8 10" />
-              </svg>
-              <span className="sf-start-orb__sheen" aria-hidden="true" />
-              <span className="sf-start-orb__label">
+              <span className="sf-start-action__label">
                 {enteringMode ? '载入中' : '开始游戏'}
               </span>
-              <span className="sf-start-orb__sub">
+              <span className="sf-start-action__sub">
                 {selectedModeMeta.title} · {selectedModeMeta.minutes}分
               </span>
             </button>
@@ -510,7 +494,7 @@ export function LobbyPage(): React.JSX.Element {
           if (e.target === e.currentTarget) setModeOverlayOpen(false);
         }}
       >
-        <div className="sf-mode-drawer ui-corner-ornaments">
+        <div className="sf-mode-drawer">
           <div className="sf-mode-drawer__head">
             <h2 className="sf-mode-drawer__title">选择模式</h2>
             <button
@@ -550,7 +534,7 @@ export function LobbyPage(): React.JSX.Element {
                   ) : null}
 
                   <div className="sf-emblem-crest">
-                    <ModeEmblemSvg mode={card.mode} size={46} />
+                    <ModeEmblemSvg mode={card.mode} size={30} />
                   </div>
 
                   <div className="sf-emblem-title">{card.title}</div>
@@ -561,7 +545,7 @@ export function LobbyPage(): React.JSX.Element {
                   </div>
 
                   <div className="sf-emblem-meta">
-                    约 {card.minutes} 分钟 · {card.arcSummary} · {spec.rounds} 场战斗
+                    {card.arcSummary} · {spec.rounds} 场战斗
                   </div>
 
                   <div className="sf-emblem-footer">
@@ -574,8 +558,8 @@ export function LobbyPage(): React.JSX.Element {
                         : isCurrentRoomMode
                           ? '回到备战房'
                           : isSelected
-                            ? '点击进入 ›'
-                            : '选择模式'}
+                            ? '已选择'
+                            : ''}
                     </span>
                   </div>
                 </button>
@@ -629,7 +613,7 @@ export function LobbyPage(): React.JSX.Element {
             if (e.target === e.currentTarget) setCodeModalOpen(false);
           }}
         >
-          <div className="sf-join-dialog ui-corner-ornaments">
+          <div className="sf-join-dialog">
             <div className="blc-dialog-sm__head">
               <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--accent-gold-bright)' }}>
                 加入房间
@@ -655,7 +639,7 @@ export function LobbyPage(): React.JSX.Element {
                   letterSpacing: '0.16em',
                   fontWeight: 700,
                   background: 'rgba(9, 15, 29, 0.84)',
-                  borderColor: 'rgba(242, 201, 125, 0.36)',
+                  borderColor: 'rgba(216, 194, 148, 0.34)',
                 }}
                 placeholder="输入 8 位房间码"
                 maxLength={10}

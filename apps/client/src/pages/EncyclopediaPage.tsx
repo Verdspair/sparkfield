@@ -552,28 +552,23 @@ export function EncyclopediaPage(): React.JSX.Element {
                     <button
                       key={u.id}
                       type="button"
-                      className={`sf-enc-unit-tile sf-cost-border--${u.cost} ${
+                      className={`sf-enc-unit-tile ${
                         selectedUnitId === u.id ? 'sf-enc-unit-tile--selected' : ''
                       }`.trim()}
                       onClick={() => openUnit(u)}
                       data-testid={`enc-unit-${u.id}`}
                     >
                       <div className="sf-enc-unit-tile__row">
-                        <UnitPortrait unitId={u.id} size="lg" />
+                        <UnitPortrait unitId={u.id} size="md" />
                         <div className="sf-enc-unit-tile__meta">
                           <div className="sf-enc-unit-tile__name">{u.name}</div>
-                          <div className="blc-gold-text" style={{ fontSize: 12, marginTop: 2 }}>
-                            {u.cost} 费
-                          </div>
+                          <div className="sf-enc-unit-tile__cost">{u.cost} 费</div>
                           <div className="sf-enc-unit-tile__tags">
                             {u.faction} · {u.role}
                             {u.uniqueTrait ? ` · ${u.uniqueTrait}` : ''}
                           </div>
                         </div>
                       </div>
-                      <p className="sf-enc-unit-tile__summary">
-                        <GameEffectText fullText={u.skillSummary} />
-                      </p>
                     </button>
                   ))}
                 </div>

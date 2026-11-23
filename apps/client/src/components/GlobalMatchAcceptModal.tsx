@@ -84,7 +84,7 @@ export function GlobalMatchAcceptModal(): React.JSX.Element | null {
       aria-label="对局确认"
       data-testid="global-match-accept-modal"
     >
-      <div className="ui-metal-frame ui-corner-ornaments blc-accept-card sf-accept-card-wide">
+      <div className="ui-metal-frame blc-accept-card sf-accept-card-wide">
         <span className="blc-accept-card__eyebrow">MATCH FOUND · S1 光锥之外</span>
         <h2 className="blc-accept-card__title">对局就绪</h2>
         <p className="blc-accept-card__meta">
@@ -103,7 +103,7 @@ export function GlobalMatchAcceptModal(): React.JSX.Element | null {
               cy="56"
               r={RING_RADIUS}
               fill="none"
-              stroke="rgba(148, 179, 224, 0.2)"
+              stroke="rgba(137,163,184, 0.2)"
               strokeWidth="4"
             />
             <circle
@@ -111,20 +111,13 @@ export function GlobalMatchAcceptModal(): React.JSX.Element | null {
               cy="56"
               r={RING_RADIUS}
               fill="none"
-              stroke="url(#sfAcceptGoldGrad)"
+              stroke="var(--accent-gold)"
               strokeWidth="4.5"
               strokeLinecap="round"
               strokeDasharray={RING_CIRCUMFERENCE}
               strokeDashoffset={strokeDashoffset}
               transform="rotate(-90 56 56)"
             />
-            <defs>
-              <linearGradient id="sfAcceptGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fff0c4" />
-                <stop offset="50%" stopColor="#f2c97d" />
-                <stop offset="100%" stopColor="#4fd1ff" />
-              </linearGradient>
-            </defs>
           </svg>
           <div className="blc-accept-card__countdown" data-testid="accept-countdown">
             {String(remainingSec).padStart(2, '0')}s

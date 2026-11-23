@@ -23,136 +23,65 @@ export const LEARNING_UI_CSS = `
   }
 }
 
-@keyframes lui-star-pulse {
-  0%, 100% {
-    box-shadow:
-      0 0 0 2px rgba(79, 209, 255, 0.24),
-      0 0 10px rgba(79, 209, 255, 0.55);
-  }
-  50% {
-    box-shadow:
-      0 0 0 4px rgba(242, 201, 125, 0.28),
-      0 0 15px rgba(79, 209, 255, 0.8);
-  }
-}
-
-@keyframes lui-track-flow {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 200% 50%;
-  }
-}
-
-@keyframes lui-option-breathe {
-  0%, 100% {
-    box-shadow:
-      0 0 0 1px rgba(242, 201, 125, 0.62),
-      0 0 14px rgba(79, 209, 255, 0.16),
-      inset 0 1px 0 rgba(255, 240, 196, 0.22);
-  }
-  50% {
-    box-shadow:
-      0 0 0 1px rgba(79, 209, 255, 0.72),
-      0 0 20px rgba(242, 201, 125, 0.28),
-      inset 0 1px 0 rgba(255, 240, 196, 0.34);
-  }
-}
-
-@keyframes lui-emerald-starlight {
-  0% {
-    box-shadow:
-      0 0 0 1px rgba(52, 211, 153, 0.9),
-      0 0 22px rgba(52, 211, 153, 0.52);
-  }
-  100% {
-    box-shadow:
-      0 0 0 1px rgba(52, 211, 153, 0.72),
-      0 0 14px rgba(52, 211, 153, 0.26);
-  }
-}
-
-@keyframes lui-clock-pulse {
-  0%, 100% {
-    opacity: 0.72;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes lui-cta-sheen {
-  0% {
-    transform: translateX(-140%) skewX(-22deg);
-  }
-  38%, 100% {
-    transform: translateX(240%) skewX(-22deg);
-  }
-}
-
 .lui-paper-shell {
-  --lui-shell-bg: linear-gradient(180deg, rgba(16, 28, 52, 0.985) 0%, rgba(11, 20, 39, 0.992) 52%, rgba(8, 15, 30, 0.995) 100%);
-  --lui-header-bg: linear-gradient(180deg, rgba(25, 40, 70, 0.94) 0%, rgba(15, 26, 48, 0.96) 100%);
-  --lui-footer-bg: linear-gradient(180deg, rgba(13, 22, 41, 0.96) 0%, rgba(9, 16, 31, 0.98) 100%);
-  --lui-body-bg: radial-gradient(ellipse at 50% 0%, rgba(79, 209, 255, 0.07) 0%, rgba(15, 26, 48, 0) 64%);
-  --lui-card-bg: #15233e;
-  --lui-card-elevated: #1a2b4c;
-  --lui-scaffold-bg: linear-gradient(165deg, rgba(23, 38, 69, 0.97) 0%, rgba(14, 25, 47, 0.98) 100%);
-  --lui-scaffold-head-bg: linear-gradient(90deg, rgba(242, 201, 125, 0.14) 0%, rgba(79, 209, 255, 0.06) 100%);
-  --lui-card-muted: rgba(24, 39, 68, 0.86);
-  --lui-card-border: rgba(141, 162, 192, 0.24);
-  --lui-card-gold-border: rgba(242, 201, 125, 0.44);
-  --lui-ink-primary: #f1f5f9;
-  --lui-ink-secondary: #cbd5e1;
-  --lui-ink-muted: #8da2c0;
-  --lui-heading-ink: #f8fafc;
-  --lui-gold-hi: #fff0c4;
-  --lui-gold-base: #f2c97d;
-  --lui-gold-deep: #a87932;
-  --lui-azure-hi: #a5f3fc;
-  --lui-azure: #4fd1ff;
-  --lui-azure-deep: #0ea5e9;
-  --lui-emerald: #34d399;
-  --lui-emerald-bg: rgba(16, 54, 46, 0.88);
-  --lui-emerald-ink: #d1fae5;
-  --lui-warn: #fbbf24;
-  --lui-warn-bg: rgba(56, 38, 16, 0.84);
-  --lui-warn-ink: #fef3c7;
-  --lui-err: #fb7185;
-  --lui-err-bg: rgba(62, 22, 34, 0.86);
-  --lui-err-ink: #ffe4e6;
-  --lui-code-bg: rgba(9, 15, 29, 0.72);
-  --lui-quote-bg: rgba(25, 41, 72, 0.85);
-  --lui-katex-bg: rgba(9, 16, 32, 0.56);
-  --lui-option-bg: rgba(21, 35, 62, 0.92);
-  --lui-option-hover-bg: rgba(28, 46, 80, 0.96);
-  --lui-option-sel-bg: linear-gradient(135deg, rgba(40, 56, 88, 0.96) 0%, rgba(26, 44, 74, 0.98) 100%);
-  --lui-option-diamond-bg: linear-gradient(135deg, #293e66 0%, #162440 100%);
-  --lui-option-diamond-border: rgba(148, 163, 184, 0.55);
-  --lui-option-diamond-ink: #e2e8f0;
-  --lui-input-bg: rgba(11, 20, 38, 0.9);
-  --lui-subtle-pill-bg: rgba(79, 209, 255, 0.12);
-  --lui-subtle-pill-ink: #bae6fd;
-  --lui-subtle-pill-border: rgba(79, 209, 255, 0.28);
-  --lui-ref-bg: rgba(22, 37, 66, 0.86);
-  --lui-ref-ink: #f2c97d;
-  --lui-ref-border: rgba(242, 201, 125, 0.42);
-  --lui-match-stroke: #f2c97d;
-  --lui-match-node: #4fd1ff;
+  --lui-shell-bg: var(--sf-surface-elevated, linear-gradient(180deg, rgba(22, 34, 58, 0.92) 0%, rgba(15, 24, 41, 0.95) 100%));
+  --lui-header-bg: rgba(16, 25, 42, 0.88);
+  --lui-footer-bg: rgba(16, 25, 42, 0.88);
+  --lui-body-bg: rgba(13, 21, 37, 0.84);
+  --lui-card-bg: var(--sf-surface-card, linear-gradient(180deg, rgba(24, 37, 62, 0.88) 0%, rgba(17, 27, 46, 0.92) 100%));
+  --lui-card-elevated: var(--sf-surface-cell-active, rgba(31, 47, 76, 0.90));
+  --lui-scaffold-bg: var(--sf-surface-card, linear-gradient(180deg, rgba(24, 37, 62, 0.88) 0%, rgba(17, 27, 46, 0.92) 100%));
+  --lui-scaffold-head-bg: var(--sf-surface-cell-active, rgba(31, 47, 76, 0.90));
+  --lui-card-muted: var(--sf-surface-cell, rgba(16, 25, 42, 0.82));
+  --lui-card-border: var(--hairline, rgba(216, 194, 148, 0.18));
+  --lui-card-gold-border: var(--hairline-accent, rgba(216, 194, 148, 0.30));
+  --lui-ink-primary: var(--text-primary, #f2f5fa);
+  --lui-ink-secondary: var(--text-secondary, #c2cde0);
+  --lui-ink-muted: var(--text-muted, #93a3bd);
+  --lui-heading-ink: var(--text-primary, #f2f5fa);
+  --lui-gold-hi: var(--accent-gold-bright, #f2e1bc);
+  --lui-gold-base: var(--accent-gold, #dec592);
+  --lui-gold-deep: var(--accent-gold-deep, #b39864);
+  --lui-azure-hi: var(--accent-azure-bright, #b4dcf7);
+  --lui-azure: var(--accent-azure, #7bb9e8);
+  --lui-azure-deep: var(--accent-azure-deep, #4e91c7);
+  --lui-emerald: var(--semantic-success, #5cc498);
+  --lui-emerald-bg: rgba(92, 196, 152, 0.14);
+  --lui-emerald-ink: #d4f3e5;
+  --lui-warn: var(--semantic-warning, #e5b762);
+  --lui-warn-bg: rgba(229, 183, 98, 0.15);
+  --lui-warn-ink: #f6e1b8;
+  --lui-err: var(--semantic-danger, #e07a86);
+  --lui-err-bg: rgba(224, 122, 134, 0.15);
+  --lui-err-ink: #f7d5da;
+  --lui-code-bg: rgba(11, 18, 32, 0.78);
+  --lui-quote-bg: rgba(24, 37, 62, 0.82);
+  --lui-katex-bg: rgba(11, 18, 32, 0.78);
+  --lui-option-bg: rgba(22, 34, 58, 0.84);
+  --lui-option-hover-bg: rgba(31, 47, 76, 0.90);
+  --lui-option-sel-bg: rgba(222, 197, 146, 0.14);
+  --lui-option-diamond-bg: rgba(16, 25, 42, 0.86);
+  --lui-option-diamond-border: rgba(216, 194, 148, 0.28);
+  --lui-option-diamond-ink: #f2f5fa;
+  --lui-input-bg: rgba(11, 18, 32, 0.80);
+  --lui-subtle-pill-bg: rgba(123, 185, 232, 0.14);
+  --lui-subtle-pill-ink: #b4dcf7;
+  --lui-subtle-pill-border: rgba(123, 185, 232, 0.28);
+  --lui-ref-bg: rgba(16, 25, 42, 0.86);
+  --lui-ref-ink: #dec592;
+  --lui-ref-border: rgba(216, 194, 148, 0.34);
+  --lui-match-stroke: var(--accent-gold, #dec592);
+  --lui-match-node: var(--accent-azure, #7bb9e8);
   --lui-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   position: relative;
   box-sizing: border-box;
   background: var(--lui-shell-bg);
+  backdrop-filter: blur(12px);
   color: var(--lui-ink-primary);
-  border: 1px solid rgba(242, 201, 125, 0.54);
-  box-shadow:
-    0 0 0 1px rgba(6, 11, 22, 0.88),
-    inset 0 0 0 1px rgba(168, 121, 50, 0.22),
-    inset 0 1px 0 rgba(255, 240, 196, 0.24),
-    0 24px 64px rgba(3, 7, 18, 0.62);
-  border-radius: 10px;
+  border: 1px solid rgba(216, 194, 148, 0.28);
+  box-shadow: var(--sf-shadow-modal, inset 0 1px 0 rgba(255, 250, 236, 0.12), 0 18px 46px rgba(4, 9, 20, 0.48));
+  border-radius: var(--sf-radius-modal, 10px);
   font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.68;
   display: flex;
@@ -161,11 +90,11 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-paper-shell--parchment .lui-body {
-  --lui-body-bg: linear-gradient(180deg, #eae4d6 0%, #e4ddcd 100%);
+  --lui-body-bg: #eae4d6;
   --lui-card-bg: #f3eee2;
   --lui-card-elevated: #f8f4ea;
-  --lui-scaffold-bg: linear-gradient(165deg, #f8f3e7 0%, #f1eadb 100%);
-  --lui-scaffold-head-bg: linear-gradient(90deg, rgba(168, 121, 50, 0.14) 0%, rgba(14, 111, 140, 0.06) 100%);
+  --lui-scaffold-bg: #f4efe4;
+  --lui-scaffold-head-bg: #eae3d3;
   --lui-card-muted: #e3dbc9;
   --lui-card-border: rgba(122, 97, 54, 0.24);
   --lui-card-gold-border: rgba(168, 121, 50, 0.48);
@@ -190,8 +119,8 @@ export const LEARNING_UI_CSS = `
   --lui-katex-bg: rgba(255, 253, 248, 0.72);
   --lui-option-bg: #f6f2e8;
   --lui-option-hover-bg: #fbf8f0;
-  --lui-option-sel-bg: linear-gradient(135deg, #f6ead0 0%, #efe0be 100%);
-  --lui-option-diamond-bg: linear-gradient(135deg, #ebe3d1 0%, #ddd2bc 100%);
+  --lui-option-sel-bg: #efe5d0;
+  --lui-option-diamond-bg: #e4dccb;
   --lui-option-diamond-border: rgba(122, 97, 54, 0.48);
   --lui-option-diamond-ink: #273244;
   --lui-input-bg: #fbf9f3;
@@ -235,19 +164,6 @@ export const LEARNING_UI_CSS = `
   width: 100%;
 }
 
-.lui-corner-ornament {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  pointer-events: none;
-  opacity: 0.92;
-  z-index: 4;
-}
-.lui-corner-ornament--tl { top: 4px; left: 4px; }
-.lui-corner-ornament--tr { top: 4px; right: 4px; transform: scaleX(-1); }
-.lui-corner-ornament--bl { bottom: 4px; left: 4px; transform: scaleY(-1); }
-.lui-corner-ornament--br { bottom: 4px; right: 4px; transform: scale(-1, -1); }
-
 .lui-header {
   position: relative;
   display: flex;
@@ -257,8 +173,8 @@ export const LEARNING_UI_CSS = `
   gap: 12px;
   padding: 11px 20px;
   background: var(--lui-header-bg);
-  border-bottom: 1px solid rgba(242, 201, 125, 0.3);
-  box-shadow: inset 0 -1px 0 rgba(79, 209, 255, 0.08);
+  border-bottom: 1px solid rgba(216, 194, 148, 0.3);
+  box-shadow: inset 0 -1px 0 rgba(123, 185, 232, 0.08);
 }
 
 .lui-header-actions {
@@ -287,21 +203,19 @@ export const LEARNING_UI_CSS = `
   width: 24px;
   height: 2px;
   margin: 0 7px;
-  border-radius: 999px;
-  background: rgba(141, 162, 192, 0.22);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
   transition: background 240ms var(--lui-ease), box-shadow 240ms var(--lui-ease);
 }
 
 .lui-step-line--done {
-  background: linear-gradient(90deg, #f2c97d 0%, #4fd1ff 100%);
-  box-shadow: 0 0 8px rgba(79, 209, 255, 0.35);
+  background: #dec592;
+  box-shadow: none;
 }
 
 .lui-step-line--active {
-  background: linear-gradient(90deg, #f2c97d 0%, #4fd1ff 50%, #fff0c4 100%);
-  background-size: 200% 100%;
-  animation: lui-track-flow 2.4s linear infinite;
-  box-shadow: 0 0 10px rgba(79, 209, 255, 0.45);
+  background: #89a3b8;
+    box-shadow: none;
 }
 
 .lui-step-pill {
@@ -311,7 +225,7 @@ export const LEARNING_UI_CSS = `
   padding: 3px 5px;
   font-size: 12.5px;
   font-weight: 500;
-  color: #8da2c0;
+  color: #7f8a9c;
   letter-spacing: 0.03em;
   transition: color 200ms var(--lui-ease);
 }
@@ -320,9 +234,9 @@ export const LEARNING_UI_CSS = `
   width: 8px;
   height: 8px;
   border-radius: 1.5px;
-  transform: rotate(45deg);
+  transform: none;
   box-sizing: border-box;
-  border: 1.5px solid rgba(141, 162, 192, 0.48);
+  border: 1.5px solid rgba(255, 255, 255, 0.48);
   background: rgba(15, 26, 48, 0.9);
   transition:
     transform 220ms var(--lui-ease),
@@ -334,24 +248,22 @@ export const LEARNING_UI_CSS = `
 .lui-step-pill--active {
   color: #fff7e6;
   font-weight: 700;
-  text-shadow: 0 0 12px rgba(79, 209, 255, 0.35);
 }
 
 .lui-step-pill--active .lui-step-dot {
-  border-color: #fff0c4;
-  background: #4fd1ff;
-  transform: rotate(45deg) scale(1.18);
-  animation: lui-star-pulse 2.2s ease-in-out infinite;
-}
+  border-color: #f2e1bc;
+  background: #89a3b8;
+  transform: none;
+  }
 
 .lui-step-pill--done {
-  color: #e2e8f0;
+  color: #eef1f5;
 }
 
 .lui-step-pill--done .lui-step-dot {
-  border-color: #fff0c4;
-  background: #f2c97d;
-  box-shadow: 0 0 8px rgba(242, 201, 125, 0.42);
+  border-color: #f2e1bc;
+  background: #dec592;
+  box-shadow: none;
 }
 
 .lui-clock-box {
@@ -359,13 +271,11 @@ export const LEARNING_UI_CSS = `
   align-items: center;
   gap: 7px;
   padding: 3px 11px 3px 6px;
-  border-radius: 5px;
-  background: linear-gradient(180deg, rgba(16, 28, 52, 0.95) 0%, rgba(10, 18, 36, 0.98) 100%);
-  color: #f8fafc;
-  border: 1px solid rgba(79, 209, 255, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(165, 243, 252, 0.16),
-    0 0 12px rgba(79, 209, 255, 0.16);
+  border-radius: var(--sf-radius-slot, 6px);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  color: #eef1f5;
+  border: 1px solid rgba(123, 185, 232, 0.45);
+  box-shadow: none;
   font-variant-numeric: tabular-nums;
   font-size: 13px;
   font-weight: 700;
@@ -373,27 +283,23 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-clock-box--urgent {
-  border-color: rgba(251, 191, 36, 0.72);
-  box-shadow:
-    inset 0 1px 0 rgba(254, 243, 199, 0.22),
-    0 0 14px rgba(251, 113, 133, 0.26);
+  border-color: rgba(199, 161, 99, 0.72);
+  box-shadow: none;
 }
 
 .lui-clock-ring {
   width: 20px;
   height: 20px;
   flex: 0 0 auto;
-  animation: lui-clock-pulse 2s ease-in-out infinite;
 }
 
 .lui-clock-time {
-  color: #fff0c4;
+  color: #f2e1bc;
   line-height: 1;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
 }
 
 .lui-clock-box--urgent .lui-clock-time {
-  color: #fde68a;
+  color: #dec592;
 }
 
 .lui-theme-toggle {
@@ -403,10 +309,10 @@ export const LEARNING_UI_CSS = `
   width: 30px;
   height: 30px;
   padding: 0;
-  border-radius: 7px;
-  border: 1px solid rgba(242, 201, 125, 0.42);
-  background: linear-gradient(180deg, rgba(28, 44, 76, 0.92) 0%, rgba(15, 26, 48, 0.96) 100%);
-  color: #f2c97d;
+  border-radius: var(--sf-radius-card, 8px);
+  border: 1px solid rgba(216, 194, 148, 0.42);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  color: #dec592;
   cursor: pointer;
   transition:
     transform 160ms var(--lui-ease),
@@ -418,21 +324,21 @@ export const LEARNING_UI_CSS = `
 
 .lui-theme-toggle:hover {
   transform: translateY(-1px);
-  border-color: #fff0c4;
-  color: #fff0c4;
-  box-shadow: 0 0 12px rgba(242, 201, 125, 0.28);
+  border-color: #f2e1bc;
+  color: #f2e1bc;
+  box-shadow: none;
 }
 
 .lui-theme-toggle--parchment {
-  background: linear-gradient(180deg, #f3e4be 0%, #dfc07b 100%);
-  border-color: #fff0c4;
-  color: #162136;
-  box-shadow: 0 0 12px rgba(242, 201, 125, 0.36);
+  background: #dec592;
+  border-color: #dec592;
+  color: #141923;
+  box-shadow: none;
 }
 
 .lui-theme-toggle--parchment:hover {
   color: #0b1322;
-  box-shadow: 0 0 16px rgba(242, 201, 125, 0.48);
+  box-shadow: none;
 }
 
 .lui-body {
@@ -444,7 +350,7 @@ export const LEARNING_UI_CSS = `
   flex-direction: column;
   gap: 16px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(242, 201, 125, 0.38) transparent;
+  scrollbar-color: rgba(216, 194, 148, 0.38) transparent;
   transition: background 220ms var(--lui-ease), color 220ms var(--lui-ease);
 }
 
@@ -457,8 +363,8 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-body::-webkit-scrollbar-thumb {
-  background: rgba(242, 201, 125, 0.34);
-  border-radius: 999px;
+  background: rgba(216, 194, 148, 0.34);
+  border-radius: 2px;
 }
 
 .lui-stage-anim {
@@ -488,12 +394,12 @@ export const LEARNING_UI_CSS = `
   align-items: center;
   gap: 4px;
   padding: 2px 9px;
-  border-radius: 5px;
+  border-radius: var(--sf-radius-slot, 6px);
   font-size: 11.5px;
   font-weight: 600;
-  color: var(--lui-subtle-pill-ink, #bae6fd);
-  background: var(--lui-subtle-pill-bg, rgba(79, 209, 255, 0.12));
-  border: 1px solid var(--lui-subtle-pill-border, rgba(79, 209, 255, 0.28));
+  color: var(--lui-subtle-pill-ink, #a4bacb);
+  background: var(--lui-subtle-pill-bg, rgba(123, 185, 232, 0.12));
+  border: 1px solid var(--lui-subtle-pill-border, rgba(123, 185, 232, 0.28));
   font-variant-numeric: tabular-nums;
 }
 
@@ -503,7 +409,7 @@ export const LEARNING_UI_CSS = `
   justify-content: center;
   width: 24px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: var(--sf-radius-slot, 6px);
   background: var(--lui-card-muted);
   border: 1px solid var(--lui-card-border);
   color: var(--lui-gold-base);
@@ -526,29 +432,28 @@ export const LEARNING_UI_CSS = `
   font-size: 12px;
   font-weight: 600;
   background: rgba(24, 39, 68, 0.88);
-  color: #cbd5e1;
-  border: 1px solid rgba(141, 162, 192, 0.28);
+  color: #b7c0ce;
+  border: 1px solid rgba(255, 255, 255, 0.28);
   font-variant-numeric: tabular-nums;
 }
 
 .lui-badge--role {
-  background: linear-gradient(135deg, rgba(242, 201, 125, 0.22) 0%, rgba(168, 121, 50, 0.14) 100%);
-  color: #fff0c4;
-  border-color: rgba(242, 201, 125, 0.5);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  color: #f2e1bc;
+  border-color: rgba(216, 194, 148, 0.5);
 }
 
 .lui-badge--locked {
-  background: rgba(79, 209, 255, 0.14);
-  color: #a5f3fc;
-  border-color: rgba(79, 209, 255, 0.36);
+  background: rgba(123, 185, 232, 0.14);
+  color: #a4bacb;
+  border-color: rgba(123, 185, 232, 0.36);
 }
 
 .lui-badge--stars {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.28) 0%, rgba(180, 83, 9, 0.22) 100%);
-  color: #fef08a;
-  border-color: rgba(245, 158, 11, 0.58);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  color: #dec592;
+  border-color: rgba(199, 161, 99, 0.58);
   letter-spacing: 0.06em;
-  text-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
 }
 
 .lui-cost-badge {
@@ -564,44 +469,34 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-cost-badge--1 {
-  background: linear-gradient(135deg, rgba(148, 163, 184, 0.24), rgba(71, 85, 105, 0.32));
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
   border-color: rgba(203, 213, 225, 0.52);
-  color: #e2e8f0;
+  color: #eef1f5;
 }
 
 .lui-cost-badge--2 {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.26), rgba(6, 95, 70, 0.36));
-  border-color: rgba(110, 231, 183, 0.54);
-  color: #a7f3d0;
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  border-color: rgba(114, 163, 138, 0.54);
+  color: #9cc2ae;
 }
 
 .lui-cost-badge--3 {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.28), rgba(29, 78, 216, 0.38));
-  border-color: rgba(125, 211, 252, 0.58);
-  color: #bae6fd;
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  border-color: rgba(123, 185, 232, 0.58);
+  color: #a4bacb;
 }
 
 .lui-cost-badge--4 {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.28), rgba(107, 33, 168, 0.38));
-  border-color: rgba(232, 121, 249, 0.54);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  border-color: rgba(179, 160, 189, 0.54);
   color: #f3e8ff;
 }
 
 .lui-cost-badge--5 {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.34), rgba(146, 64, 14, 0.42));
-  border-color: rgba(254, 240, 138, 0.68);
-  color: #fef08a;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.26);
-}
-
-.lui-material-drawer {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.lui-material-drawer:empty {
-  display: none;
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  border-color: rgba(216, 194, 148, 0.58);
+  color: #dec592;
+  box-shadow: none;
 }
 
 .lui-ref-btn {
@@ -610,10 +505,10 @@ export const LEARNING_UI_CSS = `
   gap: 6px;
   min-height: 30px;
   padding: 4px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--lui-ref-border, rgba(242, 201, 125, 0.42));
+  border-radius: var(--sf-radius-slot, 6px);
+  border: 1px solid var(--lui-ref-border, rgba(216, 194, 148, 0.42));
   background: var(--lui-ref-bg, rgba(22, 37, 66, 0.86));
-  color: var(--lui-ref-ink, #f2c97d);
+  color: var(--lui-ref-ink, #dec592);
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
@@ -626,24 +521,16 @@ export const LEARNING_UI_CSS = `
 
 .lui-ref-btn:hover {
   transform: translateY(-1px);
-  border-color: var(--lui-gold-base, #f2c97d);
+  border-color: var(--lui-gold-base, #dec592);
   box-shadow: 0 4px 12px rgba(7, 14, 28, 0.24);
 }
 
-.lui-ref-chevron {
-  transition: transform 200ms var(--lui-ease);
-}
-
-.lui-ref-chevron--open {
-  transform: rotate(180deg);
-}
-
 .lui-ref-btn--highlight {
-  border-radius: 5px;
+  border-radius: var(--sf-radius-slot, 6px);
   padding: 4px 13px;
-  border-color: var(--lui-gold-base, #f2c97d);
-  background: linear-gradient(135deg, rgba(242, 201, 125, 0.2) 0%, rgba(168, 121, 50, 0.14) 100%);
-  box-shadow: 0 0 12px rgba(242, 201, 125, 0.18);
+  border-color: var(--lui-gold-base, #dec592);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  box-shadow: none;
 }
 
 .lui-study-workspace {
@@ -684,11 +571,11 @@ export const LEARNING_UI_CSS = `
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border-radius: 10px;
+  border-radius: var(--sf-radius-modal, 10px);
   border: 1px solid var(--lui-card-gold-border);
   background: var(--lui-scaffold-bg, var(--lui-card-elevated));
   box-shadow:
-    inset 0 1px 0 rgba(255, 240, 196, 0.14),
+    inset 0 1px 0 rgba(232, 210, 162, 0.14),
     0 10px 26px rgba(4, 10, 22, 0.26);
   overflow: hidden;
   animation: lui-panel-reveal 200ms var(--lui-ease) both;
@@ -720,10 +607,10 @@ export const LEARNING_UI_CSS = `
   gap: 4px;
   min-height: 26px;
   padding: 2px 9px;
-  border-radius: 5px;
-  border: 1px solid var(--lui-ref-border, rgba(242, 201, 125, 0.42));
+  border-radius: var(--sf-radius-slot, 6px);
+  border: 1px solid var(--lui-ref-border, rgba(216, 194, 148, 0.42));
   background: transparent;
-  color: var(--lui-ref-ink, #f2c97d);
+  color: var(--lui-ref-ink, #dec592);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -732,7 +619,7 @@ export const LEARNING_UI_CSS = `
 
 .lui-scaffold-collapse-btn:hover {
   border-color: var(--lui-gold-base);
-  background: rgba(242, 201, 125, 0.12);
+  background: rgba(216, 194, 148, 0.12);
 }
 
 .lui-material-scaffold__body {
@@ -740,7 +627,7 @@ export const LEARNING_UI_CSS = `
   max-height: min(560px, 60vh);
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(242, 201, 125, 0.38) transparent;
+  scrollbar-color: rgba(216, 194, 148, 0.38) transparent;
 }
 
 .lui-material-scaffold__body::-webkit-scrollbar {
@@ -752,8 +639,8 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-material-scaffold__body::-webkit-scrollbar-thumb {
-  background: rgba(242, 201, 125, 0.34);
-  border-radius: 999px;
+  background: rgba(216, 194, 148, 0.34);
+  border-radius: 2px;
 }
 
 @media (max-width: 919px) {
@@ -762,18 +649,9 @@ export const LEARNING_UI_CSS = `
   }
 }
 
-.lui-material-scaffold__body .lui-md,
-.lui-material-content .lui-md {
+.lui-material-scaffold__body .lui-md {
   font-size: 15px;
   line-height: 1.75;
-}
-
-.lui-material-content {
-  padding: 15px 18px;
-  border-radius: 8px;
-  border: 1px solid var(--lui-card-gold-border);
-  background: var(--lui-card-elevated);
-  animation: lui-panel-reveal 200ms var(--lui-ease) both;
 }
 
 .lui-briefing-canvas {
@@ -800,23 +678,15 @@ export const LEARNING_UI_CSS = `
   width: 8px;
   height: 8px;
   flex: 0 0 auto;
-  transform: rotate(45deg);
+  transform: none;
   background: var(--lui-gold-base);
-  box-shadow: 0 0 8px rgba(242, 201, 125, 0.45);
-}
-
-.lui-section-heading {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--lui-heading-ink);
-  letter-spacing: 0.02em;
+  box-shadow: none;
 }
 
 .lui-metal-divider {
   height: 1px;
   width: 100%;
-  background: linear-gradient(90deg, rgba(242, 201, 125, 0.55) 0%, rgba(79, 209, 255, 0.28) 45%, transparent 100%);
+  background: rgba(216, 194, 148, 0.32);
   border: 0;
   margin: 2px 0;
 }
@@ -828,7 +698,7 @@ export const LEARNING_UI_CSS = `
   color: var(--lui-ink-primary);
   border: 1px solid var(--lui-card-border);
   border-left: 3px solid var(--lui-gold-base);
-  border-radius: 8px;
+  border-radius: var(--sf-radius-card, 8px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 6px 18px rgba(5, 10, 22, 0.16);
@@ -843,7 +713,7 @@ export const LEARNING_UI_CSS = `
   padding: 24px 28px;
   border-left-color: var(--lui-azure);
   box-shadow:
-    inset 0 1px 0 rgba(165, 243, 252, 0.08),
+    inset 0 1px 0 rgba(164, 186, 203, 0.08),
     0 6px 20px rgba(5, 10, 22, 0.18);
 }
 
@@ -861,13 +731,13 @@ export const LEARNING_UI_CSS = `
 .lui-remediation-submitted {
   margin: 8px 0 4px;
   padding: 4px 10px;
-  border-radius: 5px;
+  border-radius: var(--sf-radius-slot, 6px);
   display: inline-block;
   font-size: 13px;
   font-weight: 600;
   background: var(--lui-warn-bg);
   color: var(--lui-warn-ink);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  border: 1px solid rgba(199, 161, 99, 0.3);
 }
 
 .lui-md {
@@ -909,7 +779,7 @@ export const LEARNING_UI_CSS = `
   border: 0;
   height: 1px;
   margin: 0.8em 0;
-  background: linear-gradient(90deg, transparent, var(--lui-card-gold-border), transparent);
+  background: rgba(255, 255, 255, 0.08);
 }
 .lui-md blockquote {
   margin: 0.6em 0;
@@ -917,15 +787,15 @@ export const LEARNING_UI_CSS = `
   background: var(--lui-quote-bg);
   border-left: 3px solid var(--lui-gold-base);
   color: var(--lui-ink-primary);
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 3px 3px 0;
 }
 .lui-md pre {
   margin: 0.6em 0;
   padding: 11px 14px;
   background: #0c1426;
-  color: #f1f5f9;
-  border: 1px solid rgba(141, 162, 192, 0.24);
-  border-radius: 6px;
+  color: #eef1f5;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: var(--sf-radius-slot, 6px);
   overflow-x: auto;
   font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
   font-size: 13.5px;
@@ -965,7 +835,7 @@ export const LEARNING_UI_CSS = `
   text-align: center;
   background: var(--lui-katex-bg);
   border: 1px solid var(--lui-card-border);
-  border-radius: 6px;
+  border-radius: var(--sf-radius-slot, 6px);
 }
 .lui-katex-inline {
   padding: 0 2px;
@@ -1002,7 +872,7 @@ export const LEARNING_UI_CSS = `
   align-items: center;
   gap: 13px;
   padding: 13px 17px;
-  border-radius: 8px;
+  border-radius: var(--sf-radius-card, 8px);
   background: var(--lui-option-bg);
   color: var(--lui-ink-primary);
   border: 1px solid var(--lui-card-border);
@@ -1022,23 +892,19 @@ export const LEARNING_UI_CSS = `
   transform: translateY(-1.5px);
   border-color: var(--lui-gold-base);
   background: var(--lui-option-hover-bg);
-  box-shadow:
-    0 0 0 1px rgba(242, 201, 125, 0.26),
-    0 8px 18px rgba(4, 10, 22, 0.22);
+  box-shadow: none;
 }
 
 .lui-option-btn--selected {
   transform: translateY(-1px);
   border-color: var(--lui-gold-base);
   background: var(--lui-option-sel-bg);
-  animation: lui-option-breathe 2.8s ease-in-out infinite;
 }
 
 .lui-option-btn--correct {
   border-color: var(--lui-emerald);
   background: var(--lui-emerald-bg);
   color: var(--lui-emerald-ink);
-  animation: lui-emerald-starlight 650ms var(--lui-ease) forwards;
 }
 
 .lui-option-btn--incorrect {
@@ -1046,7 +912,7 @@ export const LEARNING_UI_CSS = `
   background: var(--lui-err-bg);
   color: var(--lui-err-ink);
   animation: none;
-  box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.4);
+  box-shadow: none;
 }
 
 .lui-option-btn:disabled {
@@ -1067,7 +933,7 @@ export const LEARNING_UI_CSS = `
 .lui-option-diamond-frame {
   position: absolute;
   inset: 3px;
-  transform: rotate(45deg);
+  transform: none;
   border-radius: 3px;
   background: var(--lui-option-diamond-bg);
   border: 1.5px solid var(--lui-option-diamond-border);
@@ -1094,10 +960,10 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-option-btn--selected .lui-option-diamond-frame {
-  background: linear-gradient(135deg, #fff0c4 0%, #f2c97d 52%, #b78535 100%);
-  border-color: #fff6db;
-  box-shadow: 0 0 10px rgba(242, 201, 125, 0.48);
-  transform: rotate(45deg) scale(1.06);
+  background: #dec592;
+  border-color: #dec592;
+  box-shadow: none;
+  transform: none;
 }
 
 .lui-option-btn--selected .lui-option-key {
@@ -1105,9 +971,9 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-option-btn--correct .lui-option-diamond-frame {
-  background: linear-gradient(135deg, #a7f3d0 0%, #34d399 55%, #059669 100%);
-  border-color: #ecfdf5;
-  box-shadow: 0 0 14px rgba(52, 211, 153, 0.65);
+  background: #72a38a;
+  border-color: #72a38a;
+  box-shadow: none;
 }
 
 .lui-option-btn--correct .lui-option-key {
@@ -1115,9 +981,9 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-option-btn--incorrect .lui-option-diamond-frame {
-  background: linear-gradient(135deg, #fecdd3 0%, #fb7185 55%, #be123c 100%);
-  border-color: #fff1f2;
-  box-shadow: 0 0 10px rgba(251, 113, 133, 0.45);
+  background: #b87076;
+  border-color: #b87076;
+  box-shadow: none;
 }
 
 .lui-option-btn--incorrect .lui-option-key {
@@ -1142,7 +1008,7 @@ export const LEARNING_UI_CSS = `
   justify-content: space-between;
   gap: 8px;
   padding: 9px 14px;
-  border-radius: 7px;
+  border-radius: var(--sf-radius-card, 8px);
   background: var(--lui-option-bg);
   color: var(--lui-ink-primary);
   border: 1px solid var(--lui-card-border);
@@ -1161,7 +1027,7 @@ export const LEARNING_UI_CSS = `
 .lui-matching-item--active {
   border-color: var(--lui-azure);
   background: var(--lui-option-hover-bg);
-  box-shadow: 0 0 0 1px var(--lui-azure), 0 0 12px rgba(79, 209, 255, 0.22);
+  box-shadow: none;
 }
 .lui-matching-item--paired {
   border-color: var(--lui-gold-base);
@@ -1184,11 +1050,11 @@ export const LEARNING_UI_CSS = `
   display: inline-flex;
   align-items: center;
   padding: 2px 7px;
-  border-radius: 5px;
+  border-radius: var(--sf-radius-slot, 6px);
   font-size: 11px;
   font-weight: 700;
-  background: linear-gradient(135deg, #f2c97d, #c6923f);
-  color: #111827;
+  background: #dec592;
+  color: #141923;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1198,7 +1064,7 @@ export const LEARNING_UI_CSS = `
   max-width: 420px;
   box-sizing: border-box;
   padding: 9px 14px;
-  border-radius: 7px;
+  border-radius: var(--sf-radius-card, 8px);
   border: 1px solid var(--lui-card-gold-border);
   background: var(--lui-input-bg);
   color: var(--lui-ink-primary);
@@ -1212,7 +1078,7 @@ export const LEARNING_UI_CSS = `
 .lui-input-field:focus {
   outline: none;
   border-color: var(--lui-azure);
-  box-shadow: 0 0 0 3px rgba(79, 209, 255, 0.2);
+  box-shadow: none;
 }
 
 .lui-multistep-list {
@@ -1222,7 +1088,7 @@ export const LEARNING_UI_CSS = `
 }
 .lui-multistep-row {
   padding: 12px 15px;
-  border-radius: 8px;
+  border-radius: var(--sf-radius-card, 8px);
   background: var(--lui-card-bg);
   border: 1px solid var(--lui-card-border);
   display: flex;
@@ -1240,9 +1106,9 @@ export const LEARNING_UI_CSS = `
 
 .lui-hint-box {
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: var(--sf-radius-card, 8px);
   background: var(--lui-warn-bg);
-  border: 1px solid rgba(251, 191, 36, 0.36);
+  border: 1px solid rgba(199, 161, 99, 0.36);
   border-left: 3px solid var(--lui-warn);
   color: var(--lui-warn-ink);
   animation: lui-panel-reveal 180ms var(--lui-ease) both;
@@ -1256,12 +1122,12 @@ export const LEARNING_UI_CSS = `
 
 .lui-feedback-box {
   padding: 13px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(52, 211, 153, 0.44);
+  border-radius: var(--sf-radius-card, 8px);
+  border: 1px solid rgba(114, 163, 138, 0.44);
   border-left: 3px solid var(--lui-emerald);
   background: var(--lui-emerald-bg);
   color: var(--lui-emerald-ink);
-  box-shadow: 0 0 18px rgba(52, 211, 153, 0.14);
+  box-shadow: none;
   animation: lui-panel-reveal 200ms var(--lui-ease) both;
 }
 
@@ -1271,11 +1137,11 @@ export const LEARNING_UI_CSS = `
 }
 
 .lui-feedback-box--incorrect {
-  border-color: rgba(251, 113, 133, 0.44);
+  border-color: rgba(184, 112, 118, 0.44);
   border-left-color: var(--lui-err);
   background: var(--lui-err-bg);
   color: var(--lui-err-ink);
-  box-shadow: 0 0 16px rgba(251, 113, 133, 0.12);
+  box-shadow: none;
 }
 
 .lui-feedback-box--incorrect .lui-md,
@@ -1293,9 +1159,9 @@ export const LEARNING_UI_CSS = `
 
 .lui-wait-banner {
   padding: 11px 16px;
-  border-radius: 8px;
+  border-radius: var(--sf-radius-card, 8px);
   background: var(--lui-emerald-bg);
-  border: 1px solid rgba(52, 211, 153, 0.42);
+  border: 1px solid rgba(114, 163, 138, 0.42);
   color: var(--lui-emerald-ink);
   display: flex;
   flex-wrap: wrap;
@@ -1314,7 +1180,7 @@ export const LEARNING_UI_CSS = `
   gap: 12px;
   padding: 11px 20px;
   background: var(--lui-footer-bg);
-  border-top: 1px solid rgba(242, 201, 125, 0.28);
+  border-top: 1px solid rgba(216, 194, 148, 0.28);
 }
 
 .lui-btn-row {
@@ -1329,14 +1195,14 @@ export const LEARNING_UI_CSS = `
   overflow: hidden;
   min-height: 38px;
   padding: 7px 18px;
-  border-radius: 7px;
+  border-radius: var(--sf-radius-card, 8px);
   font-size: 13.5px;
   font-weight: 700;
   letter-spacing: 0.03em;
   cursor: pointer;
-  border: 1px solid rgba(141, 162, 192, 0.34);
-  background: linear-gradient(180deg, rgba(28, 44, 76, 0.92) 0%, rgba(16, 27, 50, 0.96) 100%);
-  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  color: #eef1f5;
   transition:
     transform 150ms var(--lui-ease, cubic-bezier(0.22, 1, 0.36, 1)),
     background 180ms ease,
@@ -1345,7 +1211,7 @@ export const LEARNING_UI_CSS = `
 }
 .lui-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(242, 201, 125, 0.72);
+  border-color: rgba(216, 194, 148, 0.72);
   box-shadow: 0 6px 16px rgba(4, 10, 24, 0.32);
 }
 .lui-btn:active:not(:disabled) {
@@ -1356,55 +1222,41 @@ export const LEARNING_UI_CSS = `
   cursor: not-allowed;
 }
 .lui-btn--primary {
-  background: radial-gradient(circle at 50% 0%, #fff0c4 0%, #f2c97d 36%, #be8c3a 100%);
-  color: #111827;
-  border-color: #fff0c4;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.65),
-    0 4px 16px rgba(242, 201, 125, 0.28);
-}
-.lui-btn--primary::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 45%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
-  animation: lui-cta-sheen 4.5s ease-in-out infinite;
-  pointer-events: none;
+  background: var(--sf-gold-surface, linear-gradient(180deg, #e5d2a7 0%, #d4bd8c 100%));
+  color: #171e2b;
+  border-color: var(--sf-gold-border, rgba(244, 228, 190, 0.72));
+  box-shadow: var(--sf-gold-shadow, inset 0 1px 0 rgba(255, 252, 242, 0.42), 0 6px 16px rgba(6, 11, 24, 0.28));
 }
 .lui-btn--primary:hover:not(:disabled) {
-  background: radial-gradient(circle at 50% 0%, #fff8df 0%, #f6d591 40%, #cb9843 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.78),
-    0 6px 20px rgba(242, 201, 125, 0.42);
+  background: var(--sf-gold-surface-hover, linear-gradient(180deg, #eedcb5 0%, #dec899 100%));
+  border-color: rgba(250, 238, 206, 0.88);
+  box-shadow: var(--sf-gold-shadow-hover, inset 0 1px 0 rgba(255, 252, 242, 0.54), 0 8px 20px rgba(6, 11, 24, 0.36));
 }
 .lui-btn--ghost {
   background: rgba(21, 35, 62, 0.72);
-  border-color: rgba(242, 201, 125, 0.38);
-  color: #f2c97d;
+  border-color: rgba(216, 194, 148, 0.38);
+  color: #dec592;
 }
 .lui-btn--ghost:hover:not(:disabled) {
-  background: rgba(242, 201, 125, 0.14);
-  border-color: #f2c97d;
-  color: #fff0c4;
+  background: rgba(216, 194, 148, 0.14);
+  border-color: #dec592;
+  color: #f2e1bc;
 }
 .lui-btn--active-soft {
-  background: rgba(242, 201, 125, 0.2);
-  border-color: #f2c97d;
-  color: #fff0c4;
+  background: rgba(216, 194, 148, 0.2);
+  border-color: #dec592;
+  color: #f2e1bc;
 }
 
 .lui-lore-title {
   font-size: 17.5px;
   font-weight: 700;
-  color: #fff0c4;
+  color: #f2e1bc;
   letter-spacing: 0.05em;
 }
 .lui-lore-subtitle {
   font-size: 12.5px;
-  color: #8da2c0;
+  color: #7f8a9c;
   margin-top: 2px;
 }
 
@@ -1422,17 +1274,17 @@ export const LEARNING_UI_CSS = `
   display: flex;
   flex-direction: column;
   gap: 5px;
-  border-left: 1px solid rgba(242, 201, 125, 0.36);
+  border-left: 1px solid rgba(216, 194, 148, 0.36);
   padding-left: 14px;
 }
 .lui-era-btn {
   position: relative;
   min-height: 44px;
   padding: 8px 12px;
-  border-radius: 7px;
+  border-radius: var(--sf-radius-card, 8px);
   border: 1px solid transparent;
   background: transparent;
-  color: #cbd5e1;
+  color: #b7c0ce;
   text-align: left;
   cursor: pointer;
   display: flex;
@@ -1448,35 +1300,35 @@ export const LEARNING_UI_CSS = `
   position: absolute;
   left: -18.5px;
   top: 50%;
-  transform: translateY(-50%) rotate(45deg);
+  transform: translateY(-50%);
   width: 7px;
   height: 7px;
   border-radius: 1px;
   background: #0f1a30;
-  border: 1.5px solid rgba(242, 201, 125, 0.56);
+  border: 1.5px solid rgba(216, 194, 148, 0.56);
   transition: background-color 180ms var(--lui-ease), transform 180ms var(--lui-ease), box-shadow 180ms var(--lui-ease);
 }
 .lui-era-btn:hover {
-  background: rgba(242, 201, 125, 0.08);
-  color: #f8fafc;
+  background: rgba(216, 194, 148, 0.08);
+  color: #eef1f5;
 }
 .lui-era-btn--active {
-  background: linear-gradient(135deg, rgba(28, 45, 78, 0.94) 0%, rgba(19, 32, 58, 0.96) 100%);
-  color: #f8fafc;
-  border-color: rgba(242, 201, 125, 0.52);
-  box-shadow: inset 0 1px 0 rgba(255, 240, 196, 0.14);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  color: #eef1f5;
+  border-color: rgba(216, 194, 148, 0.52);
+  box-shadow: inset 0 1px 0 rgba(232, 210, 162, 0.14);
 }
 .lui-era-btn--active::before {
-  background: #4fd1ff;
-  border-color: #fff0c4;
-  transform: translateY(-50%) rotate(45deg) scale(1.22);
-  box-shadow: 0 0 8px rgba(79, 209, 255, 0.65);
+  background: #89a3b8;
+  border-color: #f2e1bc;
+  transform: translateY(-50%);
+  box-shadow: none;
 }
 .lui-era-scale {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #f2c97d;
+  color: #dec592;
   font-variant-numeric: tabular-nums;
 }
 .lui-era-name {
@@ -1486,7 +1338,7 @@ export const LEARNING_UI_CSS = `
 .lui-era-heading {
   margin: 0 0 12px;
   font-size: 19px;
-  color: #f8fafc;
+  color: #eef1f5;
   letter-spacing: 0.02em;
 }
 
@@ -1497,10 +1349,10 @@ export const LEARNING_UI_CSS = `
 }
 .lui-faction-card {
   padding: 15px 17px;
-  border-radius: 8px;
-  background: linear-gradient(160deg, rgba(27, 42, 74, 0.88) 0%, rgba(17, 27, 50, 0.94) 100%);
-  border: 1px solid rgba(242, 201, 125, 0.32);
-  box-shadow: inset 0 1px 0 rgba(255, 240, 196, 0.1);
+  border-radius: var(--sf-radius-card, 8px);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  border: 1px solid rgba(216, 194, 148, 0.32);
+  box-shadow: inset 0 1px 0 rgba(232, 210, 162, 0.1);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1508,21 +1360,21 @@ export const LEARNING_UI_CSS = `
 .lui-faction-title {
   font-size: 15.5px;
   font-weight: 700;
-  color: #f8fafc;
+  color: #eef1f5;
   letter-spacing: 0.02em;
 }
 .lui-faction-motto {
   font-style: italic;
-  color: #f2c97d;
+  color: #dec592;
   font-weight: 500;
   font-size: 13.5px;
   padding-left: 10px;
-  border-left: 2px solid rgba(242, 201, 125, 0.52);
+  border-left: 2px solid rgba(216, 194, 148, 0.52);
 }
 .lui-faction-summary {
   margin: 2px 0 4px;
   font-size: 13.5px;
-  color: #cbd5e1;
+  color: #b7c0ce;
   line-height: 1.62;
 }
 .lui-faction-units {
@@ -1537,19 +1389,19 @@ export const LEARNING_UI_CSS = `
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  border-bottom: 1px solid rgba(242, 201, 125, 0.24);
+  border-bottom: 1px solid rgba(216, 194, 148, 0.24);
   padding-bottom: 10px;
 }
 
 .lui-unit-name {
   font-size: 17px;
   font-weight: 700;
-  color: #f8fafc;
+  color: #eef1f5;
   letter-spacing: 0.02em;
 }
 .lui-unit-silhouette {
   font-size: 13.5px;
-  color: #cbd5e1;
+  color: #b7c0ce;
   margin-bottom: 10px;
   line-height: 1.58;
 }
@@ -1560,7 +1412,7 @@ export const LEARNING_UI_CSS = `
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.04em;
-  color: #f2c97d;
+  color: #dec592;
   margin-bottom: 6px;
 }
 .lui-stat-grid {
@@ -1574,19 +1426,19 @@ export const LEARNING_UI_CSS = `
   flex-direction: column;
   gap: 2px;
   padding: 7px 10px;
-  border-radius: 6px;
+  border-radius: var(--sf-radius-slot, 6px);
   background: rgba(11, 20, 38, 0.72);
-  border: 1px solid rgba(141, 162, 192, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.22);
 }
 .lui-stat-label {
   font-size: 11px;
-  color: #8da2c0;
+  color: #7f8a9c;
   letter-spacing: 0.03em;
 }
 .lui-stat-value {
   font-size: 14px;
   font-weight: 700;
-  color: #f8fafc;
+  color: #eef1f5;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1597,31 +1449,31 @@ export const LEARNING_UI_CSS = `
 }
 .lui-voice-card {
   padding: 12px 15px;
-  border-radius: 7px;
-  background: linear-gradient(135deg, rgba(23, 37, 66, 0.94) 0%, rgba(16, 27, 50, 0.96) 100%);
-  border: 1px solid rgba(141, 162, 192, 0.22);
-  border-left: 3px solid #f2c97d;
+  border-radius: var(--sf-radius-card, 8px);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-left: 3px solid #dec592;
 }
 .lui-voice-trigger {
   font-size: 11.5px;
   font-weight: 700;
-  color: #f2c97d;
+  color: #dec592;
   margin-bottom: 4px;
   letter-spacing: 0.05em;
 }
 .lui-voice-text {
   font-size: 14.5px;
-  color: #f1f5f9;
+  color: #eef1f5;
   line-height: 1.6;
 }
 
 .lui-recipe-tree {
   padding: 12px 14px;
-  border-radius: 8px;
-  background: linear-gradient(160deg, rgba(20, 33, 58, 0.95) 0%, rgba(12, 21, 40, 0.98) 100%);
-  border: 1px solid rgba(242, 201, 125, 0.34);
-  color: #f1f5f9;
-  box-shadow: inset 0 1px 0 rgba(255, 240, 196, 0.1);
+  border-radius: var(--sf-radius-card, 8px);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  border: 1px solid rgba(216, 194, 148, 0.34);
+  color: #eef1f5;
+  box-shadow: inset 0 1px 0 rgba(232, 210, 162, 0.1);
 }
 .lui-recipe-head {
   display: flex;
@@ -1630,7 +1482,7 @@ export const LEARNING_UI_CSS = `
   font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: #f2c97d;
+  color: #dec592;
   margin-bottom: 9px;
 }
 .lui-recipe-row {
@@ -1641,10 +1493,10 @@ export const LEARNING_UI_CSS = `
 .lui-recipe-chip {
   min-height: 34px;
   padding: 5px 11px;
-  border-radius: 6px;
-  border: 1px solid rgba(141, 162, 192, 0.3);
+  border-radius: var(--sf-radius-slot, 6px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   background: rgba(16, 28, 52, 0.9);
-  color: #e2e8f0;
+  color: #eef1f5;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1659,27 +1511,21 @@ export const LEARNING_UI_CSS = `
 }
 .lui-recipe-chip:hover {
   transform: translateY(-1px);
-  border-color: rgba(242, 201, 125, 0.72);
-  color: #fff0c4;
+  border-color: rgba(216, 194, 148, 0.72);
+  color: #f2e1bc;
 }
 .lui-recipe-chip--active {
-  border-color: #f2c97d;
-  background: linear-gradient(135deg, rgba(46, 62, 92, 0.96) 0%, rgba(28, 43, 72, 0.98) 100%);
-  color: #fff0c4;
-  box-shadow:
-    0 0 0 1px rgba(242, 201, 125, 0.42),
-    0 0 12px rgba(242, 201, 125, 0.18);
-}
-.lui-recipe-gem {
-  color: #f2c97d;
-  font-size: 10px;
+  border-color: #dec592;
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  color: #f2e1bc;
+  box-shadow: none;
 }
 .lui-recipe-formula-card {
   margin-top: 10px;
   padding: 12px 14px;
-  border-radius: 7px;
+  border-radius: var(--sf-radius-card, 8px);
   background: rgba(11, 20, 38, 0.82);
-  border: 1px solid rgba(242, 201, 125, 0.32);
+  border: 1px solid rgba(216, 194, 148, 0.32);
   animation: lui-panel-reveal 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .lui-recipe-formula-top {
@@ -1691,12 +1537,12 @@ export const LEARNING_UI_CSS = `
 .lui-recipe-formula-name {
   font-size: 14px;
   font-weight: 700;
-  color: #fff0c4;
+  color: #f2e1bc;
 }
 .lui-recipe-formula-desc {
   font-size: 12.5px;
   margin: 5px 0 9px;
-  color: #cbd5e1;
+  color: #b7c0ce;
   line-height: 1.55;
 }
 .lui-recipe-chain {
@@ -1707,45 +1553,32 @@ export const LEARNING_UI_CSS = `
 }
 .lui-recipe-plus {
   font-weight: 800;
-  color: #f2c97d;
+  color: #dec592;
 }
 .lui-recipe-comp {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 9px;
-  border-radius: 5px;
+  border-radius: var(--sf-radius-slot, 6px);
   font-size: 12px;
-  border: 1px solid rgba(141, 162, 192, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   background: rgba(24, 38, 66, 0.9);
-  color: #e2e8f0;
+  color: #eef1f5;
 }
 .lui-recipe-comp--owned {
-  border-color: rgba(52, 211, 153, 0.62);
+  border-color: rgba(114, 163, 138, 0.62);
   background: rgba(16, 54, 46, 0.82);
   color: #d1fae5;
   font-weight: 600;
 }
-.lui-recipe-glyph {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  font-size: 10.5px;
-  font-weight: 700;
-  background: rgba(242, 201, 125, 0.18);
-  border: 1px solid rgba(242, 201, 125, 0.45);
-  color: #fff0c4;
-}
 .lui-owned-tag {
   font-size: 10.5px;
   padding: 1px 6px;
-  border-radius: 5px;
-  background: rgba(52, 211, 153, 0.22);
-  border: 1px solid rgba(52, 211, 153, 0.42);
-  color: #6ee7b7;
+  border-radius: var(--sf-radius-slot, 6px);
+  background: rgba(114, 163, 138, 0.22);
+  border: 1px solid rgba(114, 163, 138, 0.42);
+  color: #9cc2ae;
 }
 .lui-item-icon {
   position: relative;
@@ -1756,98 +1589,30 @@ export const LEARNING_UI_CSS = `
   line-height: 0;
   vertical-align: middle;
   box-sizing: border-box;
-  border-radius: 8px;
+  border-radius: var(--sf-radius-card, 8px);
   overflow: hidden;
-  background: #0b1120;
-  border: 1.5px solid var(--lui-item-accent, #f2c97d);
-  box-shadow:
-    0 2px 6px rgba(2, 6, 23, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.48);
-}
-.lui-item-icon::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 42%);
+  background: #131e32;
+  border: 1px solid color-mix(in srgb, var(--lui-item-accent, #dec592) 50%, #222d40);
 }
 .lui-item-icon--xs {
   width: 20px;
   height: 20px;
-  border-radius: 5px;
-  border-width: 1.25px;
+  border-radius: var(--sf-radius-slot, 6px);
 }
 .lui-item-icon--sm {
   width: 26px;
   height: 26px;
-  border-radius: 6px;
+  border-radius: var(--sf-radius-slot, 6px);
 }
 .lui-item-icon--md {
   width: 38px;
   height: 38px;
-  border-radius: 8px;
+  border-radius: var(--sf-radius-card, 8px);
 }
 .lui-item-icon--lg {
   width: 44px;
   height: 44px;
-  border-radius: 9px;
-  border-width: 2px;
-}
-.lui-item-icon--component {
-  border-color: var(--lui-item-accent, #f59e0b);
-  box-shadow:
-    0 2px 6px rgba(2, 6, 23, 0.6),
-    0 0 8px color-mix(in srgb, var(--lui-item-accent, #f59e0b) 32%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
-}
-.lui-item-icon--completed {
-  border-color: #f0c975;
-  box-shadow:
-    0 2px 8px rgba(2, 6, 23, 0.7),
-    0 0 10px rgba(242, 201, 125, 0.34),
-    inset 0 0 0 1px rgba(255, 248, 220, 0.28);
-}
-.lui-item-icon--emblem {
-  border-color: #d8a7f5;
-  box-shadow:
-    0 2px 8px rgba(2, 6, 23, 0.72),
-    0 0 10px color-mix(in srgb, var(--lui-item-accent, #c084fc) 44%, transparent),
-    inset 0 0 0 1px rgba(254, 240, 138, 0.36);
-}
-.lui-item-icon--flag {
-  border-color: #fde047;
-  box-shadow:
-    0 2px 10px rgba(2, 6, 23, 0.75),
-    0 0 12px rgba(253, 224, 71, 0.45),
-    inset 0 0 0 1px rgba(255, 252, 230, 0.45);
-}
-.lui-item-icon--tool-remover {
-  border-color: #38bdf8;
-  box-shadow:
-    0 2px 8px rgba(2, 6, 23, 0.68),
-    0 0 10px rgba(56, 189, 248, 0.42),
-    inset 0 0 0 1px rgba(224, 242, 254, 0.32);
-}
-.lui-item-icon--tool-reforger {
-  border-color: #fb923c;
-  box-shadow:
-    0 2px 8px rgba(2, 6, 23, 0.68),
-    0 0 10px rgba(249, 115, 22, 0.42),
-    inset 0 0 0 1px rgba(254, 243, 199, 0.32);
-}
-.lui-item-icon--anvil-comp {
-  border-color: #7dd3fc;
-  box-shadow:
-    0 2px 8px rgba(2, 6, 23, 0.68),
-    0 0 9px rgba(125, 211, 252, 0.36);
-}
-.lui-item-icon--anvil-completed {
-  border-color: #f5c451;
-  box-shadow:
-    0 2px 8px rgba(2, 6, 23, 0.72),
-    0 0 11px rgba(245, 196, 81, 0.42);
+  border-radius: var(--sf-radius-card, 8px);
 }
 .lui-item-icon__img {
   display: block;
@@ -1866,17 +1631,17 @@ export const LEARNING_UI_CSS = `
   align-items: center;
   gap: 1.5px;
   padding: 1.5px 2.5px;
-  border-radius: 999px;
+  border-radius: 2px;
   background: rgba(7, 11, 22, 0.84);
-  border: 0.75px solid rgba(254, 240, 138, 0.42);
+  border: 0;
   pointer-events: none;
 }
 .lui-item-icon__dot {
   display: block;
   width: 4.5px;
   height: 4.5px;
-  border-radius: 999px;
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.85);
+  border-radius: 2px;
+  box-shadow: none;
 }
 .lui-item-icon--sm .lui-item-icon__dots {
   right: 1px;
@@ -1886,10 +1651,6 @@ export const LEARNING_UI_CSS = `
 .lui-item-icon--sm .lui-item-icon__dot {
   width: 3.5px;
   height: 3.5px;
-}
-.lui-item-icon.lui-recipe-glyph {
-  width: 20px;
-  height: 20px;
 }
 .lui-unit-skill-desc {
   font-size: 13.5px;
@@ -1923,48 +1684,46 @@ export const LEARNING_UI_CSS = `
   font-variant-numeric: tabular-nums;
 }
 .lui-stat-token--phys {
-  color: #fb923c;
+  color: #eb9d62;
 }
 .lui-stat-token--magic {
-  color: #38bdf8;
+  color: #6bc0f5;
 }
 .lui-stat-token--true {
-  color: #f8fafc;
-  text-shadow: 0 0 8px rgba(248, 250, 252, 0.42);
+  color: #f4f7fb;
 }
 .lui-stat-token--shield {
-  color: #93c5fd;
+  color: #98c7f5;
 }
 .lui-stat-token--hp {
-  color: #34d399;
+  color: #5cc498;
 }
 .lui-stat-token--as {
-  color: #fde047;
+  color: #ecd175;
 }
 .lui-stat-token--crit {
-  color: #fb7185;
+  color: #e67f8e;
 }
 .lui-stat-token--armor {
-  color: #f59e0b;
+  color: #e2aa5e;
 }
 .lui-stat-token--mr {
-  color: #c084fc;
+  color: #c2a0f2;
 }
 .lui-stat-token--mana {
-  color: #60a5fa;
+  color: #70b2f5;
 }
 .lui-stat-token--gold {
-  color: #f2c97d;
+  color: #e8cb88;
 }
 .lui-paper-shell--parchment .lui-stat-token--phys {
   color: #c2410c;
 }
 .lui-paper-shell--parchment .lui-stat-token--magic {
-  color: #0369a1;
+  color: #5a7286;
 }
 .lui-paper-shell--parchment .lui-stat-token--true {
   color: #1e293b;
-  text-shadow: none;
 }
 .lui-paper-shell--parchment .lui-stat-token--shield {
   color: #1d4ed8;
@@ -1997,8 +1756,8 @@ export const LEARNING_UI_CSS = `
   flex-wrap: wrap;
   gap: 8px 14px;
   padding: 8px 20px;
-  background: linear-gradient(90deg, rgba(16, 29, 56, 0.96) 0%, rgba(24, 41, 74, 0.94) 50%, rgba(16, 29, 56, 0.96) 100%);
-  border-bottom: 1px solid rgba(242, 201, 125, 0.24);
+  background: #161d29;
+  border-bottom: 1px solid rgba(216, 194, 148, 0.24);
 }
 .lui-arc-ribbon__left {
   display: flex;
@@ -2012,23 +1771,22 @@ export const LEARNING_UI_CSS = `
   display: inline-flex;
   align-items: center;
   padding: 2px 9px;
-  border-radius: 5px;
-  background: linear-gradient(135deg, rgba(242, 201, 125, 0.24), rgba(168, 121, 50, 0.16));
-  border: 1px solid rgba(242, 201, 125, 0.54);
-  color: #fff0c4;
+  border-radius: var(--sf-radius-slot, 6px);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  border: 1px solid rgba(216, 194, 148, 0.54);
+  color: #f2e1bc;
   font-size: 11.5px;
   font-weight: 800;
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
 .lui-arc-topic {
-  font-size: 12.5px;
+  color: var(--lui-ink-primary);
+  font-size: 13px;
+  line-height: 1.45;
   font-weight: 700;
-  color: #f1f5f9;
-  max-width: 310px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .lui-arc-tags {
   display: inline-flex;
@@ -2038,10 +1796,10 @@ export const LEARNING_UI_CSS = `
 }
 .lui-arc-tag {
   padding: 1px 7px;
-  border-radius: 5px;
-  background: rgba(79, 209, 255, 0.12);
-  border: 1px solid rgba(79, 209, 255, 0.3);
-  color: #a5f3fc;
+  border-radius: var(--sf-radius-slot, 6px);
+  background: rgba(123, 185, 232, 0.12);
+  border: 1px solid rgba(123, 185, 232, 0.3);
+  color: #a4bacb;
   font-size: 10.5px;
   font-weight: 600;
   white-space: nowrap;
@@ -2058,23 +1816,23 @@ export const LEARNING_UI_CSS = `
   align-items: center;
   gap: 5px;
   padding: 2px 9px;
-  border-radius: 5px;
+  border-radius: var(--sf-radius-slot, 6px);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
 .lui-arc-branch--remediate {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.24), rgba(180, 83, 9, 0.26));
-  border: 1px solid rgba(251, 191, 36, 0.72);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  border: 1px solid rgba(199, 161, 99, 0.72);
   color: #fef3c7;
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.24);
+  box-shadow: none;
 }
 .lui-arc-branch--stretch {
-  background: linear-gradient(135deg, rgba(255, 240, 196, 0.28), rgba(242, 201, 125, 0.22));
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
   border: 1px solid rgba(255, 232, 168, 0.86);
-  color: #fff6d9;
-  box-shadow: 0 0 14px rgba(242, 201, 125, 0.32);
+  color: #eef1f5;
+  box-shadow: none;
 }
 .lui-arc-outline {
   margin: 0;
@@ -2092,18 +1850,18 @@ export const LEARNING_UI_CSS = `
   width: 14px;
   height: 1.5px;
   margin: 0 4px;
-  border-radius: 5px;
-  background: rgba(141, 162, 192, 0.28);
+  border-radius: var(--sf-radius-slot, 6px);
+  background: rgba(255, 255, 255, 0.28);
 }
 .lui-arc-connector--done {
-  background: linear-gradient(90deg, #34d399, #f2c97d);
+  background: #72a38a;
 }
 .lui-arc-node {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 2px 7px;
-  border-radius: 5px;
+  border-radius: var(--sf-radius-slot, 6px);
   font-size: 11px;
   font-weight: 600;
   border: 1px solid transparent;
@@ -2116,42 +1874,42 @@ export const LEARNING_UI_CSS = `
   flex-shrink: 0;
 }
 .lui-arc-node--done {
-  color: #a7f3d0;
-  background: rgba(16, 185, 129, 0.14);
-  border-color: rgba(52, 211, 153, 0.38);
+  color: #9cc2ae;
+  background: rgba(114, 163, 138, 0.14);
+  border-color: rgba(114, 163, 138, 0.38);
 }
 .lui-arc-node--done .lui-arc-node-dot {
-  background: #34d399;
-  box-shadow: 0 0 6px rgba(52, 211, 153, 0.7);
+  background: #72a38a;
+  box-shadow: none;
 }
 .lui-arc-node--active {
-  color: #fff6d9;
+  color: #eef1f5;
   font-weight: 800;
-  background: rgba(242, 201, 125, 0.18);
-  border-color: rgba(242, 201, 125, 0.65);
-  box-shadow: 0 0 10px rgba(242, 201, 125, 0.22);
+  background: rgba(216, 194, 148, 0.18);
+  border-color: rgba(216, 194, 148, 0.65);
+  box-shadow: none;
 }
 .lui-arc-node--active .lui-arc-node-dot {
-  background: #f2c97d;
-  box-shadow: 0 0 8px rgba(255, 240, 196, 0.9);
+  background: #dec592;
+  box-shadow: none;
 }
 .lui-arc-node--upcoming {
-  color: #8da2c0;
+  color: #7f8a9c;
   background: rgba(15, 26, 48, 0.6);
-  border-color: rgba(141, 162, 192, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 .lui-arc-node--upcoming .lui-arc-node-dot {
-  background: rgba(141, 162, 192, 0.5);
+  background: rgba(255, 255, 255, 0.5);
 }
 .lui-desc-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  border-radius: 5px;
-  border: 1px solid rgba(242, 201, 125, 0.44);
+  border-radius: var(--sf-radius-slot, 6px);
+  border: 1px solid rgba(216, 194, 148, 0.44);
   background: rgba(15, 26, 48, 0.86);
-  color: #f2c97d;
+  color: #dec592;
   font-family: inherit;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -2163,8 +1921,8 @@ export const LEARNING_UI_CSS = `
 }
 .lui-desc-toggle:hover {
   background: rgba(30, 48, 82, 0.96);
-  border-color: rgba(242, 201, 125, 0.78);
-  color: #fff0c4;
+  border-color: rgba(216, 194, 148, 0.78);
+  color: #f2e1bc;
 }
 .lui-desc-toggle--xs {
   height: 22px;
@@ -2177,10 +1935,10 @@ export const LEARNING_UI_CSS = `
   font-size: 12px;
 }
 .lui-desc-toggle--detailed {
-  background: linear-gradient(135deg, rgba(242, 201, 125, 0.22) 0%, rgba(168, 121, 50, 0.16) 100%);
-  border-color: rgba(242, 201, 125, 0.82);
-  color: #fff0c4;
-  box-shadow: 0 0 10px rgba(242, 201, 125, 0.16);
+  background: var(--sf-surface-card, rgba(22, 34, 58, 0.88));
+  border-color: rgba(216, 194, 148, 0.82);
+  color: #f2e1bc;
+  box-shadow: none;
 }
 .lui-desc-toggle__icon {
   display: inline-flex;

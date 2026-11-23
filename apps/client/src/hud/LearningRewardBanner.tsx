@@ -3,6 +3,7 @@ import { lookupItemById, SEASON1_AUGMENTS } from '@pkg/contracts';
 import { GameItemIcon, RichGameText } from '@pkg/learning-ui';
 import type { MatchRoomSnapshot } from '../api/matchSocket.js';
 import { GameUiIcon } from '../components/GameUiIcons.js';
+import './learningReward.css';
 
 interface LearningCardData {
   readonly kind: 'learning';
@@ -280,7 +281,7 @@ export function LearningRewardBanner({
       setQueue((cur) => cur.filter((item) => item.key !== activeKey));
     }, 3800);
     return () => window.clearTimeout(timer);
-  }, [active?.key]);
+  }, [active]);
 
   if (!active) return null;
 
@@ -292,276 +293,27 @@ export function LearningRewardBanner({
       aria-live="polite"
       data-testid="learning-reward-banner"
     >
-      <style>{`
-        @keyframes sfRewardBurstIn {
-          0% { opacity: 0; transform: translate3d(-50%, -24px, 0) scale(0.84); }
-          10% { opacity: 1; transform: translate3d(-50%, 4px, 0) scale(1.03); }
-          16% { opacity: 1; transform: translate3d(-50%, 0, 0) scale(1); }
-          86% { opacity: 1; transform: translate3d(-50%, 0, 0) scale(1); }
-          100% { opacity: 0; transform: translate3d(-50%, -16px, 0) scale(0.95); }
-        }
-        @keyframes sfRewardGlowWave {
-          0% { opacity: 0; transform: translateX(-50%) scaleX(0.4); }
-          18% { opacity: 0.9; transform: translateX(-50%) scaleX(1.1); }
-          55% { opacity: 0.35; transform: translateX(-50%) scaleX(1.2); }
-          100% { opacity: 0; transform: translateX(-50%) scaleX(1.3); }
-        }
-        @keyframes sfRewardRingDraw {
-          0% { stroke-dashoffset: var(--ring-c); }
-          100% { stroke-dashoffset: var(--ring-offset); }
-        }
-        @keyframes sfRewardSheen {
-          0% { transform: translateX(-140%) skewX(-22deg); }
-          45% { transform: translateX(260%) skewX(-22deg); }
-          100% { transform: translateX(260%) skewX(-22deg); }
-        }
-        @keyframes sfRewardChipPop {
-          0% { opacity: 0; transform: translateY(10px) scale(0.88); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .sf-reward-stage {
-          position: fixed;
-          top: 13%;
-          left: 50%;
-          z-index: 54;
-          pointer-events: none;
-          animation: sfRewardBurstIn 3800ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-        .sf-reward-aura {
-          position: absolute;
-          top: -24px;
-          left: 50%;
-          width: 640px;
-          height: 150px;
-          border-radius: 50%;
-          background: radial-gradient(ellipse at center, rgba(223, 195, 138, 0.22) 0%, rgba(121, 196, 230, 0.08) 48%, rgba(10, 17, 34, 0) 74%);
-          animation: sfRewardGlowWave 2400ms ease-out forwards;
-        }
-        .sf-reward-card {
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          gap: 20px;
-          min-width: 488px;
-          max-width: 668px;
-          padding: 18px 26px 18px 20px;
-          border-radius: 10px;
-          border: 1.5px solid rgba(223, 195, 138, 0.72);
-          background: linear-gradient(165deg, rgba(21, 33, 55, 0.96) 0%, rgba(13, 21, 37, 0.98) 100%);
-          box-shadow:
-            inset 0 1px 0 rgba(239, 224, 190, 0.28),
-            inset 0 -1px 0 rgba(121, 196, 230, 0.14),
-            0 18px 46px rgba(3, 7, 16, 0.68),
-            0 0 24px rgba(223, 195, 138, 0.20);
-          color: #f3f6fb;
-        }
-        .sf-reward-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          width: 42%;
-          background: linear-gradient(90deg, rgba(239, 224, 190, 0) 0%, rgba(239, 224, 190, 0.13) 50%, rgba(239, 224, 190, 0) 100%);
-          animation: sfRewardSheen 3200ms ease-in-out infinite;
-        }
-        .sf-reward-ring {
-          position: relative;
-          width: 68px;
-          height: 68px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .sf-reward-ring svg {
-          width: 68px;
-          height: 68px;
-          transform: rotate(-90deg);
-          filter: drop-shadow(0 0 6px rgba(223, 195, 138, 0.24));
-        }
-        .sf-reward-ring__prog {
-          animation: sfRewardRingDraw 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-        .sf-reward-ring__text {
-          position: absolute;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          line-height: 1.05;
-          font-variant-numeric: tabular-nums;
-        }
-        .sf-reward-ring__ratio {
-          font-size: 16.5px;
-          font-weight: 800;
-          color: #efe0be;
-          text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-        }
-        .sf-reward-ring__sub {
-          font-size: 10px;
-          font-weight: 700;
-          color: #bce3f5;
-          margin-top: 2px;
-        }
-        .sf-reward-emblem {
-          width: 58px;
-          height: 58px;
-          border-radius: 9px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          border: 1px solid rgba(223, 195, 138, 0.56);
-          background: radial-gradient(circle at 35% 30%, rgba(223, 195, 138, 0.18), rgba(13, 21, 37, 0.94));
-          box-shadow: inset 0 1px 0 rgba(239, 224, 190, 0.18), 0 0 14px rgba(223, 195, 138, 0.16);
-          color: #efe0be;
-        }
-        .sf-reward-body {
-          display: flex;
-          flex-direction: column;
-          gap: 9px;
-          flex: 1;
-          min-width: 0;
-        }
-        .sf-reward-kicker {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 11.5px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          color: #bce3f5;
-        }
-        .sf-reward-title-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-        .sf-reward-title {
-          font-size: 20.5px;
-          font-weight: 800;
-          letter-spacing: 0.03em;
-          background: linear-gradient(180deg, #f7edd6 0%, #dfc38a 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.45));
-        }
-        .sf-reward-perfect {
-          padding: 3px 10px;
-          border-radius: var(--sf-radius-pill, 5px);
-          background: linear-gradient(135deg, #efe0be 0%, #dfc38a 100%);
-          color: #161108;
-          font-size: 11.5px;
-          font-weight: 800;
-          box-shadow: 0 0 10px rgba(223, 195, 138, 0.28);
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-        }
-        .sf-reward-excellent {
-          padding: 3px 10px;
-          border-radius: var(--sf-radius-pill, 5px);
-          background: linear-gradient(135deg, #bce3f5 0%, #79c4e6 55%, #dfc38a 100%);
-          color: #0d1525;
-          font-size: 11.5px;
-          font-weight: 800;
-          box-shadow: 0 0 10px rgba(121, 196, 230, 0.24);
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-        }
-        .sf-reward-loot-row {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-wrap: wrap;
-          animation: sfRewardChipPop 420ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both;
-        }
-        .sf-reward-pill--gold {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 5px 12px;
-          border-radius: var(--sf-radius-pill, 5px);
-          background: linear-gradient(135deg, rgba(223, 195, 138, 0.20) 0%, rgba(157, 126, 69, 0.16) 100%);
-          border: 1px solid rgba(223, 195, 138, 0.62);
-          color: #efe0be;
-          font-size: 13px;
-          font-weight: 800;
-          font-variant-numeric: tabular-nums;
-          box-shadow: 0 0 12px rgba(223, 195, 138, 0.16);
-        }
-        .sf-reward-pill--orb {
-          font-size: 11.5px;
-          font-weight: 600;
-          color: #dfc38a;
-        }
-        .sf-reward-pill--charge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 5px 11px;
-          border-radius: var(--sf-radius-pill, 5px);
-          background: rgba(121, 196, 230, 0.12);
-          border: 1px solid rgba(121, 196, 230, 0.44);
-          color: #bce3f5;
-          font-size: 12px;
-          font-weight: 700;
-          font-variant-numeric: tabular-nums;
-        }
-        .sf-reward-pill--item {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 3px 10px 3px 5px;
-          border-radius: 8px;
-          background: rgba(20, 32, 54, 0.90);
-          border: 1px solid rgba(223, 195, 138, 0.48);
-          color: #efe0be;
-          font-size: 12px;
-          font-weight: 700;
-        }
-        .sf-reward-aug-desc {
-          font-size: 12.5px;
-          line-height: 1.48;
-          color: #c5d1e3;
-        }
-        .sf-reward-bar {
-          width: 48px;
-          height: 5px;
-          border-radius: 999px;
-          background: rgba(154, 178, 214, 0.22);
-          overflow: hidden;
-        }
-        .sf-reward-bar > i {
-          display: block;
-          height: 100%;
-          border-radius: 999px;
-          background: linear-gradient(90deg, #4e9bc2, #bce3f5);
-        }
-      `}</style>
-      <div className="sf-reward-aura" aria-hidden="true" />
       <div className="sf-reward-card">
         {active.kind === 'learning' ? (() => {
-          const pct = active.totalCount > 0 ? Math.round((active.correctCount / active.totalCount) * 100) : 100;
+          const pct = active.totalCount > 0 ? Math.round((active.correctCount / active.totalCount) * 100) : null;
           const perfect = active.totalCount > 0 && active.correctCount === active.totalCount;
           const excellent = !perfect && active.performanceTier === 'excellent';
           const ringR = 28;
           const ringC = 2 * Math.PI * ringR;
-          const ringOffset = ringC * (1 - Math.max(0, Math.min(1, pct / 100)));
+          const ringOffset = ringC * (1 - Math.max(0, Math.min(1, (pct ?? 0) / 100)));
           const orbTotal = active.orbSplits.length;
           return (
             <>
-              <div className="sf-reward-ring" aria-hidden="true">
+              {pct !== null ? <div className="sf-reward-ring" aria-hidden="true">
                 <svg viewBox="0 0 68 68">
-                  <circle cx="34" cy="34" r={ringR} fill="none" stroke="rgba(154, 178, 214, 0.20)" strokeWidth="5.5" />
+                  <circle cx="34" cy="34" r={ringR} fill="none" stroke="rgba(255, 255, 255, 0.09)" strokeWidth="5.5" />
                   <circle
                     className="sf-reward-ring__prog"
                     cx="34"
                     cy="34"
                     r={ringR}
                     fill="none"
-                    stroke={perfect ? '#dfc38a' : '#5bbf9b'}
+                    stroke={perfect ? '#e5c785' : '#5cc498'}
                     strokeWidth="5.5"
                     strokeLinecap="round"
                     strokeDasharray={ringC}
@@ -575,17 +327,14 @@ export function LearningRewardBanner({
                 </svg>
                 <span className="sf-reward-ring__text">
                   <span className="sf-reward-ring__ratio">
-                    {active.totalCount > 0 ? `${active.correctCount}/${active.totalCount}` : '完成'}
+                    {pct}%
                   </span>
-                  <span className="sf-reward-ring__sub">{pct}%</span>
                 </span>
-              </div>
+              </div> : null}
 
               <div className="sf-reward-body">
                 <div className="sf-reward-kicker">
-                  <span>学习节点 {active.nodeNumber} 战果结算</span>
-                  <span>·</span>
-                  <span>点击棋盘宝球或让小小英雄路过即可拾取</span>
+                  学习节点 {active.nodeNumber} · 战果结算
                 </div>
                 <div className="sf-reward-title-row">
                   <span className="sf-reward-title">
@@ -596,7 +345,7 @@ export function LearningRewardBanner({
                   {perfect ? (
                     <span className="sf-reward-perfect">
                       <GameUiIcon name="star" size={12} />
-                      <span>满分全对</span>
+                      <span>全对</span>
                     </span>
                   ) : excellent ? (
                     <span className="sf-reward-excellent" data-testid="reward-performance-excellent">
@@ -609,14 +358,11 @@ export function LearningRewardBanner({
                   <span className="sf-reward-pill--gold">
                     <GameUiIcon name="coin" size={15} />
                     <span>+{active.grantedGold} 金币</span>
-                    {orbTotal > 0 ? <span className="sf-reward-pill--orb">· {orbTotal} 枚宝球坠落</span> : null}
+                    {orbTotal > 0 ? <span className="sf-reward-pill--orb">· {orbTotal} 枚宝球</span> : null}
                   </span>
                   <span className="sf-reward-pill--charge">
                     <GameUiIcon name="spark" size={13} />
                     <span>充能 {active.carryOutCents}/100</span>
-                    <span className="sf-reward-bar" aria-hidden="true">
-                      <i style={{ width: `${Math.max(4, Math.min(100, active.carryOutCents))}%` }} />
-                    </span>
                   </span>
                   {active.bonusRerollVouchers > 0 ? (
                     <span className="sf-reward-pill--charge" data-testid="learning-bonus-vouchers">
@@ -638,6 +384,7 @@ export function LearningRewardBanner({
                     );
                   })}
                 </div>
+                {orbTotal > 0 ? <p className="sf-reward-pickup-hint">点击棋盘上的宝球，或移动领航员拾取。</p> : null}
               </div>
             </>
           );

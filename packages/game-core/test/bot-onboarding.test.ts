@@ -1,19 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { SEASON1_UNITS_BY_ID, type DurationMode, type GameCommand, type UnitLocation } from '@pkg/contracts';
+import { MODE_BUDGETS, SEASON1_ITEMS, SEASON1_UNITS_BY_ID, type DurationMode, type GameCommand, type UnitLocation } from '@pkg/contracts';
 import { decideBotPrepCommands, type BotDifficulty } from '../src/bot.js';
 import { createOnboardingMicroScenario } from '../src/onboarding.js';
-import { applyGameCommand, assertItemConservation, beginNextRound, createGame, settleRound } from '../src/game.js';
+import { applyGameCommand, assertItemConservation, beginNextRound, createGame, itemComponentShares, settleRound } from '../src/game.js';
 import { finalizePrepDeadline } from '../src/board-ops.js';
 import { createCombat, runCombat } from '../src/combat.js';
 import { assertGoldConservation, populationCap } from '../src/economy.js';
 import { assertPoolConservation, poolAccounting, releaseShop, returnToPool, starCopies, takeFromPool } from '../src/pool.js';
 import { itemComponentValue } from '../src/items.js';
+import { grantVouchers } from '../src/augments.js';
 import type { GameState, SeatState, UnitInstance } from '../src/types.js';
 
 function replay(game: GameState, seatId: string, commands: GameCommand[]): void {
   for (const command of commands) {
     expect(applyGameCommand(game, seatId, command), JSON.stringify(command)).toEqual({ ok: true });
     assertPoolConservation(game);
+    assertItemConservation(game);
     for (const seat of game.seats) assertGoldConservation(seat);
   }
 }
@@ -42,6 +44,45 @@ function setGold(seat: SeatState, gold: number): void {
 
 const modes: DurationMode[] = ['quick', 'standard', 'deep'];
 const difficulties: BotDifficulty[] = ['novice', 'standard', 'veteran'];
+describe('round equipment grants', () => {
+  it.each(modes)('%s: only ordinary equipment fills the scheduled component budget', (mode) => {
+    const game = createGame(mode, 1729);
+    const ordinaryComponents = new Set(SEASON1_ITEMS.components.map(({ id }) => id));
+    const ordinaryCompleted = new Set(SEASON1_ITEMS.completedItems.map(({ id }) => id));
+    const { rounds, economy } = MODE_BUDGETS.modes[mode];
+    expect(game.seats.every(({ inventoryItems }) => inventoryItems.length === 1)).toBe(true);
+    while (game.phase !== 'finished') {
+      expect(game.itemComponentsGranted).toBe(8 * Math.floor(economy.ordinary_component_budget * game.round / rounds));
+      for (const seat of game.seats) {
+        expect(seat.inventoryItems.every(id => ordinaryComponents.has(id) || ordinaryCompleted.has(id))).toBe(true);
+        for (const anvil of [...seat.anvils]) {
+          const options = anvil.kind === 'component' ? ordinaryComponents : ordinaryCompleted;
+          expect(anvil.options.every(id => options.has(id))).toBe(true);
+          replay(game, seat.id, [{ type: 'PICK_ANVIL_OPTION', anvilInstanceId: anvil.instanceId, optionIndex: 0 }]);
+        }
+      }
+      finalizePrepDeadline(game);
+      settleRound(game, game.seats.map(seat => ({ seatId: seat.id, outcome: 'draw' })));
+      beginNextRound(game);
+    }
+    assertItemConservation(game);
+  });
+
+  it.each([
+    ['AUG_P01', 1, 'spatula'],
+    ['AUG_P04', 4, 'emblem'],
+  ] as const)('%s grants its rare equipment and books the exact component shares', (id, shares, kind) => {
+    const game = createGame('quick', 23);
+    const seat = game.seats[0]!;
+    seat.augmentOffer = { tier: 'prismatic', options: [id], rerolls: [true], node: 1, finalStage: false, eligibleTraits: [] };
+    const before = game.itemComponentsGranted;
+    replay(game, seat.id, [{ type: 'PICK_AUGMENT', slotIndex: 0 }]);
+    const rares = kind === 'spatula' ? [SEASON1_ITEMS.special.spatulaComponent.id] : SEASON1_ITEMS.emblems.map(item => item.id);
+    expect(seat.inventoryItems.filter(item => rares.includes(item))).toHaveLength(1);
+    expect(game.itemComponentsGranted - before).toBe(shares);
+  });
+});
+
 describe('procedural prep bots', () => {
   for (const mode of modes) for (const difficulty of difficulties) {
     it(`${mode}/${difficulty}: pure, deterministic, bounded and sequentially executable`, () => {
@@ -77,6 +118,94 @@ describe('procedural prep bots', () => {
     for (const seat of game.seats) assertGoldConservation(seat);
   });
 
+  it('novice buys only two cards per round, never rerolls and never chases a third star', () => {
+    const game = createGame('quick', 31);
+    const seat = game.seats[0]!;
+    expect(seat.inventoryItems).not.toContain('C_RUBBING');
+    emptySeat(game, seat);
+    setGold(seat, 100);
+    for (const [slot, star] of ([2, 2, 1, 1] as const).entries()) {
+      addUnit(game, seat, 'S01', { zone: 'bench', slot }, star);
+    }
+    setShop(game, seat, ['S01', 'S19', 'S20', 'S21', 'S22']);
+    grantVouchers(seat, 3, game.round);
+    const first = decideBotPrepCommands(game, seat.id, 'novice');
+    expect(first.filter(command => command.type === 'BUY_CARD')).toEqual([
+      { type: 'BUY_CARD', shopIndex: 1 }, { type: 'BUY_CARD', shopIndex: 2 },
+    ]);
+    expect(first.some(command => command.type === 'REFRESH_SHOP' || command.type === 'BUY_XP')).toBe(false);
+    replay(game, seat.id, first);
+    const second = decideBotPrepCommands(game, seat.id, 'novice');
+    expect(second.some(command => command.type === 'BUY_CARD' || command.type === 'REFRESH_SHOP')).toBe(false);
+    replay(game, seat.id, second);
+    expect(seat.shop[0]).toBe('S01');
+    expect(seat.units.every(unit => unit.star <= 2)).toBe(true);
+    expect(seat.goldLedger.some(entry => entry.reason === 'refresh_shop')).toBe(false);
+    expect(seat.rerollVouchers).toBe(3);
+
+    finalizePrepDeadline(game);
+    settleRound(game, game.seats.map(entry => ({ seatId: entry.id, outcome: 'draw' })));
+    beginNextRound(game);
+    seat.augmentOffer = null;
+    setShop(game, seat, ['S01', 'S21', 'S22', null, null]);
+    expect(decideBotPrepCommands(game, seat.id, 'novice').filter(command => command.type === 'BUY_CARD')).toHaveLength(2);
+  });
+
+  it('novice picks the first anvil option, equips once and keeps a spare component', () => {
+    const game = createGame('quick', 7);
+    const seat = game.seats[0]!;
+    emptySeat(game, seat);
+    addUnit(game, seat, 'S09', { zone: 'bench', slot: 0 });
+    seat.anvils = [{ instanceId: 'fixture-anvil', kind: 'component', options: ['C_CLOAK', 'C_SWORD', 'C_BOW'] }];
+    game.itemComponentsGranted++;
+    const commands = decideBotPrepCommands(game, seat.id, 'novice');
+    expect(commands).toContainEqual({ type: 'PICK_ANVIL_OPTION', anvilInstanceId: 'fixture-anvil', optionIndex: 0 });
+    expect(commands.filter(command => command.type === 'EQUIP_ITEM')).toHaveLength(1);
+    replay(game, seat.id, commands);
+    expect(seat.inventoryItems).toEqual(['C_CLOAK']);
+    expect(seat.units[0]!.location).toEqual({ zone: 'board', row: 0, col: 0 });
+    expect(decideBotPrepCommands(game, seat.id, 'novice').some(command => command.type === 'EQUIP_ITEM')).toBe(false);
+  });
+
+  it('standard spends at most two rerolls per round across preparation windows', () => {
+    const game = createGame('quick', 7);
+    const seat = game.seats[0]!;
+    grantVouchers(seat, 4, game.round);
+    const first = decideBotPrepCommands(game, seat.id, 'standard');
+    expect(first.filter(command => command.type === 'REFRESH_SHOP')).toHaveLength(2);
+    replay(game, seat.id, first);
+    expect(seat.rerollVouchers).toBe(2);
+    expect(decideBotPrepCommands(game, seat.id, 'standard').some(command => command.type === 'REFRESH_SHOP')).toBe(false);
+  });
+
+  it('novice loses most real battles against both tougher policies on mirrored quick matches', () => {
+    const wins = { standard: 0, veteran: 0 };
+    const opponents = ['standard', 'veteran'] as const;
+    const seeds = [1, 2, 3, 4];
+    const rounds = MODE_BUDGETS.modes.quick.rounds;
+    for (const seed of seeds) {
+      const games = difficulties.map(() => createGame('quick', seed));
+      for (let round = 1; round <= rounds; round++) {
+        const [novice, standard, veteran] = games.map((game, index) => {
+          const seat = game.seats[0]!;
+          replay(game, seat.id, decideBotPrepCommands(game, seat.id, difficulties[index]!));
+          finalizePrepDeadline(game);
+          return seat;
+        });
+        for (const [index, rival] of [standard!, veteran!].entries()) {
+          const difficulty = opponents[index]!;
+          if (runCombat(novice!, { ...rival, id: 'rival' }, 'quick', seed + round).outcome === 'loss') wins[difficulty]++;
+          if (runCombat(rival, { ...novice!, id: 'rookie' }, 'quick', seed + round).outcome === 'win') wins[difficulty]++;
+        }
+        for (const game of games) {
+          settleRound(game, game.seats.map(seat => ({ seatId: seat.id, outcome: 'draw' })));
+          beginNextRound(game);
+        }
+      }
+    }
+    for (const difficulty of opponents) expect(wins[difficulty]).toBeGreaterThanOrEqual(seeds.length * rounds * 2 * 0.75);
+  });
+
   it('returns no commands for a missing seat or outside preparation', () => {
     const game = createGame('quick', 1);
     expect(decideBotPrepCommands(game, 'missing')).toEqual([]);
@@ -103,8 +232,7 @@ describe('procedural prep bots', () => {
     const player = game.seats[0]!;
     addUnit(game, player, 'S01', { zone: 'board', row: 0, col: 3 });
     setGold(player, 1);
-    player.inventoryItems = [];
-    setShop(game, player, ['S04', 'S09', null, null, null]);
+      setShop(game, player, ['S04', 'S09', null, null, null]);
     for (const rival of game.seats.slice(1, 4)) {
       addUnit(game, rival, 'S04', { zone: 'board', row: 3, col: 3 }, 2);
       addUnit(game, rival, 'S05', { zone: 'board', row: 3, col: 4 });
@@ -134,8 +262,10 @@ describe('procedural prep bots', () => {
     const player = game.seats[0]!;
     emptySeat(game, player);
     setGold(player, 0);
+    const before = itemComponentShares(game);
     player.inventoryItems = ['C_RUBBING', 'C_RUBBING'];
     player.anvils = [];
+    game.itemComponentsGranted += itemComponentShares(game) - before;
     for (let i = 0; i < 5; i++) addUnit(game, player, `S0${i + 1}`, { zone: 'bench', slot: i });
     replay(game, player.id, decideBotPrepCommands(game, player.id, 'standard'));
     expect(player.units.some((unit) => unit.items.includes('I_MOTHERSHIP_FLAG'))).toBe(true);

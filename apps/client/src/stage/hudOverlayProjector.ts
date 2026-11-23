@@ -1,6 +1,5 @@
 import * as THREE from 'three';
-import { lookupItemById } from '@pkg/contracts';
-import { getGameItemIconUrl } from '@pkg/learning-ui';
+import { getGameItemIconAccent, getGameItemIconUrl } from '@pkg/learning-ui';
 import type { UnitActorRig } from './unitMeshFactory.js';
 import type {
   DamageFloatKind,
@@ -29,18 +28,6 @@ interface PooledGoldFloat {
   durationSec: number;
   driftX: number;
 }
-
-const COMPONENT_COLOR: Readonly<Record<string, string>> = {
-  C_SWORD: '#F97316',
-  C_BOW: '#FACC15',
-  C_ROD: '#22D3EE',
-  C_TEAR: '#3B82F6',
-  C_VEST: '#D97706',
-  C_CLOAK: '#A855F7',
-  C_BELT: '#22C55E',
-  C_GLOVE: '#EF4444',
-  C_RUBBING: '#F5C451',
-};
 
 const DAMAGE_POOL_SIZE = 64;
 const GOLD_FLOAT_POOL_SIZE = 16;
@@ -75,77 +62,26 @@ function paintItemBadgeFrame(
   img: HTMLImageElement | null,
 ): void {
   const s = ITEM_BADGE_PX;
-  const normalized = itemId === 'C_SPATULA' ? 'C_RUBBING' : itemId;
-  const lookedUp = lookupItemById(normalized);
-  const pad = 0.9;
+  const pad = 0.75;
   const inner = s - pad * 2;
-  const radius = 3.6;
+  const accent = getGameItemIconAccent(itemId);
 
   ctx.clearRect(0, 0, s, s);
   ctx.save();
-  drawRoundedRectPath(ctx, pad, pad, inner, inner, radius);
+  drawRoundedRectPath(ctx, pad, pad, inner, inner, 4);
   ctx.clip();
-
+  ctx.fillStyle = '#131e32';
+  ctx.fillRect(0, 0, s, s);
   if (img && img.complete && img.naturalWidth > 0) {
     ctx.drawImage(img, pad, pad, inner, inner);
   } else {
-    const accent = COMPONENT_COLOR[normalized] ?? '#F5C451';
-    const bg = ctx.createRadialGradient(s * 0.5, s * 0.45, 1, s * 0.5, s * 0.5, s * 0.65);
-    bg.addColorStop(0, accent);
-    bg.addColorStop(1, '#0B1220');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, s, s);
+    ctx.fillStyle = accent;
+    ctx.fillRect(s * 0.4, s * 0.4, s * 0.2, s * 0.2);
   }
-
-  const sheen = ctx.createLinearGradient(0, 0, s, s * 0.65);
-  sheen.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
-  sheen.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
-  ctx.fillStyle = sheen;
-  ctx.fillRect(0, 0, s, s);
   ctx.restore();
 
-  drawRoundedRectPath(ctx, pad, pad, inner, inner, radius);
-  if (lookedUp?.kind === 'completed') {
-    const goldBorder = ctx.createLinearGradient(0, 0, s, s);
-    goldBorder.addColorStop(0, '#FFF6C8');
-    goldBorder.addColorStop(0.5, '#F5C451');
-    goldBorder.addColorStop(1, '#B7791F');
-    ctx.lineWidth = 1.65;
-    ctx.strokeStyle = goldBorder;
-    ctx.stroke();
-    return;
-  }
-
-  if (lookedUp?.kind === 'emblem') {
-    const emblemBorder = ctx.createLinearGradient(0, 0, s, s);
-    emblemBorder.addColorStop(0, '#FFF6C8');
-    emblemBorder.addColorStop(0.5, '#F5C451');
-    emblemBorder.addColorStop(1, '#C084FC');
-    ctx.lineWidth = 1.65;
-    ctx.strokeStyle = emblemBorder;
-    ctx.stroke();
-    return;
-  }
-
-  if (lookedUp?.kind === 'flag' || normalized === 'I_MOTHERSHIP_FLAG') {
-    const flagBorder = ctx.createLinearGradient(0, 0, s, s);
-    flagBorder.addColorStop(0, '#FFFDF0');
-    flagBorder.addColorStop(0.45, '#FDE047');
-    flagBorder.addColorStop(0.85, '#38BDF8');
-    flagBorder.addColorStop(1, '#F59E0B');
-    ctx.lineWidth = 1.7;
-    ctx.strokeStyle = flagBorder;
-    ctx.stroke();
-    return;
-  }
-
-  const accent =
-    normalized === 'TOOL_MAGNETIC_REMOVER'
-      ? '#38BDF8'
-      : normalized === 'TOOL_REFORGER'
-        ? '#FB923C'
-        : COMPONENT_COLOR[normalized] ?? '#F5C451';
-  ctx.lineWidth = 1.35;
+  drawRoundedRectPath(ctx, pad, pad, inner, inner, 4);
+  ctx.lineWidth = 1;
   ctx.strokeStyle = accent;
   ctx.stroke();
 }
@@ -490,11 +426,11 @@ export class StageHudOverlayProjector {
     }
 
     const badges: { label: string; bg: string; fg: string }[] = [];
-    if (p.statuses.antiHeal) badges.push({ label: '重伤', bg: '#7F1D1D', fg: '#FCA5A5' });
+    if (p.statuses.antiHeal) badges.push({ label: '重伤', bg: '#4b343b', fg: '#e0bcc0' });
     if (p.statuses.armorShred || p.statuses.mrShred) {
-      badges.push({ label: '破甲', bg: '#78350F', fg: '#FDE68A' });
+      badges.push({ label: '破甲', bg: '#503f32', fg: '#d3c2a0' });
     }
-    if (p.statuses.ccImmune) badges.push({ label: '免控', bg: '#1E3A8A', fg: '#DBEAFE' });
+    if (p.statuses.ccImmune) badges.push({ label: '免控', bg: '#293c52', fg: '#DBEAFE' });
 
     if (badges.length > 0) {
       const totalBadgeW = badges.length * 26 + (badges.length - 1) * 3;
@@ -527,11 +463,11 @@ export class StageHudOverlayProjector {
     const shieldW = (p.shield / effectiveTotal) * barW;
 
     if (ghostW > hpW + 0.5) {
-      ctx.fillStyle = '#FBBF24';
+      ctx.fillStyle = '#c7a163';
       ctx.fillRect(x0 + hpW, y0, ghostW - hpW, hpH);
     }
 
-    ctx.fillStyle = p.allegiance === 'ally' ? '#34D399' : '#EF4444';
+    ctx.fillStyle = p.allegiance === 'ally' ? '#72a38a' : '#b87076';
     ctx.fillRect(x0, y0, hpW, hpH);
 
     if (shieldW > 0.5) {
@@ -554,13 +490,13 @@ export class StageHudOverlayProjector {
     }
 
     const manaRatio = Math.min(1, p.mana / p.maxMana);
-    ctx.fillStyle = manaRatio >= 0.85 ? '#FDE68A' : '#38BDF8';
+    ctx.fillStyle = manaRatio >= 0.85 ? '#d3c2a0' : '#89a3b8';
     ctx.fillRect(x0, y0 + hpH + 1, barW * manaRatio, manaH);
 
     ctx.font = '800 10px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = p.star === 3 ? '#FDE68A' : p.star === 2 ? '#E2E8F0' : '#D99B66';
+    ctx.fillStyle = p.star === 3 ? '#d3c2a0' : p.star === 2 ? '#E2E8F0' : '#ba967b';
     ctx.fillText('★'.repeat(p.star), x0 - 4, y0 + hpH * 0.5);
   }
 
@@ -583,34 +519,15 @@ export class StageHudOverlayProjector {
     ctx.globalAlpha = Math.max(0, alpha);
     ctx.translate(px, py);
 
-    if (df.isCrit) {
-      ctx.fillStyle = 'rgba(28, 21, 10, 0.88)';
-      ctx.strokeStyle = '#F0DCAA';
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      const spikes = 10;
-      for (let i = 0; i < spikes * 2; i += 1) {
-        const r = i % 2 === 0 ? 24 : 15;
-        const ang = (i / (spikes * 2)) * Math.PI * 2;
-        const sx = Math.cos(ang) * r * 1.35;
-        const sy = Math.sin(ang) * r * 0.72;
-        if (i === 0) ctx.moveTo(sx, sy);
-        else ctx.lineTo(sx, sy);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    }
-
     ctx.font = `800 ${fontPx}px "PingFang SC", "Segoe UI", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     const fill =
       df.kind === 'physical'
-        ? '#F59E0B'
+        ? '#c7a163'
         : df.kind === 'magic'
-          ? '#38BDF8'
+          ? '#89a3b8'
           : '#FFFFFF';
 
     ctx.lineWidth = 3;
@@ -646,30 +563,16 @@ export class StageHudOverlayProjector {
     ctx.translate(px, py);
     ctx.scale(popScale, popScale);
 
-    const aura = ctx.createRadialGradient(0, 0, 2, 0, 0, 34);
-    aura.addColorStop(0, 'rgba(254, 240, 138, 0.42)');
-    aura.addColorStop(0.55, 'rgba(245, 158, 11, 0.16)');
-    aura.addColorStop(1, 'rgba(245, 158, 11, 0)');
-    ctx.fillStyle = aura;
-    ctx.beginPath();
-    ctx.arc(0, 0, 34, 0, Math.PI * 2);
-    ctx.fill();
-
     const label = `+${gf.amount}G`;
     ctx.font = '900 22px -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    const textGrad = ctx.createLinearGradient(0, -12, 0, 12);
-    textGrad.addColorStop(0, '#FFFDF0');
-    textGrad.addColorStop(0.45, '#FDE047');
-    textGrad.addColorStop(1, '#F59E0B');
-
     ctx.lineJoin = 'round';
     ctx.lineWidth = 4.6;
     ctx.strokeStyle = '#261404';
     ctx.strokeText(label, 0, 0);
-    ctx.fillStyle = textGrad;
+    ctx.fillStyle = '#d3c2a0';
     ctx.fillText(label, 0, 0);
 
     ctx.restore();

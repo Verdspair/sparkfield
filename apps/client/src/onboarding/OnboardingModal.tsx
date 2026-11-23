@@ -71,7 +71,6 @@ function SpotlightCue({ label }: { readonly label: string }): React.JSX.Element 
         {label}
       </span>
       <span className="ob-pulse-beacon" aria-hidden="true">
-        <span className="ob-pulse-beacon__wave" />
         <span className="ob-pulse-beacon__core" />
       </span>
     </>
@@ -81,11 +80,11 @@ function SpotlightCue({ label }: { readonly label: string }): React.JSX.Element 
 function ChoiceIconCardsSvg(): React.JSX.Element {
   return (
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-      <rect x="5" y="7" width="16" height="20" rx="3" stroke="#f2c97d" strokeWidth="1.5" />
-      <path d="M9 13H17M9 17H15" stroke="#fff0c4" strokeWidth="1.4" strokeLinecap="round" />
-      <circle cx="26" cy="20" r="6.5" stroke="#4fd1ff" strokeWidth="1.5" />
-      <circle cx="26" cy="20" r="2.6" fill="#fff0c4" />
-      <path d="M21 15L24 17.5" stroke="#f2c97d" strokeWidth="1.3" strokeLinecap="round" />
+      <rect x="5" y="7" width="16" height="20" rx="3" stroke="#c8b590" strokeWidth="1.5" />
+      <path d="M9 13H17M9 17H15" stroke="#d3c2a0" strokeWidth="1.4" strokeLinecap="round" />
+      <circle cx="26" cy="20" r="6.5" stroke="#9db5c7" strokeWidth="1.5" />
+      <circle cx="26" cy="20" r="2.6" fill="#d3c2a0" />
+      <path d="M21 15L24 17.5" stroke="#c8b590" strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   );
 }
@@ -95,16 +94,16 @@ function ChoiceIconMicroSvg(): React.JSX.Element {
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
       <polygon
         points="18,4.5 29.5,11 29.5,25 18,31.5 6.5,25 6.5,11"
-        stroke="#fff0c4"
+        stroke="#d3c2a0"
         strokeWidth="1.6"
-        fill="rgba(242,201,125,0.14)"
+        fill="rgba(200,181,144,0.14)"
       />
       <polygon
         points="18,10.5 23.8,14 23.8,21 18,24.5 12.2,21 12.2,14"
-        stroke="#4fd1ff"
+        stroke="#9db5c7"
         strokeWidth="1.3"
       />
-      <circle cx="18" cy="17.5" r="2.6" fill="#fff0c4" />
+      <circle cx="18" cy="17.5" r="2.6" fill="#d3c2a0" />
     </svg>
   );
 }
@@ -112,10 +111,10 @@ function ChoiceIconMicroSvg(): React.JSX.Element {
 function ChoiceIconSkipSvg(): React.JSX.Element {
   return (
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-      <circle cx="18" cy="18" r="12" stroke="rgba(242,201,125,0.6)" strokeWidth="1.4" />
+      <circle cx="18" cy="18" r="12" stroke="rgba(200,181,144,0.6)" strokeWidth="1.4" />
       <path
         d="M13 13L19 18L13 23M20 13L26 18L20 23"
-        stroke="#fff0c4"
+        stroke="#d3c2a0"
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -129,39 +128,39 @@ function GuideSlideDiagram({ index }: { readonly index: number }): React.JSX.Ele
     return (
       <svg className="ob-diagram-svg" viewBox="0 0 720 220" fill="none" role="img" aria-label="答题蓄能爆出鎏金法球">
         <g transform="translate(54, 32)">
-          <rect x="0" y="0" width="148" height="130" rx="10" fill="#15233e" stroke="#f2c97d" strokeWidth="1.7" />
-          <rect x="18" y="22" width="22" height="22" rx="5" fill="rgba(52,211,153,0.2)" stroke="#34d399" strokeWidth="1.4" />
-          <path d="M24 33L28 37L35 28" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <line x1="50" y1="28" x2="126" y2="28" stroke="#fff0c4" strokeWidth="2" strokeLinecap="round" />
+          <rect x="0" y="0" width="148" height="130" rx="4" fill="#1b2433" stroke="#c8b590" strokeWidth="1.7" />
+          <rect x="18" y="22" width="22" height="22" rx="4" fill="rgba(114,163,138,0.2)" stroke="#84ac96" strokeWidth="1.4" />
+          <path d="M24 33L28 37L35 28" stroke="#84ac96" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="50" y1="28" x2="126" y2="28" stroke="#d3c2a0" strokeWidth="2" strokeLinecap="round" />
           <line x1="50" y1="39" x2="104" y2="39" stroke="rgba(203,213,225,0.58)" strokeWidth="1.6" strokeLinecap="round" />
-          <rect x="18" y="60" width="112" height="22" rx="5" fill="rgba(242,201,125,0.16)" stroke="rgba(242,201,125,0.55)" strokeWidth="1.2" />
-          <rect x="18" y="90" width="112" height="22" rx="5" fill="rgba(79,209,255,0.08)" stroke="rgba(148,179,224,0.22)" strokeWidth="1" />
+          <rect x="18" y="60" width="112" height="22" rx="4" fill="rgba(200,181,144,0.16)" stroke="rgba(200,181,144,0.55)" strokeWidth="1.2" />
+          <rect x="18" y="90" width="112" height="22" rx="4" fill="rgba(137,163,184,0.08)" stroke="rgba(137,163,184,0.22)" strokeWidth="1" />
           <text x="74" y="156" textAnchor="middle" fill="#cbd5e1" fontSize="13.5" fontWeight="600">战术简报答题</text>
         </g>
 
-        <path d="M218 96 Q268 48 320 96" stroke="#f2c97d" strokeWidth="2.2" className="ob-flow-line" />
-        <polygon points="326,98 313,90 315,103" fill="#fff0c4" />
+        <path d="M218 96 Q268 48 320 96" stroke="#c8b590" strokeWidth="2.2" className="ob-flow-line" />
+        <polygon points="326,98 313,90 315,103" fill="#d3c2a0" />
 
         <g transform="translate(348, 28)">
-          <circle cx="68" cy="68" r="54" stroke="rgba(242,201,125,0.34)" strokeWidth="1.4" strokeDasharray="4 5" />
-          <circle cx="68" cy="68" r="40" fill="rgba(242,201,125,0.22)" stroke="#fff0c4" strokeWidth="2.2" className="ob-breathe" />
+          <circle cx="68" cy="68" r="54" stroke="rgba(200,181,144,0.34)" strokeWidth="1.4" strokeDasharray="4 5" />
+          <circle cx="68" cy="68" r="40" fill="rgba(200,181,144,0.22)" stroke="#d3c2a0" strokeWidth="2.2" />
           <circle cx="56" cy="54" r="9" fill="rgba(255,252,240,0.4)" />
-          <text x="68" y="75" textAnchor="middle" fill="#fff0c4" fontSize="22" fontWeight="800">+2G</text>
-          <text x="68" y="160" textAnchor="middle" fill="#f2c97d" fontSize="13.5" fontWeight="700">鎏金法球</text>
+          <text x="68" y="75" textAnchor="middle" fill="#d3c2a0" fontSize="22" fontWeight="800">+2G</text>
+          <text x="68" y="160" textAnchor="middle" fill="#c8b590" fontSize="13.5" fontWeight="700">鎏金法球</text>
         </g>
 
-        <text x="514" y="104" textAnchor="middle" fill="#f2c97d" fontSize="22" fontWeight="700">+</text>
+        <text x="514" y="104" textAnchor="middle" fill="#c8b590" fontSize="22" fontWeight="700">+</text>
 
         <g transform="translate(544, 32)">
-          <circle cx="60" cy="64" r="42" stroke="rgba(148,179,224,0.2)" strokeWidth="6" />
+          <circle cx="60" cy="64" r="42" stroke="rgba(137,163,184,0.2)" strokeWidth="6" />
           <path
             d="M60 22 A42 42 0 1 1 21 80"
-            stroke="#4fd1ff"
+            stroke="#9db5c7"
             strokeWidth="6"
             strokeLinecap="round"
           />
           <text x="60" y="70" textAnchor="middle" fill="#f8fafc" fontSize="17" fontWeight="800">65%</text>
-          <text x="60" y="156" textAnchor="middle" fill="#a5f3fc" fontSize="13.5" fontWeight="600">星核充能</text>
+          <text x="60" y="156" textAnchor="middle" fill="#acc0cf" fontSize="13.5" fontWeight="600">星核充能</text>
         </g>
       </svg>
     );
@@ -176,31 +175,31 @@ function GuideSlideDiagram({ index }: { readonly index: number }): React.JSX.Ele
           { x: 64, y: 136 },
         ].map((pos, idx) => (
           <g key={idx} transform={`translate(${pos.x}, ${pos.y})`}>
-            <rect x="0" y="0" width="124" height="46" rx="8" fill="#15233e" stroke="#f2c97d" strokeWidth="1.6" />
-            <polygon points="26,13 29,20 36,20 30.5,24.5 32.5,31.5 26,27 19.5,31.5 21.5,24.5 16,20 23,20" fill="#4fd1ff" />
-            <text x="76" y="28" textAnchor="middle" fill="#fff0c4" fontSize="15" fontWeight="700">1★ 同卡</text>
+            <rect x="0" y="0" width="124" height="46" rx="4" fill="#1b2433" stroke="#c8b590" strokeWidth="1.6" />
+            <polygon points="26,13 29,20 36,20 30.5,24.5 32.5,31.5 26,27 19.5,31.5 21.5,24.5 16,20 23,20" fill="#9db5c7" />
+            <text x="76" y="28" textAnchor="middle" fill="#d3c2a0" fontSize="15" fontWeight="700">1★ 同卡</text>
           </g>
         ))}
 
-        <path d="M198 43 C270 43, 290 101, 376 101" stroke="#f2c97d" strokeWidth="1.8" className="ob-flow-line" />
-        <path d="M198 101 L376 101" stroke="#fff0c4" strokeWidth="2.2" className="ob-flow-line" />
-        <path d="M198 159 C270 159, 290 103, 376 103" stroke="#4fd1ff" strokeWidth="1.8" className="ob-flow-line" />
-        <rect x="256" y="86" width="62" height="28" rx="14" fill="#101b32" stroke="rgba(242,201,125,0.64)" strokeWidth="1.3" />
-        <text x="287" y="105" textAnchor="middle" fill="#fff0c4" fontSize="12.5" fontWeight="700">三合一</text>
-        <polygon points="386,101 374,95 374,107" fill="#fff0c4" />
+        <path d="M198 43 C270 43, 290 101, 376 101" stroke="#c8b590" strokeWidth="1.8" className="ob-flow-line" />
+        <path d="M198 101 L376 101" stroke="#d3c2a0" strokeWidth="2.2" className="ob-flow-line" />
+        <path d="M198 159 C270 159, 290 103, 376 103" stroke="#9db5c7" strokeWidth="1.8" className="ob-flow-line" />
+        <rect x="256" y="86" width="62" height="28" rx="4" fill="#101b32" stroke="rgba(200,181,144,0.64)" strokeWidth="1.3" />
+        <text x="287" y="105" textAnchor="middle" fill="#d3c2a0" fontSize="12.5" fontWeight="700">三合一</text>
+        <polygon points="386,101 374,95 374,107" fill="#d3c2a0" />
 
         <g transform="translate(432, 16)">
-          <rect x="74" y="4" width="52" height="148" rx="26" fill="rgba(242,201,125,0.16)" className="ob-breathe" />
-          <line x1="100" y1="8" x2="100" y2="146" stroke="#fff0c4" strokeWidth="2.4" strokeDasharray="3 4" />
+          <rect x="74" y="4" width="52" height="148" rx="26" fill="rgba(200,181,144,0.16)" />
+          <line x1="100" y1="8" x2="100" y2="146" stroke="#d3c2a0" strokeWidth="2.4" strokeDasharray="3 4" />
           <polygon
             points="100,112 154,132 134,158 66,158 46,132"
-            fill="rgba(79,209,255,0.16)"
-            stroke="#4fd1ff"
+            fill="rgba(137,163,184,0.16)"
+            stroke="#9db5c7"
             strokeWidth="1.7"
           />
-          <circle cx="100" cy="82" r="35" fill="#182745" stroke="#fff0c4" strokeWidth="2.4" />
-          <text x="100" y="90" textAnchor="middle" fill="#fef08a" fontSize="22" fontWeight="800">2★</text>
-          <text x="100" y="182" textAnchor="middle" fill="#f2c97d" fontSize="13.5" fontWeight="700">鎏金升星光柱</text>
+          <circle cx="100" cy="82" r="35" fill="#182745" stroke="#d3c2a0" strokeWidth="2.4" />
+          <text x="100" y="90" textAnchor="middle" fill="#ddca9f" fontSize="22" fontWeight="800">2★</text>
+          <text x="100" y="182" textAnchor="middle" fill="#c8b590" fontSize="13.5" fontWeight="700">鎏金升星光柱</text>
         </g>
       </svg>
     );
@@ -210,39 +209,39 @@ function GuideSlideDiagram({ index }: { readonly index: number }): React.JSX.Ele
     return (
       <svg className="ob-diagram-svg" viewBox="0 0 720 220" fill="none" role="img" aria-label="两件散件拖放直合成装">
         <g transform="translate(52, 40)">
-          <rect x="0" y="0" width="118" height="110" rx="10" fill="#15233e" stroke="#f2c97d" strokeWidth="1.7" />
-          <path d="M38 74L78 34M64 34H78V48M32 68L44 80" stroke="#fff0c4" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="0" y="0" width="118" height="110" rx="4" fill="#1b2433" stroke="#c8b590" strokeWidth="1.7" />
+          <path d="M38 74L78 34M64 34H78V48M32 68L44 80" stroke="#d3c2a0" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
           <text x="59" y="136" textAnchor="middle" fill="#cbd5e1" fontSize="13.5" fontWeight="600">钨芯刃</text>
         </g>
 
-        <text x="196" y="104" textAnchor="middle" fill="#fff0c4" fontSize="24" fontWeight="700">+</text>
+        <text x="196" y="104" textAnchor="middle" fill="#d3c2a0" fontSize="24" fontWeight="700">+</text>
 
         <g transform="translate(222, 40)">
-          <rect x="0" y="0" width="118" height="110" rx="10" fill="#15233e" stroke="#4fd1ff" strokeWidth="1.7" />
-          <path d="M32 68L78 34M42 78L88 44" stroke="#4fd1ff" strokeWidth="2.3" strokeLinecap="round" />
-          <circle cx="60" cy="56" r="6" fill="#fff0c4" />
+          <rect x="0" y="0" width="118" height="110" rx="4" fill="#1b2433" stroke="#9db5c7" strokeWidth="1.7" />
+          <path d="M32 68L78 34M42 78L88 44" stroke="#9db5c7" strokeWidth="2.3" strokeLinecap="round" />
+          <circle cx="60" cy="56" r="6" fill="#d3c2a0" />
           <text x="59" y="136" textAnchor="middle" fill="#cbd5e1" fontSize="13.5" fontWeight="600">加速轨</text>
         </g>
 
-        <line x1="362" y1="96" x2="458" y2="96" stroke="#f2c97d" strokeWidth="2.2" className="ob-flow-line" />
-        <polygon points="468,96 455,90 455,102" fill="#fff0c4" />
+        <line x1="362" y1="96" x2="458" y2="96" stroke="#c8b590" strokeWidth="2.2" className="ob-flow-line" />
+        <polygon points="468,96 455,90 455,102" fill="#d3c2a0" />
 
         <g transform="translate(492, 24)">
           <polygon
             points="84,8 158,70 84,132 10,70"
-            fill="rgba(242,201,125,0.18)"
-            stroke="#fff0c4"
+            fill="rgba(200,181,144,0.18)"
+            stroke="#d3c2a0"
             strokeWidth="2.2"
-            className="ob-breathe"
+
           />
           <polygon
             points="84,24 138,70 84,116 30,70"
-            fill="#15233e"
-            stroke="#4fd1ff"
+            fill="#1b2433"
+            stroke="#9db5c7"
             strokeWidth="1.4"
           />
-          <path d="M56 82L112 58M62 66L106 48M68 92L112 74" stroke="#fef08a" strokeWidth="2.3" strokeLinecap="round" />
-          <text x="84" y="160" textAnchor="middle" fill="#f2c97d" fontSize="14" fontWeight="700">洛伦兹连发轨</text>
+          <path d="M56 82L112 58M62 66L106 48M68 92L112 74" stroke="#ddca9f" strokeWidth="2.3" strokeLinecap="round" />
+          <text x="84" y="160" textAnchor="middle" fill="#c8b590" fontSize="14" fontWeight="700">洛伦兹连发轨</text>
         </g>
       </svg>
     );
@@ -262,30 +261,30 @@ function GuideSlideDiagram({ index }: { readonly index: number }): React.JSX.Ele
           <polygon
             key={i}
             points={`${hex.cx},${hex.cy - 26} ${hex.cx + 23},${hex.cy - 13} ${hex.cx + 23},${hex.cy + 13} ${hex.cx},${hex.cy + 26} ${hex.cx - 23},${hex.cy + 13} ${hex.cx - 23},${hex.cy - 13}`}
-            fill={hex.active ? 'rgba(242,201,125,0.22)' : 'rgba(21,35,62,0.92)'}
-            stroke={hex.active ? '#fff0c4' : 'rgba(79,209,255,0.48)'}
+            fill={hex.active ? 'rgba(200,181,144,0.22)' : 'rgba(21,35,62,0.92)'}
+            stroke={hex.active ? '#d3c2a0' : 'rgba(137,163,184,0.48)'}
             strokeWidth={hex.active ? '1.9' : '1.2'}
           />
         ))}
-        <circle cx="56" cy="52" r="9" fill="#4fd1ff" />
-        <circle cx="140" cy="100" r="9" fill="#f2c97d" />
-        <path d="M68 44 C104 20, 134 44, 140 84" stroke="#fff0c4" strokeWidth="1.8" strokeDasharray="4 4" />
-        <path d="M128 108 C92 130, 62 106, 56 68" stroke="#4fd1ff" strokeWidth="1.8" strokeDasharray="4 4" />
+        <circle cx="56" cy="52" r="9" fill="#9db5c7" />
+        <circle cx="140" cy="100" r="9" fill="#c8b590" />
+        <path d="M68 44 C104 20, 134 44, 140 84" stroke="#d3c2a0" strokeWidth="1.8" strokeDasharray="4 4" />
+        <path d="M128 108 C92 130, 62 106, 56 68" stroke="#9db5c7" strokeWidth="1.8" strokeDasharray="4 4" />
         <text x="124" y="158" textAnchor="middle" fill="#cbd5e1" fontSize="13.5" fontWeight="600">拖拽换位激活羁绊</text>
       </g>
 
-      <line x1="316" y1="98" x2="424" y2="98" stroke="#f2c97d" strokeWidth="2.2" className="ob-flow-line" />
-      <polygon points="434,98 421,92 421,104" fill="#fff0c4" />
+      <line x1="316" y1="98" x2="424" y2="98" stroke="#c8b590" strokeWidth="2.2" className="ob-flow-line" />
+      <polygon points="434,98 421,92 421,104" fill="#d3c2a0" />
 
       <g transform="translate(460, 26)">
-        <rect x="12" y="14" width="176" height="122" rx="12" fill="#15233e" stroke="#f2c97d" strokeWidth="1.8" />
-        <rect x="26" y="28" width="148" height="22" rx="6" fill="rgba(79,209,255,0.22)" stroke="#4fd1ff" strokeWidth="1.2" className="ob-breathe" />
-        <text x="100" y="43" textAnchor="middle" fill="#a5f3fc" fontSize="11.5" fontWeight="700">顶部悬浮抽屉</text>
-        <rect x="26" y="64" width="148" height="22" rx="6" fill="rgba(148,179,224,0.1)" stroke="rgba(148,179,224,0.24)" strokeWidth="1" />
+        <rect x="12" y="14" width="176" height="122" rx="4" fill="#1b2433" stroke="#c8b590" strokeWidth="1.8" />
+        <rect x="26" y="28" width="148" height="22" rx="4" fill="rgba(137,163,184,0.22)" stroke="#9db5c7" strokeWidth="1.2" />
+        <text x="100" y="43" textAnchor="middle" fill="#acc0cf" fontSize="11.5" fontWeight="700">顶部悬浮抽屉</text>
+        <rect x="26" y="64" width="148" height="22" rx="4" fill="rgba(137,163,184,0.1)" stroke="rgba(137,163,184,0.24)" strokeWidth="1" />
         <text x="100" y="79" textAnchor="middle" fill="#cbd5e1" fontSize="11">9 格备战席零遮挡</text>
-        <rect x="26" y="100" width="148" height="24" rx="6" fill="rgba(242,201,125,0.22)" stroke="#f2c97d" strokeWidth="1.3" />
-        <text x="100" y="116" textAnchor="middle" fill="#fff0c4" fontSize="11.5" fontWeight="700">底部零遮挡安全区</text>
-        <text x="100" y="160" textAnchor="middle" fill="#f2c97d" fontSize="13.5" fontWeight="700">双模商店自由切换</text>
+        <rect x="26" y="100" width="148" height="24" rx="4" fill="rgba(200,181,144,0.22)" stroke="#c8b590" strokeWidth="1.3" />
+        <text x="100" y="116" textAnchor="middle" fill="#d3c2a0" fontSize="11.5" fontWeight="700">底部零遮挡安全区</text>
+        <text x="100" y="160" textAnchor="middle" fill="#c8b590" fontSize="13.5" fontWeight="700">双模商店自由切换</text>
       </g>
     </svg>
   );
@@ -815,17 +814,17 @@ export function OnboardingModal(): React.JSX.Element | null {
 
         {microProg.stageId === 'summary' ? (
           <div className="blc-center-float">
-            <div className="ui-metal-frame ui-corner-ornaments ob-summary-card">
+            <div className="ui-metal-frame ob-summary-card">
               <svg width="46" height="46" viewBox="0 0 44 44" fill="none" aria-hidden="true">
                 <polygon
                   points="22,3 38,12 38,32 22,41 6,32 6,12"
-                  fill="rgba(242,201,125,0.18)"
-                  stroke="#fff0c4"
+                  fill="rgba(200,181,144,0.18)"
+                  stroke="#d3c2a0"
                   strokeWidth="1.7"
                 />
                 <path
                   d="M15 22.5L20 27.5L29.5 17"
-                  stroke="#fef08a"
+                  stroke="#ddca9f"
                   strokeWidth="2.3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -858,7 +857,7 @@ export function OnboardingModal(): React.JSX.Element | null {
       aria-label="启航引导"
       data-testid="onboarding-modal"
     >
-      <div className="ui-corner-ornaments ob-minimal-panel">
+      <div className="ob-minimal-panel">
         {step === 'choice' ? (
           <div key="choice" className="ob-stage-anim">
             <header className="ob-welcome-hero">

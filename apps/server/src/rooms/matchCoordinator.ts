@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { matchMaker } from '@colyseus/core';
 import { CoursePackSchema, type CoursePack, type DurationMode, type UserProfile } from '@pkg/contracts';
+import type { BotDifficulty } from '@pkg/game-core';
 import { sql } from 'kysely';
 import { ServiceError } from '../db/errors.js';
 import type { CreateMatchInput, MatchCreationResult } from '../lobby/lobbyService.js';
@@ -11,6 +12,10 @@ export interface MatchCoordinatorOptions extends Omit<MatchRuntime,'register'|'u
   roomType?:string;
   matchmakingScore?:MatchmakingScoreOptions;
   onMatchEnded?:(roomId:string,userIds:readonly string[])=>void;
+}
+export function botDifficultyForMatch(score: number | null | undefined, accuracy: number | null | undefined): BotDifficulty {
+  if ((score ?? 1000) < 1200 || (accuracy ?? 0.6) < 0.45) return 'novice';
+  return (score ?? 1000) < 1550 ? 'standard' : 'veteran';
 }
 export class MatchCoordinator {
   private readonly rooms=new Map<string,MatchRoom>();
@@ -57,7 +62,7 @@ export class MatchCoordinator {
         .where('user_id','in',humanIds).where('is_offline_unverified','=',false).where('created_at','>',new Date(Date.now()-30*86_400_000)).executeTakeFirst();
       const standings=await db.selectFrom('mode_standings').select(sql<number>`avg(rank_score)::float8`.as('score'))
         .where('season_term_id','=',season.id).where('duration_mode','=',input.durationMode).where('user_id','in',humanIds).executeTakeFirst();
-      const botDifficulty=(recent?.accuracy??0.6)<0.45?'novice':(recent?.accuracy??0.6)>0.8&&(standings?.score??1000)>1500?'veteran':'standard';
+      const botDifficulty=botDifficultyForMatch(standings?.score,recent?.accuracy);
       const options:MatchRoomOptions={runtime:this.runtime,capability:this.capability,expectedCapability:this.capability,input,start,packs,botDifficulty};
       const listing=await matchMaker.createRoom(this.roomType,options);
       const room=this.rooms.get(listing.roomId);if(!room)throw new Error('MATCH_ROOM_NOT_REGISTERED');

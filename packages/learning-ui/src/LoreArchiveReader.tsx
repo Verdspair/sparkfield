@@ -36,25 +36,6 @@ function clampCostTier(cost: number): 1 | 2 | 3 | 4 | 5 {
   return 5;
 }
 
-function DrawerCornerSvg({ pos }: { readonly pos: 'tl' | 'tr' | 'bl' | 'br' }): React.JSX.Element {
-  return (
-    <svg
-      className={`lui-corner-ornament lui-corner-ornament--${pos}`}
-      viewBox="0 0 14 14"
-      aria-hidden="true"
-    >
-      <path
-        d="M1.2 12.8V4.2L4.2 1.2H12.8"
-        fill="none"
-        stroke="#f2c97d"
-        strokeWidth="1.25"
-      />
-      <polygon points="1.2,1.2 4.6,1.2 1.2,4.6" fill="#f2c97d" />
-      <circle cx="5.4" cy="5.4" r="1.05" fill="#4fd1ff" />
-    </svg>
-  );
-}
-
 export interface RecommendedItemsTreeProps {
   readonly recommendedItemIds: readonly string[];
   readonly ownedComponentIds?: readonly string[];
@@ -185,7 +166,7 @@ export function RecommendedItemsTree({
                       data-owned={isOwned ? 'true' : 'false'}
                       title={compTitle}
                     >
-                      <GameItemIcon itemId={compId} size="xs" className="lui-recipe-glyph" />
+                      <GameItemIcon itemId={compId} size="xs" />
                       <span>{compLabel}</span>
                       {isOwned ? <span className="lui-owned-tag">背包已有</span> : null}
                     </span>
@@ -259,10 +240,6 @@ export function UnitLoreDrawer({
       data-cost-tier={costTier}
       aria-label={`${displayName} 图鉴详情`}
     >
-      <DrawerCornerSvg pos="tl" />
-      <DrawerCornerSvg pos="tr" />
-      <DrawerCornerSvg pos="bl" />
-      <DrawerCornerSvg pos="br" />
 
       <header className="lui-header">
         <div className="lui-badge-group">
@@ -505,10 +482,6 @@ export function LoreArchiveReader({
       className="lui-paper-shell lui-paper-shell--standalone"
       data-testid="lore-archive-reader"
     >
-      <DrawerCornerSvg pos="tl" />
-      <DrawerCornerSvg pos="tr" />
-      <DrawerCornerSvg pos="bl" />
-      <DrawerCornerSvg pos="br" />
 
       <header className="lui-header">
         <div>

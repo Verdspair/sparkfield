@@ -237,8 +237,6 @@ export function PrepRoomPage(): React.JSX.Element | null {
 
   return (
     <div className="sf-prep-viewport" data-testid="prep-room-page">
-      <div className="sf-lobby-vignette-bottom" aria-hidden="true" />
-
       <header className="sf-prep-topbar">
         <div className="sf-prep-topbar__left">
           <button
@@ -258,8 +256,7 @@ export function PrepRoomPage(): React.JSX.Element | null {
               {DURATION_MODE_SHORT_LABELS[room.durationMode]} · {plannedMinutes} 分钟
             </strong>
             <span>
-              {QUEUE_TYPE_LABELS[room.queueType]} · {blueprint.arcCount} 个学习大轮次（约{' '}
-              {plannedMinutes} 分钟） · {modeSpec.rounds} 场战斗
+              {QUEUE_TYPE_LABELS[room.queueType]} · {blueprint.arcCount} 个学习大轮次 · {modeSpec.rounds} 场战斗
             </span>
           </div>
 
@@ -334,13 +331,13 @@ export function PrepRoomPage(): React.JSX.Element | null {
 
         <div className="sf-prep-right-stack">
           <section
-            className="sf-prep-roster-panel ui-corner-ornaments"
-            aria-label="8 席星环席位"
+            className="sf-prep-roster-panel"
+            aria-label="8 个备战席位"
             data-testid="prep-left-roster"
           >
           <div className="sf-prep-roster-head">
             <div className="sf-prep-roster-title">
-              <span>星港备战席</span>
+              <span>备战席位</span>
               <span>({room.members.length} / {TOTAL_SEATS})</span>
             </div>
 
@@ -387,7 +384,6 @@ export function PrepRoomPage(): React.JSX.Element | null {
                       alt={member.nickname}
                       className="sf-seat-portrait"
                     />
-                    {member.isHost ? <span className="sf-seat-crown">房主</span> : null}
                     <span
                       className={`sf-seat-status-dot ${
                         isReady ? 'sf-seat-status-dot--ok' : ''
@@ -545,7 +541,7 @@ export function PrepRoomPage(): React.JSX.Element | null {
             type="button"
             className="sf-prep-chapter-chip"
             onClick={() => openSettings('learning')}
-            title="前往设置调整起始章节"
+            title={`${resolvedNodeTitle} · 调整起始章节`}
             data-testid="prep-chapter-summary-btn"
           >
             <span style={{ color: 'var(--accent-gold)' }}>起点</span>
@@ -560,7 +556,7 @@ export function PrepRoomPage(): React.JSX.Element | null {
 
         <div className="sf-prep-action-cluster">
           <div className="sf-prep-eta" data-testid="estimated-end-time-box">
-            <strong>约 {plannedMinutes} 分钟 · 预计 {estimatedEndHHMM} 结束</strong>
+            <strong>预计 {estimatedEndHHMM} 结束</strong>
           </div>
 
           <button

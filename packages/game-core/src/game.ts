@@ -1,5 +1,5 @@
 import { GameCommandSchema, MODE_BUDGETS, SEASON1_ITEMS, type BattleOutcome, type DurationMode, type GameCommand } from '@pkg/contracts';
-import { createRng, shuffle } from './rng.js';
+import { createRng, randomInt, shuffle } from './rng.js';
 import { createPool, drawUnitOfCost, naturalRefreshShop, refreshShop } from './pool.js';
 import { addExperience, buyExperience, economyFor, grantGold, settleSeatEconomy } from './economy.js';
 import { buyCard, combineUnits, makeUnit, moveUnit, sellUnit } from './board-ops.js';
@@ -8,6 +8,18 @@ import { createAnvil, equipItem, itemComponentValue, pickAnvilOption, useMagneti
 import { beginAugmentPrep, createRoomAugmentOffers, grantVouchers, pickAugment, rerollAugmentSlot } from './augments.js';
 import { isPveRound, victoryPointsFor } from './schedule.js';
 import type { CommandResult, GameState, SeatState } from './types.js';
+type PrepAction = 'BUY_CARD' | 'BUY_XP' | 'EQUIP_ITEM' | 'REFRESH_SHOP';
+type GameWithPrepActions = GameState & {
+  prepActions?: { round: number; bySeat: Record<string, Partial<Record<PrepAction, number>>> };
+};
+export function countPrepActions(game: GameWithPrepActions, seatId: string, action: PrepAction): number {
+  return game.prepActions?.round === game.round ? game.prepActions.bySeat[seatId]?.[action] ?? 0 : 0;
+}
+function recordPrepAction(game: GameWithPrepActions, seatId: string, action: PrepAction): void {
+  if (game.prepActions?.round !== game.round) game.prepActions = { round: game.round, bySeat: {} };
+  const actions = game.prepActions.bySeat[seatId] ??= {};
+  actions[action] = (actions[action] ?? 0) + 1;
+}
 export function createSeat(id: string, mode: DurationMode): SeatState {
   const e = economyFor(mode);
   return { id, level: e.starting_level, xp: 0, gold: e.starting_gold, initialGold: e.starting_gold, goldLedger: [], units: [], shop: Array(5).fill(null) as null[], shopLocked: false, inventoryItems: [], magneticCharges: 1, reforgerCharges: 0, cryoPodEnabled: false, chosenAugments: [], augmentOffer: null, anvils: [], previousBattleTraits: [], lineupPlan: [], victoryPoints: 0, pvpWinStreak: 0, moraleGoldGranted: 0, rerollVouchers: 0, voucherRound: null, vouchersGranted: 0, learningChargeCents: 0, learningGoldOrbs: [], pendingAugmentRerollRounds: 0, pendingLevelFreeRefreshes: 0, pendingCommands: [], isBot: false, botDifficulty: 'standard' };
@@ -30,7 +42,11 @@ function grantRoundResources(game: GameState): void {
   const allotment = Math.floor(budget * game.round / b.rounds) - Math.floor(budget * (game.round - 1) / b.rounds);
   for (const seat of game.seats) {
     let remaining = allotment;
-    if (game.round === 1 || game.round === Math.floor(b.rounds / 2) + 1) { seat.inventoryItems.push(SEASON1_ITEMS.special.spatulaComponent.id); remaining--; }
+    if (game.round === 1 && remaining > 0) {
+      const components = SEASON1_ITEMS.components;
+      seat.inventoryItems.push(components[randomInt(game.rng, components.length)]!.id);
+      remaining--;
+    }
     while (remaining >= 2) { createAnvil(seat, 'completed', game.rng, 'anvil-' + game.nextInstanceId++); remaining -= 2; }
     if (remaining > 0) createAnvil(seat, 'component', game.rng, 'anvil-' + game.nextInstanceId++);
   }
@@ -90,6 +106,9 @@ export function applyGameCommand(game: GameState, seatId: string, command: GameC
   }
   if (result.ok) {
     if (c.type === 'PICK_AUGMENT') game.itemComponentsGranted += itemComponentShares(game) - shares;
+    if (c.type === 'BUY_CARD' || c.type === 'BUY_XP' || c.type === 'EQUIP_ITEM' || c.type === 'REFRESH_SHOP') {
+      recordPrepAction(game, seatId, c.type);
+    }
     flushLevelRefreshes(game, seat);
   }
   return result;

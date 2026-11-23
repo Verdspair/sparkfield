@@ -81,15 +81,15 @@ export function GameUiIcon({
         <svg className={cls} width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <polygon
             points="9,1.6 15.2,5.15 15.2,12.85 9,16.4 2.8,12.85 2.8,5.15"
-            fill="#f5c259"
+            fill="#e5c785"
             fillOpacity="0.22"
-            stroke="#f7cf78"
+            stroke="#e5c785"
             strokeWidth="1.45"
             strokeLinejoin="round"
           />
           <polygon
             points="9,4.35 12.85,6.6 12.85,11.4 9,13.65 5.15,11.4 5.15,6.6"
-            fill="#fbd47d"
+            fill="#f3dfad"
             fillOpacity="0.72"
           />
           <path d="M9 5.75L11.2 9L9 12.25L6.8 9Z" fill="#fff7db" />
@@ -101,9 +101,9 @@ export function GameUiIcon({
         <svg className={cls} width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path
             d="M9 1.75L11.45 6.55L16.25 9L11.45 11.45L9 16.25L6.55 11.45L1.75 9L6.55 6.55Z"
-            fill="#38bdf8"
+            fill="#7bb9e8"
             fillOpacity="0.24"
-            stroke="#67e8f9"
+            stroke="#b4dcf7"
             strokeWidth="1.35"
             strokeLinejoin="round"
           />

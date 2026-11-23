@@ -20,26 +20,26 @@ export type StatTokenKind =
   | 'gold';
 
 const COMPONENT_ACCENT: Readonly<Record<string, string>> = {
-  C_SWORD: '#f59e0b',
-  C_BOW: '#facc15',
-  C_ROD: '#38bdf8',
-  C_TEAR: '#60a5fa',
-  C_VEST: '#fb923c',
-  C_CLOAK: '#c084fc',
-  C_BELT: '#34d399',
-  C_GLOVE: '#fb7185',
-  C_RUBBING: '#f5c451',
+  C_SWORD: '#e6ae65',
+  C_BOW: '#ecd175',
+  C_ROD: '#6bc0f5',
+  C_TEAR: '#74b2f2',
+  C_VEST: '#e69b63',
+  C_CLOAK: '#be9cf0',
+  C_BELT: '#5cc498',
+  C_GLOVE: '#e38090',
+  C_RUBBING: '#e8c472',
 };
 
 const EMBLEM_ACCENT: Readonly<Record<string, string>> = {
-  E_DYSON: '#fb923c',
-  E_CLOUD: '#60a5fa',
-  E_DILATION: '#fde047',
-  E_EUROPA: '#34d399',
-  E_ARRAY: '#38bdf8',
-  E_ANTIMATTER: '#f59e0b',
-  E_STARGATE: '#c084fc',
-  E_SWARM: '#fb7185',
+  E_DYSON: '#e69b63',
+  E_CLOUD: '#74b2f2',
+  E_DILATION: '#ecd175',
+  E_EUROPA: '#5cc498',
+  E_ARRAY: '#6bc0f5',
+  E_ANTIMATTER: '#e6ae65',
+  E_STARGATE: '#be9cf0',
+  E_SWARM: '#e38090',
 };
 
 const SPECIAL_TITLES: Readonly<Record<string, string>> = {
@@ -82,28 +82,28 @@ function resolveItemVisualMeta(normalized: string): ItemVisualMeta {
   if (normalized === 'TOOL_MAGNETIC_REMOVER') {
     return {
       tier: 'tool-remover',
-      accent: '#38bdf8',
+      accent: '#6bc0f5',
       defaultTitle: SPECIAL_TITLES[normalized]!,
     };
   }
   if (normalized === 'TOOL_REFORGER') {
     return {
       tier: 'tool-reforger',
-      accent: '#fb923c',
+      accent: '#e69b63',
       defaultTitle: SPECIAL_TITLES[normalized]!,
     };
   }
   if (normalized === 'ANVIL_COMPONENT_3') {
     return {
       tier: 'anvil-comp',
-      accent: '#7dd3fc',
+      accent: '#93c8f0',
       defaultTitle: SPECIAL_TITLES[normalized]!,
     };
   }
   if (normalized === 'ANVIL_COMPLETED_4') {
     return {
       tier: 'anvil-completed',
-      accent: '#f5c451',
+      accent: '#e8c472',
       defaultTitle: SPECIAL_TITLES[normalized]!,
     };
   }
@@ -112,24 +112,24 @@ function resolveItemVisualMeta(normalized: string): ItemVisualMeta {
   if (entry?.kind === 'flag' || normalized === 'I_MOTHERSHIP_FLAG') {
     return {
       tier: 'flag',
-      accent: '#fde047',
+      accent: '#ecd175',
       defaultTitle: entry?.item.name ?? '深空远征母舰旗',
     };
   }
   if (entry?.kind === 'emblem') {
     return {
       tier: 'emblem',
-      accent: EMBLEM_ACCENT[entry.item.id] ?? '#c084fc',
+      accent: EMBLEM_ACCENT[entry.item.id] ?? '#be9cf0',
       defaultTitle: entry.item.name,
     };
   }
   if (entry?.kind === 'completed') {
     const [cid1 = 'C_SWORD', cid2 = cid1] = entry.item.components;
-    const dot1 = COMPONENT_ACCENT[cid1] ?? '#f59e0b';
+    const dot1 = COMPONENT_ACCENT[cid1] ?? '#e6ae65';
     const dot2 = COMPONENT_ACCENT[cid2] ?? dot1;
     return {
       tier: 'completed',
-      accent: '#f2c97d',
+      accent: '#dec592',
       compDots: [dot1, dot2],
       defaultTitle: entry.item.name,
     };
@@ -137,16 +137,20 @@ function resolveItemVisualMeta(normalized: string): ItemVisualMeta {
   if (entry?.kind === 'component' || entry?.kind === 'spatula') {
     return {
       tier: 'component',
-      accent: COMPONENT_ACCENT[normalized] ?? '#f5c451',
+      accent: COMPONENT_ACCENT[normalized] ?? '#e8c472',
       defaultTitle: entry.item.name,
     };
   }
 
   return {
     tier: 'default',
-    accent: '#f2c97d',
+    accent: '#dec592',
     defaultTitle: normalized,
   };
+}
+
+export function getGameItemIconAccent(itemId: string): string {
+  return resolveItemVisualMeta(normalizeItemId(itemId)).accent;
 }
 
 export interface GameItemIconProps {

@@ -51,18 +51,6 @@ const ALL_CRAFT_COMPONENT_IDS: readonly string[] = [
   SEASON1_ITEMS.special.spatulaComponent.id,
 ];
 
-const COMPONENT_ACCENT_COLORS: Readonly<Record<string, string>> = {
-  C_SWORD: '#f59e0b',
-  C_BOW: '#facc15',
-  C_ROD: '#38bdf8',
-  C_TEAR: '#60a5fa',
-  C_VEST: '#fb923c',
-  C_CLOAK: '#c084fc',
-  C_BELT: '#34d399',
-  C_GLOVE: '#fb7185',
-  C_RUBBING: '#fde047',
-};
-
 const ITEM_KIND_LABELS: Readonly<Record<string, string>> = {
   component: '散件',
   spatula: '星环拓片',
@@ -868,7 +856,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             {DURATION_MODE_LABELS[matchSnapshot.mode]} · {QUEUE_TYPE_LABELS[matchSnapshot.queueType]}
           </span>
           {matchConnectionState === 'reconnecting' ? (
-            <span className="blc-chip" style={{ borderColor: '#F59E0B', color: '#FDE68A' }}>
+            <span className="blc-chip" style={{ borderColor: 'var(--semantic-warning)', color: 'var(--text-primary)' }}>
               正在重连…
             </span>
           ) : null}
@@ -904,9 +892,9 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                   fontSize: '10.5px',
                   fontWeight: 800,
                   letterSpacing: '0.04em',
-                  background: 'linear-gradient(135deg, rgba(225, 29, 72, 0.34), rgba(245, 158, 11, 0.28))',
+                  background: '#30252a',
                   border: '1px solid rgba(251, 191, 36, 0.85)',
-                  color: '#fef08a',
+                  color: '#ddca9f',
                   boxShadow: '0 0 10px rgba(244, 63, 94, 0.35)',
                   whiteSpace: 'nowrap',
                 }}
@@ -922,8 +910,8 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                   fontSize: '10.5px',
                   fontWeight: 800,
                   letterSpacing: '0.04em',
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.26), rgba(242, 201, 125, 0.2))',
-                  border: '1px solid rgba(52, 211, 153, 0.72)',
+                  background: '#25322e',
+                  border: '1px solid rgba(114,163,138, 0.72)',
                   color: '#d1fae5',
                   whiteSpace: 'nowrap',
                 }}
@@ -1349,7 +1337,6 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                         (otherId, otherIdx) =>
                           otherIdx !== idx && Boolean(lookupCraftRecipe(itemId, otherId)),
                       );
-                    const accentColor = COMPONENT_ACCENT_COLORS[itemId] ?? '#f2c97d';
 
                     return (
                       <div
@@ -1375,11 +1362,6 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                               ? 'sf-bag-slot--dragging'
                               : ''
                           }`.trim()}
-                          style={
-                            isComponent
-                              ? ({ '--slot-accent': accentColor } as React.CSSProperties)
-                              : undefined
-                          }
                           onPointerDown={(event) => {
                             beginItemPointerDrag(event, {
                               kind: 'equip',
@@ -1620,10 +1602,12 @@ export function MatchHudOverlay(): React.JSX.Element | null {
         className={`ui-metal-frame blc-hud-right ${!isBottomOpen ? 'blc-hud-right--tall' : ''}`.trim()}
         data-testid="hud-right-rail"
       >
-        <div className="blc-seg-tabs">
+        <div className="sf-rail-tabs" role="tablist" aria-label="排行榜视图">
           <button
             type="button"
-            className={`blc-seg-tab ${rightTab === 'score' ? 'blc-seg-tab--active' : ''}`}
+            role="tab"
+            aria-selected={rightTab === 'score'}
+            className={`sf-rail-tab ${rightTab === 'score' ? 'sf-rail-tab--active' : ''}`}
             onClick={() => setRightTab('score')}
             data-testid="hud-right-score-tab"
           >
@@ -1631,7 +1615,9 @@ export function MatchHudOverlay(): React.JSX.Element | null {
           </button>
           <button
             type="button"
-            className={`blc-seg-tab ${rightTab === 'damage' ? 'blc-seg-tab--active' : ''}`}
+            role="tab"
+            aria-selected={rightTab === 'damage'}
+            className={`sf-rail-tab ${rightTab === 'damage' ? 'sf-rail-tab--active' : ''}`}
             onClick={() => setRightTab('damage')}
             data-testid="hud-right-damage-tab"
           >
@@ -1640,53 +1626,47 @@ export function MatchHudOverlay(): React.JSX.Element | null {
         </div>
 
         {rightTab === 'score' ? (
-          <div className="blc-hud-scroll">
+          <div className="blc-hud-scroll sf-rail-list">
             {sortedSeats.map((s, idx) => {
               const isSelf = s.seatId === matchSnapshot.seatId;
               const isScouted = (scoutedSeatId ?? matchSnapshot.seatId) === s.seatId;
-              const ringPct = Math.max(18, Math.min(100, Math.round((s.victoryPoints / maxSeatVp) * 100)));
-              const ringColor = isSelf
-                ? '#f2c97d'
-                : idx < 4
-                  ? '#34d399'
-                  : '#4fd1ff';
+              const isTopFour = idx < 4;
+              const vpPct = Math.max(0, Math.min(100, Math.round((s.victoryPoints / maxSeatVp) * 100)));
               return (
                 <button
                   key={s.seatId}
                   type="button"
-                  className={`blc-seat-pill ${isSelf ? 'blc-seat-pill--self' : ''} ${
-                    isScouted ? 'blc-seat-pill--scouted' : ''
+                  className={`sf-rail-row ${isSelf ? 'sf-rail-row--self' : ''} ${
+                    isScouted && !isSelf ? 'sf-rail-row--scouted' : ''
                   }`.trim()}
                   onClick={() => scoutMatchSeat(isSelf ? null : s.seatId)}
                   title={isSelf ? '返回主场' : `侦察 ${s.nickname} 战场`}
                   data-testid={`seat-ring-${s.seatId}`}
                 >
-                  <div className="blc-seat-pill__who">
-                    <strong>
-                      {s.nickname}
-                      {matchSnapshot.queueType === 'solo' && s.isBot ? ' · 电脑' : ''}
-                    </strong>
-                    <span className="sf-seat-meta-line">
-                      <span>#{idx + 1}</span>
-                      <span>Lv.{s.level}</span>
-                      <span className="sf-seat-vp-num">
-                        {formatQuarterPoints(s.victoryPoints)}
-                      </span>
-                    </span>
-                  </div>
-                  <span
-                    className="sf-seat-ring-avatar"
-                    style={
-                      {
-                        '--ring-pct': `${ringPct}%`,
-                        '--ring-color': ringColor,
-                      } as React.CSSProperties
-                    }
-                  >
+                  <span className={`sf-rail-rank ${isTopFour ? 'sf-rail-rank--top' : ''}`}>
+                    {idx + 1}
+                  </span>
+                  <span className="sf-rail-avatar">
                     <TacticianPortrait
                       tacticianId={s.tacticianId ?? 'tactician_lumina_bell'}
                       size="sm"
                       alt={s.nickname}
+                    />
+                  </span>
+                  <span className="sf-rail-info">
+                    <span className="sf-rail-name">
+                      {s.nickname}
+                      {matchSnapshot.queueType === 'solo' && s.isBot ? ' · 电脑' : ''}
+                    </span>
+                    <span className="sf-rail-lvl">Lv.{s.level}</span>
+                  </span>
+                  <span className={`sf-rail-vp ${isTopFour ? 'sf-rail-vp--top' : ''}`}>
+                    {formatQuarterPoints(s.victoryPoints)}
+                  </span>
+                  <span className="sf-rail-bar" aria-hidden="true">
+                    <i
+                      className={isTopFour ? 'sf-rail-bar__fill--top' : ''}
+                      style={{ width: `${Math.max(s.victoryPoints > 0 ? 6 : 0, vpPct)}%` }}
                     />
                   </span>
                 </button>
@@ -1694,25 +1674,25 @@ export function MatchHudOverlay(): React.JSX.Element | null {
             })}
           </div>
         ) : (
-          <div className="blc-hud-scroll" data-testid="hud-damage-panel">
-            <div className="blc-seg-tabs" style={{ marginBottom: 6 }}>
+          <div className="blc-hud-scroll sf-rail-list" data-testid="hud-damage-panel">
+            <div className="sf-rail-subtabs">
               <button
                 type="button"
-                className={`blc-seg-tab ${damageMetric === 'dealt' ? 'blc-seg-tab--active' : ''}`}
+                className={`sf-rail-subtab ${damageMetric === 'dealt' ? 'sf-rail-subtab--active' : ''}`}
                 onClick={() => setDamageMetric('dealt')}
               >
                 输出
               </button>
               <button
                 type="button"
-                className={`blc-seg-tab ${damageMetric === 'taken' ? 'blc-seg-tab--active' : ''}`}
+                className={`sf-rail-subtab ${damageMetric === 'taken' ? 'sf-rail-subtab--active' : ''}`}
                 onClick={() => setDamageMetric('taken')}
               >
                 承伤
               </button>
               <button
                 type="button"
-                className={`blc-seg-tab ${damageMetric === 'heal' ? 'blc-seg-tab--active' : ''}`}
+                className={`sf-rail-subtab ${damageMetric === 'heal' ? 'sf-rail-subtab--active' : ''}`}
                 onClick={() => setDamageMetric('heal')}
               >
                 护疗
@@ -1743,11 +1723,11 @@ export function MatchHudOverlay(): React.JSX.Element | null {
                       <div className="blc-dmg-row__head">
                         <span className="sf-dmg-unit-head">
                           <UnitPortrait unitId={r.unitId} size="sm" />
-                          <span>
+                          <span className="sf-dmg-unit-name">
                             {'★'.repeat(r.star)} {def?.name ?? '棋子'}
                           </span>
                         </span>
-                        <strong>{Math.round(r.metricVal)}</strong>
+                        <strong className="sf-dmg-val">{Math.round(r.metricVal)}</strong>
                       </div>
                       <div className="blc-dmg-bar-track">
                         {damageMetric === 'dealt' ? (
@@ -1797,7 +1777,7 @@ export function MatchHudOverlay(): React.JSX.Element | null {
 
       {inspectedUnit && inspectedDef ? (
         <section
-          className="ui-metal-frame ui-corner-ornaments blc-unit-inspect"
+          className="ui-metal-frame blc-unit-inspect"
           aria-label="棋子战术检视卡"
           data-testid="unit-inspect-card"
         >
@@ -2334,7 +2314,6 @@ export function MatchHudOverlay(): React.JSX.Element | null {
         <MatchChoiceModal
           showAugmentChoice={showAugmentChoice}
           self={self}
-          liveRemainingSec={liveRemainingSec}
           serverCommandsLocked={serverCommandsLocked}
           onPeekBattlefield={() => setPeekingBattlefield(true)}
           onSendCommand={sendMatchCommand}

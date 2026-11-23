@@ -2,7 +2,7 @@ import {
   MODE_BUDGETS, SEASON1_AUGMENTS, SEASON1_TRAITS, SEASON1_UNITS_BY_ID,
   lookupCraftRecipe, lookupItemById, type GameCommand, type UnitLocation,
 } from '@pkg/contracts';
-import { applyGameCommand } from './game.js';
+import { applyGameCommand, countPrepActions } from './game.js';
 import { populationCap } from './economy.js';
 import type { GameState, SeatState, UnitInstance } from './types.js';
 
@@ -34,9 +34,8 @@ function unitPower(unit: UnitInstance): number {
     + unit.bonusHp / 150 + unit.bonusSkillEfficiency / 10;
 }
 
-function teamPower(units: readonly UnitInstance[], difficulty: BotDifficulty): number {
+function teamPower(units: readonly UnitInstance[]): number {
   let value = units.reduce((sum, unit) => sum + unitPower(unit), 0);
-  if (difficulty === 'novice') return value;
   const counts = traitCounts(units);
   for (const trait of traits) {
     const count = counts.get(trait.name) ?? 0;
@@ -51,10 +50,11 @@ function teamPower(units: readonly UnitInstance[], difficulty: BotDifficulty): n
 function bestTeam(seat: SeatState, mode: GameState['mode'], difficulty: BotDifficulty): UnitInstance[] {
   const candidates = seat.units.filter(available);
   const cap = populationCap(seat, mode);
+  if (difficulty === 'novice') return candidates.sort((a, b) => b.star - a.star).slice(0, cap);
   let selected: UnitInstance[] = [];
   while (selected.length < Math.min(cap, candidates.length)) {
     const next = candidates.filter((unit) => !selected.includes(unit)).sort((a, b) =>
-      teamPower([...selected, b], difficulty) - teamPower([...selected, a], difficulty)
+      teamPower([...selected, b]) - teamPower([...selected, a])
       || a.instanceId.localeCompare(b.instanceId))[0];
     if (!next) break;
     selected.push(next);
@@ -66,7 +66,7 @@ function bestTeam(seat: SeatState, mode: GameState['mode'], difficulty: BotDiffi
         for (const candidate of candidates.filter((unit) => !selected.includes(unit))) {
           const proposal = [...selected];
           proposal[index] = candidate;
-          if (teamPower(proposal, difficulty) > teamPower(selected, difficulty) + 0.01) {
+          if (teamPower(proposal) > teamPower(selected) + 0.01) {
             selected = proposal;
             improved = true;
           }
@@ -81,33 +81,37 @@ function bestTeam(seat: SeatState, mode: GameState['mode'], difficulty: BotDiffi
 function buyScore(game: GameState, seat: SeatState, unitId: string, difficulty: BotDifficulty): number {
   const def = SEASON1_UNITS_BY_ID.get(unitId);
   if (!def) return -Infinity;
-  const same = seat.units.filter((unit) => unit.unitId === unitId && available(unit));
+  const matching = seat.units.filter((unit) => unit.unitId === unitId);
+  const same = matching.filter(available);
   const owned = same.reduce((sum, unit) => sum + copies(unit), 0);
+  if (difficulty === 'novice') {
+    if (matching.some((unit) => unit.star >= 2)) return -Infinity;
+    const needsFighter = seat.units.filter(available).length < populationCap(seat, game.mode);
+    return def.cost + (owned === 2 ? 2 : 0) + (needsFighter ? 2 : 0);
+  }
   if (same.some((unit) => unit.star === 3)) return -Infinity;
   const board = bestTeam(seat, game.mode, difficulty);
   const counts = traitCounts(board);
   let score = def.cost + (owned % 3 === 2 ? 24 : owned > 0 ? 7 : 0);
   if (owned >= 6 && owned % 3 === 2) score += 14;
   if (seat.units.length < populationCap(seat, game.mode)) score += 10;
-  if (difficulty !== 'novice') {
-    for (const name of [def.faction, def.role]) {
-      const count = counts.get(name) ?? 0;
-      score += Math.min(4, count) * 1.5;
-      if (!board.some((unit) => unit.unitId === unitId)
-        && traits.find((trait) => trait.name === name)?.thresholds.includes(count + 1)) score += 6;
-    }
-    if (seat.inventoryItems.some((item) => def.recommendedItems.includes(item))) score += 3;
-    let rivals = 0;
-    let competingTraits = 0;
-    for (const other of game.seats.filter((other) => other.id !== seat.id)) {
-      const publicBoard = other.units.filter((unit) => unit.location.zone === 'board');
-      rivals += publicBoard.filter((unit) => unit.unitId === unitId).reduce((sum, unit) => sum + copies(unit), 0);
-      if ((traitCounts(publicBoard).get(def.faction) ?? 0) >= 2) competingTraits++;
-    }
-    const scouting = difficulty === 'veteran' ? 1 : 0.5;
-    score -= scouting * (rivals * 1.8 + competingTraits * 2);
-    score -= scouting * (1 - (game.pool[unitId] ?? 0) / def.poolCopies) * 5;
+  for (const name of [def.faction, def.role]) {
+    const count = counts.get(name) ?? 0;
+    score += Math.min(4, count) * 1.5;
+    if (!board.some((unit) => unit.unitId === unitId)
+      && traits.find((trait) => trait.name === name)?.thresholds.includes(count + 1)) score += 6;
   }
+  if (seat.inventoryItems.some((item) => def.recommendedItems.includes(item))) score += 3;
+  let rivals = 0;
+  let competingTraits = 0;
+  for (const other of game.seats.filter((other) => other.id !== seat.id)) {
+    const publicBoard = other.units.filter((unit) => unit.location.zone === 'board');
+    rivals += publicBoard.filter((unit) => unit.unitId === unitId).reduce((sum, unit) => sum + copies(unit), 0);
+    if ((traitCounts(publicBoard).get(def.faction) ?? 0) >= 2) competingTraits++;
+  }
+  const scouting = difficulty === 'veteran' ? 1 : 0.5;
+  score -= scouting * (rivals * 1.8 + competingTraits * 2);
+  score -= scouting * (1 - (game.pool[unitId] ?? 0) / def.poolCopies) * 5;
   if (board.length >= populationCap(seat, game.mode) && owned === 0) {
     const weakest = Math.min(...board.map(unitPower));
     score += Math.max(-8, def.cost * 2 + 3 - weakest);
@@ -115,10 +119,10 @@ function buyScore(game: GameState, seat: SeatState, unitId: string, difficulty: 
   return score;
 }
 
-function itemFit(unit: UnitInstance, itemId: string): number {
+function itemFit(unit: UnitInstance, itemId: string, difficulty: BotDifficulty): number {
   const def = SEASON1_UNITS_BY_ID.get(unit.unitId);
   if (!def) return 0;
-  return (def.recommendedItems.includes(itemId) ? 20 : 0) + unitPower(unit) / 5;
+  return (def.recommendedItems.includes(itemId) ? (difficulty === 'veteran' ? 20 : 5) : 0) + unitPower(unit) / 5;
 }
 
 export function decideBotPrepCommands(
@@ -128,6 +132,8 @@ export function decideBotPrepCommands(
   let simulation = clone(game);
   const current = () => simulation.seats.find((seat) => seat.id === seatId)!;
   const skill = difficulty ?? current().botDifficulty;
+  const novice = skill === 'novice';
+  const veteran = skill === 'veteran';
   const commands: GameCommand[] = [];
   const emit = (command: GameCommand): boolean => {
     if (commands.length >= 160) return false;
@@ -139,28 +145,43 @@ export function decideBotPrepCommands(
   };
   const budget = MODE_BUDGETS.modes[game.mode];
   const final = game.round >= budget.rounds;
-  const reserve = final ? 0 : skill === 'novice' ? 2 : skill === 'standard' ? 8
-    : Math.min(budget.economy.interest_cap * 10, Math.max(8, current().gold - 12));
+  const reserve = novice ? 2 : final ? 0 : skill === 'standard' ? 8
+    : Math.min(budget.economy.interest_cap * 10, Math.max(8, Math.floor((current().gold - 18) / 10) * 10));
 
-  if (current().augmentOffer) {
+  if (current().augmentOffer && novice) {
+    emit({ type: 'PICK_AUGMENT', slotIndex: 0 });
+  } else if (current().augmentOffer) {
     const counts = traitCounts(current().units.filter((unit) => unit.location.zone === 'board'));
     const options = current().augmentOffer!.options;
     const ranked = options.map((id, slotIndex) => {
       const augment = SEASON1_AUGMENTS.find((entry) => entry.id === id);
       const fit = augment?.tailorTraits.reduce((sum, name) => sum + (counts.get(name) ?? 0), 0) ?? 0;
-      return { slotIndex, score: skill === 'novice' ? -slotIndex : fit * 4
+      return { slotIndex, score: fit * 4
         + (augment?.category === 'combat' ? 3 : 0) - (final && augment?.category === 'economy' ? 10 : 0) };
     }).sort((a, b) => b.score - a.score || a.slotIndex - b.slotIndex);
     if (ranked[0]) emit({ type: 'PICK_AUGMENT', slotIndex: ranked[0].slotIndex });
   }
   for (const anvil of [...current().anvils]) {
+    if (novice) {
+      emit({ type: 'PICK_ANVIL_OPTION', anvilInstanceId: anvil.instanceId, optionIndex: 0 });
+      continue;
+    }
+    const seat = current();
     const ranked = anvil.options.map((id, optionIndex) => ({ optionIndex,
-      score: Math.max(0, ...current().units.map((unit) => itemFit(unit, id))) })).sort((a, b) => b.score - a.score || a.optionIndex - b.optionIndex);
+      score: Math.max(0, ...seat.units.filter(available).map(unit => {
+        const base = itemFit(unit, id, skill);
+        if (!veteran || anvil.kind !== 'component') return base;
+        return Math.max(base, ...[...seat.inventoryItems, ...unit.items].flatMap(other => {
+          const recipe = lookupCraftRecipe(id, other);
+          return recipe ? [itemFit(unit, recipe.id, skill)] : [];
+        }));
+      })) })).sort((a, b) => b.score - a.score || a.optionIndex - b.optionIndex);
     if (ranked[0]) emit({ type: 'PICK_ANVIL_OPTION', anvilInstanceId: anvil.instanceId, optionIndex: ranked[0].optionIndex });
   }
 
   const buyFromShop = () => {
-    for (let purchase = 0; purchase < 16; purchase++) {
+    const limit = veteran ? 16 : (novice ? 2 : 4) - countPrepActions(simulation, seatId, 'BUY_CARD');
+    for (let purchase = 0; purchase < limit; purchase++) {
       const ranked = current().shop.flatMap((id, shopIndex) => id === null ? [] : [{ id, shopIndex,
         score: buyScore(simulation, current(), id, skill) }])
         .sort((a, b) => b.score - a.score || a.shopIndex - b.shopIndex);
@@ -169,37 +190,49 @@ export function decideBotPrepCommands(
         const def = SEASON1_UNITS_BY_ID.get(option.id)!;
         const completesPair = current().units.filter((unit) => unit.unitId === option.id && unit.star === 1 && available(unit)).length >= 2;
         const floor = completesPair || current().units.length < current().level ? 0 : reserve;
-        if (option.score < (skill === 'novice' ? 3 : 5) || current().gold - def.cost < floor) continue;
+        if (option.score < (novice ? 3 : 5) || current().gold - def.cost < floor) continue;
         if (emit({ type: 'BUY_CARD', shopIndex: option.shopIndex })) { bought = true; break; }
       }
       if (!bought) break;
     }
   };
-  buyFromShop();
-
-  const seat = current();
-  const xpNeeded = (MODE_BUDGETS.xp_to_next as Record<string, number>)[String(seat.level)];
-  const xpPerBuy = seat.chosenAugments.includes('AUG_P02') ? 6 : 4;
-  const xpBuys = Math.ceil(Math.max(0, (xpNeeded ?? Infinity) - seat.xp) / xpPerBuy);
-  const targetLevel = Math.min(budget.economy.base_level_cap,
-    budget.economy.starting_level + Math.floor(game.round / (skill === 'novice' ? 3 : 2)) + 1);
-  if (seat.level < targetLevel && seat.units.filter(available).length > populationCap(seat, game.mode)
-    && xpBuys <= 12 && seat.gold >= xpBuys * 4 + reserve) {
+  const tryLevel = (): boolean => {
+    const seat = current();
+    const xpNeeded = (MODE_BUDGETS.xp_to_next as Record<string, number>)[String(seat.level)];
+    const xpPerBuy = seat.chosenAugments.includes('AUG_P02') ? 6 : 4;
+    const xpBuys = Math.ceil(Math.max(0, (xpNeeded ?? Infinity) - seat.xp) / xpPerBuy);
+    const { starting_level: startingLevel, base_level_cap: levelCap } = budget.economy;
+    const standardTarget = Math.min(levelCap, startingLevel + Math.floor(game.round / 3) + 1);
+    const latePush = game.round >= budget.rounds - 2 ? 2 : 0;
+    const slowOpening = budget.rounds > 8 && game.round < budget.rounds / 2 ? 1 : 0;
+    const veteranTarget = Math.min(levelCap, startingLevel + Math.ceil(game.round / 2) + latePush - slowOpening);
+    const targetLevel = novice ? standardTarget - 1 : veteran ? veteranTarget : standardTarget;
+    const levelReserve = novice ? 20 : veteran && game.mode === 'quick' ? Math.min(reserve, 4) : reserve;
+    if (seat.level >= targetLevel || seat.units.filter(available).length <= populationCap(seat, game.mode)
+      || seat.gold < xpBuys * 4 + levelReserve) return false;
+    if (novice && (game.round <= Math.floor(budget.rounds / 2) || xpBuys > 2
+      || countPrepActions(simulation, seatId, 'BUY_XP') > 0)) return false;
     for (let step = 0; step < xpBuys; step++) if (!emit({ type: 'BUY_XP' })) break;
-    buyFromShop();
-  }
+    return current().level > seat.level;
+  };
+  const leveledEarly = veteran && tryLevel();
+  buyFromShop();
+  if (!leveledEarly && tryLevel()) buyFromShop();
 
-  const rollLimit = skill === 'novice' ? 1 : skill === 'standard' ? 3 : 6;
-  for (let roll = 0; roll < rollLimit; roll++) {
+  const rollLimit = novice ? 0 : skill === 'standard' ? 2 : 6;
+  for (let roll = countPrepActions(simulation, seatId, 'REFRESH_SHOP'); roll < rollLimit; roll++) {
     const hasPair = current().units.some((unit) => available(unit) && unit.star === 1
       && current().units.filter((other) => available(other) && other.unitId === unit.unitId && other.star === 1).length >= 2);
-    const free = current().rerollVouchers > 0;
-    if (!free && (!hasPair && !final || current().gold < reserve + 4)) break;
+    const free = current().rerollVouchers > 0 && current().voucherRound === game.round;
+    const chaseUpgrade = veteran && current().units.some((unit) => available(unit) && unit.star === 2
+      && current().units.some((other) => available(other) && other.unitId === unit.unitId
+        && other.star === 2 && other.instanceId !== unit.instanceId));
+    if (!free && (!hasPair && !chaseUpgrade && !final || current().gold < reserve + 4)) break;
     if (!emit({ type: 'REFRESH_SHOP' })) break;
     buyFromShop();
   }
 
-  if (skill !== 'novice' && current().units.filter((unit) => unit.location.zone === 'bench').length >= 8) {
+  if (!novice && current().units.filter((unit) => unit.location.zone === 'bench').length >= 8) {
     const selected = new Set(bestTeam(current(), game.mode, skill).map((unit) => unit.instanceId));
     for (const unit of [...current().units]) {
       if (unit.location.zone !== 'bench' || !available(unit) || unit.star !== 1 || unit.items.length
@@ -222,7 +255,7 @@ export function decideBotPrepCommands(
       else {
         const occupied = new Set(current().units.flatMap((entry) => entry.location.zone === 'board' ? [`${entry.location.row}:${entry.location.col}`] : []));
         let to: UnitLocation | undefined;
-        for (let row = 0; row < 4 && !to; row++) for (const col of [3, 2, 4, 1, 5, 0, 6]) {
+        for (let row = 0; row < 4 && !to; row++) for (const col of novice ? [0, 1, 2, 3, 4, 5, 6] : [3, 2, 4, 1, 5, 0, 6]) {
           if (!occupied.has(`${row}:${col}`)) { to = { zone: 'board', row, col }; break; }
         }
         if (to) emit({ type: 'MOVE_UNIT', instanceId, to });
@@ -230,6 +263,20 @@ export function decideBotPrepCommands(
     }
   };
   deployBestTeam();
+  if (novice) {
+    if (countPrepActions(simulation, seatId, 'EQUIP_ITEM') > 0) return commands;
+    const inventory = current().inventoryItems;
+    const isComponent = (id: string) => ['component', 'spatula'].includes(lookupItemById(id)?.kind ?? '');
+    const reserveComponent = inventory.filter(isComponent).length <= 1;
+    for (const [inventoryItemIndex, id] of inventory.entries()) {
+      if (reserveComponent && isComponent(id)) continue;
+      for (const unit of current().units) {
+        if (unit.location.zone === 'board'
+          && emit({ type: 'EQUIP_ITEM', inventoryItemIndex, targetInstanceId: unit.instanceId })) return commands;
+      }
+    }
+    return commands;
+  }
   for (let pass = 0; pass < 24; pass++) {
     let best: { score: number; commands: GameCommand[] } | undefined;
     const inventory = current().inventoryItems;
@@ -250,7 +297,7 @@ export function decideBotPrepCommands(
           const sequence: GameCommand[] = proposal.indexes.map((inventoryItemIndex) => ({ type: 'EQUIP_ITEM', inventoryItemIndex, targetInstanceId: unit.instanceId }));
           const trial = clone(simulation);
           if (!sequence.every((command) => applyGameCommand(trial, seatId, command).ok)) continue;
-          const score = itemFit(unit, proposal.itemId) + (proposal.itemId === 'I_MOTHERSHIP_FLAG' ? 25 : 0);
+          const score = itemFit(unit, proposal.itemId, skill) + (proposal.itemId === 'I_MOTHERSHIP_FLAG' ? 25 : 0);
           if (!best || score > best.score) best = { score, commands: sequence };
         }
       }
@@ -271,7 +318,7 @@ export function decideBotPrepCommands(
   deployBestTeam();
 
   const threats = Array<number>(7).fill(0);
-  if (skill === 'veteran') for (const other of simulation.seats.filter((seat) => seat.id !== seatId)) {
+  if (veteran) for (const other of simulation.seats.filter((seat) => seat.id !== seatId)) {
     for (const unit of other.units) if (unit.location.zone === 'board') {
       const col = 6 - unit.location.col;
       threats[col] = (threats[col] ?? 0) + unitPower(unit);
@@ -285,7 +332,7 @@ export function decideBotPrepCommands(
     .sort((a, b) => unitPower(b) - unitPower(a) || a.instanceId.localeCompare(b.instanceId));
   for (const unit of board) {
     const ranged = (SEASON1_UNITS_BY_ID.get(unit.unitId)?.stats.range ?? 1) >= 3;
-    const rows = ranged ? [3, 2, 1, 0] : [skill === 'novice' ? 1 : 0, skill === 'novice' ? 0 : 1, 2, 3];
+    const rows = ranged ? [3, 2, 1, 0] : [0, 1, 2, 3];
     let to: UnitLocation | undefined;
     for (const row of rows) {
       for (const col of ranged ? backColumns : frontColumns) if (!used.has(`${row}:${col}`)) {

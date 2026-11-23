@@ -216,25 +216,6 @@ function deterministicShuffle(items: readonly string[], seedStr: string): string
   return copy;
 }
 
-function CornerOrnamentSvg({ pos }: { readonly pos: 'tl' | 'tr' | 'bl' | 'br' }): React.JSX.Element {
-  return (
-    <svg
-      className={`lui-corner-ornament lui-corner-ornament--${pos}`}
-      viewBox="0 0 14 14"
-      aria-hidden="true"
-    >
-      <path
-        d="M1.2 12.8V4.2L4.2 1.2H12.8"
-        fill="none"
-        stroke="#f2c97d"
-        strokeWidth="1.25"
-      />
-      <polygon points="1.2,1.2 4.6,1.2 1.2,4.6" fill="#f2c97d" />
-      <circle cx="5.4" cy="5.4" r="1.05" fill="#4fd1ff" />
-    </svg>
-  );
-}
-
 function shouldDefaultExpandMaterial(
   question: ClientQuestionView | QuestionItem | null,
   arcMeta: LearningArcMeta | null,
@@ -253,7 +234,7 @@ function shouldDefaultExpandMaterial(
 }
 
 function resolveScaffoldTitle(stageKind?: ArcStageKind): string {
-  if (stageKind === 'intro') return '本节核心知识点 · 对照熟悉';
+  if (stageKind === 'intro') return '本节知识点';
   if (stageKind === 'remediate') return '靶向知识点 · 错题复盘';
   return '知识点精讲';
 }
@@ -642,10 +623,6 @@ export function QuestionStepCard({
       data-step-kind={effectiveStepKind}
       data-reading-theme={readingTheme}
     >
-      <CornerOrnamentSvg pos="tl" />
-      <CornerOrnamentSvg pos="tr" />
-      <CornerOrnamentSvg pos="bl" />
-      <CornerOrnamentSvg pos="br" />
 
       {arcMeta ? (
         <div
@@ -781,7 +758,7 @@ export function QuestionStepCard({
                   cy="10"
                   r={CLOCK_RING_RADIUS}
                   fill="none"
-                  stroke={clockUrgent ? '#fbbf24' : '#4fd1ff'}
+                  stroke={clockUrgent ? 'var(--lui-warn)' : 'var(--lui-match-node)'}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeDasharray={CLOCK_RING_CIRCUMFERENCE}

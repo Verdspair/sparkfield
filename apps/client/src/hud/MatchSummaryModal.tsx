@@ -95,7 +95,7 @@ export function MatchSummaryModal(): React.JSX.Element | null {
       aria-label="本局结算"
       data-testid="match-summary-modal"
     >
-      <div className="ui-metal-frame ui-corner-ornaments sf-summary-shell">
+      <div className="ui-metal-frame sf-summary-shell">
         <header className="sf-summary-hero">
           <div className="sf-summary-hero__left">
             <TacticianPortrait

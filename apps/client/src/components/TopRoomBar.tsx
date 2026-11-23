@@ -55,13 +55,13 @@ export function TopRoomBar(): React.JSX.Element | null {
     <header
       className="blc-top-room-bar"
       data-testid="top-room-bar"
-      role="status"
+      aria-label="房间状态"
     >
-      <div className="blc-top-room-bar__info">
+      <div className="blc-top-room-bar__info" role="status">
         <span
           className={`blc-top-room-bar__dot ${
             room.status === 'queuing' || room.status === 'accept_check'
-              ? 'blc-top-room-bar__status--pulse'
+              ? 'blc-top-room-bar__status--active'
               : ''
           }`.trim()}
           aria-hidden="true"
@@ -78,7 +78,7 @@ export function TopRoomBar(): React.JSX.Element | null {
         ) : null}
         <span
           className={`blc-top-room-bar__status ${
-            room.status === 'queuing' ? 'blc-top-room-bar__status--pulse' : ''
+            room.status === 'queuing' ? 'blc-top-room-bar__status--active' : ''
           }`.trim()}
         >
           {statusText}

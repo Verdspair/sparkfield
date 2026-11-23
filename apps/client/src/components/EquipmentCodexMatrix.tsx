@@ -410,13 +410,7 @@ export function EquipmentCodexMatrix({
               onMouseLeave={() => setHoveredFocus(null)}
             >
               <div className="sf-equip-matrix-grid" role="grid" aria-label="9×9 装备合成矩阵">
-                <div className="sf-equip-corner" title="星环合成图鉴">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.4" strokeDasharray="4 2" />
-                    <circle cx="12" cy="12" r="3.5" fill="currentColor" fillOpacity="0.32" stroke="currentColor" strokeWidth="1.4" />
-                    <path d="M12 2V5M12 19V22M2 12H5M19 12H22" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  </svg>
-                </div>
+                <div className="sf-equip-corner">配方</div>
 
                 {BASE_COMPONENT_ORDER.map((colComp) => {
                   const item = ITEM_BY_ID.get(colComp)!;

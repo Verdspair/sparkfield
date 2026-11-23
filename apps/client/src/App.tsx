@@ -107,7 +107,7 @@ function AppViewportRouter(): React.JSX.Element {
       <div className="blc-ui-layer">
         {authMode === 'booting' ? (
           <div className="blc-auth-viewport" data-testid="boot-loading-screen">
-            <div className="ui-metal-frame ui-corner-ornaments sf-boot-card">
+            <div className="ui-metal-frame sf-boot-card">
               <h3 className="sf-boot-card__title">SparkField · 灵光之野</h3>
               <span className="stat-skeleton" style={{ width: '78%', height: 14 }} />
             </div>

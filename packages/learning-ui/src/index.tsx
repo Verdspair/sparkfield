@@ -42,6 +42,7 @@ export {
   GameItemIcon,
   RichGameText,
   StatInlineIcon,
+  getGameItemIconAccent,
   getGameItemIconUrl,
   tokenizeRichGameText,
   type GameItemIconProps,

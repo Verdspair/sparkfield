@@ -8,7 +8,6 @@ import {
 } from '@pkg/contracts';
 import { ArenaStageAssembly, getArenaThemeLightingPreset } from './arenaBuilder.js';
 import {
-  COST_TIER_COLORS,
   FACTION_PALETTES,
   PbrMaterialLibrary,
   buildProceduralStudioEnvMap,
@@ -31,7 +30,31 @@ const ARENA_THEME_IDS: readonly ArenaThemeId[] = [
 const portraitCache = new Map<string, string>();
 const studioEnvCache = new WeakMap<THREE.WebGLRenderer, THREE.Texture>();
 let attachedRenderer: THREE.WebGLRenderer | null = null;
-let activePrebakePromise: Promise<void> | null = null;
+const portraitListeners = new Map<string, Set<() => void>>();
+
+function subscribePortrait(key: string, onChange: () => void): () => void {
+  const listeners = portraitListeners.get(key) ?? new Set<() => void>();
+  listeners.add(onChange);
+  portraitListeners.set(key, listeners);
+  return () => {
+    listeners.delete(onChange);
+    if (listeners.size === 0) portraitListeners.delete(key);
+  };
+}
+
+function publishPortrait(key: string, url: string): void {
+  if (portraitCache.get(key) === url) return;
+  portraitCache.set(key, url);
+  portraitListeners.get(key)?.forEach((onChange) => onChange());
+}
+
+export function subscribeUnitPortrait(unitId: string, onChange: () => void): () => void {
+  return subscribePortrait(`unit:${unitId}:1:${DEFAULT_BAKE_SIZE}`, onChange);
+}
+
+export function subscribeTacticianPortrait(tacticianId: TacticianId, onChange: () => void): () => void {
+  return subscribePortrait(`tactician:${tacticianId}:${DEFAULT_BAKE_SIZE}`, onChange);
+}
 
 function getOrCreateStudioEnvMap(renderer: THREE.WebGLRenderer): THREE.Texture | null {
   const existing = studioEnvCache.get(renderer);
@@ -45,78 +68,52 @@ function getOrCreateStudioEnvMap(renderer: THREE.WebGLRenderer): THREE.Texture |
   }
 }
 
-function toHexCss(colorInt: number): string {
-  return `#${colorInt.toString(16).padStart(6, '0')}`;
-}
-
 function encodeSvgDataUrl(svg: string): string {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
 function roleGlyphPath(role: string): string {
   if (role === '重装') {
-    return '<path d="M128 54 L182 78 V130 C182 164 158 190 128 206 C98 190 74 164 74 130 V78 Z" fill="none" stroke="url(#fg)" stroke-width="9"/><path d="M128 74 L164 90 V128 C164 152 148 172 128 184 C108 172 92 152 92 128 V90 Z" fill="url(#fg)" fill-opacity="0.22"/>';
+    return '<path d="M128 54 L182 78 V130 C182 164 158 190 128 206 C98 190 74 164 74 130 V78 Z" fill="none" stroke="#91a1b4" stroke-width="9"/><path d="M128 74 L164 90 V128 C164 152 148 172 128 184 C108 172 92 152 92 128 V90 Z" fill="#91a1b4" fill-opacity="0.22"/>';
   }
   if (role === '磁轨') {
-    return '<path d="M58 174 L188 74 M78 186 L202 90" stroke="url(#fg)" stroke-width="9" stroke-linecap="round"/><circle cx="174" cy="96" r="24" fill="none" stroke="#fff0c4" stroke-width="4" stroke-dasharray="6 5"/>';
+    return '<path d="M58 174 L188 74 M78 186 L202 90" stroke="#91a1b4" stroke-width="9" stroke-linecap="round"/><circle cx="174" cy="96" r="24" fill="none" stroke="#b7c0ce" stroke-width="4"/>';
   }
   if (role === '光子') {
-    return '<polygon points="128,48 178,128 128,208 78,128" fill="url(#fg)" fill-opacity="0.26" stroke="url(#fg)" stroke-width="8"/><circle cx="128" cy="128" r="20" fill="#fff7d6"/>';
+    return '<polygon points="128,48 178,128 128,208 78,128" fill="#91a1b4" fill-opacity="0.26" stroke="#91a1b4" stroke-width="8"/><circle cx="128" cy="128" r="20" fill="#b7c0ce"/>';
   }
   if (role === '矩阵') {
-    return '<polygon points="128,54 186,88 186,168 128,202 70,168 70,88" fill="url(#fg)" fill-opacity="0.18" stroke="url(#fg)" stroke-width="8"/><circle cx="128" cy="128" r="28" fill="none" stroke="#a5f3fc" stroke-width="5"/>';
+    return '<polygon points="128,54 186,88 186,168 128,202 70,168 70,88" fill="#91a1b4" fill-opacity="0.18" stroke="#91a1b4" stroke-width="8"/><circle cx="128" cy="128" r="28" fill="none" stroke="#b7c0ce" stroke-width="5"/>';
   }
   if (role === '维生') {
-    return '<circle cx="128" cy="128" r="64" fill="url(#fg)" fill-opacity="0.18" stroke="url(#fg)" stroke-width="8"/><path d="M128 84 V172 M84 128 H172" stroke="#ecfeff" stroke-width="10" stroke-linecap="round"/>';
+    return '<circle cx="128" cy="128" r="64" fill="#91a1b4" fill-opacity="0.18" stroke="#91a1b4" stroke-width="8"/><path d="M128 84 V172 M84 128 H172" stroke="#b7c0ce" stroke-width="10" stroke-linecap="round"/>';
   }
-  return '<path d="M62 178 L128 56 L194 178 L128 148 Z" fill="url(#fg)" fill-opacity="0.24" stroke="url(#fg)" stroke-width="8" stroke-linejoin="round"/>';
+  return '<path d="M62 178 L128 56 L194 178 L128 148 Z" fill="#91a1b4" fill-opacity="0.24" stroke="#91a1b4" stroke-width="8" stroke-linejoin="round"/>';
 }
 
-function buildUnitSvgFallback(unitDef: UnitDef, star: UnitStar = 1): string {
-  const palette = FACTION_PALETTES[unitDef.faction] ?? FACTION_PALETTES['戴森工团']!;
-  const costColor = toHexCss(COST_TIER_COLORS[unitDef.cost] ?? 0x94a3b8);
-  const accentCss = toHexCss(palette.accentHex);
-  const secondaryCss = toHexCss(palette.secondaryHex);
-  const starText = '★'.repeat(star);
-
-  const svg = [
+function buildUnitSvgFallback(unitDef: UnitDef): string {
+  return encodeSvgDataUrl([
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">',
-    '<defs>',
-    `<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${palette.backdropTopCss}"/><stop offset="52%" stop-color="${palette.backdropMidCss}"/><stop offset="100%" stop-color="${palette.backdropBotCss}"/></linearGradient>`,
-    `<radialGradient id="halo" cx="50%" cy="42%" r="54%"><stop offset="0%" stop-color="${accentCss}" stop-opacity="0.40"/><stop offset="100%" stop-color="${accentCss}" stop-opacity="0"/></radialGradient>`,
-    `<linearGradient id="fg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="50%" stop-color="${accentCss}"/><stop offset="100%" stop-color="${secondaryCss}"/></linearGradient>`,
-    '</defs>',
-    '<rect width="256" height="256" fill="url(#bg)"/>',
-    '<rect width="256" height="256" fill="url(#halo)"/>',
-    '<circle cx="128" cy="124" r="96" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>',
-    '<circle cx="128" cy="124" r="76" fill="none" stroke="rgba(255,255,255,0.16)" stroke-dasharray="5 7" stroke-width="1.5"/>',
+    '<rect width="256" height="256" fill="rgba(16,25,42,0.38)"/>',
+    `<title>${unitDef.name}</title>`,
     roleGlyphPath(unitDef.role),
-    `<rect x="10" y="10" width="236" height="236" rx="18" fill="none" stroke="${costColor}" stroke-opacity="0.72" stroke-width="4"/>`,
-    `<text x="22" y="38" fill="${costColor}" font-size="16" font-weight="800" font-family="sans-serif">${unitDef.cost}G</text>`,
-    `<text x="234" y="38" text-anchor="end" fill="#fde68a" font-size="15" font-weight="700" font-family="sans-serif">${starText}</text>`,
-    `<text x="128" y="236" text-anchor="middle" fill="#f8fafc" font-size="18" font-weight="700" font-family="sans-serif">${unitDef.name}</text>`,
     '</svg>',
-  ].join('');
-  return encodeSvgDataUrl(svg);
+  ].join(''));
 }
 
 function buildTacticianSvgFallback(tacticianId: TacticianId): string {
   const entry = TACTICIAN_CATALOG.find((t) => t.id === tacticianId) ?? TACTICIAN_CATALOG[0]!;
   const emblem =
     tacticianId === 'tactician_europa_fin'
-      ? '<ellipse cx="128" cy="134" rx="64" ry="44" fill="url(#fg)" fill-opacity="0.34" stroke="#a5f3fc" stroke-width="6"/><circle cx="128" cy="134" r="18" fill="#38bdf8"/><circle cx="106" cy="126" r="6" fill="#0f172a"/><circle cx="150" cy="126" r="6" fill="#0f172a"/>'
+      ? '<ellipse cx="128" cy="134" rx="64" ry="44" fill="#89a3b8" fill-opacity="0.34" stroke="#a4bacb" stroke-width="6"/><circle cx="128" cy="134" r="18" fill="#89a3b8"/><circle cx="106" cy="126" r="6" fill="#0f172a"/><circle cx="150" cy="126" r="6" fill="#0f172a"/>'
       : tacticianId === 'tactician_singularity_mew'
-        ? '<polygon points="84,96 104,54 122,94" fill="#c084fc"/><polygon points="172,96 152,54 134,94" fill="#c084fc"/><circle cx="128" cy="132" r="48" fill="#2e1f4d" stroke="#f2c97d" stroke-width="5"/><ellipse cx="128" cy="172" rx="76" ry="18" fill="none" stroke="#f5c451" stroke-width="6"/><circle cx="110" cy="128" r="6" fill="#fde047"/><circle cx="146" cy="128" r="6" fill="#fde047"/>'
-        : '<ellipse cx="128" cy="68" rx="46" ry="12" fill="none" stroke="#f5c451" stroke-width="6"/><path d="M84 166 C84 102 104 82 128 82 C152 82 172 102 172 166 Z" fill="#f8fafc" stroke="#f2c97d" stroke-width="4"/><rect x="96" y="106" width="64" height="34" rx="14" fill="#132144"/><path d="M108 124 Q115 114 122 124 M134 124 Q141 114 148 124" fill="none" stroke="#67e8f9" stroke-width="4" stroke-linecap="round"/>';
+        ? '<polygon points="84,96 104,54 122,94" fill="#a89ab8"/><polygon points="172,96 152,54 134,94" fill="#a89ab8"/><circle cx="128" cy="132" r="48" fill="#2e1f4d" stroke="#c8b590" stroke-width="5"/><ellipse cx="128" cy="172" rx="76" ry="18" fill="none" stroke="#c8b590" stroke-width="6"/><circle cx="110" cy="128" r="6" fill="#d3c2a0"/><circle cx="146" cy="128" r="6" fill="#d3c2a0"/>'
+        : '<ellipse cx="128" cy="68" rx="46" ry="12" fill="none" stroke="#c8b590" stroke-width="6"/><path d="M84 166 C84 102 104 82 128 82 C152 82 172 102 172 166 Z" fill="#f8fafc" stroke="#c8b590" stroke-width="4"/><rect x="96" y="106" width="64" height="34" rx="14" fill="#132144"/><path d="M108 124 Q115 114 122 124 M134 124 Q141 114 148 124" fill="none" stroke="#a4bacb" stroke-width="4" stroke-linecap="round"/>';
 
   const svg = [
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">',
-    '<defs>',
-    '<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#173866"/><stop offset="56%" stop-color="#27558c"/><stop offset="100%" stop-color="#1b2642"/></linearGradient>',
-    `<linearGradient id="fg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${entry.accentHex}"/><stop offset="100%" stop-color="${entry.secondaryHex}"/></linearGradient>`,
-    '</defs>',
-    '<rect width="256" height="256" fill="url(#bg)"/>',
-    '<circle cx="128" cy="128" r="92" fill="none" stroke="rgba(242,201,125,0.42)" stroke-width="2.5"/>',
+    '<rect width="256" height="256" fill="rgba(16,25,42,0.38)"/>',
+    '<circle cx="128" cy="128" r="92" fill="none" stroke="rgba(200,181,144,0.28)" stroke-width="2.5"/>',
     emblem,
     `<text x="128" y="234" text-anchor="middle" fill="#f8fafc" font-size="18" font-weight="700" font-family="sans-serif">${entry.name}</text>`,
     '</svg>',
@@ -125,20 +122,11 @@ function buildTacticianSvgFallback(tacticianId: TacticianId): string {
 }
 
 function buildArenaSvgFallback(themeId: ArenaThemeId): string {
-  const preset = getArenaThemeLightingPreset(themeId);
-  const top = `#${preset.skyTop.getHexString()}`;
-  const mid = `#${preset.skyMid.getHexString()}`;
-  const horizon = `#${preset.skyHorizon.getHexString()}`;
-
   if (themeId === 'mercury_dyson_forge') {
     const svg = [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">',
-      '<defs>',
-      `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${top}"/><stop offset="56%" stop-color="${mid}"/><stop offset="100%" stop-color="${horizon}"/></linearGradient>`,
-      '<radialGradient id="sun" cx="50%" cy="44%" r="40%"><stop offset="0%" stop-color="#f8cb72"/><stop offset="60%" stop-color="#d96e26"/><stop offset="100%" stop-color="#5a1e0c" stop-opacity="0"/></radialGradient>',
-      '</defs>',
-      '<rect width="256" height="256" fill="url(#sky)"/>',
-      '<circle cx="128" cy="110" r="68" fill="url(#sun)"/>',
+      '<rect width="256" height="256" fill="#222d40"/>',
+      '<circle cx="128" cy="110" r="68" fill="#937856"/>',
       '<path d="M54 114 A74 74 0 0 1 202 114" fill="none" stroke="#b87e42" stroke-width="6"/>',
       '<polygon points="44,186 72,134 184,134 212,186" fill="#2a1d18" stroke="#c98e46" stroke-width="3.5"/>',
       '<polygon points="28,126 42,106 56,126 42,146" fill="#c98e46" stroke="#3c261c" stroke-width="2.5"/>',
@@ -153,10 +141,7 @@ function buildArenaSvgFallback(themeId: ArenaThemeId): string {
   if (themeId === 'event_horizon_observatory') {
     const svg = [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">',
-      '<defs>',
-      `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${top}"/><stop offset="56%" stop-color="${mid}"/><stop offset="100%" stop-color="${horizon}"/></linearGradient>`,
-      '</defs>',
-      '<rect width="256" height="256" fill="url(#sky)"/>',
+      '<rect width="256" height="256" fill="#222d40"/>',
       '<ellipse cx="128" cy="96" rx="76" ry="20" transform="rotate(-10 128 96)" fill="none" stroke="#b38ef5" stroke-width="7"/>',
       '<ellipse cx="128" cy="96" rx="54" ry="14" transform="rotate(-10 128 96)" fill="none" stroke="#e5bd6c" stroke-width="4.5"/>',
       '<circle cx="128" cy="96" r="24" fill="#05040c" stroke="#e5bd6c" stroke-width="3"/>',
@@ -171,16 +156,13 @@ function buildArenaSvgFallback(themeId: ArenaThemeId): string {
 
   const svg = [
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">',
-    '<defs>',
-    `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${top}"/><stop offset="58%" stop-color="${mid}"/><stop offset="100%" stop-color="${horizon}"/></linearGradient>`,
-    '</defs>',
-    '<rect width="256" height="256" fill="url(#sky)"/>',
+    '<rect width="256" height="256" fill="#222d40"/>',
     '<rect x="118" y="22" width="20" height="118" fill="#bfe8ff" fill-opacity="0.38"/>',
     '<path d="M38 148 Q128 32 218 148" fill="none" stroke="#f2f6fa" stroke-width="9" stroke-linecap="round"/>',
     '<path d="M52 148 Q128 52 204 148" fill="none" stroke="#80c8eb" stroke-width="4" stroke-linecap="round"/>',
     '<ellipse cx="128" cy="196" rx="108" ry="28" fill="#f7f4ec" fill-opacity="0.72"/>',
     '<rect x="58" y="136" width="140" height="44" rx="18" fill="#eef3f8" stroke="#d4b57a" stroke-width="3.5"/>',
-    '<text x="128" y="236" text-anchor="middle" fill="#18324d" font-size="18" font-weight="700" font-family="sans-serif">天梯港</text>',
+    '<text x="128" y="236" text-anchor="middle" fill="#eef1f5" font-size="18" font-weight="700" font-family="sans-serif">天梯港</text>',
     '</svg>',
   ].join('');
   return encodeSvgDataUrl(svg);
@@ -209,17 +191,16 @@ function createBackdropShader(topCss: string, midCss: string, botCss: string, ac
       uniform vec3 uAccent;
       varying vec2 vUv;
       void main() {
-        vec3 col = mix(uBot * 0.72, uMid * 0.84, smoothstep(0.0, 0.56, vUv.y));
-        col = mix(col, uTop * 0.78, smoothstep(0.56, 1.0, vUv.y));
-        vec2 p = (vUv - vec2(0.5, 0.50)) * vec2(1.0, 1.04);
+        vec3 col = mix(uBot * 0.80, uMid * 0.92, smoothstep(0.0, 0.56, vUv.y));
+        col = mix(col, uTop * 0.86, smoothstep(0.56, 1.0, vUv.y));
+        vec3 starBlue = vec3(0.082, 0.125, 0.212);
+        col = mix(starBlue, col, 0.74);
+        vec2 p = (vUv - vec2(0.5, 0.48)) * vec2(1.0, 1.04);
         float dist = length(p);
-        float glow = exp(-dist * dist * 5.2);
-        col += uAccent * glow * 0.24;
-        float ringOuter = exp(-pow((dist - 0.395) / 0.0045, 2.0));
-        float ringInner = exp(-pow((dist - 0.355) / 0.0028, 2.0));
-        col += uAccent * (ringOuter * 0.18 + ringInner * 0.12);
-        float vig = smoothstep(0.95, 0.25, dist);
-        col *= mix(0.68, 1.02, vig);
+        float glow = exp(-dist * dist * 4.6);
+        col += uAccent * glow * 0.16;
+        float vig = smoothstep(0.96, 0.24, dist);
+        col *= mix(0.76, 1.04, vig);
         gl_FragColor = vec4(col, 1.0);
       }
     `,
@@ -495,6 +476,7 @@ export function attachPortraitBakerRenderer(renderer: THREE.WebGLRenderer | null
 
 export function clearPortraitCache(): void {
   portraitCache.clear();
+  portraitListeners.forEach((listeners) => listeners.forEach((onChange) => onChange()));
 }
 
 export function getUnitPortraitUrl(
@@ -513,7 +495,7 @@ export function getUnitPortraitUrl(
   }
 
   const unitDef = SEASON1_UNITS_BY_ID.get(unitId) ?? SEASON1_UNITS[0]!;
-  const fallback = buildUnitSvgFallback(unitDef, star);
+  const fallback = buildUnitSvgFallback(unitDef);
   portraitCache.set(sizedKey, fallback);
   return fallback;
 }
@@ -582,15 +564,15 @@ export function bakePortraitNow(
     if (kind === 'unit') {
       const unitDef = SEASON1_UNITS_BY_ID.get(id) ?? SEASON1_UNITS[0]!;
       const png = bakeSingleUnitWithWebgl(renderer, unitFactory!, unitDef, size, star);
-      const url = png ?? buildUnitSvgFallback(unitDef, star);
-      portraitCache.set(`unit:${id}:${star}:${size}`, url);
+      const url = png ?? buildUnitSvgFallback(unitDef);
+      publishPortrait(`unit:${id}:${star}:${size}`, url);
       return url;
     }
     if (kind === 'tactician') {
       const tid = id as TacticianId;
       const png = bakeSingleTacticianWithWebgl(renderer, materials, tid, size);
       const url = png ?? buildTacticianSvgFallback(tid);
-      portraitCache.set(`tactician:${tid}:${size}`, url);
+      publishPortrait(`tactician:${tid}:${size}`, url);
       return url;
     }
     const arenaId = id as ArenaThemeId;
@@ -608,74 +590,66 @@ export async function prebakePortraitsAsync(options?: {
   readonly size?: number;
   readonly renderer?: THREE.WebGLRenderer | null;
   readonly includeArenas?: boolean;
+  readonly signal?: AbortSignal;
 }): Promise<void> {
-  if (activePrebakePromise) return activePrebakePromise;
-
   const size = options?.size ?? DEFAULT_BAKE_SIZE;
   const renderer = options?.renderer ?? attachedRenderer;
   const includeArenas = options?.includeArenas ?? true;
+  const signal = options?.signal;
+  if (signal?.aborted) return;
 
-  const run = async (): Promise<void> => {
-    if (!renderer) {
-      for (const u of SEASON1_UNITS) {
-        getUnitPortraitUrl(u.id, { size, star: 1 });
-      }
-      for (const tid of TACTICIAN_IDS) {
-        getTacticianPortraitUrl(tid, { size });
-      }
-      if (includeArenas) {
-        for (const theme of ARENA_THEME_IDS) {
-          getArenaPreviewUrl(theme, { size });
-        }
-      }
-      return;
+  if (!renderer) {
+    for (const unit of SEASON1_UNITS) getUnitPortraitUrl(unit.id, { size });
+    for (const id of TACTICIAN_IDS) getTacticianPortraitUrl(id, { size });
+    if (includeArenas) {
+      for (const id of ARENA_THEME_IDS) getArenaPreviewUrl(id, { size });
     }
+    return;
+  }
 
-    const materials = new PbrMaterialLibrary();
-    const unitFactory = new UnitMeshFactory(materials);
-    const sharedArena = includeArenas ? new ArenaStageAssembly(materials, 'orbital_elevator_port') : null;
-    try {
-      const yieldFrame = () =>
-        new Promise<void>((resolve) => {
-          if (typeof requestAnimationFrame === 'function') {
-            requestAnimationFrame(() => resolve());
-          } else {
-            setTimeout(resolve, 0);
-          }
-        });
-
-      if (sharedArena) {
-        for (const theme of ARENA_THEME_IDS) {
-          const png = bakeArenaPreview(renderer, materials, theme, size, sharedArena);
-          if (png) portraitCache.set(`arena:${theme}:${size}`, png);
-        }
-        await yieldFrame();
-      }
-
-      for (const tid of TACTICIAN_IDS) {
-        const png = bakeSingleTacticianWithWebgl(renderer, materials, tid, size);
-        if (png) portraitCache.set(`tactician:${tid}:${size}`, png);
-      }
-      await yieldFrame();
-
-      const batchSize = 6;
-      for (let i = 0; i < SEASON1_UNITS.length; i += 1) {
-        const u = SEASON1_UNITS[i]!;
-        const png = bakeSingleUnitWithWebgl(renderer, unitFactory, u, size, 1);
-        if (png) portraitCache.set(`unit:${u.id}:1:${size}`, png);
-        if ((i + 1) % batchSize === 0) {
-          await yieldFrame();
-        }
-      }
-    } finally {
-      sharedArena?.dispose();
-      unitFactory.dispose();
-      materials.dispose();
-    }
-  };
-
-  activePrebakePromise = run().finally(() => {
-    activePrebakePromise = null;
+  const yieldFrame = () => new Promise<void>((resolve) => {
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => resolve());
+    else setTimeout(resolve, 0);
   });
-  return activePrebakePromise;
+  const needsBake = (key: string) => !portraitCache.get(key)?.startsWith('data:image/png');
+  await yieldFrame();
+  if (signal?.aborted) return;
+
+  const materials = new PbrMaterialLibrary();
+  const unitFactory = new UnitMeshFactory(materials);
+  const sharedArena = includeArenas && ARENA_THEME_IDS.some((id) => needsBake(`arena:${id}:${size}`))
+    ? new ArenaStageAssembly(materials, 'orbital_elevator_port')
+    : null;
+  try {
+    for (const id of TACTICIAN_IDS) {
+      const key = `tactician:${id}:${size}`;
+      if (!needsBake(key)) continue;
+      const url = bakeSingleTacticianWithWebgl(renderer, materials, id, size);
+      if (url) publishPortrait(key, url);
+    }
+    await yieldFrame();
+
+    for (let i = 0; i < SEASON1_UNITS.length; i += 1) {
+      if (signal?.aborted) return;
+      const unit = SEASON1_UNITS[i]!;
+      const key = `unit:${unit.id}:1:${size}`;
+      if (needsBake(key)) {
+        const url = bakeSingleUnitWithWebgl(renderer, unitFactory, unit, size, 1);
+        if (url) publishPortrait(key, url);
+      }
+      if ((i + 1) % 6 === 0) await yieldFrame();
+    }
+    if (sharedArena && !signal?.aborted) {
+      for (const id of ARENA_THEME_IDS) {
+        const key = `arena:${id}:${size}`;
+        if (!needsBake(key)) continue;
+        const url = bakeArenaPreview(renderer, materials, id, size, sharedArena);
+        if (url) publishPortrait(key, url);
+      }
+    }
+  } finally {
+    sharedArena?.dispose();
+    unitFactory.dispose();
+    materials.dispose();
+  }
 }

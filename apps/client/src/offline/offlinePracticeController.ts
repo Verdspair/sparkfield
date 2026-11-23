@@ -471,7 +471,7 @@ export class OfflinePracticeMatchController {
     for (let i = 0; i < this.game.seats.length; i += 1) {
       const seat = this.game.seats[i]!;
       seat.isBot = i > 0;
-      seat.botDifficulty = options.botDifficulty ?? 'standard';
+      seat.botDifficulty = options.botDifficulty ?? 'novice';
     }
   }
 

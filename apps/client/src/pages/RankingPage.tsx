@@ -13,36 +13,6 @@ import {
 } from '../utils/antiFakeZero.js';
 import './subpages.css';
 
-function PodiumCrest({ rank }: { readonly rank: number }): React.JSX.Element {
-  const palette =
-    rank === 1
-      ? { stroke: '#f5d076', fill: 'rgba(245, 208, 118, 0.24)', label: '冠军' }
-      : rank === 2
-        ? { stroke: '#cbd5e1', fill: 'rgba(203, 213, 225, 0.2)', label: '亚军' }
-        : { stroke: '#d19162', fill: 'rgba(209, 145, 98, 0.2)', label: '季军' };
-
-  return (
-    <svg width="40" height="40" viewBox="0 0 44 44" aria-label={palette.label}>
-      <polygon
-        points="22,3 38,12 38,32 22,41 6,32 6,12"
-        fill={palette.fill}
-        stroke={palette.stroke}
-        strokeWidth="2"
-      />
-      <text
-        x="22"
-        y="27"
-        textAnchor="middle"
-        fill={palette.stroke}
-        fontSize="15"
-        fontWeight="800"
-      >
-        {rank}
-      </text>
-    </svg>
-  );
-}
-
 export function RankingPage(): React.JSX.Element {
   const {
     authMode,
@@ -85,7 +55,6 @@ export function RankingPage(): React.JSX.Element {
 
   const selfStanding = board?.self ?? null;
   const seasonLabel = board?.currentSeasonTerm.label ?? currentSeasonTerm?.label ?? 'S1 · 光锥之外';
-  const podiumEntries = board && !board.isEmpty ? board.entries.slice(0, 3) : [];
 
   const modeSelector = (
     <div className="blc-seg-tabs" role="tablist" aria-label="模式切换">
@@ -192,8 +161,7 @@ export function RankingPage(): React.JSX.Element {
       footer={selfFooter}
     >
       <section
-        className="sf-card sf-section-panel"
-        style={{ flex: 1, minHeight: 0 }}
+        className="sf-ranking-board"
         data-testid="ranking-board-section"
       >
         {isOffline ? (
@@ -213,82 +181,56 @@ export function RankingPage(): React.JSX.Element {
             <span style={{ fontSize: 13 }}>完成定级对局后显示排名。</span>
           </div>
         ) : (
-          <>
-            {podiumEntries.length > 0 ? (
-              <div className="sf-podium-grid" aria-label="前三名领奖台">
-                {podiumEntries.map((entry) => (
-                  <div
-                    key={entry.userId}
-                    className={`sf-podium-card sf-podium-card--${entry.leaderboardRank}`}
-                  >
-                    <PodiumCrest rank={entry.leaderboardRank} />
-                    <strong style={{ fontSize: 15 }}>{entry.nickname}</strong>
-                    <span className="blc-chip blc-chip--gold">{entry.tierLabel}</span>
-                    <strong
-                      style={{
-                        fontSize: 16,
-                        color: 'var(--gold-light)',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
+          <div className="blc-table-scroll">
+            <table className="blc-table sf-ranking-table" aria-label="赛季名次">
+              <thead>
+                <tr>
+                  <th>名次</th>
+                  <th>昵称</th>
+                  <th>段位</th>
+                  <th>胜点</th>
+                </tr>
+              </thead>
+              <tbody>
+                {board.entries.map((entry) => {
+                  const isMe = entry.userId === profile?.userId;
+                  return (
+                    <tr
+                      key={entry.userId}
+                      className={isMe ? 'blc-table-row--self' : undefined}
+                      data-testid={`leaderboard-row-${entry.leaderboardRank}`}
                     >
-                      {entry.rankScore} LP
-                    </strong>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            <div className="blc-table-scroll">
-              <table className="blc-table">
-                <thead>
-                  <tr>
-                    <th>名次</th>
-                    <th>昵称</th>
-                    <th>段位</th>
-                    <th style={{ textAlign: 'right' }}>胜点</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {board.entries.map((entry) => {
-                    const isMe = entry.userId === profile?.userId;
-                    return (
-                      <tr
-                        key={entry.userId}
-                        className={isMe ? 'blc-table-row--self' : undefined}
-                        data-testid={`leaderboard-row-${entry.leaderboardRank}`}
-                      >
-                        <td>
-                          <span
-                            className={`blc-rank-num ${
-                              entry.leaderboardRank <= 3
-                                ? `blc-rank-num--top${entry.leaderboardRank}`
-                                : ''
-                            }`.trim()}
-                          >
-                            #{entry.leaderboardRank}
+                      <td>
+                        <span
+                          className={`blc-rank-num ${
+                            entry.leaderboardRank <= 3
+                              ? `blc-rank-num--top${entry.leaderboardRank}`
+                              : ''
+                          }`.trim()}
+                        >
+                          #{entry.leaderboardRank}
+                        </span>
+                      </td>
+                      <td>
+                        <strong>{entry.nickname}</strong>
+                        {isMe ? (
+                          <span className="blc-tag-mini" style={{ marginLeft: 6 }}>
+                            我
                           </span>
-                        </td>
-                        <td>
-                          <strong>{entry.nickname}</strong>
-                          {isMe ? (
-                            <span className="blc-tag-mini" style={{ marginLeft: 6 }}>
-                              我
-                            </span>
-                          ) : null}
-                        </td>
-                        <td>
-                          <span className="blc-chip blc-chip--gold">{entry.tierLabel}</span>
-                        </td>
-                        <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                          <strong>{entry.rankScore} LP</strong>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>
+                        ) : null}
+                      </td>
+                      <td>
+                        <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 500 }}>{entry.tierLabel}</span>
+                      </td>
+                      <td>
+                        <strong>{entry.rankScore} LP</strong>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </SubpageShell>

@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useSyncExternalStore } from 'react';
 import { SEASON1_UNITS_BY_ID } from '@pkg/contracts';
 import {
   getTacticianPortraitUrl,
   getUnitPortraitUrl,
+  subscribeTacticianPortrait,
+  subscribeUnitPortrait,
   type TacticianId,
 } from '../stage/index.js';
+import './portraits.css';
 
 export interface UnitPortraitProps {
   readonly unitId: string;
@@ -21,16 +24,9 @@ export function UnitPortrait({
 }: UnitPortraitProps): React.JSX.Element {
   const unit = SEASON1_UNITS_BY_ID.get(unitId);
   const cost = unit?.cost ?? 1;
-  const [src, setSrc] = useState<string>(() => getUnitPortraitUrl(unitId));
-
-  useEffect(() => {
-    setSrc(getUnitPortraitUrl(unitId));
-    const timer = window.setTimeout(() => {
-      const next = getUnitPortraitUrl(unitId);
-      setSrc((prev) => (prev === next ? prev : next));
-    }, 350);
-    return () => window.clearTimeout(timer);
-  }, [unitId]);
+  const subscribe = useCallback((onChange: () => void) => subscribeUnitPortrait(unitId, onChange), [unitId]);
+  const getSnapshot = useCallback(() => getUnitPortraitUrl(unitId), [unitId]);
+  const src = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   return (
     <div
@@ -61,16 +57,9 @@ export function TacticianPortrait({
   alt = '小小领航员',
   className = '',
 }: TacticianPortraitProps): React.JSX.Element {
-  const [src, setSrc] = useState<string>(() => getTacticianPortraitUrl(tacticianId));
-
-  useEffect(() => {
-    setSrc(getTacticianPortraitUrl(tacticianId));
-    const timer = window.setTimeout(() => {
-      const next = getTacticianPortraitUrl(tacticianId);
-      setSrc((prev) => (prev === next ? prev : next));
-    }, 350);
-    return () => window.clearTimeout(timer);
-  }, [tacticianId]);
+  const subscribe = useCallback((onChange: () => void) => subscribeTacticianPortrait(tacticianId, onChange), [tacticianId]);
+  const getSnapshot = useCallback(() => getTacticianPortraitUrl(tacticianId), [tacticianId]);
+  const src = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   return (
     <div className={`sf-tactician-portrait sf-tactician-portrait--${size} ${className}`.trim()}>

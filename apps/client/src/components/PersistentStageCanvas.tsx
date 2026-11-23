@@ -140,9 +140,11 @@ export function PersistentStageCanvas({
     win.__getStagePerfStats = () => engine.getPerfStats();
     win.__getStageEngine = () => engine;
 
-    void prebakePortraitsAsync({ renderer: engine.getRenderer() });
+    const portraitBake = new AbortController();
+    void prebakePortraitsAsync({ renderer: engine.getRenderer(), signal: portraitBake.signal });
 
     return () => {
+      portraitBake.abort();
       delete win.__getStagePerfStats;
       delete win.__getStageEngine;
       engineRef.current = null;

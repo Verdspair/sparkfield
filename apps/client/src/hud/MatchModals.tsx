@@ -15,161 +15,71 @@ import { EquipmentCodexMatrix } from '../components/EquipmentCodexMatrix.js';
 import { GameUiIcon } from '../components/GameUiIcons.js';
 import { UnitPortrait } from '../components/UnitPortrait.js';
 
-function formatMMSS(sec: number): string {
-  const safe = Math.max(0, Math.ceil(sec));
-  const mm = String(Math.floor(safe / 60)).padStart(2, '0');
-  const ss = String(safe % 60).padStart(2, '0');
-  return `${mm}:${ss}`;
-}
+type AugmentTier = 'silver' | 'gold' | 'prismatic';
 
-function ThreeRingEnergyEmblem({
-  tier,
-  variant = 'augment',
-  itemId,
-}: {
-  readonly tier: 'silver' | 'gold' | 'prismatic';
-  readonly variant?: 'augment' | 'anvil';
-  readonly itemId?: string;
-}): React.JSX.Element {
-  const strokePrimary =
-    tier === 'prismatic' ? '#e879f9' : tier === 'gold' ? '#f2c97d' : '#cbd5e1';
-  const strokeSecondary =
-    tier === 'prismatic' ? '#4fd1ff' : tier === 'gold' ? '#fff0c4' : '#94a3b8';
+const AUGMENT_TIER_LABELS: Readonly<Record<AugmentTier, string>> = {
+  silver: '白银',
+  gold: '黄金',
+  prismatic: '棱彩',
+};
 
+const AUGMENT_TIER_GLYPHS: Readonly<Record<AugmentTier, string>> = {
+  silver: 'M12 3 21 12 12 21 3 12Z',
+  gold: 'M12 3 20 7.5v9L12 21l-8-4.5v-9Z',
+  prismatic: 'M12 2.5 14.7 9.3 21.5 12 14.7 14.7 12 21.5 9.3 14.7 2.5 12 9.3 9.3Z',
+};
+
+function AugmentMark({ tier }: { readonly tier: AugmentTier }): React.JSX.Element {
   return (
-    <div className="sf-tri-ring-emblem" aria-hidden="true">
-      <svg className="sf-tri-ring-emblem__outer" viewBox="0 0 96 96" fill="none">
-        <circle
-          cx="48"
-          cy="48"
-          r="45"
-          stroke={strokePrimary}
-          strokeWidth="1.5"
-          strokeDasharray="10 6 2 6"
-          opacity="0.88"
-        />
-        <circle cx="48" cy="3" r="2.5" fill={strokeSecondary} />
-        <circle cx="48" cy="93" r="2.5" fill={strokeSecondary} />
-        <circle cx="3" cy="48" r="2" fill={strokePrimary} />
-        <circle cx="93" cy="48" r="2" fill={strokePrimary} />
+    <span className="sf-choice-mark" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d={AUGMENT_TIER_GLYPHS[tier]} stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
       </svg>
-      <svg className="sf-tri-ring-emblem__mid" viewBox="0 0 74 74" fill="none">
-        <circle
-          cx="37"
-          cy="37"
-          r="34"
-          stroke={strokeSecondary}
-          strokeWidth="1.5"
-          strokeDasharray="18 8"
-          opacity="0.78"
-        />
-        <polygon
-          points="37,5 41,11 33,11"
-          fill={strokePrimary}
-          opacity="0.9"
-        />
-      </svg>
-      <div className="sf-tri-ring-emblem__core">
-        {variant === 'anvil' && itemId ? (
-          <GameItemIcon itemId={itemId} size="lg" />
-        ) : variant === 'anvil' ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M4 9h16l-2 4h-3l2 6H7l2-6H6L4 9Z"
-              stroke={strokeSecondary}
-              strokeWidth="1.8"
-              strokeLinejoin="round"
-            />
-            <circle cx="12" cy="5.5" r="2" fill={strokePrimary} />
-          </svg>
-        ) : tier === 'prismatic' ? (
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z"
-              fill={strokePrimary}
-              stroke={strokeSecondary}
-              strokeWidth="1.4"
-            />
-          </svg>
-        ) : tier === 'gold' ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <polygon
-              points="12,2.5 20.5,7.5 20.5,16.5 12,21.5 3.5,16.5 3.5,7.5"
-              stroke={strokeSecondary}
-              strokeWidth="1.7"
-              fill="rgba(242,201,125,0.18)"
-            />
-            <circle cx="12" cy="12" r="3.4" fill={strokePrimary} />
-          </svg>
-        ) : (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <polygon
-              points="12,3 20,12 12,21 4,12"
-              stroke={strokeSecondary}
-              strokeWidth="1.7"
-              fill="rgba(203,213,225,0.16)"
-            />
-            <circle cx="12" cy="12" r="2.6" fill={strokePrimary} />
-          </svg>
-        )}
-      </div>
-    </div>
+    </span>
   );
 }
 
 export function MatchChoiceModal({
   showAugmentChoice,
   self,
-  liveRemainingSec,
   serverCommandsLocked,
   onPeekBattlefield,
   onSendCommand,
 }: {
   readonly showAugmentChoice: boolean;
   readonly self: SeatState;
-  readonly liveRemainingSec: number;
   readonly serverCommandsLocked: boolean;
   readonly onPeekBattlefield: () => void;
   readonly onSendCommand: (cmd: GameCommand) => void;
 }): React.JSX.Element | null {
+  const offer = self.augmentOffer;
   const activeAnvil = self.anvils[0] ?? null;
+  const title = showAugmentChoice ? '选择强化符文' : activeAnvil?.kind === 'completed' ? '成装铁砧' : '散件铁砧';
 
   return (
     <div
       className="sf-choice-backdrop sf-hud-modal"
       role="dialog"
       aria-modal="true"
-      aria-label="战术抉择时刻"
+      aria-label={title}
       data-testid="choice-event-modal"
     >
       <div className="sf-choice-stage">
         <div className="sf-choice-header">
-          <h2 className="sf-choice-title">
-            {showAugmentChoice
-              ? '星海强化抉择'
-              : activeAnvil?.kind === 'completed'
-                ? '成装星核锻炉'
-                : '散件补给锻炉'}
-          </h2>
-          <span className="blc-clock-pill">{formatMMSS(liveRemainingSec)}</span>
+          <h2 className="sf-choice-title">{title}</h2>
           <DescriptionModeToggle size="sm" />
         </div>
 
         <fieldset
           disabled={serverCommandsLocked}
-          style={{ display: 'contents', border: 0, padding: 0, margin: 0 }}
+          className="sf-choice-options"
         >
-          {showAugmentChoice && self.augmentOffer ? (
+          {showAugmentChoice && offer ? (
             <div className="sf-augment-row">
-              {self.augmentOffer.options.map((augId, slotIdx) => {
+              {offer.options.map((augId, slotIdx) => {
                 const aug = SEASON1_AUGMENTS.find((a) => a.id === augId);
-                const tier: 'silver' | 'gold' | 'prismatic' =
-                  aug?.tier === 'prismatic'
-                    ? 'prismatic'
-                    : aug?.tier === 'gold'
-                      ? 'gold'
-                      : 'silver';
-                const canReroll = Boolean(self.augmentOffer?.rerolls[slotIdx]);
+                const tier = aug?.tier ?? 'silver';
+                const canReroll = Boolean(offer.rerolls[slotIdx]);
                 return (
                   <div key={`${augId}-${slotIdx}`} className="sf-augment-col">
                     <div
@@ -177,21 +87,19 @@ export function MatchChoiceModal({
                       data-testid={`augment-slot-${slotIdx}`}
                       data-augment-id={augId}
                     >
-                      <ThreeRingEnergyEmblem tier={tier} variant="augment" />
-                      <span className={`sf-augment-tier-tag sf-augment-tier-tag--${tier}`}>
-                        {tier === 'prismatic'
-                          ? '棱彩阶强化'
-                          : tier === 'gold'
-                            ? '黄金阶强化'
-                            : '白银阶强化'}
-                      </span>
-                      <h3 className="sf-augment-name">{aug?.name ?? '星海强化'}</h3>
+                      <div className="sf-choice-card-heading">
+                        <AugmentMark tier={tier} />
+                        <div>
+                          <span className="sf-augment-tier-tag">{AUGMENT_TIER_LABELS[tier]}</span>
+                          <h3 className="sf-augment-name">{aug?.name ?? '强化符文'}</h3>
+                        </div>
+                      </div>
                       <div className="sf-augment-desc-box">
                         {aug?.desc ? <GameEffectText augmentId={augId} fullText={aug.desc} /> : ''}
                       </div>
                       <button
                         type="button"
-                        className="sf-augment-pick-btn"
+                        className="blc-btn blc-btn--primary blc-btn--sm sf-augment-pick-btn"
                         onClick={() => onSendCommand({ type: 'PICK_AUGMENT', slotIndex: slotIdx })}
                         data-testid={`pick-augment-${slotIdx}`}
                       >
@@ -200,14 +108,14 @@ export function MatchChoiceModal({
                     </div>
                     <button
                       type="button"
-                      className="sf-augment-reroll-btn"
+                      className="blc-btn blc-btn--ghost blc-btn--sm sf-augment-reroll-btn"
                       disabled={!canReroll}
                       onClick={() =>
                         onSendCommand({ type: 'REROLL_AUGMENT_SLOT', slotIndex: slotIdx })
                       }
                       data-testid={`reroll-augment-${slotIdx}`}
                     >
-                      ↻ 刷新 {canReroll ? '(1)' : '(0)'}
+                      {canReroll ? '刷新此符文' : '已刷新'}
                     </button>
                   </div>
                 );
@@ -217,15 +125,14 @@ export function MatchChoiceModal({
             <div
               className="sf-anvil-grid"
               style={{
-                gridTemplateColumns: `repeat(${activeAnvil.options.length}, minmax(0, 224px))`,
-              }}
+                '--choice-count': activeAnvil.options.length,
+              } as React.CSSProperties}
             >
               {activeAnvil.options.map((itemId, optIdx) => {
                 const entry = lookupItemById(itemId);
-                const tier = activeAnvil.kind === 'completed' ? 'gold' : 'silver';
-                const matchingUnits = self.units
-                  .filter((u) =>
-                    getUnitRecommendedBuilds(u.unitId, [
+                const matchingUnitIds = [...new Set(self.units.map((unit) => unit.unitId))]
+                  .filter((unitId) =>
+                    getUnitRecommendedBuilds(unitId, [
                       ...self.inventoryItems,
                       itemId,
                     ]).some(
@@ -238,15 +145,14 @@ export function MatchChoiceModal({
                 return (
                   <div
                     key={`${itemId}-${optIdx}`}
-                    className={`sf-augment-card sf-anvil-card sf-augment-card--${tier}`}
+                    className="sf-augment-card"
                     data-testid={`anvil-option-${optIdx}`}
                     data-item-id={itemId}
                   >
-                    <ThreeRingEnergyEmblem tier={tier} variant="anvil" itemId={itemId} />
-                    <span className={`sf-augment-tier-tag sf-augment-tier-tag--${tier}`}>
-                      {activeAnvil.kind === 'completed' ? '成装补给' : '散件补给'}
-                    </span>
-                    <h3 className="sf-augment-name">{entry?.item.name ?? '装备'}</h3>
+                    <div className="sf-choice-card-heading">
+                      <GameItemIcon itemId={itemId} size="lg" />
+                      <h3 className="sf-augment-name">{entry?.item.name ?? '装备'}</h3>
+                    </div>
                     <div className="sf-augment-desc-box">
                       {entry?.item.desc ? (
                         <GameEffectText itemId={itemId} fullText={entry.item.desc} />
@@ -254,21 +160,17 @@ export function MatchChoiceModal({
                         ''
                       )}
                     </div>
-                    {matchingUnits.length > 0 ? (
+                    {matchingUnitIds.length > 0 ? (
                       <div className="sf-anvil-fits" aria-label="推荐佩戴棋子">
-                        {matchingUnits.map((u) => (
-                          <UnitPortrait
-                            key={u.instanceId}
-                            unitId={u.unitId}
-                            size="sm"
-                            star={u.star}
-                          />
+                        <span>适合</span>
+                        {matchingUnitIds.map((unitId) => (
+                          <UnitPortrait key={unitId} unitId={unitId} size="sm" />
                         ))}
                       </div>
                     ) : null}
                     <button
                       type="button"
-                      className="sf-augment-pick-btn"
+                      className="blc-btn blc-btn--primary blc-btn--sm sf-augment-pick-btn"
                       onClick={() =>
                         onSendCommand({
                           type: 'PICK_ANVIL_OPTION',
@@ -289,7 +191,7 @@ export function MatchChoiceModal({
 
         <button
           type="button"
-          className="sf-choice-peek-btn"
+          className="blc-btn blc-btn--ghost blc-btn--sm"
           onClick={onPeekBattlefield}
           data-testid="peek-battlefield-btn"
         >
@@ -324,7 +226,7 @@ export function MatchLineupPlannerModal({
       aria-label="10槽阵容规划器"
       data-testid="lineup-planner-modal"
     >
-      <div className="ui-metal-frame ui-corner-ornaments blc-workbench-modal">
+      <div className="ui-metal-frame blc-workbench-modal">
         <div className="blc-col-head">
           <div>
             <h3 style={{ margin: 0 }}>
@@ -405,7 +307,7 @@ export function MatchLineupPlannerModal({
         <div className="blc-workbench-scroll">
           <fieldset
             disabled={serverCommandsLocked}
-            style={{ display: 'contents', border: 0, padding: 0, margin: 0 }}
+            className="sf-choice-options"
           >
             <div className="blc-unit-grid">
               {SEASON1_UNITS.map((u) => {
@@ -474,7 +376,7 @@ export function MatchCodexModal({
       aria-label="局内图鉴"
       data-testid="inmatch-codex-modal"
     >
-      <div className="ui-metal-frame ui-corner-ornaments blc-workbench-modal">
+      <div className="ui-metal-frame blc-workbench-modal">
         <div className="blc-col-head">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <div className="sf-equip-view-switch" role="tablist" aria-label="局内图鉴切换">

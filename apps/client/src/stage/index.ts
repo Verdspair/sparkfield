@@ -66,6 +66,8 @@ export {
   getTacticianPortraitUrl,
   getUnitPortraitUrl,
   prebakePortraitsAsync,
+  subscribeTacticianPortrait,
+  subscribeUnitPortrait,
 } from './unitPortraitBaker.js';
 
 export { StageVfxManager } from './vfxManager.js';

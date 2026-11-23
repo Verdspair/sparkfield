@@ -1,0 +1,13 @@
+.sf-unit-portrait:not(.sf-unit-portrait--card)::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(14, 22, 40, 0.36);
+}
+
+.sf-cost-border--1 { --sf-cost-tone: var(--cost-1-iron); }
+.sf-cost-border--2 { --sf-cost-tone: var(--cost-2-jade); }
+.sf-cost-border--3 { --sf-cost-tone: var(--cost-3-azure); }
+.sf-cost-border--4 { --sf-cost-tone: var(--cost-4-amethyst); }
+.sf-cost-border--5 { --sf-cost-tone: var(--cost-5-radiant); }

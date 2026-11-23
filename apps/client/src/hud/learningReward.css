@@ -1,0 +1,204 @@
+@keyframes sfRewardBurstIn {
+  0% { opacity: 0; transform: translate3d(-50%, -14px, 0); }
+  12% { opacity: 1; transform: translate3d(-50%, 0, 0); }
+  88% { opacity: 1; transform: translate3d(-50%, 0, 0); }
+  100% { opacity: 0; transform: translate3d(-50%, -10px, 0); }
+}
+@keyframes sfRewardRingDraw {
+  0% { stroke-dashoffset: var(--ring-c); }
+  100% { stroke-dashoffset: var(--ring-offset); }
+}
+@keyframes sfRewardChipPop {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.sf-reward-stage {
+  position: fixed;
+  top: 13%;
+  left: 50%;
+  z-index: 54;
+  pointer-events: none;
+  animation: sfRewardBurstIn 3800ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.sf-reward-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(600px, calc(100vw - 32px));
+  padding: 16px;
+  border-radius: var(--sf-radius-card);
+  border: 1px solid rgba(216, 194, 148, 0.28);
+  background: var(--sf-surface-elevated);
+  backdrop-filter: var(--sf-glass-blur);
+  box-shadow: var(--sf-shadow-panel);
+  color: #eef1f5;
+}
+.sf-reward-ring {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sf-reward-ring svg {
+  width: 64px;
+  height: 64px;
+  transform: rotate(-90deg);
+}
+.sf-reward-ring__prog {
+  stroke-dashoffset: var(--ring-offset);
+  animation: sfRewardRingDraw 500ms var(--ease-out-quart) backwards;
+}
+.sf-reward-ring__text {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.sf-reward-ring__ratio {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #eef1f5;
+}
+.sf-reward-emblem {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--sf-radius-card);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(216, 194, 148, 0.34);
+  background: var(--sf-surface-card);
+  color: var(--accent-gold);
+}
+.sf-reward-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.sf-reward-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.sf-reward-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sf-reward-title {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #eef1f5;
+}
+.sf-reward-perfect {
+  padding: 3px 9px;
+  border-radius: var(--sf-radius-pill);
+  background: var(--sf-gold-surface);
+  color: #171e2b;
+  font-size: 11.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.sf-reward-excellent {
+  padding: 3px 9px;
+  border-radius: var(--sf-radius-pill);
+  background: var(--sf-surface-cell-active);
+  border: 1px solid rgba(123, 185, 232, 0.38);
+  color: var(--accent-azure-bright);
+  font-size: 11.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.sf-reward-loot-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  animation: sfRewardChipPop 360ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+.sf-reward-pill--gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--sf-radius-pill);
+  background: rgba(216, 194, 148, 0.12);
+  border: 1px solid rgba(216, 194, 148, 0.38);
+  color: var(--accent-gold-bright);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.sf-reward-pill--orb {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #b7c0ce;
+}
+.sf-reward-pill--charge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--sf-radius-pill);
+  background: var(--sf-surface-card);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #b7c0ce;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.sf-reward-pill--item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 5px;
+  border-radius: var(--sf-radius-pill);
+  background: var(--sf-surface-card);
+  border: 1px solid rgba(216, 194, 148, 0.32);
+  color: #eef1f5;
+  font-size: 12px;
+  font-weight: 600;
+}
+.sf-reward-aug-desc {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #b7c0ce;
+}
+.sf-reward-loot-row:empty { display: none; }
+
+.sf-reward-pickup-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-reward-stage,
+  .sf-reward-ring__prog,
+  .sf-reward-loot-row {
+    animation: none;
+  }
+  .sf-reward-stage {
+    transform: translateX(-50%);
+  }
+}

@@ -29,9 +29,9 @@ const SETTINGS_TABS: readonly {
 ];
 
 const ARENA_ACCENT_BY_ID: Readonly<Record<ArenaThemeId, string>> = {
-  orbital_elevator_port: 'linear-gradient(135deg, #1b3f66 0%, #10203a 58%, #9b7339 100%)',
-  mercury_dyson_forge: 'linear-gradient(135deg, #5a2714 0%, #2a130e 58%, #c7852e 100%)',
-  event_horizon_observatory: 'linear-gradient(135deg, #321b5c 0%, #130e29 58%, #be964f 100%)',
+  orbital_elevator_port: '#222d40',
+  mercury_dyson_forge: '#312a29',
+  event_horizon_observatory: '#292638',
 };
 
 function readInitialArenaPreviews(): Record<ArenaThemeId, string> {
@@ -67,34 +67,17 @@ function ShopLayoutDiagramSvg({
         role="img"
         aria-label={isBottom ? '底部商店布局示意' : '顶部抽屉商店布局示意'}
       >
-        <defs>
-          <linearGradient id="sfDiagBg" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#142341" />
-            <stop offset="55%" stopColor="#0e182e" />
-            <stop offset="100%" stopColor="#091020" />
-          </linearGradient>
-          <linearGradient id="sfDiagBoard" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#253b64" stopOpacity="0.86" />
-            <stop offset="100%" stopColor="#182846" stopOpacity="0.92" />
-          </linearGradient>
-          <linearGradient id="sfDiagShop" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#f2c97d" stopOpacity="0.3" />
-            <stop offset="50%" stopColor="#4fd1ff" stopOpacity="0.24" />
-            <stop offset="100%" stopColor="#f2c97d" stopOpacity="0.3" />
-          </linearGradient>
-        </defs>
+        <rect x="2" y="2" width="416" height="172" rx="4" fill="#0f141c" stroke="rgba(137,163,184,0.28)" />
 
-        <rect x="2" y="2" width="416" height="172" rx="10" fill="url(#sfDiagBg)" stroke="rgba(148,179,224,0.28)" />
-
-        <rect x="116" y="8" width="188" height="11" rx="5.5" fill="rgba(22,36,64,0.9)" stroke="rgba(242,201,125,0.34)" />
-        <rect x="132" y="11.5" width="46" height="4" rx="2" fill="#f2c97d" opacity="0.82" />
-        <rect x="188" y="11.5" width="76" height="4" rx="2" fill="#4fd1ff" opacity="0.65" />
+        <rect x="116" y="8" width="188" height="11" rx="3" fill="rgba(22,36,64,0.9)" stroke="rgba(200,181,144,0.34)" />
+        <rect x="132" y="11.5" width="46" height="4" rx="2" fill="#c8b590" opacity="0.82" />
+        <rect x="188" y="11.5" width="76" height="4" rx="2" fill="#9db5c7" opacity="0.65" />
 
         <g opacity="0.78">
-          <rect x="12" y="34" width="38" height="14" rx="4" fill="rgba(26,42,74,0.85)" stroke="rgba(242,201,125,0.35)" />
-          <rect x="12" y="53" width="38" height="14" rx="4" fill="rgba(26,42,74,0.85)" stroke="rgba(148,179,224,0.25)" />
-          <rect x="12" y="72" width="38" height="14" rx="4" fill="rgba(26,42,74,0.85)" stroke="rgba(148,179,224,0.25)" />
-          <rect x="12" y="91" width="38" height="14" rx="4" fill="rgba(26,42,74,0.85)" stroke="rgba(79,209,255,0.35)" />
+          <rect x="12" y="34" width="38" height="14" rx="4" fill="rgba(26,42,74,0.85)" stroke="rgba(200,181,144,0.35)" />
+          <rect x="12" y="53" width="38" height="14" rx="4" fill="rgba(26,42,74,0.85)" stroke="rgba(137,163,184,0.25)" />
+          <rect x="12" y="72" width="38" height="14" rx="4" fill="rgba(26,42,74,0.85)" stroke="rgba(137,163,184,0.25)" />
+          <rect x="12" y="91" width="38" height="14" rx="4" fill="rgba(26,42,74,0.85)" stroke="rgba(137,163,184,0.35)" />
         </g>
 
         <g opacity="0.78">
@@ -106,8 +89,8 @@ function ShopLayoutDiagramSvg({
               width="42"
               height="13"
               rx="4"
-              fill={idx === 0 ? 'rgba(242,201,125,0.2)' : 'rgba(26,42,74,0.85)'}
-              stroke={idx === 0 ? 'rgba(242,201,125,0.72)' : 'rgba(148,179,224,0.25)'}
+              fill={idx === 0 ? 'rgba(200,181,144,0.2)' : 'rgba(26,42,74,0.85)'}
+              stroke={idx === 0 ? 'rgba(200,181,144,0.72)' : 'rgba(137,163,184,0.25)'}
             />
           ))}
         </g>
@@ -115,11 +98,11 @@ function ShopLayoutDiagramSvg({
         <g>
           <polygon
             points={`108,${boardY} 312,${boardY} 336,${boardY + 72} 84,${boardY + 72}`}
-            fill="url(#sfDiagBoard)"
-            stroke="rgba(79,209,255,0.45)"
+            fill="#1b2433"
+            stroke="rgba(137,163,184,0.45)"
             strokeWidth="1.2"
           />
-          <line x1="96" y1={boardY + 36} x2="324" y2={boardY + 36} stroke="rgba(242,201,125,0.28)" strokeDasharray="4 4" />
+          <line x1="96" y1={boardY + 36} x2="324" y2={boardY + 36} stroke="rgba(200,181,144,0.28)" strokeDasharray="4 4" />
           <text
             x="210"
             y={boardY + 32}
@@ -134,7 +117,7 @@ function ShopLayoutDiagramSvg({
             x="210"
             y={boardY + 54}
             textAnchor="middle"
-            fill="#7dd3fc"
+            fill="#a2b9ca"
             fontSize="8.5"
           >
             我方区域
@@ -148,8 +131,8 @@ function ShopLayoutDiagramSvg({
             width="252"
             height="16"
             rx="4"
-            fill="rgba(79,209,255,0.12)"
-            stroke="rgba(79,209,255,0.72)"
+            fill="rgba(137,163,184,0.12)"
+            stroke="rgba(137,163,184,0.72)"
             strokeWidth="1.1"
           />
           {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((slot) => (
@@ -160,13 +143,13 @@ function ShopLayoutDiagramSvg({
               width="21"
               height="9"
               rx="2.5"
-              fill="rgba(79,209,255,0.34)"
+              fill="rgba(137,163,184,0.34)"
             />
           ))}
           <text
             x="342"
             y={benchY + 11}
-            fill="#a5f3fc"
+            fill="#acc0cf"
             fontSize="8.5"
             fontWeight="700"
           >
@@ -181,12 +164,12 @@ function ShopLayoutDiagramSvg({
             width="292"
             height="32"
             rx="7"
-            fill="url(#sfDiagShop)"
-            stroke="#f2c97d"
+            fill="#222d40"
+            stroke="#c8b590"
             strokeWidth="1.4"
           />
-          <rect x="72" y={shopY + 5} width="40" height="10" rx="3" fill="rgba(242,201,125,0.45)" />
-          <rect x="72" y={shopY + 18} width="40" height="9" rx="3" fill="rgba(79,209,255,0.38)" />
+          <rect x="72" y={shopY + 5} width="40" height="10" rx="3" fill="rgba(200,181,144,0.45)" />
+          <rect x="72" y={shopY + 18} width="40" height="9" rx="3" fill="rgba(137,163,184,0.38)" />
           {[0, 1, 2, 3, 4].map((card) => (
             <rect
               key={card}
@@ -196,7 +179,7 @@ function ShopLayoutDiagramSvg({
               height="22"
               rx="4"
               fill="rgba(16,28,50,0.88)"
-              stroke="rgba(242,201,125,0.58)"
+              stroke="rgba(200,181,144,0.58)"
               strokeWidth="0.9"
             />
           ))}
@@ -204,7 +187,7 @@ function ShopLayoutDiagramSvg({
             x="233"
             y={shopY + 19}
             textAnchor="middle"
-            fill="#fff0c4"
+            fill="#d3c2a0"
             fontSize="9"
             fontWeight="700"
           >
@@ -461,7 +444,7 @@ export function SettingsModal(): React.JSX.Element | null {
       onClick={closeSettings}
     >
       <div
-        className="ui-metal-frame ui-corner-ornaments sf-settings-shell"
+        className="ui-metal-frame sf-settings-shell"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="sf-settings-header">

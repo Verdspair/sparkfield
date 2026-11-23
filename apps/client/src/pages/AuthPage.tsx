@@ -6,60 +6,9 @@ type AuthFormStage = 'intent' | 'login' | 'register';
 
 function BrandCrestSvg(): React.JSX.Element {
   return (
-    <svg
-      className="sf-auth-crest sf-auth-crest--compact"
-      width={34}
-      height={34}
-      viewBox="0 0 96 96"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle
-        className="sf-crest-ring sf-crest-ring--outer"
-        cx="48"
-        cy="48"
-        r="41"
-        stroke="url(#sfCrestGold)"
-        strokeWidth="1.4"
-        strokeDasharray="6 4"
-      />
-      <ellipse
-        cx="48"
-        cy="48"
-        rx="44"
-        ry="16"
-        transform="rotate(-24 48 48)"
-        stroke="url(#sfCrestGold)"
-        strokeWidth="1.5"
-      />
-      <ellipse
-        cx="48"
-        cy="48"
-        rx="44"
-        ry="16"
-        transform="rotate(34 48 48)"
-        stroke="url(#sfCrestAzure)"
-        strokeWidth="1.2"
-      />
-      <path
-        d="M48 24L52.2 43.8L72 48L52.2 52.2L48 72L43.8 52.2L24 48L43.8 43.8L48 24Z"
-        stroke="#FFF0C4"
-        strokeWidth="1.4"
-        fill="rgba(242, 201, 125, 0.24)"
-      />
-      <circle cx="48" cy="48" r="3.4" fill="#FFF0C4" />
-      <defs>
-        <linearGradient id="sfCrestGold" x1="8" y1="8" x2="88" y2="88" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FFF0C4" />
-          <stop offset="50%" stopColor="#F2C97D" />
-          <stop offset="100%" stopColor="#A87932" />
-        </linearGradient>
-        <linearGradient id="sfCrestAzure" x1="88" y1="12" x2="12" y2="84" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#A5F3FC" />
-          <stop offset="60%" stopColor="#4FD1FF" />
-          <stop offset="100%" stopColor="#A78BFA" />
-        </linearGradient>
-      </defs>
+    <svg className="sf-auth-crest sf-auth-crest--compact" width="34" height="34" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M16 2.8 29 16 16 29.2 3 16Z" stroke="var(--accent-gold)" strokeWidth="1.3" />
+      <circle cx="16" cy="16" r="3" fill="var(--accent-gold)" />
     </svg>
   );
 }
@@ -253,7 +202,7 @@ export function AuthPage(): React.JSX.Element {
           }}
         >
           <section
-            className="ui-metal-frame ui-corner-ornaments sf-auth-modal"
+            className="ui-metal-frame sf-auth-modal"
             aria-label={stage === 'login' ? '账号登录' : '注册新账号'}
             onClick={(e) => e.stopPropagation()}
           >

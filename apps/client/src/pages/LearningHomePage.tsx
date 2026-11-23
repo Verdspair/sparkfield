@@ -536,7 +536,7 @@ export function LearningHomePage(): React.JSX.Element {
               cy="42"
               r="34"
               fill="none"
-              stroke="#e5be73"
+              stroke="#c8b590"
               strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray={outerCirc}
@@ -556,7 +556,7 @@ export function LearningHomePage(): React.JSX.Element {
               cy="42"
               r="24"
               fill="none"
-              stroke="#5cc8d6"
+              stroke="#89a3b8"
               strokeWidth="5"
               strokeLinecap="round"
               strokeDasharray={innerCirc}

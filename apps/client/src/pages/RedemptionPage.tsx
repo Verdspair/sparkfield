@@ -24,21 +24,15 @@ function GiftArtworkSvg({
   if (title.includes('书签')) {
     return (
       <svg width={size} height={size} viewBox="0 0 96 96" aria-hidden="true">
-        <defs>
-          <linearGradient id="bmGold" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#fff3c4" />
-            <stop offset="100%" stopColor="#c59745" />
-          </linearGradient>
-        </defs>
         <path
           d="M32 14 H64 V82 L48 68 L32 82 Z"
-          fill="url(#bmGold)"
+          fill="var(--accent-gold)"
           fillOpacity="0.22"
-          stroke="url(#bmGold)"
+          stroke="var(--accent-gold)"
           strokeWidth="3"
         />
-        <circle cx="48" cy="36" r="10" fill="none" stroke="#5cc8d6" strokeWidth="2.5" />
-        <path d="M48 22 V50 M34 36 H62" stroke="#fff3c4" strokeWidth="1.5" />
+        <circle cx="48" cy="36" r="10" fill="none" stroke="#89a3b8" strokeWidth="2.5" />
+        <path d="M48 22 V50 M34 36 H62" stroke="#d3c2a0" strokeWidth="1.5" />
       </svg>
     );
   }
@@ -50,13 +44,13 @@ function GiftArtworkSvg({
           y="16"
           width="52"
           height="64"
-          rx="6"
+          rx="4"
           fill="rgba(92, 200, 214, 0.16)"
-          stroke="#f0dcaa"
+          stroke="#c8b590"
           strokeWidth="3"
         />
         <line x1="32" y1="16" x2="32" y2="80" stroke="#c8aa6e" strokeWidth="2.5" />
-        <circle cx="54" cy="44" r="12" fill="none" stroke="#5cc8d6" strokeWidth="2" />
+        <circle cx="54" cy="44" r="12" fill="none" stroke="#89a3b8" strokeWidth="2" />
         <ellipse
           cx="54"
           cy="44"
@@ -64,7 +58,7 @@ function GiftArtworkSvg({
           ry="6"
           transform="rotate(-24 54 44)"
           fill="none"
-          stroke="#f0dcaa"
+          stroke="#c8b590"
           strokeWidth="2"
         />
       </svg>
@@ -75,16 +69,16 @@ function GiftArtworkSvg({
       <polygon
         points="48,14 78,30 78,66 48,82 18,66 18,30"
         fill="rgba(240, 220, 170, 0.16)"
-        stroke="#f0dcaa"
+        stroke="#c8b590"
         strokeWidth="3"
       />
       <polygon
         points="48,26 66,36 66,60 48,70 30,60 30,36"
         fill="rgba(92, 200, 214, 0.2)"
-        stroke="#5cc8d6"
+        stroke="#89a3b8"
         strokeWidth="2"
       />
-      <circle cx="48" cy="48" r="6" fill="#fff3c4" />
+      <circle cx="48" cy="48" r="6" fill="#d3c2a0" />
     </svg>
   );
 }

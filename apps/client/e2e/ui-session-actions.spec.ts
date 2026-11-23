@@ -48,6 +48,28 @@ test('new commander uses the branded launch capsules, skips the guide and enters
   await expect(page.getByTestId('prep-chapter-summary-btn')).toContainText(firstEnglishTitle);
 });
 
+test('the codex keeps the room status and renders 36 live portraits', async ({ page, mock }) => {
+  let joined = false;
+  await mock({
+    'GET /api/lobby/state': (route) => ok(route, joined ? roomLobby : emptyLobby),
+    'POST /api/lobby/enter': (route) => {
+      joined = true;
+      return ok(route, roomLobby);
+    },
+  });
+  await visitLobby(page);
+  await (await openModeOverlay(page, 'standard')).getByTestId('mode-overlay-confirm-btn').click();
+  await page.getByTestId('prep-back-to-lobby-view-btn').click();
+  const codex = await openSubpage(page, 'encyclopedia');
+  await expect(page.getByTestId('top-room-bar')).toContainText(roomLobby.prepRoom.roomCode);
+  await codex.getByTestId('enc-tab-units').click();
+  const portraits = codex.locator('.sf-enc-unit-wall .sf-unit-portrait img');
+  await expect(portraits).toHaveCount(36);
+  if (await page.evaluate(() => Boolean((window as Window & { __getStagePerfStats?: () => { webglAvailable: boolean } }).__getStagePerfStats?.()?.webglAvailable))) {
+    await expect(codex.locator('.sf-enc-unit-wall .sf-unit-portrait img[src^="data:image/png"]')).toHaveCount(36, { timeout: 12_000 });
+  }
+});
+
 test('the gear switches actual fullscreen, stages and tacticians and can reopen the guide', async ({ page, mock }) => {
   let current = profile;
   await mock({

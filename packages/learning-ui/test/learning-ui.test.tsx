@@ -86,7 +86,7 @@ describe('@pkg/learning-ui', () => {
     expect(markup).toContain('katex');
   });
 
-  it('defaults to deep-space eye-care cosmos theme and supports warm parchment localStorage persistence', () => {
+  it('defaults to matte slate cosmos theme and supports warm parchment localStorage persistence', () => {
     expect(readStoredReadingTheme()).toBe('cosmos');
 
     const defaultHtml = renderToStaticMarkup(
@@ -141,8 +141,8 @@ describe('@pkg/learning-ui', () => {
     expect(parchmentHtml).toContain('lui-option-diamond-frame');
     expect(parchmentHtml).toContain('回答正确');
 
-    expect(LEARNING_UI_CSS).toContain('#15233e');
-    expect(LEARNING_UI_CSS).toContain('#f1f5f9');
+    expect(LEARNING_UI_CSS).toContain('--lui-shell-bg: var(--sf-surface-elevated,');
+    expect(LEARNING_UI_CSS).toContain('--lui-ink-primary: var(--text-primary, #f2f5fa);');
     expect(LEARNING_UI_CSS).toContain('#eae4d6');
     expect(LEARNING_UI_CSS).toContain('height: auto;');
     expect(LEARNING_UI_CSS).not.toContain('height: min(76vh');
@@ -254,7 +254,7 @@ describe('@pkg/learning-ui', () => {
     );
     expect(treeHtml).toContain('lui-recipe-tree');
     expect(treeHtml).toContain('聚变重刃');
-    expect(treeHtml).toContain('lui-recipe-glyph');
+    expect(treeHtml).toContain('data-item-icon-id="C_SWORD"');
     expect(treeHtml).toContain('背包已有');
   });
 
